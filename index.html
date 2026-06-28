@@ -10734,7 +10734,7 @@ self.addEventListener('fetch', e => {
             const rows = sorted.map((p, idx) => {
                 const isStarter = idx < starterCount;
                 const mainStat = p.position === 'GK'
-                    ? `keeper: ${p.keeper}`
+                    ? `GK: ${p.keeper}`
                     : `攻${p.offense} 守${p.defense}`;
                 const skillBadge = (p.skills && p.skills.length > 0)
                     ? p.skills.map(s => `<span style="font-size:10px;background:rgba(76,175,80,0.3);border-radius:4px;padding:1px 5px;margin-left:4px;">${SKILLS[s] ? SKILLS[s].name : s}</span>`).join('')
@@ -13920,8 +13920,8 @@ self.addEventListener('fetch', e => {
                 // FKイベント
                 fkEvents.forEach(ev => {
                     if (ev.side === 'my' && ev.kicker) {
-                        if (ev.success) specialMsgArray.push(`<span data-score-goal="my"></span>🎯 <b>フリーキック</b> — <b>${ev.kicker.name}</b> が直接FK成功！ゴール！（shoot: ${ev.kicker.shoot || 50}）`);
-                        else specialMsgArray.push(`🎯 <b>フリーキック</b> — <b>${ev.kicker.name}</b> のFKはキーパーに弾かれる。（shoot: ${ev.kicker.shoot || 50}）`);
+                        if (ev.success) specialMsgArray.push(`<span data-score-goal="my"></span>🎯 <b>フリーキック</b> — <b>${ev.kicker.name}</b> が直接FK成功！ゴール！（シュート: ${ev.kicker.shoot || 50}）`);
+                        else specialMsgArray.push(`🎯 <b>フリーキック</b> — <b>${ev.kicker.name}</b> のFKはキーパーに弾かれる。（シュート: ${ev.kicker.shoot || 50}）`);
                     } else if (ev.side === 'opp') {
                         if (ev.success) specialMsgArray.push('<span data-score-goal="opp"></span>⚠️ <b>相手フリーキック</b> — 相手のFKが直接ゴール！');
                         else specialMsgArray.push('🛡️ <b>相手フリーキック</b> — 相手のFKはキーパーがセーブ！');
@@ -13930,8 +13930,8 @@ self.addEventListener('fetch', e => {
                 // PKイベント
                 pkEvents.forEach(ev => {
                     if (ev.side === 'my' && ev.kicker) {
-                        if (ev.success) specialMsgArray.push(`<span data-score-goal="my"></span>⚡ <b>PK獲得</b> — <b>${ev.kicker.name}</b> がPKを冷静に決める！ゴール！（shoot: ${ev.kicker.shoot || 50}）`);
-                        else specialMsgArray.push(`⚡ <b>PK失敗</b> — <b>${ev.kicker.name}</b> のPKはキーパーに阻まれる！（shoot: ${ev.kicker.shoot || 50}）`);
+                        if (ev.success) specialMsgArray.push(`<span data-score-goal="my"></span>⚡ <b>PK獲得</b> — <b>${ev.kicker.name}</b> がPKを冷静に決める！ゴール！（シュート: ${ev.kicker.shoot || 50}）`);
+                        else specialMsgArray.push(`⚡ <b>PK失敗</b> — <b>${ev.kicker.name}</b> のPKはキーパーに阻まれる！（シュート: ${ev.kicker.shoot || 50}）`);
                     } else if (ev.side === 'opp') {
                         if (ev.success) specialMsgArray.push('<span data-score-goal="opp"></span>⚠️ <b>相手PK</b> — 相手にPKを決められる！');
                         else specialMsgArray.push('🧤 <b>相手PK</b> — キーパーがPKをセーブ！ピンチを救う！');
@@ -14013,7 +14013,7 @@ self.addEventListener('fetch', e => {
             // ステータス別アシスト演出（MFのpassing値に応じたテキスト）
             const getAssistText = (assister) => {
                 const passing = assister.passing || 50;
-                if (passing >= 70) return `🌟 <b>${assister.name}</b> のピンポイントパスからのゴール。（pass: ${passing}）`;
+                if (passing >= 70) return `🌟 <b>${assister.name}</b> のピンポイントパスからのゴール。（パス: ${passing}）`;
                 if (passing >= 60) return `🤝 <b>${assister.name}</b> のスルーパスからのゴール。`;
                 return `🤝 <b>${assister.name}</b> のアシストからのゴール。`;
             };
@@ -14021,7 +14021,7 @@ self.addEventListener('fetch', e => {
             // ステータス別セーブ演出（GKのkeeper値に応じたテキスト）
             const getSaveText = (keeper) => {
                 const kv = keeper.keeper || 50;
-                if (kv >= 80) return `🧤 <b>${keeper.name}</b> が超反応ダイビングセーブ！（keeper: ${kv}）ピンチを脱する。`;
+                if (kv >= 80) return `🧤 <b>${keeper.name}</b> が超反応ダイビングセーブ！（GK: ${kv}）ピンチを脱する。`;
                 if (kv >= 70) return `🧤 <b>${keeper.name}</b> がビッグセーブ！ピンチを脱する。`;
                 return `👊 <b>${keeper.name}</b> がパンチングでクリア！`;
             };
@@ -14034,11 +14034,11 @@ self.addEventListener('fetch', e => {
                 // tackle・ block・ coverの最高値で演出を分岐
                 const maxStat = Math.max(tackle, block, cover);
                 if (maxStat === tackle && tackle >= 70)
-                    return `🛡️ <b>${defender.name}</b> が魔法のタックルで相手エースを封じる！（tackle: ${tackle}）`;
+                    return `🛡️ <b>${defender.name}</b> が魔法のタックルで相手エースを封じる！（タックル: ${tackle}）`;
                 if (maxStat === block && block >= 70)
-                    return `🛡️ <b>${defender.name}</b> がシュートコースに飛び込み強烈ブロック！（block: ${block}）`;
+                    return `🛡️ <b>${defender.name}</b> がシュートコースに飛び込み強烈ブロック！（ブロック: ${block}）`;
                 if (maxStat === cover && cover >= 70)
-                    return `🛡️ <b>${defender.name}</b> がスペースを埋めて相手のスルーパスを封じる！（cover: ${cover}）`;
+                    return `🛡️ <b>${defender.name}</b> がスペースを埋めて相手のスルーパスを封じる！（カバー: ${cover}）`;
                 if (tackle >= 60)
                     return `🛡️ <b>${defender.name}</b> がタックルでカウンターを封じる。`;
                 if (block >= 60)
@@ -14301,22 +14301,22 @@ self.addEventListener('fetch', e => {
 
             // block特化中間イベント（block値が高いDFが登場）
             const blockMidTemplates = [
-                (d, bv) => `🛡️ <b>${d}</b> がシュートコースに飛び込みブロック！ギリギリで得点を許さない。（block: ${bv}）`,
-                (d, bv) => `🛡️ <b>${d}</b> がパスコースを読んでカット！相手のビルドアップを途中で封じる。（block: ${bv}）`,
-                (d, bv) => `🛡️ <b>${d}</b> がゴールライン上でシュートをブロック！チームを救う第一歩。（block: ${bv}）`,
-                (d, bv) => `🛡️ <b>${d}</b> がコーナーキックのボールを体でブロック！危機を脱する。（block: ${bv}）`,
-                (d, bv) => `🛡️ <b>${d}</b> が相手のミドルシュートに体を張ってブロック！強烈なインパクトを身で受ける。（block: ${bv}）`,
-                (d, bv) => `🛡️ <b>${d}</b> がストライカーのシュートコースを読んでブロック、チームを救う。（block: ${bv}）`,
+                (d, bv) => `🛡️ <b>${d}</b> がシュートコースに飛び込みブロック！ギリギリで得点を許さない。（ブロック: ${bv}）`,
+                (d, bv) => `🛡️ <b>${d}</b> がパスコースを読んでカット！相手のビルドアップを途中で封じる。（ブロック: ${bv}）`,
+                (d, bv) => `🛡️ <b>${d}</b> がゴールライン上でシュートをブロック！チームを救う第一歩。（ブロック: ${bv}）`,
+                (d, bv) => `🛡️ <b>${d}</b> がコーナーキックのボールを体でブロック！危機を脱する。（ブロック: ${bv}）`,
+                (d, bv) => `🛡️ <b>${d}</b> が相手のミドルシュートに体を張ってブロック！強烈なインパクトを身で受ける。（ブロック: ${bv}）`,
+                (d, bv) => `🛡️ <b>${d}</b> がストライカーのシュートコースを読んでブロック、チームを救う。（ブロック: ${bv}）`,
             ];
 
             // cover特化中間イベント（cover値が高いDFが登場）
             const coverMidTemplates = [
-                (d, cv) => `🛡️ <b>${d}</b> がスペースを埋めて相手のスルーパスを封じる！（cover: ${cv}）`,
-                (d, cv) => `🛡️ <b>${d}</b> がラインを統制し、オフサイドトラップを成功させる！（cover: ${cv}）`,
-                (d, cv) => `🛡️ <b>${d}</b> のポジショニングが相手のカウンターの軌道を先読みして封じる。（cover: ${cv}）`,
-                (d, cv) => `🛡️ <b>${d}</b> がディフェンスラインを統制し、相手のストライカーを封じ込む。（cover: ${cv}）`,
-                (d, cv) => `🛡️ <b>${d}</b> がスペースを埋めて相手のカウンターを封じる。山を張るバックラインが機能した。（cover: ${cv}）`,
-                (d, cv) => `🛡️ <b>${d}</b> の先読みが相手のスルーパスを封じ、インターセプトに成功する。（cover: ${cv}）`,
+                (d, cv) => `🛡️ <b>${d}</b> がスペースを埋めて相手のスルーパスを封じる！（カバー: ${cv}）`,
+                (d, cv) => `🛡️ <b>${d}</b> がラインを統制し、オフサイドトラップを成功させる！（カバー: ${cv}）`,
+                (d, cv) => `🛡️ <b>${d}</b> のポジショニングが相手のカウンターの軌道を先読みして封じる。（カバー: ${cv}）`,
+                (d, cv) => `🛡️ <b>${d}</b> がディフェンスラインを統制し、相手のストライカーを封じ込む。（カバー: ${cv}）`,
+                (d, cv) => `🛡️ <b>${d}</b> がスペースを埋めて相手のカウンターを封じる。山を張るバックラインが機能した。（カバー: ${cv}）`,
+                (d, cv) => `🛡️ <b>${d}</b> の先読みが相手のスルーパスを封じ、インターセプトに成功する。（カバー: ${cv}）`,
             ];
 
             // 0-0の場合の見せ場
@@ -14427,14 +14427,14 @@ self.addEventListener('fetch', e => {
                         (a) => `💨 <b>${a}</b> のカウンターアタックが相手守備陣を揺さぶる。`,
                     ];
                     const powerAttackTemplates = [
-                        (a) => `💥 <b>${a}</b> の強烈なシュートがゴールポストを直撃！惜しい！（shoot: ${topFwShoot2}）`,
-                        (a) => `🔥 <b>${a}</b> がフルパワーのシュートを放つ！キーパーが必死のセーブ！（shoot: ${topFwShoot2}）`,
-                        (a) => `⚡ <b>${a}</b> の豪快なシュートがゴールを揺らすかと思われたが、わずかに枠外！（shoot: ${topFwShoot2}）`,
+                        (a) => `💥 <b>${a}</b> の強烈なシュートがゴールポストを直撃！惜しい！（シュート: ${topFwShoot2}）`,
+                        (a) => `🔥 <b>${a}</b> がフルパワーのシュートを放つ！キーパーが必死のセーブ！（シュート: ${topFwShoot2}）`,
+                        (a) => `⚡ <b>${a}</b> の豪快なシュートがゴールを揺らすかと思われたが、わずかに枠外！（シュート: ${topFwShoot2}）`,
                     ];
                     const dribbleAttackTemplates = [
-                        (a) => `💨 <b>${a}</b> が華麗なドリブルで3人をかわすも、最後は体を張られる。（dribble: ${topFwDribble2}）`,
-                        (a) => `⚡ <b>${a}</b> のドリブルが相手DFを翻弄！シュートはキーパーの正面に。（dribble: ${topFwDribble2}）`,
-                        (a) => `🌟 <b>${a}</b> のドリブル突破が相手守備を崩すも、シュートは枠をとらえられず。（dribble: ${topFwDribble2}）`,
+                        (a) => `💨 <b>${a}</b> が華麗なドリブルで3人をかわすも、最後は体を張られる。（ドリブル: ${topFwDribble2}）`,
+                        (a) => `⚡ <b>${a}</b> のドリブルが相手DFを翻弄！シュートはキーパーの正面に。（ドリブル: ${topFwDribble2}）`,
+                        (a) => `🌟 <b>${a}</b> のドリブル突破が相手守備を崩すも、シュートは枠をとらえられず。（ドリブル: ${topFwDribble2}）`,
                     ];
                     // myAttackRatioに応じて攻撃系・守備系イベントの確率を変える
                     // myAttackRatio > 1.2: 攻撃優位 → 攻撃系60%, 守備系20%
@@ -14564,32 +14564,32 @@ self.addEventListener('fetch', e => {
                         `🎉 <b>試合終了</b> — ${myScore}得点の大量得点勝利！サポーターが歓声を上げる！`,
                     ];
                     lines.push(bigWinLines[Math.floor(Math.random() * bigWinLines.length)]);
-                    if (topFwPlayer) lines.push(`  ⭐ <b>${topFwPlayer.name}</b>（shoot: ${topFwPlayer.shoot}）が活躍した試合だった。`);
+                    if (topFwPlayer) lines.push(`  ⭐ <b>${topFwPlayer.name}</b>（シュート: ${topFwPlayer.shoot}）が活躍した試合だった。`);
                 } else if (oppScore === 0) {
                     // クリーンシート勝利
                     lines.push(`🎉 <b>試合終了</b> — ${myScore}-0のクリーンシート勝利！守備陣形が完璧だった。`);
-                    if (gkPlayer) lines.push(`  🧤 <b>${gkPlayer.name}</b>（keeper: ${gkPlayer.keeper}）が無失点に貢献。`);
-                    if (topDfPlayer) lines.push(`  🛡️ <b>${topDfPlayer.name}</b>（tackle: ${topDfPlayer.tackle}）を中心に守備陣形が機能した。`);
+                    if (gkPlayer) lines.push(`  🧤 <b>${gkPlayer.name}</b>（GK: ${gkPlayer.keeper}）が無失点に貢献。`);
+                    if (topDfPlayer) lines.push(`  🛡️ <b>${topDfPlayer.name}</b>（タックル: ${topDfPlayer.tackle}）を中心に守備陣形が機能した。`);
                 } else {
                     lines.push(winLines[Math.floor(Math.random() * winLines.length)]);
-                    if (topFwPlayer && topFwPlayer.shoot >= 65) lines.push(`  ⭐ <b>${topFwPlayer.name}</b>（shoot: ${topFwPlayer.shoot}）の決定力が光った。`);
+                    if (topFwPlayer && topFwPlayer.shoot >= 65) lines.push(`  ⭐ <b>${topFwPlayer.name}</b>（シュート: ${topFwPlayer.shoot}）の決定力が光った。`);
                 }
             } else if (myScore === oppScore) {
                 if (myScore === 0) {
                     // 0-0の引き分け
                     lines.push(`🤝 <b>試合終了</b> — 0-0のスコアレスドロー。両チームの守備が光った。`);
-                    if (gkPlayer) lines.push(`  🧤 <b>${gkPlayer.name}</b>（keeper: ${gkPlayer.keeper}）が無失点に貢献。`);
+                    if (gkPlayer) lines.push(`  🧤 <b>${gkPlayer.name}</b>（GK: ${gkPlayer.keeper}）が無失点に貢献。`);
                 } else {
                     lines.push(drawLines[Math.floor(Math.random() * drawLines.length)]);
-                    if (topMfPlayer && topMfPlayer.passing >= 60) lines.push(`  📊 <b>${topMfPlayer.name}</b>（pass: ${topMfPlayer.passing}）が中盤で存在感を示した。`);
+                    if (topMfPlayer && topMfPlayer.passing >= 60) lines.push(`  📊 <b>${topMfPlayer.name}</b>（パス: ${topMfPlayer.passing}）が中盤で存在感を示した。`);
                 }
             } else {
                 if (myScore === 0) {
                     lines.push(`😔 <b>試合終了</b> — 0-${oppScore}の敗戦。決定力不足が命取りになった。`);
-                    if (topFwPlayer) lines.push(`  🔍 FWの決定力向上が次の課題だ。（<b>${topFwPlayer.name}</b> shoot: ${topFwPlayer.shoot}）`);
+                    if (topFwPlayer) lines.push(`  🔍 FWの決定力向上が次の課題だ。（<b>${topFwPlayer.name}</b> シュート: ${topFwPlayer.shoot}）`);
                 } else if (Math.abs(scoreDiff) >= 3) {
                     lines.push(`😔 <b>試合終了</b> — ${myScore}-${oppScore}の大敗。守備陣形の崩れを修正する必要がある。`);
-                    if (topDfPlayer) lines.push(`  🔍 DFの守備強化が次の課題。（<b>${topDfPlayer.name}</b> tackle: ${topDfPlayer.tackle}）`);
+                    if (topDfPlayer) lines.push(`  🔍 DFの守備強化が次の課題。（<b>${topDfPlayer.name}</b> タックル: ${topDfPlayer.tackle}）`);
                 } else {
                     lines.push(loseLines[Math.floor(Math.random() * loseLines.length)]);
                 }
