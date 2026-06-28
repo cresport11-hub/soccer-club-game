@@ -12336,9 +12336,9 @@ self.addEventListener('fetch', e => {
             const condBonus = avgCond >= 3.5 ? 0.10 : avgCond >= 3.0 ? 0.05 : avgCond <= 0.5 ? -0.10 : avgCond <= 1.0 ? -0.05 : 0;
 
             // 得点期待値は 0～2.5 の範囲にクランプ（低めに抑えてゼロを増やす）
-            let myScoreBase = Math.min(2.5, myAttackRatio * 1.2) * 0.7 + (yourStrength / 120) * 1.0 * 0.3
+            let myScoreBase = Math.min(2.5, myAttackRatio * 1.2) * 0.9 + (yourStrength / 120) * 1.0 * 0.1
                 + aceBonus + chanceBonus + condBonus;
-            let oppScoreBase = Math.min(2.5, oppAttackRatio * 1.2) * 0.7 + (opponentStrength / 120) * 1.0 * 0.3
+            let oppScoreBase = Math.min(2.5, oppAttackRatio * 1.2) * 0.9 + (opponentStrength / 120) * 1.0 * 0.1
                 - gkSaveReduction - tackleReduction;
 
             // スキル: スナイパー（FW）: 得点期待値 +0.4
@@ -13026,9 +13026,9 @@ self.addEventListener('fetch', e => {
             const avgCond2 = starters.length > 0 ? starters.reduce((s, p) => s + (p.condition !== undefined ? p.condition : 2), 0) / starters.length : 2;
             const condBonus2 = avgCond2 >= 3.5 ? 0.10 : avgCond2 >= 3.0 ? 0.05 : avgCond2 <= 0.5 ? -0.10 : avgCond2 <= 1.0 ? -0.05 : 0;
 
-            let myScoreBase2 = Math.min(2.5, myAttackRatio2 * 1.2) * 0.7 + (yourStrength / 120) * 1.0 * 0.3
+            let myScoreBase2 = Math.min(2.5, myAttackRatio2 * 1.2) * 0.9 + (yourStrength / 120) * 1.0 * 0.1
                 + aceBonus2 + chanceBonus2 + condBonus2;
-            let oppScoreBase2 = Math.min(2.5, oppAttackRatio2 * 1.2) * 0.7 + (opponentStrength / 120) * 1.0 * 0.3
+            let oppScoreBase2 = Math.min(2.5, oppAttackRatio2 * 1.2) * 0.9 + (opponentStrength / 120) * 1.0 * 0.1
                 - gkSaveReduction2 - tackleReduction2;
 
             if (startersHaveSkill(starters, 'sniper')) myScoreBase2 += 0.25;
