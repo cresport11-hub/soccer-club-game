@@ -8707,56 +8707,56 @@ self.addEventListener('fetch', e => {
         // 上がFW側（攻撃）、下がGK側（守備）
         const PITCH_SLOTS = {
             '4-4-2': [
-                {pos:'FW', idx:0, x:32, y:10}, {pos:'FW', idx:1, x:68, y:10},
-                {pos:'MF', idx:0, x:15, y:33}, {pos:'MF', idx:1, x:38, y:33}, {pos:'MF', idx:2, x:62, y:33}, {pos:'MF', idx:3, x:85, y:33},
+                {pos:'FW', idx:0, x:32, y:15}, {pos:'FW', idx:1, x:68, y:15},
+                {pos:'MF', idx:0, x:15, y:38}, {pos:'MF', idx:1, x:38, y:38}, {pos:'MF', idx:2, x:62, y:38}, {pos:'MF', idx:3, x:85, y:38},
                 {pos:'DF', idx:0, x:15, y:57}, {pos:'DF', idx:1, x:38, y:57}, {pos:'DF', idx:2, x:62, y:57}, {pos:'DF', idx:3, x:85, y:57},
                 {pos:'GK', idx:0, x:50, y:80}
             ],
             '4-3-3': [
-                {pos:'FW', idx:0, x:50, y:8},
-                {pos:'FW', idx:1, x:22, y:14}, {pos:'FW', idx:2, x:78, y:14},
-                {pos:'MF', idx:0, x:22, y:30}, {pos:'MF', idx:1, x:50, y:26}, {pos:'MF', idx:2, x:78, y:30},
+                {pos:'FW', idx:0, x:50, y:13},
+                {pos:'FW', idx:1, x:22, y:19}, {pos:'FW', idx:2, x:78, y:19},
+                {pos:'MF', idx:0, x:22, y:35}, {pos:'MF', idx:1, x:50, y:31}, {pos:'MF', idx:2, x:78, y:35},
                 {pos:'DF', idx:0, x:15, y:57}, {pos:'DF', idx:1, x:38, y:54}, {pos:'DF', idx:2, x:62, y:54}, {pos:'DF', idx:3, x:85, y:57},
                 {pos:'GK', idx:0, x:50, y:80}
             ],
             '3-5-2': [
-                {pos:'FW', idx:0, x:32, y:9}, {pos:'FW', idx:1, x:68, y:9},
-                {pos:'MF', idx:0, x:50, y:22},
-                {pos:'MF', idx:1, x:12, y:34}, {pos:'MF', idx:2, x:36, y:32}, {pos:'MF', idx:3, x:64, y:32}, {pos:'MF', idx:4, x:88, y:34},
+                {pos:'FW', idx:0, x:32, y:14}, {pos:'FW', idx:1, x:68, y:14},
+                {pos:'MF', idx:0, x:50, y:27},
+                {pos:'MF', idx:1, x:12, y:39}, {pos:'MF', idx:2, x:36, y:37}, {pos:'MF', idx:3, x:64, y:37}, {pos:'MF', idx:4, x:88, y:39},
                 {pos:'DF', idx:0, x:25, y:56}, {pos:'DF', idx:1, x:50, y:53}, {pos:'DF', idx:2, x:75, y:56},
                 {pos:'GK', idx:0, x:50, y:80}
             ],
             '3-4-3': [
-                {pos:'FW', idx:0, x:20, y:9}, {pos:'FW', idx:1, x:50, y:7}, {pos:'FW', idx:2, x:80, y:9},
-                {pos:'MF', idx:0, x:18, y:32}, {pos:'MF', idx:1, x:40, y:29}, {pos:'MF', idx:2, x:60, y:29}, {pos:'MF', idx:3, x:82, y:32},
+                {pos:'FW', idx:0, x:20, y:14}, {pos:'FW', idx:1, x:50, y:12}, {pos:'FW', idx:2, x:80, y:14},
+                {pos:'MF', idx:0, x:18, y:37}, {pos:'MF', idx:1, x:40, y:34}, {pos:'MF', idx:2, x:60, y:34}, {pos:'MF', idx:3, x:82, y:37},
                 {pos:'DF', idx:0, x:25, y:57}, {pos:'DF', idx:1, x:50, y:54}, {pos:'DF', idx:2, x:75, y:57},
                 {pos:'GK', idx:0, x:50, y:80}
             ],
             '3-6-1': [
-                {pos:'FW', idx:0, x:50, y:8},
-                {pos:'MF', idx:0, x:38, y:19}, {pos:'MF', idx:1, x:62, y:19},
-                {pos:'MF', idx:2, x:18, y:28}, {pos:'MF', idx:3, x:82, y:28},
-                {pos:'MF', idx:4, x:38, y:37}, {pos:'MF', idx:5, x:62, y:37},
+                {pos:'FW', idx:0, x:50, y:13},
+                {pos:'MF', idx:0, x:38, y:24}, {pos:'MF', idx:1, x:62, y:24},
+                {pos:'MF', idx:2, x:18, y:33}, {pos:'MF', idx:3, x:82, y:33},
+                {pos:'MF', idx:4, x:38, y:42}, {pos:'MF', idx:5, x:62, y:42},
                 {pos:'DF', idx:0, x:25, y:56}, {pos:'DF', idx:1, x:50, y:53}, {pos:'DF', idx:2, x:75, y:56},
                 {pos:'GK', idx:0, x:50, y:80}
             ],
             '5-3-2': [
-                {pos:'FW', idx:0, x:32, y:10}, {pos:'FW', idx:1, x:68, y:10},
-                {pos:'MF', idx:0, x:22, y:33}, {pos:'MF', idx:1, x:50, y:28}, {pos:'MF', idx:2, x:78, y:33},
+                {pos:'FW', idx:0, x:32, y:15}, {pos:'FW', idx:1, x:68, y:15},
+                {pos:'MF', idx:0, x:22, y:38}, {pos:'MF', idx:1, x:50, y:33}, {pos:'MF', idx:2, x:78, y:38},
                 {pos:'DF', idx:0, x:10, y:57}, {pos:'DF', idx:1, x:28, y:54}, {pos:'DF', idx:2, x:50, y:52}, {pos:'DF', idx:3, x:72, y:54}, {pos:'DF', idx:4, x:90, y:57},
                 {pos:'GK', idx:0, x:50, y:80}
             ],
             '4-5-1': [
-                {pos:'FW', idx:0, x:50, y:8},
-                {pos:'MF', idx:0, x:50, y:19},
-                {pos:'MF', idx:1, x:18, y:29}, {pos:'MF', idx:2, x:82, y:29},
-                {pos:'MF', idx:3, x:36, y:37}, {pos:'MF', idx:4, x:64, y:37},
+                {pos:'FW', idx:0, x:50, y:13},
+                {pos:'MF', idx:0, x:50, y:24},
+                {pos:'MF', idx:1, x:18, y:34}, {pos:'MF', idx:2, x:82, y:34},
+                {pos:'MF', idx:3, x:36, y:42}, {pos:'MF', idx:4, x:64, y:42},
                 {pos:'DF', idx:0, x:15, y:57}, {pos:'DF', idx:1, x:37, y:54}, {pos:'DF', idx:2, x:63, y:54}, {pos:'DF', idx:3, x:85, y:57},
                 {pos:'GK', idx:0, x:50, y:80}
             ],
             '5-4-1': [
-                {pos:'FW', idx:0, x:50, y:8},
-                {pos:'MF', idx:0, x:18, y:30}, {pos:'MF', idx:1, x:38, y:27}, {pos:'MF', idx:2, x:62, y:27}, {pos:'MF', idx:3, x:82, y:30},
+                {pos:'FW', idx:0, x:50, y:13},
+                {pos:'MF', idx:0, x:18, y:35}, {pos:'MF', idx:1, x:38, y:32}, {pos:'MF', idx:2, x:62, y:32}, {pos:'MF', idx:3, x:82, y:35},
                 {pos:'DF', idx:0, x:10, y:57}, {pos:'DF', idx:1, x:28, y:54}, {pos:'DF', idx:2, x:50, y:52}, {pos:'DF', idx:3, x:72, y:54}, {pos:'DF', idx:4, x:90, y:57},
                 {pos:'GK', idx:0, x:50, y:80}
             ]
