@@ -13835,7 +13835,7 @@ self.addEventListener('fetch', e => {
                     starters
                 });
                 // 選手採点を計算・保存（コンディション変化も適用）
-                _lastMatchRatings = calcPlayerRatings(starters, myScore, oppScore, myShots, oppShots);
+                _lastMatchRatings = calcPlayerRatings(starters, myScore, oppScore, myShots, oppShots, cardEvents);
                 applyRatingConditionChange(_lastMatchRatings);
                 // 採点ボタンをリセット（次試合まで非表示）
                 const _ratingBtnDiv = document.getElementById('playerRatingBtnDiv');
@@ -14603,7 +14603,7 @@ self.addEventListener('fetch', e => {
         // 試合後に格納される採点データ
         let _lastMatchRatings = null;
 
-        function calcPlayerRatings(starters, myScore, oppScore, myShots, oppShots) {
+        function calcPlayerRatings(starters, myScore, oppScore, myShots, oppShots, cardEvents) {
             const won  = myScore > oppScore;
             const drew = myScore === oppScore;
             const lost = myScore < oppScore;
@@ -14653,9 +14653,12 @@ self.addEventListener('fetch', e => {
                 else if (cond <= 0) base -= 0.5;
                 else if (cond <= 1) base -= 0.3;
 
-                // カード補正
-                if (p._matchYellow) base -= 0.3;
-                if (p._matchRed)    base -= 0.8;
+                // カード補正（cardEventsから判定）
+                const _cards = (cardEvents || []).filter(e => e.playerName === p.name);
+                const _hasRed    = _cards.some(e => e.isRed);
+                const _hasYellow = !_hasRed && _cards.length > 0;
+                if (_hasRed)    base -= 1.5;
+                if (_hasYellow) base -= 0.5;
 
                 // 怪我補正
                 if (p.injury) base -= 0.4;
@@ -14668,7 +14671,7 @@ self.addEventListener('fetch', e => {
                 base = Math.round(base * 2) / 2;
 
                 // 短評コメント生成
-                const comment = generateRatingComment(p, base, myScore, oppScore, cleanSheet);
+                const comment = generateRatingComment(p, base, myScore, oppScore, cleanSheet, _hasRed, _hasYellow);
 
                 ratings.push({ player: p, score: base, comment });
             });
@@ -14686,7 +14689,10 @@ self.addEventListener('fetch', e => {
             return ratings;
         }
 
-        function generateRatingComment(p, score, myScore, oppScore, cleanSheet) {
+        function generateRatingComment(p, score, myScore, oppScore, cleanSheet, hasRed, hasYellow) {
+            // カードによる短評上書き
+            if (hasRed)    return 'レッドカードで退場。チームに多大な迷惑をかけた';
+            if (hasYellow) return 'イエローカードを受けた。自制が求められる';
             const pos = p.position;
             const won = myScore > oppScore;
             const lost = myScore < oppScore;
