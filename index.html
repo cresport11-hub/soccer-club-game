@@ -2701,7 +2701,7 @@ self.addEventListener('fetch', e => {
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:rgba(255,255,255,0.9);">&#x1F9E4; GK個人練習</td>
-                                <td style="padding:7px 8px; color:rgba(255,255,255,0.85);">GK全員のDF+2（永続）</td>
+                                <td style="padding:7px 8px; color:rgba(255,255,255,0.85);">GK全員のGK+2（永続）</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:rgba(255,255,255,0.9);">&#x1F3E5; コンディション調整</td>
@@ -3001,7 +3001,7 @@ self.addEventListener('fetch', e => {
                             </button>
                             <button class="btn btn-primary" onclick="doCamp('gk')" style="text-align:left; padding:14px; background:linear-gradient(135deg,#4A148C,#2a0a5e);">
                                 🧤 <strong>GK個人練習</strong><br>
-                                <span style="font-size:11px; opacity:0.8;">GK全員のDF+2（永続）</span>
+                                <span style="font-size:11px; opacity:0.8;">GK全員のGK+2（永続）</span>
                             </button>
                             <button class="btn btn-primary" onclick="doCamp('condition')" style="text-align:left; padding:14px; background:linear-gradient(135deg,#006064,#003d40);">
                                 🏥 <strong>コンディション調整</strong><br>
@@ -8312,9 +8312,9 @@ self.addEventListener('fetch', e => {
             } else if (type === 'gk') {
                 const gks = gameData.players.filter(p => p.position === 'GK');
                 if (gks.length === 0) { showNotification('GKの選手がいません。'); return; }
-                gks.forEach(p => { p.defense = Math.min(99, (p.defense || 0) + 2); });
+                gks.forEach(p => { p.keeper = Math.min(99, (p.keeper || 0) + 2); });
                 icon = '🧤'; title = 'GK個人練習完了！';
-                effect = 'GK全員のDF+2（永続）';
+                effect = 'GK全員のGK+2（永続）';
 
             } else if (type === 'condition') {
                 gameData.players.forEach(p => { p.condition = Math.max(p.condition || 2, 3); });
