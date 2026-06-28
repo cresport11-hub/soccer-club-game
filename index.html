@@ -8928,6 +8928,12 @@ self.addEventListener('fetch', e => {
                 renderPitch();
                 return;
             }
+            if (gameData.suspended && gameData.suspended[srcPlayer.id]) {
+                showNotification('出場停止中の選手はスタメンに選出できません');
+                pitchSelectedSource = null;
+                renderPitch();
+                return;
+            }
 
             // ターゲットスロットに既に別の選手がいれば入れ替え
             const existingId = (gameData.pitchAssignment || {})[slotKey];
@@ -9010,13 +9016,18 @@ self.addEventListener('fetch', e => {
                     renderPitch();
                     return;
                 }
-                if (player.injury === 'heavy') {
+                                if (player.injury === 'heavy') {
                     showNotification('重症の選手はスタメンに選出できません');
                     pitchSelectedSource = null;
                     renderPitch();
                     return;
                 }
-
+                if (gameData.suspended && gameData.suspended[player.id]) {
+                    showNotification('出場停止中の選手はスタメンに選出できません');
+                    pitchSelectedSource = null;
+                    renderPitch();
+                    return;
+                }
                 // スロットにいた選手をベンチへ
                 const prevId = pitchSelectedSource.playerId;
                 const prevPlayer = gameData.players.find(p => p.id === prevId);
