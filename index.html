@@ -13400,7 +13400,8 @@ self.addEventListener('fetch', e => {
             const _mseFame = getManagerSkillEffects();
             const fameMult = _mseFame.fameMult || 1.0;
             gameData.fame += Math.round(fame * fameMult);
-            gameData.popularity = Math.max(1, Math.min(100, gameData.popularity + popularityChange));
+            // 人気変動は試合結果を閉じた時点で反映（先に見えないよう保留）
+            gameData._pendingPopularityChange = popularityChange;
             // シーズン目標カウンター更新
             updateSeasonGoalCounters(myScore, oppScore, fame);
             // ライバル対戦成績更新
@@ -14805,6 +14806,11 @@ self.addEventListener('fetch', e => {
 
         function closeMatchResult() {
             if (_highlightTimer) { clearInterval(_highlightTimer); _highlightTimer = null; }
+            // 人気変動をここで反映（試合結果を見終わった後）
+            if (gameData._pendingPopularityChange !== undefined) {
+                gameData.popularity = Math.max(1, Math.min(100, (gameData.popularity || 50) + gameData._pendingPopularityChange));
+                gameData._pendingPopularityChange = undefined;
+            }
             document.getElementById('matchResultModal').classList.remove('active');
             // 次回の試合のために詳細・ OKボタンを再非表示にリセット
             const det = document.getElementById('matchResultDetails');
