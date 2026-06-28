@@ -8884,7 +8884,7 @@ self.addEventListener('fetch', e => {
                     <div class="bench-name">${p.name}</div>
                     <div class="bench-stat">${statStr} 疲${p.fatigue||0}</div>
                     ${benchCondHtml}
-                    ${p.injury === 'heavy' ? '<div style="font-size:8px;color:#ef5350;">重症</div>' : ''}
+                    ${p.injury === 'heavy' ? '<div style="font-size:8px;color:#ef5350;font-weight:700;">重症(' + (p.injuryRecovery || 0) + '節)</div>' : p.injury === 'light' ? '<div style="font-size:8px;color:#FF6B6B;font-weight:700;">軽傷</div>' : ''}
                     ${benchSkillHtml}
                 </div>`;
             }).join('');
