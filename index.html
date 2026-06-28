@@ -5608,6 +5608,8 @@ self.addEventListener('fetch', e => {
         // 引き抜きオファーを生成する（試合後に呼び出す）
         function generateTransferOffer() {
             if (!gameData.players || gameData.players.length === 0) return;
+            // 5部リーグ中はオファーを発生させない
+            if ((gameData.league || 5) >= 5) return;
             // 毎節10%の確率でオファー発生
             const offerChance = 0.10;
             if (Math.random() > offerChance) return;
