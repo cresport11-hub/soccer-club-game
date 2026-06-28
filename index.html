@@ -12917,13 +12917,14 @@ self.addEventListener('fetch', e => {
                     const condColor2 = condColorsHT[p.condition !== undefined ? p.condition : 2];
                     const condText2 = condLabelsHT[p.condition !== undefined ? p.condition : 2];
                     const injBadge2 = p.injury === 'light' ? ' <span style="color:#ff9800;">⚠軽傷</span>' : '';
+                    const ssBadge = (p.skills && p.skills.includes('superSub')) ? ' <span style="color:#FFD700; font-weight:bold;">⚡SS</span>' : '';
                     const canSub = halftimeSubPendingOut !== null && subCount < 3;
                     const abilityLine2 = p.position === 'GK'
                         ? `GK:${p.keeper||0}`
                         : `攻${getPlayerAttack(p)} 守${getPlayerDefense(p)}`;
                     return `<div onclick="halftimeSelectIn('${p.id}')" style="cursor:pointer; padding:6px 8px; border-radius:8px; font-size:11px; border:1px solid ${canSub ? 'rgba(129,199,132,0.5)' : 'rgba(255,255,255,0.15)'}; background:${canSub ? 'rgba(129,199,132,0.08)' : 'rgba(255,255,255,0.03)'}; min-width:72px; text-align:center; line-height:1.6;">
                         <div style="font-weight:700; font-size:12px; color:#81C784; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
-                        <div style="font-size:10px; color:rgba(255,255,255,0.5);">${p.position}${injBadge2}</div>
+                        <div style="font-size:10px; color:rgba(255,255,255,0.5);">${p.position}${injBadge2}${ssBadge}</div>
                         <div style="font-size:10px; color:rgba(255,255,255,0.75);">${abilityLine2}</div>
                         <div style="font-size:10px;"><span style="color:${fatigueColor2}">疲${fat2}</span> <span style="color:${condColor2};">${condText2}</span></div>
                     </div>`;
