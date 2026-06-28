@@ -3288,6 +3288,10 @@ self.addEventListener('fetch', e => {
                     <span class="ability-label">疲労度</span>
                     <span class="ability-value" id="detailFatigue">-</span>
                 </div>
+                <div class="ability-row" id="ratingDetailRow">
+                    <span class="ability-label">平均評価点</span>
+                    <span class="ability-value" id="detailAvgRating">-</span>
+                </div>
             </div>
 
             <div class="card" style="margin-bottom: 12px;">
@@ -6010,7 +6014,7 @@ self.addEventListener('fetch', e => {
                 cupWins: 0,
                 cupGoals: 0,
                 playerGoals: {},   // playerId: goals
-                playerApps: {},    // playerId: appearances
+                playerApps: {}, playerRatings: {},    // playerId: appearances
                 playerAssists: {}, // playerId: assists
             };
         }
@@ -6113,6 +6117,28 @@ self.addEventListener('fetch', e => {
                         <span style="font-weight:700;color:#81C784;">${a}試合</span></div>` : '';
                 }).join('') || '<div style="color:rgba(255,255,255,0.4);font-size:13px;">データなし</div>';
 
+            // 平均評価点ランキング（今シーズン、2試合以上出場）
+            const ratingRanking = Object.entries(s.playerRatings || {})
+                .filter(([id, d]) => d.count >= 2)
+                .map(([id, d]) => ({ id, avg: d.total / d.count, count: d.count }))
+                .sort((a, b) => b.avg - a.avg)
+                .slice(0, 5)
+                .map((item, idx) => {
+                    const p = gameData.players.find(pl => pl.id === item.id);
+                    if (!p) return '';
+                    let ratingColor = '#9ca3af';
+                    if (item.avg >= 7.5) ratingColor = '#FFD700';
+                    else if (item.avg >= 7.0) ratingColor = '#81C784';
+                    else if (item.avg < 6.0) ratingColor = '#EF9A9A';
+                    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : (idx + 1) + '.';
+                    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
+                        <span style="font-size:13px;">${medal} ${p.name} <span style="font-size:11px;color:rgba(255,255,255,0.5);">(${p.position})</span></span>
+                        <span style="display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:11px;color:rgba(255,255,255,0.4);">${item.count}試合</span>
+                            <span style="font-weight:700;font-size:16px;color:${ratingColor};">${item.avg.toFixed(2)}</span>
+                        </span>
+                    </div>`;
+                }).join('') || '<div style="color:rgba(255,255,255,0.4);font-size:13px;">データなし（2試合以上出場が必要）</div>';
             // シーズン履歴
             const historyHtml = history.length === 0
                 ? '<div style="color:rgba(255,255,255,0.4);font-size:13px;padding:8px 0;">まだシーズン履歴がありません</div>'
@@ -6210,6 +6236,11 @@ self.addEventListener('fetch', e => {
                 <div style="margin-bottom:16px;">
                     <div style="font-size:14px;font-weight:700;color:#FFD700;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:6px;">📅 出場数ランキング（今シーズン）</div>
                     ${appRanking}
+                </div>
+                <!-- 平均評価点ランキング -->
+                <div style="margin-bottom:16px;">
+                    <div style="font-size:14px;font-weight:700;color:#FFD700;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.15);padding-bottom:6px;">⭐ 平均評価点ランキング（今シーズン）</div>
+                    ${ratingRanking}
                 </div>
                 <!-- シーズン履歴 -->
                 <div>
@@ -14706,11 +14737,22 @@ self.addEventListener('fetch', e => {
 
                 r.condDelta = delta;
 
-                if (delta !== 0) {
-                    const realPlayer = gameData.players.find(gp => gp.id === p.id);
-                    if (realPlayer) {
+                const realPlayer = gameData.players.find(gp => gp.id === p.id);
+                if (realPlayer) {
+                    // コンディション変化
+                    if (delta !== 0) {
                         realPlayer.condition = Math.max(0, Math.min(4, (realPlayer.condition || 2) + delta));
                     }
+                    // 採点履歴を蓄積（最大50試合分）
+                    if (!realPlayer.ratingHistory) realPlayer.ratingHistory = [];
+                    realPlayer.ratingHistory.push(r.score);
+                    if (realPlayer.ratingHistory.length > 50) realPlayer.ratingHistory.shift();
+                    // 今シーズン採点も蓄積（シーズン統計用）
+                    if (!gameData.seasonStats.playerRatings) gameData.seasonStats.playerRatings = {};
+                    const pr = gameData.seasonStats.playerRatings;
+                    if (!pr[realPlayer.id]) pr[realPlayer.id] = { total: 0, count: 0 };
+                    pr[realPlayer.id].total += r.score;
+                    pr[realPlayer.id].count += 1;
                 }
             });
         }
@@ -15292,6 +15334,27 @@ self.addEventListener('fetch', e => {
                 fatigueEl.style.color = fatigueColor;
             }
 
+            // 平均評価点表示
+            const ratingDetailRow = document.getElementById('ratingDetailRow');
+            const detailAvgRating = document.getElementById('detailAvgRating');
+            if (ratingDetailRow && detailAvgRating) {
+                const hist = player.ratingHistory;
+                if (hist && hist.length > 0) {
+                    const avg = (hist.reduce((s, v) => s + v, 0) / hist.length).toFixed(2);
+                    const count = hist.length;
+                    let ratingColor = '#9ca3af';
+                    if (avg >= 7.5) ratingColor = '#FFD700';
+                    else if (avg >= 7.0) ratingColor = '#81C784';
+                    else if (avg < 6.0) ratingColor = '#EF9A9A';
+                    detailAvgRating.textContent = avg + '  (' + count + '試合)';
+                    detailAvgRating.style.color = ratingColor;
+                    ratingDetailRow.style.display = 'flex';
+                } else {
+                    detailAvgRating.textContent = 'データなし';
+                    detailAvgRating.style.color = 'rgba(255,255,255,0.4)';
+                    ratingDetailRow.style.display = 'flex';
+                }
+            }
             const container = document.getElementById('abilityContainer');
             let html = '';
 
