@@ -9679,10 +9679,15 @@ self.addEventListener('fetch', e => {
               desc:'ジムで黙々とトレーニングをこなした。地道な努力が実を結ぶ。',
               type:'instant',
               effect: () => { const p = gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.exp=(p.exp||0)+15; return p.name+'の経験値+15'; } return '変化なし'; } },
-            { id:'o62', rarity:1, icon:'💪', title:'筋トレに励んだ',
-              desc:'フィジカルトレーニングに集中した。選手の体力が向上した。',
+            { id:'o62', rarity:1, icon:'😓', title:'オーバートレーニング',
+              desc:'張り切りすぎてしまい、選手が疲弊した。翌節に響きそうだ。',
               type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-3); }); return '全選手の疲労-3'; } },
+              effect: () => {
+                const ps = gameData.players;
+                const t = ps[Math.floor(Math.random()*ps.length)];
+                if(t){ t.fatigue=Math.min(100,(t.fatigue||0)+15); t.condition=Math.max(0,(t.condition||2)-1); return t.name+'の疲労+15・コンディション-1'; }
+                return '変化なし';
+              } },
             { id:'o63', rarity:2, icon:'🧘', title:'ストレッチ＆ケアに専念',
               desc:'入念なストレッチとボディケアで選手たちのコンディションが整った。',
               type:'instant',
@@ -9691,65 +9696,106 @@ self.addEventListener('fetch', e => {
               desc:'短距離ダッシュを繰り返し、スピードと瞬発力を鍛えた。',
               type:'choice',
               choices: [
-                { label:'全力でこなす', effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){p.exp=(p.exp||0)+30;} return (p?p.name:'選手')+'の経験値+30（疲労なし）'; } },
+                { label:'全力でこなす', effect: () => {
+                    const p=gameData.players[Math.floor(Math.random()*gameData.players.length)];
+                    if(p){ p.exp=(p.exp||0)+25; p.fatigue=Math.min(100,(p.fatigue||0)+10); return p.name+'の経験値+25・疲労+10'; }
+                    return '変化なし';
+                  } },
                 { label:'軽めにする', effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-5); }); return '全選手の疲労-5'; } }
               ] },
-            { id:'o65', rarity:2, icon:'🤸', title:'有名トレーナーに出会った',
-              desc:'ジムで著名なフィジカルトレーナーと知り合いになった。',
-              type:'choice',
-              choices: [
-                { label:'指導を仰ぐ', effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+20; }); return '全選手の経験値+20'; } },
-                { label:'名刺交換だけ', effect: () => { gameData.fame=Math.min(999,gameData.fame+3); return '名声+3'; } }
-              ] },
+            { id:'o65', rarity:1, icon:'🤕', title:'トレーニング中に軽い肉離れ',
+              desc:'無理をしすぎたのか、選手の一人が肉離れを起こしてしまった。',
+              type:'instant',
+              effect: () => {
+                const ps = gameData.players.filter(p => !p.injury);
+                const t = ps[Math.floor(Math.random()*ps.length)];
+                if(t){ t.injury='light'; return t.name+'が軽傷を負った'; }
+                return '変化なし';
+              } },
             { id:'o66', rarity:3, icon:'🏆', title:'元オリンピック選手と合同トレーニング',
               desc:'元オリンピック選手がジムに来ており、特別に合同トレーニングを行えた。',
               type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+40; p.fatigue=Math.max(0,(p.fatigue||0)-8); }); return '全選手の経験値+40・疲労-8'; } },
-            { id:'o67', rarity:1, icon:'😓', title:'オーバートレーニング気味',
-              desc:'張り切りすぎてしまい、選手が少し疲れた様子だ。',
+              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+30; }); return '全選手の経験値+30'; } },
+            { id:'o67', rarity:2, icon:'🤸', title:'有名トレーナーに出会った',
+              desc:'ジムで著名なフィジカルトレーナーと知り合いになった。',
+              type:'choice',
+              choices: [
+                { label:'指導を仰ぐ（5万円）', effect: () => {
+                    if(gameData.money < 50000){ return '資金不足で断念した'; }
+                    gameData.money -= 50000;
+                    gameData.players.forEach(p=>{ p.exp=(p.exp||0)+20; });
+                    return '資金-50,000円・全選手の経験値+20';
+                  } },
+                { label:'名刺交換だけ', effect: () => { gameData.fame=Math.min(999,gameData.fame+3); return '名声+3'; } }
+              ] },
+            { id:'o68', rarity:1, icon:'🥗', title:'ジムの設備が故障していた',
+              desc:'いざトレーニングしようとしたら主要マシンが故障中。時間を無駄にした。',
               type:'instant',
-              effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.fatigue=Math.min(100,(p.fatigue||0)+10); return p.name+'の疲労+10'; } return '変化なし'; } },
-            { id:'o68', rarity:1, icon:'🥗', title:'ジムのプロテインバーで補給',
-              desc:'トレーニング後にプロテインをしっかり摂取した。回復が早まりそうだ。',
-              type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-5); }); return '全選手の疲労-5'; } },
+              effect: () => { return '何も起こらなかった（設備故障）'; } },
 
             // ===== 自然・リゾート =====
             { id:'o69', rarity:1, icon:'🌿', title:'自然の中でリフレッシュ',
               desc:'緑豊かな場所で深呼吸。日常の喧騒を忘れ、心が落ち着いた。',
               type:'instant',
               effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-7); }); return '全選手の疲労-7'; } },
-            { id:'o70', rarity:1, icon:'🏔️', title:'山でハイキング',
-              desc:'チームで山道を歩いた。体力づくりと団結力が高まった。',
+            { id:'o70', rarity:1, icon:'🏔️', title:'山でハイキング中に道に迷った',
+              desc:'チームで山道を歩いていたら道に迷い、帰りが遅くなってしまった。',
               type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+10; p.fatigue=Math.max(0,(p.fatigue||0)-5); }); return '全選手の経験値+10・疲労-5'; } },
+              effect: () => {
+                gameData.players.forEach(p=>{ p.fatigue=Math.min(100,(p.fatigue||0)+8); });
+                return '全選手の疲労+8（迷子で消耗）';
+              } },
             { id:'o71', rarity:1, icon:'🌊', title:'海岸でリラックス',
               desc:'波の音を聞きながらのんびり過ごした。選手たちの表情が明るくなった。',
               type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-10); }); return '全選手の疲労-10'; } },
+              effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-8); }); return '全選手の疲労-8'; } },
             { id:'o72', rarity:2, icon:'♨️', title:'温泉でゆっくり過ごした',
-              desc:'温泉に浸かり、疲れた体を癒した。選手たちのコンディションが大幅回復。',
+              desc:'温泉に浸かり、疲れた体を癒した。ただし費用がかかった。',
               type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-12); }); return '全選手の疲労-12'; } },
+              effect: () => {
+                const cost = 80000;
+                if(gameData.money < cost){ gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-5); }); return '資金不足で安宿に変更…疲労-5のみ'; }
+                gameData.money -= cost;
+                gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-12); p.condition=Math.min(4,(p.condition||2)+1); });
+                return '資金-80,000円・全選手の疲労-12・コンディション+1';
+              } },
             { id:'o73', rarity:2, icon:'🎣', title:'釣りで気分転換',
               desc:'のんびり釣りを楽しんだ。思わぬ大物が釣れて盛り上がった。',
               type:'choice',
               choices: [
-                { label:'大物を狙う', effect: () => { const r=Math.random(); if(r<0.3){ gameData.fame=Math.min(999,gameData.fame+15); return '大物ゲット！名声+15'; } else { return 'ボウズ…でも気分転換になった'; } } },
-                { label:'のんびり楽しむ', effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-8); }); return '全選手の疲労-8'; } }
+                { label:'大物を狙う', effect: () => {
+                    const r=Math.random();
+                    if(r<0.3){ gameData.fame=Math.min(999,gameData.fame+15); return '大物ゲット！名声+15'; }
+                    else { gameData.players.forEach(p=>{ p.fatigue=Math.min(100,(p.fatigue||0)+5); }); return 'ボウズ…長時間粘って疲労+5'; }
+                  } },
+                { label:'のんびり楽しむ', effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-6); }); return '全選手の疲労-6'; } }
               ] },
-            { id:'o74', rarity:2, icon:'🏕️', title:'チームでキャンプファイヤー',
-              desc:'夜の野外でキャンプファイヤーを囲んだ。チームの絆が深まった。',
+            { id:'o74', rarity:1, icon:'🌧️', title:'急に雨が降ってきた',
+              desc:'天気が急変して土砂降りに。選手たちはずぶ濡れで体調を崩しそうだ。',
               type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+15; p.fatigue=Math.max(0,(p.fatigue||0)-8); }); return '全選手の経験値+15・疲労-8'; } },
+              effect: () => {
+                const ps = gameData.players;
+                const t = ps[Math.floor(Math.random()*ps.length)];
+                if(t){ t.fatigue=Math.min(100,(t.fatigue||0)+10); t.condition=Math.max(0,(t.condition||2)-1); return t.name+'が濡れて疲労+10・コンディション-1'; }
+                return '変化なし';
+              } },
             { id:'o75', rarity:3, icon:'🌅', title:'絶景スポットで感動',
               desc:'素晴らしい景色に選手たちが感動し、モチベーションが大きく上がった。',
               type:'instant',
-              effect: () => { gameData.outingNextMatchBonus={of:4,df:4}; gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-10); }); return '次節OF/DF+4・全選手の疲労-10'; } },
-            { id:'o76', rarity:1, icon:'🌧️', title:'急に雨が降ってきた',
-              desc:'天気が急変して雨に降られてしまった。ずぶ濡れで帰宅した。',
-              type:'instant',
-              effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.fatigue=Math.min(100,(p.fatigue||0)+8); return p.name+'が濡れて疲労+8'; } return '変化なし'; } },
+              effect: () => { gameData.outingNextMatchBonus={of:3,df:3}; gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-8); }); return '次節OF/DF+3・全選手の疲労-8'; } },
+            { id:'o76', rarity:2, icon:'🏕️', title:'チームでキャンプ',
+              desc:'夜の野外でキャンプを楽しんだ。しかし翌朝の寝不足が響いた。',
+              type:'choice',
+              choices: [
+                { label:'夜遅くまで盛り上がる', effect: () => {
+                    gameData.players.forEach(p=>{ p.exp=(p.exp||0)+10; p.fatigue=Math.min(100,(p.fatigue||0)+8); });
+                    return '全選手の経験値+10・疲労+8（寝不足）';
+                  } },
+                { label:'早めに就寝する', effect: () => {
+                    gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-5); });
+                    return '全選手の疲労-5';
+                  } }
+              ] },
 
             // ===== 夜の街 =====
             { id:'o77', rarity:1, icon:'🍺', title:'仲間と軽く一杯',
