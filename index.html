@@ -1730,6 +1730,98 @@
             margin: 1px 0;
             animation: highlightSlideIn 0.3s ease both;
         }
+
+        /* 選手採点モーダル */
+        .rating-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 3000;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            overflow-y: auto;
+        }
+        .rating-modal-overlay.hidden { display: none; }
+        .rating-modal-box {
+            background: linear-gradient(160deg, #0d2b0d 0%, #1a3a1a 100%);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 14px;
+            padding: 18px 16px 20px;
+            width: 92%;
+            max-width: 420px;
+            margin: 20px auto;
+        }
+        .rating-modal-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #FFD700;
+            text-align: center;
+            margin-bottom: 14px;
+            letter-spacing: 0.5px;
+        }
+        .rating-row {
+            display: flex;
+            align-items: center;
+            padding: 7px 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            gap: 8px;
+        }
+        .rating-row:last-child { border-bottom: none; }
+        .rating-pos-badge {
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-radius: 4px;
+            min-width: 28px;
+            text-align: center;
+        }
+        .rating-pos-gk { background: #FFA000; color: #000; }
+        .rating-pos-df { background: #1565C0; color: #fff; }
+        .rating-pos-mf { background: #2E7D32; color: #fff; }
+        .rating-pos-fw { background: #B71C1C; color: #fff; }
+        .rating-name {
+            flex: 1;
+            font-size: 13px;
+            color: rgba(255,255,255,0.9);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .rating-score {
+            font-size: 18px;
+            font-weight: bold;
+            min-width: 38px;
+            text-align: right;
+        }
+        .rating-score-high { color: #FFD700; }
+        .rating-score-good { color: #81C784; }
+        .rating-score-avg  { color: rgba(255,255,255,0.75); }
+        .rating-score-low  { color: #EF9A9A; }
+        .rating-comment {
+            font-size: 10px;
+            color: rgba(255,255,255,0.5);
+            flex: 2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .rating-mom-badge {
+            font-size: 10px;
+            background: #FFD700;
+            color: #000;
+            border-radius: 4px;
+            padding: 1px 5px;
+            font-weight: bold;
+        }
+        .rating-cond-change {
+            font-size: 10px;
+            min-width: 28px;
+            text-align: center;
+        }
+        .rating-cond-up   { color: #81C784; }
+        .rating-cond-down { color: #EF9A9A; }
+        .rating-cond-same { color: rgba(255,255,255,0.3); }
     </style>
 
     <!-- PWA: Service Worker登録 & manifest動的設定 -->
@@ -3446,12 +3538,25 @@ self.addEventListener('fetch', e => {
                         <div style="font-size:11px; color:rgba(255,255,255,0.5); font-weight:bold; margin-bottom:10px; letter-spacing:0.5px;">📊 試合スタッツ</div>
                         <div id="matchStatsContent"></div>
                     </div>
+                    <!-- 選手採点ボタン -->
+                    <div id="playerRatingBtnDiv" style="margin-top:10px; display:none;">
+                        <button class="btn btn-secondary" style="width:100%; font-size:13px;" onclick="showPlayerRating()">⭐ 選手採点を見る</button>
+                    </div>
                 </div>
             </div>
             <button id="matchResultOkBtn" class="btn btn-primary btn-large" onclick="closeMatchResult()" style="display:none;">OK</button>
         </div>
     </div>
 
+
+    <!-- 選手採点モーダル -->
+    <div id="playerRatingOverlay" class="rating-modal-overlay hidden">
+        <div class="rating-modal-box">
+            <div class="rating-modal-title">⭐ 選手採点</div>
+            <div id="playerRatingContent"></div>
+            <button class="btn btn-primary btn-large" style="margin-top:14px; width:100%;" onclick="closePlayerRating()">閉じる</button>
+        </div>
+    </div>
     <!-- ハーフタイムモーダル -->
     <div id="halftimeModal" class="modal" style="align-items: flex-start; overflow-y: auto;">
         <div class="modal-content" style="margin-top: 0;">
@@ -13639,6 +13744,12 @@ self.addEventListener('fetch', e => {
                     myPoss, myFk, myCk, myKm,
                     starters
                 });
+                // 選手採点を計算・保存（コンディション変化も適用）
+                _lastMatchRatings = calcPlayerRatings(starters, myScore, oppScore, myShots, oppShots);
+                applyRatingConditionChange(_lastMatchRatings);
+                // 採点ボタンをリセット（次試合まで非表示）
+                const _ratingBtnDiv = document.getElementById('playerRatingBtnDiv');
+                if (_ratingBtnDiv) _ratingBtnDiv.style.display = 'none';
             })();
 
             // 前半・後半合併ハイライトを表示（2秒ごとに1行ずつ）
@@ -13687,6 +13798,9 @@ self.addEventListener('fetch', e => {
                 if (det) { det.style.display = ''; }
                 const okBtn = document.getElementById('matchResultOkBtn');
                 if (okBtn) { okBtn.style.display = ''; }
+                // 採点ボタン表示
+                const ratingBtnDiv = document.getElementById('playerRatingBtnDiv');
+                if (ratingBtnDiv && _lastMatchRatings) ratingBtnDiv.style.display = '';
                 // 内容描画待ちのため少し遅延してスクロール
                 setTimeout(function() {
                     const modal = document.getElementById('matchResultModal');
@@ -14392,6 +14506,213 @@ self.addEventListener('fetch', e => {
             }
 
             return lines.join('<br>');
+        }
+
+
+        // ===== 選手採点システム =====
+        // 試合後に格納される採点データ
+        let _lastMatchRatings = null;
+
+        function calcPlayerRatings(starters, myScore, oppScore, myShots, oppShots) {
+            const won  = myScore > oppScore;
+            const drew = myScore === oppScore;
+            const lost = myScore < oppScore;
+            const cleanSheet = oppScore === 0;
+            const ratings = [];
+
+            starters.forEach(p => {
+                let base = 6.0;
+                const pos = p.position;
+
+                // ポジション別ベーススコア
+                if (pos === 'GK') {
+                    base = 6.0;
+                    if (cleanSheet) base += 0.8;
+                    base -= oppScore * 0.4;
+                    const kv = (p.keeper || 50) / 100;
+                    base += kv * 0.6;
+                } else if (pos === 'DF') {
+                    base = 6.0;
+                    if (cleanSheet) base += 0.6;
+                    base -= oppScore * 0.3;
+                    const tv = (p.tackle || 50) / 100;
+                    base += tv * 0.5;
+                } else if (pos === 'MF') {
+                    base = 6.0;
+                    const pv = (p.passing || 50) / 100;
+                    base += pv * 0.5;
+                    if (myScore > 0) base += 0.2;
+                } else if (pos === 'FW') {
+                    base = 6.0;
+                    const sv = (p.shoot || 50) / 100;
+                    base += sv * 0.5;
+                    // 得点数に応じてボーナス（FW全体で分配）
+                    const fwCount = starters.filter(x => x.position === 'FW').length || 1;
+                    base += (myScore / fwCount) * 0.5;
+                }
+
+                // 勝敗ボーナス
+                if (won)  base += 0.4;
+                if (drew) base += 0.1;
+                if (lost) base -= 0.3;
+
+                // コンディション補正
+                const cond = p.condition !== undefined ? p.condition : 2;
+                if (cond >= 4) base += 0.3;
+                else if (cond >= 3) base += 0.1;
+                else if (cond <= 0) base -= 0.5;
+                else if (cond <= 1) base -= 0.3;
+
+                // カード補正
+                if (p._matchYellow) base -= 0.3;
+                if (p._matchRed)    base -= 0.8;
+
+                // 怪我補正
+                if (p.injury) base -= 0.4;
+
+                // ランダム揺らぎ（±0.5）
+                base += (Math.random() - 0.5) * 1.0;
+
+                // クランプ: 5.0〜9.0、0.5刻み
+                base = Math.max(5.0, Math.min(9.0, base));
+                base = Math.round(base * 2) / 2;
+
+                // 短評コメント生成
+                const comment = generateRatingComment(p, base, myScore, oppScore, cleanSheet);
+
+                ratings.push({ player: p, score: base, comment });
+            });
+
+            // MOM: 最高点の選手（複数いれば最初の1人）
+            const maxScore = Math.max(...ratings.map(r => r.score));
+            ratings.forEach(r => { r.isMOM = (r.score === maxScore); });
+            // 同点が複数いる場合は1人だけMOM
+            let momSet = false;
+            ratings.forEach(r => {
+                if (r.isMOM && momSet) r.isMOM = false;
+                if (r.isMOM) momSet = true;
+            });
+
+            return ratings;
+        }
+
+        function generateRatingComment(p, score, myScore, oppScore, cleanSheet) {
+            const pos = p.position;
+            const won = myScore > oppScore;
+            const lost = myScore < oppScore;
+
+            if (score >= 8.5) {
+                const high = {
+                    GK: ['神がかりなセーブ連発', '鉄壁の守護神', 'ゴールを死守した'],
+                    DF: ['完璧な守備を披露', '攻撃の芽を摘み続けた', '圧巻のタックル'],
+                    MF: ['ゲームを支配した', '卓越したパスワーク', '攻守に大活躍'],
+                    FW: ['圧倒的な存在感', '決定的な仕事をした', 'ゴールを量産'],
+                };
+                const arr = high[pos] || high.MF;
+                return arr[Math.floor(Math.random() * arr.length)];
+            } else if (score >= 7.5) {
+                const good = {
+                    GK: ['安定したセービング', 'ピンチを何度も救った', '好セーブを連発'],
+                    DF: ['堅実な守備を見せた', 'ラインを統率した', '危険な場面を防いだ'],
+                    MF: ['効果的なパス回し', 'ボールをよく動かした', 'チャンスを演出'],
+                    FW: ['積極的なシュート', '前線で存在感を示した', 'チャンスに絡んだ'],
+                };
+                const arr = good[pos] || good.MF;
+                return arr[Math.floor(Math.random() * arr.length)];
+            } else if (score >= 6.5) {
+                const avg = {
+                    GK: ['無難なプレー', '及第点の守備', '大きなミスはなかった'],
+                    DF: ['無難なディフェンス', '及第点の出来', '守備に集中した'],
+                    MF: ['無難なプレー', 'ボールに絡んだ', '平均的なパフォーマンス'],
+                    FW: ['チャンスを作った', '動き回った', '及第点の出来'],
+                };
+                const arr = avg[pos] || avg.MF;
+                return arr[Math.floor(Math.random() * arr.length)];
+            } else if (score >= 5.5) {
+                const poor = {
+                    GK: ['失点が響いた', 'セーブに精彩を欠いた', '不安定な守備'],
+                    DF: ['守備に課題が残った', '振り切られる場面も', 'ポジショニングが悪かった'],
+                    MF: ['ボールロストが多かった', 'パスが繋がらなかった', '存在感が薄かった'],
+                    FW: ['決定機を外した', 'シュートが枠を外れた', 'チャンスを生かせなかった'],
+                };
+                const arr = poor[pos] || poor.MF;
+                return arr[Math.floor(Math.random() * arr.length)];
+            } else {
+                const bad = {
+                    GK: ['致命的なミス', '大量失点に絡んだ', '精彩を欠いた'],
+                    DF: ['守備崩壊の原因に', 'マークを外した', '大きなミスが目立った'],
+                    MF: ['ゲームを壊した', 'ボールを失い続けた', '戦術を理解できなかった'],
+                    FW: ['全くゴールに絡めず', '消えていた90分', 'チャンスを全て外した'],
+                };
+                const arr = bad[pos] || bad.MF;
+                return arr[Math.floor(Math.random() * arr.length)];
+            }
+        }
+
+        function showPlayerRating() {
+            if (!_lastMatchRatings) return;
+            const overlay = document.getElementById('playerRatingOverlay');
+            const content = document.getElementById('playerRatingContent');
+            if (!overlay || !content) return;
+
+            const posOrder = { GK: 0, DF: 1, MF: 2, FW: 3 };
+            const sorted = [..._lastMatchRatings].sort((a, b) =>
+                (posOrder[a.player.position] || 0) - (posOrder[b.player.position] || 0)
+            );
+
+            let html = '';
+            sorted.forEach(r => {
+                const pos = r.player.position;
+                const posClass = 'rating-pos-' + pos.toLowerCase();
+                let scoreClass = 'rating-score-avg';
+                if (r.score >= 8.0) scoreClass = 'rating-score-high';
+                else if (r.score >= 7.0) scoreClass = 'rating-score-good';
+                else if (r.score < 6.0) scoreClass = 'rating-score-low';
+
+                // コンディション変化表示
+                const condDelta = r.condDelta || 0;
+                let condHtml = '';
+                if (condDelta > 0) condHtml = `<span class="rating-cond-change rating-cond-up">▲${condDelta}</span>`;
+                else if (condDelta < 0) condHtml = `<span class="rating-cond-change rating-cond-down">▼${Math.abs(condDelta)}</span>`;
+                else condHtml = `<span class="rating-cond-change rating-cond-same">—</span>`;
+
+                const momBadge = r.isMOM ? '<span class="rating-mom-badge">MOM</span>' : '';
+
+                html += `<div class="rating-row">
+                    <span class="rating-pos-badge ${posClass}">${pos}</span>
+                    <span class="rating-name">${r.player.name}${momBadge ? ' ' + momBadge : ''}</span>
+                    <span class="rating-comment">${r.comment}</span>
+                    ${condHtml}
+                    <span class="rating-score ${scoreClass}">${r.score.toFixed(1)}</span>
+                </div>`;
+            });
+
+            content.innerHTML = html;
+            overlay.classList.remove('hidden');
+        }
+
+        function closePlayerRating() {
+            const overlay = document.getElementById('playerRatingOverlay');
+            if (overlay) overlay.classList.add('hidden');
+        }
+
+        function applyRatingConditionChange(ratings) {
+            ratings.forEach(r => {
+                const p = r.player;
+                let delta = 0;
+                if (r.score >= 8.0) delta = 1;
+                else if (r.score >= 7.0) delta = 0;
+                else if (r.score < 6.0) delta = -1;
+
+                r.condDelta = delta;
+
+                if (delta !== 0) {
+                    const realPlayer = gameData.players.find(gp => gp.id === p.id);
+                    if (realPlayer) {
+                        realPlayer.condition = Math.max(0, Math.min(4, (realPlayer.condition || 2) + delta));
+                    }
+                }
+            });
         }
 
         function closeMatchResult() {
@@ -15945,6 +16266,8 @@ self.addEventListener('fetch', e => {
         window.executeMatch = executeMatch;
         window.executeSecondHalf = executeSecondHalf;
         window.closeMatchResult = closeMatchResult;
+        window.showPlayerRating = showPlayerRating;
+        window.closePlayerRating = closePlayerRating;
         window.closeMatchPreview = closeMatchPreview;
         window.closeMatchEvent = closeMatchEvent;
         window.setPreviewTactics = setPreviewTactics;
