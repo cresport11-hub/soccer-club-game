@@ -7146,7 +7146,8 @@ self.addEventListener('fetch', e => {
                     gameData.money += prize;
                     gameData.fame += 30;
                     gameData.popularity = Math.min(100, gameData.popularity + 15);
-                    showNotification('🏆 ジャパンカップ優勝！ 賞金 +' + formatNumber(prize) + '円 名声 +30');
+                    if (!gameData._pendingNotifications) gameData._pendingNotifications = [];
+                    gameData._pendingNotifications.push('🏆 ジャパンカップ優勝！ 賞金 +' + formatNumber(prize) + '円 名声 +30');
                     if (!gameData.trophies) gameData.trophies = [];
                     gameData.trophies.push({ name: 'ジャパンカップ優勝', season: gameData.season });
                     addManagerXP(10); // カップ戦優勝：XP+10
