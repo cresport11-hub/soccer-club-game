@@ -7445,69 +7445,83 @@ self.addEventListener('fetch', e => {
         // 全リーグの昇降格処理（シーズン終了時）
         function processAllLeaguePromoRelegation(playerLeague, playerRank) {
             if (!gameData.allLeagues) return;
-            // 各リーグの上位3・下位3を特定して隣接リーグと入れ替え
+
+            // ===== Step1: 各リーグの昇格・降格チームを事前に確定する =====
+            // tier=0(スーパーリーグ)〜tier=5(5部)
+            // プレイヤーリーグは別途処理済みなのでスキップ
+            const promotedMap   = {};  // promotedMap[tier]   = [tier→tier-1へ昇格するチーム3つ]
+            const relegatedMap  = {};  // relegatedMap[tier]  = [tier→tier+1へ降格するチーム3つ]
+
             for (let tier = 0; tier <= 5; tier++) {
                 if (tier === playerLeague) continue;
                 const league = gameData.allLeagues[tier];
                 if (!league || !league.standings || league.standings.length === 0) continue;
                 const sorted = [...league.standings].sort((a, b) => b.points - a.points || b.goalDiff - a.goalDiff);
-                const promoted = sorted.slice(0, 3);   // 上位3チームが昇格
-                const relegated = sorted.slice(-3);    // 下位3チームが降格
-                // 昇格先リーグに追加
-                if (tier > 0) {
-                    const upperTier = tier - 1;
-                    const upperLeague = upperTier === playerLeague
-                        ? { standings: gameData.leagueStandings }
-                        : gameData.allLeagues[upperTier];
-                    if (upperLeague && upperLeague.standings) {
-                        // 上位リーグの下位3チームを降格させてから昇格チームを追加
-                        const upperSorted = [...upperLeague.standings].sort((a, b) => b.points - a.points || b.goalDiff - a.goalDiff);
-                        const upperRelegated = upperSorted.slice(-3).filter(t => t.name !== gameData.clubName);
-                        upperRelegated.forEach(t => {
-                            upperLeague.standings = upperLeague.standings.filter(s => s.name !== t.name);
-                        });
-                        promoted.forEach(p => {
-                            const newEntry = resetTeamStats(p, upperTier);
-                            upperLeague.standings.push(newEntry);
-                        });
-                        if (upperTier === playerLeague) {
-                            updateLeaguePoints();
-                        } else {
-                            updateOtherLeaguePoints(upperLeague.standings);
-                        }
-                    }
+                // スーパーリーグ(tier=0)は昇格なし、5部(tier=5)は降格なし
+                if (tier > 0) promotedMap[tier]  = sorted.slice(0, 3);
+                if (tier < 5) relegatedMap[tier] = sorted.slice(-3);
+            }
+
+            // ===== Step2: 各リーグのstandingsを更新する =====
+            for (let tier = 0; tier <= 5; tier++) {
+                if (tier === playerLeague) continue;
+                const league = gameData.allLeagues[tier];
+                if (!league || !league.standings) continue;
+
+                let newStandings = [...league.standings];
+
+                // このリーグから昇格するチームを除外
+                if (promotedMap[tier]) {
+                    const promotedNames = new Set(promotedMap[tier].map(t => t.name));
+                    newStandings = newStandings.filter(t => !promotedNames.has(t.name));
                 }
-                // 降格先リーグに追加
-                if (tier < 5) {
-                    const lowerTier = tier + 1;
-                    const lowerLeague = lowerTier === playerLeague
-                        ? { standings: gameData.leagueStandings }
-                        : gameData.allLeagues[lowerTier];
-                    if (lowerLeague && lowerLeague.standings) {
-                        const lowerSorted = [...lowerLeague.standings].sort((a, b) => b.points - a.points || b.goalDiff - a.goalDiff);
-                        const lowerPromoted = lowerSorted.slice(0, 3);
-                        lowerPromoted.forEach(p => {
-                            lowerLeague.standings = lowerLeague.standings.filter(s => s.name !== p.name);
-                        });
-                        relegated.forEach(r => {
-                            const newEntry = resetTeamStats(r, lowerTier);
-                            lowerLeague.standings.push(newEntry);
-                        });
-                        if (lowerTier === playerLeague) {
-                            updateLeaguePoints();
-                        } else {
-                            updateOtherLeaguePoints(lowerLeague.standings);
-                        }
-                    }
+                // このリーグから降格するチームを除外
+                if (relegatedMap[tier]) {
+                    const relegatedNames = new Set(relegatedMap[tier].map(t => t.name));
+                    newStandings = newStandings.filter(t => !relegatedNames.has(t.name));
                 }
-                // 自リーグのスケジュールをリセット
+                // 上のリーグ(tier-1)から降格してくるチームを追加
+                if (tier > 0 && relegatedMap[tier - 1]) {
+                    relegatedMap[tier - 1].forEach(r => {
+                        newStandings.push(resetTeamStats(r, tier));
+                    });
+                }
+                // 下のリーグ(tier+1)から昇格してくるチームを追加
+                if (tier < 5 && promotedMap[tier + 1]) {
+                    promotedMap[tier + 1].forEach(p => {
+                        newStandings.push(resetTeamStats(p, tier));
+                    });
+                }
+
+                league.standings = newStandings;
+                // スケジュールをリセット
                 league.standings.forEach(t => {
                     t.wins = 0; t.draws = 0; t.losses = 0;
                     t.points = 0; t.goalsFor = 0; t.goalsAgainst = 0;
                     t.goalDiff = 0; t.matchesPlayed = 0;
                 });
                 league.otherTeamMatches = generateLeagueSchedule(league.standings.map(t => t.name));
+                updateOtherLeaguePoints(league.standings);
             }
+
+            // ===== Step3: プレイヤーリーグに隣接する昇降格を反映 =====
+            // プレイヤーリーグの上のリーグ(playerLeague-1)から降格してくるチーム
+            if (playerLeague > 0 && relegatedMap[playerLeague - 1]) {
+                relegatedMap[playerLeague - 1].forEach(r => {
+                    if (!gameData.leagueStandings.find(t => t.name === r.name)) {
+                        gameData.leagueStandings.push(resetTeamStats(r, playerLeague));
+                    }
+                });
+            }
+            // プレイヤーリーグの下のリーグ(playerLeague+1)から昇格してくるチーム
+            if (playerLeague < 5 && promotedMap[playerLeague + 1]) {
+                promotedMap[playerLeague + 1].forEach(p => {
+                    if (!gameData.leagueStandings.find(t => t.name === p.name)) {
+                        gameData.leagueStandings.push(resetTeamStats(p, playerLeague));
+                    }
+                });
+            }
+            updateLeaguePoints();
         }
 
         function resetTeamStats(team, newTier) {
