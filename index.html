@@ -7373,16 +7373,34 @@ self.addEventListener('fetch', e => {
                 if (tier === gameData.league) return;
                 const league = gameData.allLeagues[tier];
                 if (!league || !league.otherTeamMatches) return;
-                const matches = league.otherTeamMatches[matchDay];
+                // JSONロード後はキーが文字列になるため両方試みる
+                const matches = league.otherTeamMatches[matchDay] || league.otherTeamMatches[String(matchDay)];
                 if (!matches) return;
+                // スケジュールに存在しないチームがいる場合は再生成フラグを立てる
+                let needRegen = false;
                 matches.forEach(match => {
                     if (match.played) return;
                     const team1 = league.standings.find(t => t.name === match.team1);
                     const team2 = league.standings.find(t => t.name === match.team2);
-                    if (!team1 || !team2) return;
+                    if (!team1 || !team2) { needRegen = true; return; }
                     simulateOtherLeagueMatch(team1, team2);
                     match.played = true;
                 });
+                // チームが見つからない場合はスケジュールを再生成して再試行
+                if (needRegen) {
+                    league.otherTeamMatches = generateLeagueSchedule(league.standings.map(t => t.name));
+                    const newMatches = league.otherTeamMatches[matchDay] || league.otherTeamMatches[String(matchDay)];
+                    if (newMatches) {
+                        newMatches.forEach(match => {
+                            if (match.played) return;
+                            const team1 = league.standings.find(t => t.name === match.team1);
+                            const team2 = league.standings.find(t => t.name === match.team2);
+                            if (!team1 || !team2) return;
+                            simulateOtherLeagueMatch(team1, team2);
+                            match.played = true;
+                        });
+                    }
+                }
                 // 順位更新
                 updateOtherLeaguePoints(league.standings);
             });
