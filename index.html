@@ -4922,6 +4922,8 @@ self.addEventListener('fetch', e => {
                                 }
                             });
                         }
+                        // 他クラブ選手の細分化ポジション補完
+                        initSubPositions(team.squad);
                         // 旧セーブデータに監督スキルがない場合は生成して補完
                         if (!team.managerSkills) {
                             team.managerSkills = generateRivalManagerSkills(gameData.league);
@@ -4957,6 +4959,17 @@ self.addEventListener('fetch', e => {
                 if (gameData.trainingUsed === undefined) gameData.trainingUsed = false;
                 if (gameData.soloTrainingUsed === undefined) gameData.soloTrainingUsed = false;
                 if (!gameData.allLeagues) { gameData.allLeagues = null; initAllLeagues(); }
+                // allLeagues内の他クラブ選手にも細分化ポジション補完を適用
+                if (gameData.allLeagues) {
+                    Object.values(gameData.allLeagues).forEach(ld => {
+                        if (!ld || !ld.standings) return;
+                        ld.standings.forEach(team => {
+                            if (team.squad && team.squad.length > 0) {
+                                initSubPositions(team.squad);
+                            }
+                        });
+                    });
+                }
                 // 既存セーブデータで他リーグが遅れている場合、現在の節まで一括で追いつかせる
                 if (gameData.allLeagues && gameData.currentMatchIndex > 0) {
                     for (let day = 1; day <= gameData.currentMatchIndex; day++) {
