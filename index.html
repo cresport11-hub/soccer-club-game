@@ -16425,8 +16425,10 @@ self.addEventListener('fetch', e => {
         function autoSelectLineup() {
             const fm = formations[gameData.formation] || formations['4-4-2'];
             const suspended = gameData.suspended || {};
+            const slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
+            const fmSubPos = FORMATION_SUB_POS[gameData.formation] || FORMATION_SUB_POS['4-4-2'];
 
-            // 選出スコア計算：能力値×疲労ペナルティ×怨我ペナルティ
+            // 選出スコア計算：能力値×疲労ペナルティ×傷ペナルティ
             function playerScore(p) {
                 if (p.injury === 'heavy') return -1; // 除外
                 if (suspended[p.id]) return -1;      // 除外
@@ -16438,14 +16440,12 @@ self.addEventListener('fetch', e => {
                     const def = getPlayerDefense(p) || 0;
                     base = (atk + def) / 2;
                 }
-                // 疲労ペナルティ：50以上で段階的に下げる
                 const fatigue = p.fatigue || 0;
                 let fatigueMod = 1.0;
                 if (fatigue >= 90) fatigueMod = 0.55;
                 else if (fatigue >= 75) fatigueMod = 0.70;
                 else if (fatigue >= 60) fatigueMod = 0.82;
                 else if (fatigue >= 50) fatigueMod = 0.92;
-                // 軽傷ペナルティ
                 const injuryMod = (p.injury === 'light') ? 0.80 : 1.0;
                 return base * fatigueMod * injuryMod;
             }
@@ -16453,57 +16453,75 @@ self.addEventListener('fetch', e => {
             // 全選手をスタメン解除
             gameData.players.forEach(p => { p.starter = false; });
 
-            // 各ポジションごとにスコア順にソート
-            const byPos = (pos) => gameData.players
-                .filter(p => p.position === pos)
-                .map(p => ({ p, score: playerScore(p) }))
-                .filter(x => x.score >= 0)
-                .sort((a, b) => b.score - a.score);
+            // スロット単位で最適選手を割り当てる
+            // 優先度: 1)細分化ポジション完全一致 2)大枠ポジション一致（少し外） 3)その他
+            gameData.pitchAssignment = {};
+            const usedIds = new Set();
 
-            const gkCandidates = byPos('GK');
-            const dfCandidates = byPos('DF');
-            const mfCandidates = byPos('MF');
-            const fwCandidates = byPos('FW');
+            // スロットごとに必要な細分化ポジションを収集
+            const slotList = slots.map(slot => {
+                const key = slot.pos + '_' + slot.idx;
+                const subPosArr = fmSubPos[slot.pos] || [];
+                const slotSubPos = subPosArr[slot.idx] !== undefined ? subPosArr[slot.idx] : slot.pos;
+                return { key, pos: slot.pos, slotSubPos };
+            });
 
-            // 必要人数分だけスタメンに登録
-            const pick = (candidates, count) => {
-                candidates.slice(0, count).forEach(x => { x.p.starter = true; });
-                return candidates.slice(0, count).length;
-            };
+            // 2パス割り当て：
+            // Pass1: 細分化ポジション完全一致の選手を優先配置
+            // Pass2: 残りスロットに大枠一致の選手を配置
+            function getBestCandidate(pos, slotSubPos, requireExact) {
+                const candidates = gameData.players
+                    .filter(p => {
+                        if (usedIds.has(p.id)) return false;
+                        if (p.position !== pos) return false;
+                        const score = playerScore(p);
+                        if (score < 0) return false;
+                        if (requireExact) {
+                            const sp = getSubPos(p);
+                            const sp2 = getSubPos2(p);
+                            return sp === slotSubPos || sp2 === slotSubPos;
+                        }
+                        return true;
+                    })
+                    .map(p => ({ p, score: playerScore(p) }))
+                    .sort((a, b) => b.score - a.score);
+                return candidates.length > 0 ? candidates[0].p : null;
+            }
 
-            let total = 0;
-            total += pick(gkCandidates, 1);
-            total += pick(dfCandidates, fm.df);
-            total += pick(mfCandidates, fm.mf);
-            total += pick(fwCandidates, fm.fw);
+            // Pass1: 完全一致優先
+            const unfilledSlots = [];
+            slotList.forEach(sl => {
+                const pl = getBestCandidate(sl.pos, sl.slotSubPos, true);
+                if (pl) {
+                    gameData.pitchAssignment[sl.key] = pl.id;
+                    usedIds.add(pl.id);
+                    pl.starter = true;
+                } else {
+                    unfilledSlots.push(sl);
+                }
+            });
 
-            // 不足分を補充（不足ポジションがある場合、他ポジションから流用）
-            if (total < 11) {
+            // Pass2: 大枠一致（少し外）で補完
+            unfilledSlots.forEach(sl => {
+                const pl = getBestCandidate(sl.pos, sl.slotSubPos, false);
+                if (pl) {
+                    gameData.pitchAssignment[sl.key] = pl.id;
+                    usedIds.add(pl.id);
+                    pl.starter = true;
+                }
+            });
+
+            // 不足分を補充（他ポジションから流用）
+            const starterCount = gameData.players.filter(p => p.starter).length;
+            if (starterCount < 11) {
                 const remaining = gameData.players
                     .filter(p => !p.starter)
                     .map(p => ({ p, score: playerScore(p) }))
                     .filter(x => x.score >= 0)
                     .sort((a, b) => b.score - a.score);
-                const need = 11 - total;
+                const need = 11 - starterCount;
                 remaining.slice(0, need).forEach(x => { x.p.starter = true; });
             }
-
-            // pitchAssignmentを自動設定
-            gameData.pitchAssignment = {};
-            const slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
-            const assignedInAuto = {}; // pos -> [player, ...]
-            gameData.players.filter(p => p.starter).forEach(p => {
-                if (!assignedInAuto[p.position]) assignedInAuto[p.position] = [];
-                assignedInAuto[p.position].push(p);
-            });
-            slots.forEach(slot => {
-                const key = slot.pos + '_' + slot.idx;
-                const candidates = assignedInAuto[slot.pos] || [];
-                if (candidates.length > 0) {
-                    const pl = candidates.shift();
-                    gameData.pitchAssignment[key] = pl.id;
-                }
-            });
 
             saveGame();
             renderLineup();
