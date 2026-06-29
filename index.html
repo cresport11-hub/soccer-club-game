@@ -5915,7 +5915,12 @@ self.addEventListener('fetch', e => {
         function expireTransferOffers() {
             if (!gameData.transferOffers) return;
             const before = gameData.transferOffers.length;
-            gameData.transferOffers = gameData.transferOffers.filter(o => o.expiresAt > gameData.currentMatchIndex);
+            // 期限切れまたは対象選手が存在しないオファーを削除
+            gameData.transferOffers = gameData.transferOffers.filter(o => {
+                if (o.expiresAt <= gameData.currentMatchIndex) return false;
+                if (!gameData.players.some(p => p.id === o.playerId)) return false;
+                return true;
+            });
             if (gameData.transferOffers.length < before) {
                 if (!gameData._pendingNotifications) gameData._pendingNotifications = [];
                 gameData._pendingNotifications.push('⏰ 移籍オファーの有効期限が切れました');
@@ -13994,9 +13999,9 @@ self.addEventListener('fetch', e => {
             }
 
                         healInjuries();
-            // 移籍オファー生成・期限切れ処理
-            generateTransferOffer();
+            // 移籍オファー期限切れ処理（先に古いオファーを削除してから新規生成）
             expireTransferOffers();
+            generateTransferOffer();
             // 3節ごとに市場を自動更新
             {
                 const curIdx2 = gameData.currentMatchIndex || 0;
