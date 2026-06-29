@@ -13703,26 +13703,32 @@ self.addEventListener('fetch', e => {
 
             // 「アウト候補のスタメン選手」を「交代でインした選手」に戻す場合→交代取り消し
             const reverseIdx = halftimeSubstitutions.findIndex(s => s.in === halftimeSubPendingOut && s.out === benchPlayerId);
-            if (reverseIdx !== -1) {
+                        if (reverseIdx !== -1) {
                 // 元の交代をキャンセル：スタメンを元に戻す
                 outPlayer.starter = false;   // イン側（現在のアウト候補）をベンチへ
                 inPlayer.starter = true;    // 元のアウト側（元スタメン）を復帰
+                // pitchAssignmentも元に戻す（inPlayerのスロットをoutPlayerのIDに戻す）
+                const pa = gameData.pitchAssignment || {};
+                const slotKey = Object.keys(pa).find(k => pa[k] === outPlayer.id);
+                if (slotKey) pa[slotKey] = inPlayer.id;
                 halftimeSubstitutions.splice(reverseIdx, 1); // 交代記録を削除
                 halftimeSubPendingOut = null;
                 renderHalftimeSubstitutionUI();
                 showNotification('交代を取り消しました');
                 return;
             }
-
             // 通常の交代：上限チェック
             if (halftimeSubstitutions.length >= 3) {
                 showNotification('交代は最大３名までです');
                 return;
             }
-
             // スタメンを切り替え
             outPlayer.starter = false;
             inPlayer.starter = true;
+            // pitchAssignmentのスロットをinPlayerのIDに更新
+            const pa = gameData.pitchAssignment || {};
+            const slotKey = Object.keys(pa).find(k => pa[k] === outPlayer.id);
+            if (slotKey) pa[slotKey] = inPlayer.id;
             halftimeSubstitutions.push({ out: outPlayer.id, outName: outPlayer.name, in: inPlayer.id, inName: inPlayer.name });
             halftimeSubPendingOut = null;
             htPitchSelectedId = null;
