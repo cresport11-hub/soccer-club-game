@@ -6171,7 +6171,9 @@ self.addEventListener('fetch', e => {
             if (!gameData.transferMarket || gameData.transferMarket.length === 0) refreshTransferMarket();
             // 次回市場更新節を計算（3節ごとに更新）
             const curIdx = gameData.currentMatchIndex || 0;
-            const lastRefresh = gameData.lastMarketRefreshIndex || 0;
+            let lastRefresh = gameData.lastMarketRefreshIndex || 0;
+            // lastMarketRefreshIndexが現在節より大きい場合（異常値）はリセット
+            if (lastRefresh > curIdx) { lastRefresh = 0; gameData.lastMarketRefreshIndex = 0; }
             const nextMarketRefresh = lastRefresh + 3;
             const posColor = { GK: '#FFB74D', DF: '#64B5F6', MF: '#81C784', FW: '#EF9A9A' };
 
@@ -13998,7 +14000,9 @@ self.addEventListener('fetch', e => {
             // 3節ごとに市場を自動更新
             {
                 const curIdx2 = gameData.currentMatchIndex || 0;
-                const lastRefresh2 = gameData.lastMarketRefreshIndex || 0;
+                let lastRefresh2 = gameData.lastMarketRefreshIndex || 0;
+                // lastMarketRefreshIndexが現在節より大きい場合（異常値）はリセット
+                if (lastRefresh2 > curIdx2) { lastRefresh2 = 0; gameData.lastMarketRefreshIndex = 0; }
                 if (curIdx2 - lastRefresh2 >= 3) {
                     gameData.transferMarket = [];
                     refreshTransferMarket();
@@ -15647,12 +15651,12 @@ self.addEventListener('fetch', e => {
                 p.fatigue = 0; // シーズン終了で疲労リセット
             });
             // シーズン終了時にカード・出場停止をリセット
-            gameData.seasonYellows = {};
+                        gameData.seasonYellows = {};
             gameData.seasonReds = 0;
             gameData.suspended = {};
-
             gameData.seasonProgress = 0;
             gameData.currentMatchIndex = 0;
+            gameData.lastMarketRefreshIndex = 0; // 市場更新節をリセット
             gameData.seasonEnded = false;
 
             // シーズン履歴に今シーズンの統計を保存
