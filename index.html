@@ -5876,8 +5876,7 @@ self.addEventListener('fetch', e => {
         // 引き抜きオファーを生成する（試合後に呼び出す）
         function generateTransferOffer() {
             if (!gameData.players || gameData.players.length === 0) return;
-            // 5部リーグ中はオファーを発生させない
-            if ((gameData.league || 5) >= 5) return;
+            // 全リーグでオファーを発生させる
             // 毎節10%の確率でオファー発生
             const offerChance = 0.10;
             if (Math.random() > offerChance) return;
@@ -8447,8 +8446,7 @@ self.addEventListener('fetch', e => {
             const hintCard = document.getElementById('beginnerHintCard');
             if (hintCard) hintCard.style.display = (gameData.league === 5) ? 'block' : 'none';
 
-            // 5部時はスキル特訓・移籍市場・名声ボタンをロック表示
-            const _is5 = (gameData.league >= 5);
+            // スキル特訓・移籍市場・名声ボタンのロックを解除（全リーグで使用可能）
             const _lockDefs = [
                 { nav: 'skillTrainingNavBtn', drawer: 'drawer-skillTraining' },
                 { nav: 'transferNavBtn',      drawer: 'drawer-transfer' },
@@ -8456,16 +8454,10 @@ self.addEventListener('fetch', e => {
             ];
             _lockDefs.forEach(({ nav, drawer }) => {
                 const navBtn = document.getElementById(nav);
-                if (navBtn) {
-                    navBtn.style.opacity = _is5 ? '0.4' : '';
-                    navBtn.title = _is5 ? '🔒 4部以上に昇格すると解放' : '';
-                }
+                if (navBtn) { navBtn.style.opacity = ''; navBtn.title = ''; }
                 if (drawer) {
                     const drawerBtn = document.getElementById(drawer);
-                    if (drawerBtn) {
-                        drawerBtn.style.opacity = _is5 ? '0.4' : '';
-                        drawerBtn.title = _is5 ? '🔒 4部以上に昇格すると解放' : '';
-                    }
+                    if (drawerBtn) { drawerBtn.style.opacity = ''; drawerBtn.title = ''; }
                 }
             });
         }
@@ -11209,12 +11201,6 @@ self.addEventListener('fetch', e => {
             document.getElementById('navDrawerOverlay').classList.remove('active');
         }
         function switchTabFromDrawer(tabName) {
-            // 5部ロックチェック
-            const _locked5 = ['skillTraining', 'transfer', 'fame'];
-            if (gameData.league >= 5 && _locked5.includes(tabName)) {
-                showNotification('⚠️ 4部以上に昇格すると解放されます！');
-                return;
-            }
             // タブ切り替え（既存のswitchTabを流用）
             const tabs = ['dashboard', 'team', 'lineup', 'facilities', 'league', 'cup', 'sponsor', 'recruit', 'trophy', 'help', 'outing', 'camp', 'fame', 'training', 'skillTraining', 'transfer', 'stats', 'manager-skills', 'log', 'save'];
             tabs.forEach(t => {
@@ -11261,12 +11247,6 @@ self.addEventListener('fetch', e => {
         }
 
         function switchTab(tabName, event) {
-            // 5部ロックチェック
-            const _locked5b = ['skillTraining', 'transfer', 'fame'];
-            if (gameData.league >= 5 && _locked5b.includes(tabName)) {
-                showNotification('⚠️ 4部以上に昇格すると解放されます！');
-                return;
-            }
             const tabs = ['dashboard', 'team', 'lineup', 'facilities', 'league', 'cup', 'sponsor', 'recruit', 'trophy', 'help', 'outing', 'camp', 'fame', 'training', 'skillTraining', 'transfer', 'stats', 'manager-skills', 'log', 'save'];
             tabs.forEach(t => {
                 const el = document.getElementById(t);
