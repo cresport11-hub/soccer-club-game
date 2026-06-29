@@ -3640,16 +3640,34 @@ self.addEventListener('fetch', e => {
                 </div>
             </div>
             <!-- 選手交代 -->
-            <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; margin-bottom:12px;">
-                <div style="font-size:12px; color:#FFD700; font-weight:700; margin-bottom:8px;">🔄 選手交代（最大3名）</div>
-                <div style="font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:4px;">スタメン選手をタップして交代候補に選び、ベンチ選手をタップして交代させます。</div>
-                <div style="font-size:11px; color:rgba(255,255,255,0.45); margin-bottom:8px;">戦力値が変動する以外にも、交代アウトした選手は疲労が軽減し、交代インした選手は経験値を取得します。</div>
-                <div style="font-size:11px; color:rgba(255,255,255,0.6); margin-bottom:4px; font-weight:600;">スタメン</div>
-                <div id="halftimeStarterList" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;"></div>
-                <div style="font-size:11px; color:rgba(255,255,255,0.6); margin-bottom:4px; font-weight:600;">ベンチ</div>
-                <div id="halftimeBenchList" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
-                <div id="halftimeSubCount" style="font-size:11px; color:#81C784; margin-top:8px;">交代: 0/3</div>
-            </div>
+             <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; margin-bottom:12px;">
+                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                     <div style="font-size:12px; color:#FFD700; font-weight:700;">🔄 選手交代（最大3名）</div>
+                     <div id="halftimeSubCount" style="font-size:11px; color:#81C784;">交代: 0/3</div>
+                 </div>
+                 <div style="font-size:10px; color:rgba(255,255,255,0.4); margin-bottom:8px;">スロット/選手をタップして選択→ベンチ選手をタップして交代</div>
+                 <!-- ハーフタイム用ピッチ図 -->
+                 <div style="position:relative; background:linear-gradient(180deg,#1a5c2a 0%,#1e7a35 40%,#1e7a35 60%,#1a5c2a 100%); border-radius:8px; overflow:hidden; margin-bottom:8px;">
+                     <div class="pitch-inner" id="htPitchInner">
+                         <svg class="pitch-lines" viewBox="0 0 100 145" preserveAspectRatio="none">
+                             <rect x="5" y="3" width="90" height="139" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>
+                             <line x1="5" y1="72.5" x2="95" y2="72.5" stroke="rgba(255,255,255,0.3)" stroke-width="0.6"/>
+                             <circle cx="50" cy="72.5" r="12" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.6"/>
+                             <circle cx="50" cy="72.5" r="1" fill="rgba(255,255,255,0.4)"/>
+                             <rect x="25" y="120" width="50" height="22" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.6"/>
+                             <rect x="25" y="3" width="50" height="22" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.6"/>
+                             <rect x="38" y="140" width="24" height="4" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="0.7"/>
+                             <rect x="38" y="-1" width="24" height="4" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="0.7"/>
+                         </svg>
+                     </div>
+                 </div>
+                 <!-- ハーフタイム用ベンチ -->
+                 <div style="font-size:11px; color:rgba(255,255,255,0.6); margin-bottom:4px; font-weight:600;">ベンチ</div>
+                 <div class="pitch-bench-list" id="htBenchList"></div>
+                 <!-- 旧リスト（非表示・互換用） -->
+                 <div id="halftimeStarterList" style="display:none;"></div>
+                 <div id="halftimeBenchList" style="display:none;"></div>
+             </div>
             <!-- 作戦設定 -->
             <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; margin-bottom:12px;">
                 <div style="font-size:12px; color:#FFD700; font-weight:700; margin-bottom:8px;">⚔️ 後半の作戦</div>
@@ -13150,6 +13168,7 @@ self.addEventListener('fetch', e => {
             };
             halftimeSubstitutions = [];
             halftimeSubPendingOut = null;
+            htPitchSelectedId = null;
 
             // 前半ハイライト生成
             const firstHalfHighlights = generateMatchHighlights(myScore, oppScore, opponent, starters, specialEvents, true, null, null, cardEvents, injuryEvents, myAttackRatio);
@@ -13215,7 +13234,6 @@ self.addEventListener('fetch', e => {
             const starterListEl = document.getElementById('halftimeStarterList');
             const benchListEl = document.getElementById('halftimeBenchList');
             const subCountEl = document.getElementById('halftimeSubCount');
-            if (!starterListEl || !benchListEl) return;
 
             const subCount = halftimeSubstitutions.length;
             if (subCountEl) subCountEl.textContent = '交代: ' + subCount + '/3';
@@ -13224,11 +13242,16 @@ self.addEventListener('fetch', e => {
             const posOrder = { 'FW': 0, 'MF': 1, 'DF': 2, 'GK': 3 };
             const sortByPos = (a, b) => (posOrder[a.position] ?? 9) - (posOrder[b.position] ?? 9);
 
-            // スタメン選手リスト
+            // ===== ハーフタイム用ピッチ図を描画 =====
+            renderHtPitch();
+            // ===== ハーフタイム用ベンチを描画 =====
+            renderHtBench();
+
+            // 旧リスト（非表示互換用）
             const condLabelsHT = ['絶不調', '不調', '普通', '好調', '絶好調'];
             const condColorsHT = ['#ef5350', '#ff9800', '#90a4ae', '#66bb6a', '#ffd700'];
             const starters = gameData.players.filter(p => p.starter && p.injury !== 'heavy').sort(sortByPos);
-            starterListEl.innerHTML = starters.map(p => {
+            if (starterListEl) starterListEl.innerHTML = starters.map(p => {
                 const isPendingOut = halftimeSubPendingOut === p.id;
                 const fat = p.fatigue || 0;
                 const fatigueColor = fat >= 90 ? '#ef5350' : fat >= 75 ? '#ff7043' : fat >= 50 ? '#ffa726' : 'rgba(255,255,255,0.6)';
@@ -13249,7 +13272,7 @@ self.addEventListener('fetch', e => {
 
             // ベンチ選手リスト
             const benched = gameData.players.filter(p => !p.starter && p.injury !== 'heavy' && !(gameData.suspended && gameData.suspended[p.id])).sort(sortByPos);
-            benchListEl.innerHTML = benched.length === 0
+            if (benchListEl) benchListEl.innerHTML = benched.length === 0
                 ? '<div style="color:rgba(255,255,255,0.4); font-size:11px;">ベンチなし</div>'
                 : benched.map(p => {
                     const fat2 = p.fatigue || 0;
@@ -13351,7 +13374,130 @@ self.addEventListener('fetch', e => {
                 if (oppLabel) oppLabel.textContent = ht.opponent || '相手';
             }
         }
-        function halftimeSelectOut(playerId) {
+        // ===== ハーフタイム用ピッチ図描画 =====
+        let htPitchSelectedId = null; // 交代アウト候補のスタメン選手ID（スロットタップで選択）
+
+        function renderHtPitch() {
+            const pitchInner = document.getElementById('htPitchInner');
+            if (!pitchInner) return;
+            // 既存スロットを削除
+            Array.from(pitchInner.querySelectorAll('.pitch-slot')).forEach(el => el.remove());
+
+            const formation = gameData.formation || '4-4-2';
+            const slots = PITCH_SLOTS[formation];
+            if (!slots) return;
+
+            // pitchAssignment を参照（スタメン画面と同じ割り当て）
+            const pa = gameData.pitchAssignment || {};
+            const subCount = halftimeSubstitutions.length;
+
+            slots.forEach(slot => {
+                const slotKey = slot.pos + '_' + slot.idx;
+                const assignedId = pa[slotKey];
+                const player = assignedId ? gameData.players.find(p => p.id === assignedId) : null;
+
+                const isPendingOut = htPitchSelectedId === assignedId && assignedId;
+                const isSubbedOut = halftimeSubstitutions.some(s => s.out === assignedId);
+
+                const el = document.createElement('div');
+                el.className = 'pitch-slot' + (player ? '' : ' empty') + (isPendingOut ? ' selected-source' : '');
+                el.style.left = slot.x + '%';
+                el.style.top = slot.y + '%';
+                el.dataset.slotKey = slotKey;
+
+                if (player) {
+                    const statStr = player.position === 'GK'
+                        ? 'GK' + (player.keeper || 0)
+                        : '攻' + getPlayerAttack(player) + '/守' + getPlayerDefense(player);
+                    const fat = player.fatigue || 0;
+                    const fatigueColor = fat >= 90 ? '#ef5350' : fat >= 75 ? '#ff7043' : fat >= 50 ? '#ffa726' : 'rgba(255,255,255,0.5)';
+                    const slotSubLabel = getSlotSubPos(slotKey);
+                    const slotPosColor = SUB_POS_COLOR[slotSubLabel] || '#fff';
+                    const injHtml = player.injury === 'light' ? '<div style="font-size:6px;color:#FF6B6B;font-weight:700;">軽傷</div>' : '';
+                    const isInMatchInjured = halftimeState && halftimeState.firstHalfInjuredIds && halftimeState.firstHalfInjuredIds.includes(player.id);
+                    const injMatchHtml = isInMatchInjured ? '<div style="font-size:6px;color:#ef5350;font-weight:700;">負傷</div>' : '';
+                    const subbedOutHtml = isSubbedOut ? '<div style="font-size:6px;color:#81C784;font-weight:700;">交代済</div>' : '';
+                    el.innerHTML =
+                        '<div class="slot-pos" style="color:' + slotPosColor + '">' + slotSubLabel + '</div>' +
+                        '<div class="slot-name">' + player.name + '</div>' +
+                        '<div class="slot-stat">' + statStr + '</div>' +
+                        '<div style="font-size:7px;color:' + fatigueColor + ';margin-top:1px;">疲' + fat + '</div>' +
+                        injHtml + injMatchHtml + subbedOutHtml;
+                    // 交代済みは選択不可
+                    if (!isSubbedOut) {
+                        el.addEventListener('click', () => htSlotClick(assignedId));
+                    } else {
+                        el.style.opacity = '0.5';
+                        el.style.cursor = 'default';
+                    }
+                } else {
+                    const emptyLabel = getSlotSubPos(slotKey);
+                    const emptyColor = SUB_POS_COLOR[emptyLabel] || '#fff';
+                    el.innerHTML = '<div class="slot-pos" style="color:' + emptyColor + '">' + emptyLabel + '</div><div class="slot-name" style="color:rgba(255,255,255,0.35);font-size:9px;">空き</div>';
+                }
+                pitchInner.appendChild(el);
+            });
+        }
+
+        function renderHtBench() {
+            const benchEl = document.getElementById('htBenchList');
+            if (!benchEl) return;
+            const subCount = halftimeSubstitutions.length;
+            const benched = gameData.players.filter(p => !p.starter && p.injury !== 'heavy' && !(gameData.suspended && gameData.suspended[p.id]))
+                .sort((a, b) => {
+                    const po = { 'FW': 0, 'MF': 1, 'DF': 2, 'GK': 3 };
+                    return (po[a.position] ?? 9) - (po[b.position] ?? 9);
+                });
+            if (benched.length === 0) {
+                benchEl.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:11px;grid-column:1/-1;text-align:center;">ベンチなし</div>';
+                return;
+            }
+            const canSub = htPitchSelectedId !== null && subCount < 3;
+            benchEl.innerHTML = benched.map(p => {
+                const fat = p.fatigue || 0;
+                const fatigueColor = fat >= 90 ? '#ef5350' : fat >= 75 ? '#ff7043' : fat >= 50 ? '#ffa726' : 'rgba(255,255,255,0.6)';
+                const condLabels = ['絶不調', '不調', '', '好調', '絶好調'];
+                const condColors = ['#ef5350', '#ff9800', '#90a4ae', '#66bb6a', '#ffd700'];
+                const cond = p.condition !== undefined ? p.condition : 2;
+                const condHtml = cond !== 2 ? '<div style="font-size:7px;color:' + condColors[cond] + ';font-weight:700;">' + condLabels[cond] + '</div>' : '';
+                const ssBadge = (p.skills && p.skills.includes('superSub')) ? '<span style="color:#FFD700;font-weight:bold;font-size:8px;">⚡SS</span>' : '';
+                const injBadge = p.injury === 'light' ? '<span style="color:#ff9800;font-size:8px;">⚠軽傷</span>' : '';
+                const abilityLine = p.position === 'GK' ? 'GK:' + (p.keeper || 0) : '攻' + getPlayerAttack(p) + ' 守' + getPlayerDefense(p);
+                const borderColor = canSub ? 'rgba(129,199,132,0.6)' : 'rgba(255,255,255,0.2)';
+                const bgColor = canSub ? 'rgba(129,199,132,0.08)' : 'rgba(255,255,255,0.03)';
+                return '<div class="pitch-bench-card" style="border-color:' + borderColor + ';background:' + bgColor + ';" onclick="htBenchClick('' + p.id + '')">' +
+                    '<div class="bench-pos">' + getSubPos(p) + (p.subPosition2 ? '<span style="font-size:8px;opacity:0.6;">/ ' + p.subPosition2 + '</span>' : '') + ' ' + ssBadge + injBadge + '</div>' +
+                    '<div class="bench-name">' + p.name + '</div>' +
+                    '<div class="bench-stat">' + abilityLine + ' 疲' + fat + '</div>' +
+                    condHtml +
+                    '</div>';
+            }).join('');
+        }
+
+        function htSlotClick(playerId) {
+            // スロットタップ：交代アウト候補を選択（再タップで解除）
+            if (htPitchSelectedId === playerId) {
+                htPitchSelectedId = null;
+            } else {
+                htPitchSelectedId = playerId;
+                // 旧UIとも同期
+                halftimeSubPendingOut = playerId;
+            }
+            renderHtPitch();
+            renderHtBench();
+        }
+
+        function htBenchClick(benchPlayerId) {
+            if (!htPitchSelectedId) return;
+            // halftimeSelectIn に委譲（既存の交代ロジックを流用）
+            halftimeSubPendingOut = htPitchSelectedId;
+            halftimeSelectIn(benchPlayerId);
+            htPitchSelectedId = null;
+            renderHtPitch();
+            renderHtBench();
+        }
+
+                function halftimeSelectOut(playerId) {
             // スタメン選手を交代候補にセット（再タップで解除）
             if (halftimeSubPendingOut === playerId) {
                 halftimeSubPendingOut = null;
@@ -13392,6 +13538,7 @@ self.addEventListener('fetch', e => {
             inPlayer.starter = true;
             halftimeSubstitutions.push({ out: outPlayer.id, outName: outPlayer.name, in: inPlayer.id, inName: inPlayer.name });
             halftimeSubPendingOut = null;
+            htPitchSelectedId = null;
             renderHalftimeSubstitutionUI();
         }
 
