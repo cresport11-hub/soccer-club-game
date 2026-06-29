@@ -5885,25 +5885,10 @@ self.addEventListener('fetch', e => {
             const topN = Math.max(1, Math.floor(candidates.length * 0.4));
             const target = candidates[Math.floor(Math.random() * topN)];
             if (!target) return;
-            // オファー金額：放出金額の2〜3倍を目安に計算
-            const age = target.age || 24;
-            let avgAbility;
-            if (target.position === 'GK') {
-                avgAbility = target.keeper || 50;
-            } else {
-                const vals = [target.offense, target.defense, target.passing, target.shoot,
-                              target.block, target.cover, target.dribble, target.tackle]
-                              .filter(v => v !== undefined);
-                avgAbility = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 50;
-            }
-            const ageFactor = age >= 24 && age <= 29 ? 1.2
-                            : age >= 30 && age <= 32 ? 1.0
-                            : age >= 33 ? 0.7
-                            : 0.85;
-            const skillBonus = (target.skills && target.skills.length > 0) ? target.skills.length * 15000 : 0;
-            const releaseValue = Math.floor((target.level * 15000 + avgAbility * 500) * ageFactor + skillBonus);
-            const mult = 2.0 + Math.random() * 1.0; // 2.0〜3.0倍
-            const offerFee = Math.ceil(releaseValue * mult / 10000) * 10000;
+            // オファー金額：移籍市場金額（transferFee）の1〜1.5倍
+            const baseFee = calcTransferFee(target, gameData.league || 5);
+            const mult = 1.0 + Math.random() * 0.5; // 1.0〜1.5倍
+            const offerFee = Math.ceil(baseFee * mult / 10000) * 10000;
             // オファークラブ名
             const otherClubs = gameData.leagueStandings
                 ? gameData.leagueStandings.filter(t => t.name !== gameData.clubName)
