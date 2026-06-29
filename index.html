@@ -12731,6 +12731,23 @@ self.addEventListener('fetch', e => {
 
         function executeMatch() {
             if (!pendingMatch || matchExecuting) return;
+            // スタメンチェック
+            const _checkStarters = gameData.players.filter(p => p.starter && p.injury !== 'heavy');
+            if (_checkStarters.length !== 11) {
+                showNotification('スタメンが11名である必要があります（重症の選手は出場できません）');
+                return;
+            }
+            const _checkFormation = formations[gameData.formation];
+            if (_checkFormation) {
+                const _fw = _checkStarters.filter(p => p.position === 'FW').length;
+                const _mf = _checkStarters.filter(p => p.position === 'MF').length;
+                const _df = _checkStarters.filter(p => p.position === 'DF').length;
+                const _gk = _checkStarters.filter(p => p.position === 'GK').length;
+                if (_fw !== _checkFormation.fw || _mf !== _checkFormation.mf || _df !== _checkFormation.df || _gk !== 1) {
+                    showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
+                    return;
+                }
+            }
             matchExecuting = true;
             playBGM('match'); // 試合BGM開始
             // pendingMatchをローカル変数に保存し、即座にnullにして二重実行を防止
