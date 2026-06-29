@@ -15752,9 +15752,30 @@ self.addEventListener('fetch', e => {
             const round = cup.rounds[roundIdx];
             if (!round || round.done) return;
             if (matchIdx >= round.triggerMatch) {
-                // 自クラブが敗退済みの場合は非プレイヤー試合を自動シミュレート
+                // 自クラブが敗退済みの場合は該当ラウンドのみ自動シミュレート（次ラウンドは次のtriggerMatchまで待つ）
                 if (cup.eliminated) {
-                    simulateRemainingCupRounds();
+                    // このラウンドの未実施試合を全てシミュレート
+                    const winners = [];
+                    round.matches.forEach(match => {
+                        if (!match.played) {
+                            const result = simulateCupMatch(match.home, match.away);
+                            match.result = result;
+                            match.played = true;
+                        }
+                        winners.push(match.result.winner);
+                    });
+                    round.done = true;
+                    cup.currentRound++;
+                    if (cup.currentRound < cup.rounds.length) {
+                        cup.rounds[cup.currentRound].matches = generateNextCupRound(winners);
+                        // 次ラウンドの通知
+                        const nextRound = cup.rounds[cup.currentRound];
+                        setTimeout(() => showNotification('🏆 ジャパンカップ ' + round.name + ' が終了しました。'), 800);
+                    } else {
+                        // 全ラウンド終了 → 優勝チーム決定
+                        cup.winner = winners[0];
+                        setTimeout(() => showNotification('🏆 ジャパンカップ優勝: ' + cup.winner), 800);
+                    }
                     return;
                 }
                 cup.pendingRound = true;
