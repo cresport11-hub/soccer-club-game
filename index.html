@@ -9235,6 +9235,7 @@ self.addEventListener('fetch', e => {
                     <div class="bench-stat">${statStr} 疲${p.fatigue||0}</div>
                     ${benchCondHtml}
                     ${p.injury === 'heavy' ? '<div style="font-size:8px;color:#ef5350;font-weight:700;">重症(' + (p.injuryRecovery || 0) + '節)</div>' : p.injury === 'light' ? '<div style="font-size:8px;color:#FF6B6B;font-weight:700;">軽傷</div>' : ''}
+                    ${(gameData.suspended && gameData.suspended[p.id]) ? '<div style="font-size:8px;color:#FF7043;font-weight:700;">出場停止</div>' : ''}
                     ${benchSkillHtml}
                 </div>`;
             }).join('');
@@ -9487,13 +9488,13 @@ self.addEventListener('fetch', e => {
                                 : '攻' + getPlayerAttack(p) + ' / 守' + getPlayerDefense(p) + ' / <span style="color:' + ((p.fatigue||0) >= 90 ? '#ef5350' : (p.fatigue||0) >= 75 ? '#ff7043' : (p.fatigue||0) >= 50 ? '#ffa726' : 'rgba(255,255,255,0.6)') + '">疲労 ' + (p.fatigue||0) + '</span>'}
                         </div>
                         ${benchSkillChips}
-                        ${p.injury === 'heavy' ? '<div class="injury-badge">重症(' + (p.injuryRecovery || 0) + '節)</div>' : p.injury === 'light' ? '<div class="injury-badge">軽傷</div>' : ''}
+                                                ${p.injury === 'heavy' ? '<div class="injury-badge">重症(' + (p.injuryRecovery || 0) + '節)</div>' : p.injury === 'light' ? '<div class="injury-badge">軽傷</div>' : ''}
+                        ${(gameData.suspended && gameData.suspended[p.id]) ? '<div class="injury-badge" style="background:#FF7043;">出場停止</div>' : ''}
                         ${conditionBadgeHtml(p)}
                         ${fatigueBadgeHtml(p)}
                     </div>`;
                 }).join('');
         }
-
         // ① スタメン画面でも体調を表示するrenderPlayerCard
         function renderPlayerCard(player, formation) {
             const isValid = isPlayerValidForFormation(player, formation);
