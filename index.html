@@ -5026,6 +5026,8 @@ self.addEventListener('fetch', e => {
                 if (!gameData.notificationLog) gameData.notificationLog = [];
                 // 細分化ポジションの補完（旧セーブデータ対応）
                 if (gameData.players) initSubPositions(gameData.players);
+                // 移籍市場キャッシュ済み選手にも副ポジを補完
+                if (gameData.transferMarket) initSubPositions(gameData.transferMarket);
                 // カップ戦データの後方互換補完（旧セーブデータ対応）
                 if (!gameData.cup) {
                     // セーブデータにカップ戦データがない場合、現在のシーズンに対応したカップ戦を初期化
