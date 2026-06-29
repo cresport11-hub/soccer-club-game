@@ -14320,14 +14320,35 @@ self.addEventListener('fetch', e => {
                     <span>${getTeamWithEmblem(opponent, 20)}</span>
                 </div>`;
 
+                                // 得点者リスト生成
+                let scorerHtml = '';
+                if (myScore > 0 || oppScore > 0) {
+                    // 自クラブ得点者（goalEventsから集計）
+                    const scorerMap = {};
+                    (goalEvents || []).forEach(e => {
+                        if (!scorerMap[e.playerName]) scorerMap[e.playerName] = 0;
+                        scorerMap[e.playerName]++;
+                    });
+                    const scorerList = Object.entries(scorerMap).map(([name, cnt]) => cnt > 1 ? name + '×' + cnt : name);
+                    const myScorersText = scorerList.length > 0 ? scorerList.join('、') : (myScore > 0 ? '（不明）' : '');
+                    scorerHtml = `<div style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1); font-size:11px;">`
+                        + `<div style="color:rgba(255,255,255,0.45); font-weight:bold; margin-bottom:5px; letter-spacing:0.5px;">⚽ 得点者</div>`;
+                    if (myScore > 0) {
+                        scorerHtml += `<div style="display:flex; gap:6px; margin-bottom:3px;"><span style="color:#4CAF50; font-weight:bold; min-width:80px;">${gameData.clubName}</span><span style="color:rgba(255,255,255,0.8);">${myScorersText}</span></div>`;
+                    }
+                    if (oppScore > 0) {
+                        scorerHtml += `<div style="display:flex; gap:6px;"><span style="color:rgba(255,255,255,0.55); font-weight:bold; min-width:80px;">${opponent.name}</span><span style="color:rgba(255,255,255,0.6);">（相手得点）</span></div>`;
+                    }
+                    scorerHtml += `</div>`;
+                }
                 const statsHtml = statsHeader
+                    + scorerHtml
                     + statsRow('保持率', myPoss, oppPoss, 100, '', true)
                     + statsRow('シュート', myShots, oppShots, Math.max(myShots, oppShots, 1), '', false)
                     + statsRow('枠内シュート', myOnTarget, oppOnTarget, Math.max(myOnTarget, oppOnTarget, 1), '', false)
                     + statsRow('走行距離', myKm, oppKm, Math.max(parseFloat(myKm), parseFloat(oppKm), 1), 'km', false)
                     + statsRow('FK', myFk, oppFk, Math.max(myFk, oppFk, 1), '', false)
                     + statsRow('CK', myCk, oppCk, Math.max(myCk, oppCk, 1), '', false);
-
                 document.getElementById('matchStatsContent').innerHTML = statsHtml;
 
                 // シーズン統計を更新
