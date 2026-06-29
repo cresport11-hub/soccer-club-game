@@ -13465,7 +13465,7 @@ self.addEventListener('fetch', e => {
                 const abilityLine = p.position === 'GK' ? 'GK:' + (p.keeper || 0) : '攻' + getPlayerAttack(p) + ' 守' + getPlayerDefense(p);
                 const borderColor = canSub ? 'rgba(129,199,132,0.6)' : 'rgba(255,255,255,0.2)';
                 const bgColor = canSub ? 'rgba(129,199,132,0.08)' : 'rgba(255,255,255,0.03)';
-                return '<div class="pitch-bench-card" style="border-color:' + borderColor + ';background:' + bgColor + ';" onclick="htBenchClick('' + p.id + '')">' +
+                return '<div class="pitch-bench-card" style="border-color:' + borderColor + ';background:' + bgColor + ';" onclick="htBenchClick(\'' + p.id + '\')">' +
                     '<div class="bench-pos">' + getSubPos(p) + (p.subPosition2 ? '<span style="font-size:8px;opacity:0.6;">/ ' + p.subPosition2 + '</span>' : '') + ' ' + ssBadge + injBadge + '</div>' +
                     '<div class="bench-name">' + p.name + '</div>' +
                     '<div class="bench-stat">' + abilityLine + ' 疲' + fat + '</div>' +
