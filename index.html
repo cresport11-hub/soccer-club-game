@@ -12737,6 +12737,7 @@ self.addEventListener('fetch', e => {
             // カード処理用配列（前半ハイライト生成より前に初期化が必要）
             const cardMessages = [];
             const cardEvents = []; // ハイライト用（{min, html, color} オブジェクト配列）
+            const goalEvents = []; // 得点者記録用（{playerId, playerName} 配列）
             const injuryEvents = []; // 試合中怪我イベント（{min, html, playerId, playerName} オブジェクト配列）
             const firstHalfInjuredIds = new Set(); // 前半に試合中怪我した選手IDセット
             const yourOff = getFormationAdjustedOffense(starters);
@@ -13184,7 +13185,7 @@ self.addEventListener('fetch', e => {
             htPitchSelectedId = null;
 
             // 前半ハイライト生成
-            const firstHalfHighlights = generateMatchHighlights(myScore, oppScore, opponent, starters, specialEvents, true, null, null, cardEvents, injuryEvents, myAttackRatio);
+            const firstHalfHighlights = generateMatchHighlights(myScore, oppScore, opponent, starters, specialEvents, true, null, null, cardEvents, injuryEvents, myAttackRatio, goalEvents);
 
             // ハーフタイムモーダルに前半情報を表示
             document.getElementById('halftimeOpponent').innerHTML = 'vs ' + getTeamWithEmblem(opponent, 20);
@@ -14195,7 +14196,7 @@ self.addEventListener('fetch', e => {
 
             // 後半ハイライト生成（前半・後半合併）
             // 試合終了コメントは最終合計スコアで判定するため、myScore/oppScore（合計）を渡す
-            const secondHalfHighlights = generateMatchHighlights(myScore, oppScore, opponent, starters, specialEvents2, false, myScore2, oppScore2, cardEvents, htInjuryEvents, myAttackRatio2);
+            const secondHalfHighlights = generateMatchHighlights(myScore, oppScore, opponent, starters, specialEvents2, false, myScore2, oppScore2, cardEvents, htInjuryEvents, myAttackRatio2, goalEvents);
             const fullHighlights = secondHalfHighlights;
 
             // 試合結果モーダルに表示
@@ -14335,7 +14336,7 @@ self.addEventListener('fetch', e => {
                     starters
                 });
                 // 選手採点を計算・保存（コンディション変化も適用）
-                _lastMatchRatings = calcPlayerRatings(starters, myScore, oppScore, myShots, oppShots, cardEvents);
+                _lastMatchRatings = calcPlayerRatings(starters, myScore, oppScore, myShots, oppShots, cardEvents, goalEvents);
                 applyRatingConditionChange(_lastMatchRatings);
                 // 採点ボタンをリセット（次試合まで非表示）
                 const _ratingBtnDiv = document.getElementById('playerRatingBtnDiv');
@@ -14404,7 +14405,7 @@ self.addEventListener('fetch', e => {
             renderGame();
         }
 
-        function generateMatchHighlights(myScore, oppScore, opponent, starters, specialEvents, isFirstHalf = false, halfMyScore = null, halfOppScore = null, allCardEvents = [], allInjuryEvents = [], myAttackRatio = 1.0) {
+        function generateMatchHighlights(myScore, oppScore, opponent, starters, specialEvents, isFirstHalf = false, halfMyScore = null, halfOppScore = null, allCardEvents = [], allInjuryEvents = [], myAttackRatio = 1.0, allGoalEvents = []) {
             // myScore/oppScore: 試合終了コメント判定用（後半呼び出し時は合計スコア）
             // halfMyScore/halfOppScore: ゴールイベント数の生成に使う当該ハーフのスコア（後半のみ）
             // specialEventsはオブジェクト { varEvents, fkEvents, pkEvents } または配列として渡される
@@ -14420,8 +14421,10 @@ self.addEventListener('fetch', e => {
                 // FKイベント
                 fkEvents.forEach(ev => {
                     if (ev.side === 'my' && ev.kicker) {
-                        if (ev.success) specialMsgArray.push(`<span data-score-goal="my"></span>🎯 <b>フリーキック</b> — <b>${ev.kicker.name}</b> が直接FK成功！ゴール！（シュート: ${ev.kicker.shoot || 50}）`);
-                        else specialMsgArray.push(`🎯 <b>フリーキック</b> — <b>${ev.kicker.name}</b> のFKはキーパーに弾かれる。（シュート: ${ev.kicker.shoot || 50}）`);
+                        if (ev.success) {
+                            specialMsgArray.push(`<span data-score-goal="my"></span>🎯 <b>フリーキック</b> — <b>${ev.kicker.name}</b> が直接FK成功！ゴール！（シュート: ${ev.kicker.shoot || 50}）`);
+                            if (ev.kicker.id) allGoalEvents.push({ playerId: ev.kicker.id, playerName: ev.kicker.name });
+                        } else specialMsgArray.push(`🎯 <b>フリーキック</b> — <b>${ev.kicker.name}</b> のFKはキーパーに弾かれる。（シュート: ${ev.kicker.shoot || 50}）`);
                     } else if (ev.side === 'opp') {
                         if (ev.success) specialMsgArray.push('<span data-score-goal="opp"></span>⚠️ <b>相手フリーキック</b> — 相手のFKが直接ゴール！');
                         else specialMsgArray.push('🛡️ <b>相手フリーキック</b> — 相手のFKはキーパーがセーブ！');
@@ -14430,11 +14433,13 @@ self.addEventListener('fetch', e => {
                 // PKイベント
                 pkEvents.forEach(ev => {
                     if (ev.side === 'my' && ev.kicker) {
-                        if (ev.success) specialMsgArray.push(`<span data-score-goal="my"></span>⚡ <b>PK獲得</b> — <b>${ev.kicker.name}</b> がPKを冷静に決める！ゴール！（シュート: ${ev.kicker.shoot || 50}）`);
-                        else specialMsgArray.push(`⚡ <b>PK失敗</b> — <b>${ev.kicker.name}</b> のPKはキーパーに阻まれる！（シュート: ${ev.kicker.shoot || 50}）`);
+                        if (ev.success) {
+                            specialMsgArray.push(`<span data-score-goal="my"></span>⚡ <b>PK獲得</b> — <b>${ev.kicker.name}</b> がPKを冷静に決める！ゴール！（シュート: ${ev.kicker.shoot || 50}）`);
+                            if (ev.kicker.id) allGoalEvents.push({ playerId: ev.kicker.id, playerName: ev.kicker.name });
+                        } else specialMsgArray.push(`⚡ <b>PK失敗</b> — <b>${ev.kicker.name}</b> のPKはキーパーに阻まれる！（シュート: ${ev.kicker.shoot || 50}）`);
                     } else if (ev.side === 'opp') {
-                        if (ev.success) specialMsgArray.push('<span data-score-goal="opp"></span>⚠️ <b>相手PK</b> — 相手にPKを決められる！');
-                        else specialMsgArray.push('🧤 <b>相手PK</b> — キーパーがPKをセーブ！ピンチを救う！');
+                        if (ev.success) specialMsgArray.push('<span data-score-goal="opp"></span>⚠️ <b>相手 PK</b> — 相手にPKを決められる！');
+                        else specialMsgArray.push('🧤 <b>相手 PK</b> — キーパーがPKをセーブ！ピンチを救う！');
                     }
                 });
             } else if (Array.isArray(specialEvents)) {
@@ -14847,6 +14852,8 @@ self.addEventListener('fetch', e => {
                     const typeTemplates = goalTemplatesByType[goalType];
                     const tmpl = typeTemplates[Math.floor(Math.random() * typeTemplates.length)];
                     lines.push(`<span data-score-goal="my"></span>⏱️ <span style="color:#FFD700;">${half}</span> ${tmpl(scorerPlayer.name)}`);
+                    // 得点者をgoalEventsに記録
+                    if (scorerPlayer.id) allGoalEvents.push({ playerId: scorerPlayer.id, playerName: scorerPlayer.name });
                     // コンディション表示（好調・絶好調の場合）
                     const cond = scorerPlayer.condition !== undefined ? scorerPlayer.condition : 2;
                     if (cond >= 4) lines.push(`  ✨ <b>${scorerPlayer.name}</b> は絶好調！今日は別格の輝きを放つ。`);
@@ -15102,7 +15109,7 @@ self.addEventListener('fetch', e => {
         // 試合後に格納される採点データ
         let _lastMatchRatings = null;
 
-        function calcPlayerRatings(starters, myScore, oppScore, myShots, oppShots, cardEvents) {
+        function calcPlayerRatings(starters, myScore, oppScore, myShots, oppShots, cardEvents, goalEvents) {
             const won  = myScore > oppScore;
             const drew = myScore === oppScore;
             const lost = myScore < oppScore;
@@ -15135,11 +15142,12 @@ self.addEventListener('fetch', e => {
                     base = 6.0;
                     const sv = (p.shoot || 50) / 100;
                     base += sv * 0.5;
-                    // 得点数に応じてボーナス（FW全体で分配）
-                    const fwCount = starters.filter(x => x.position === 'FW').length || 1;
-                    base += (myScore / fwCount) * 0.5;
                 }
-
+                // 個人得点数に応じた加点（全ポジション共通）
+                const _personalGoals = (goalEvents || []).filter(e => e.playerId === p.id).length;
+                if (_personalGoals === 1) base += 1.0;
+                else if (_personalGoals === 2) base += 2.0;
+                else if (_personalGoals >= 3) base += 3.5; // ハットトリック以上
                 // 勝敗ボーナス
                 if (won)  base += 0.4;
                 if (drew) base += 0.1;
@@ -15170,7 +15178,7 @@ self.addEventListener('fetch', e => {
                 base = Math.round(base * 2) / 2;
 
                 // 短評コメント生成
-                const comment = generateRatingComment(p, base, myScore, oppScore, cleanSheet, _hasRed, _hasYellow);
+                const comment = generateRatingComment(p, base, myScore, oppScore, cleanSheet, _hasRed, _hasYellow, _personalGoals);
 
                 ratings.push({ player: p, score: base, comment });
             });
@@ -15188,10 +15196,15 @@ self.addEventListener('fetch', e => {
             return ratings;
         }
 
-        function generateRatingComment(p, score, myScore, oppScore, cleanSheet, hasRed, hasYellow) {
+        function generateRatingComment(p, score, myScore, oppScore, cleanSheet, hasRed, hasYellow, goalCount) {
+            goalCount = goalCount || 0;
             // カードによる短評上書き
             if (hasRed)    return 'レッドカードで退場。チームに多大な迷惑をかけた';
             if (hasYellow) return 'イエローカードを受けた。自制が求められる';
+            // 得点数による短評上書き
+            if (goalCount >= 3) return 'ハットトリック達成！今日のヒーロー。歴史に刻まれる活躍だった';
+            if (goalCount === 2) return '2ゴールの大活躍！決定力を高いレベルで発揮した';
+            if (goalCount === 1) return 'ゴールを決めた！局面を決定する仕事をした';
             const pos = p.position;
             const won = myScore > oppScore;
             const lost = myScore < oppScore;
