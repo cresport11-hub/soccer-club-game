@@ -5280,6 +5280,9 @@ self.addEventListener('fetch', e => {
                 player.tackle  = Math.max(1, Math.min(99, baseTackle  + getRandomAbility(-8, 12)));
             }
 
+            // 細分化ポジション設定
+            player.subPosition = subPositionArg ? subPositionArg : MAIN_TO_DEFAULT_SUB[position] || position;
+            player.subPosition2 = (subPosition2Arg !== undefined) ? subPosition2Arg : null;
             player.salary = calculatePlayerSalary(player);
             return player;
         }
@@ -5396,9 +5399,9 @@ self.addEventListener('fetch', e => {
             const level = 1 + Math.floor(Math.random() * 5); // Lv1〜5
 
             const player = { name, position, age, level, skills: [] };
-            // 細分化ポジション設定（引数で指定されていれば使用、なければデフォルト）
-            player.subPosition = subPositionArg ? subPositionArg : MAIN_TO_DEFAULT_SUB[position] || position;
-            player.subPosition2 = (subPosition2Arg !== undefined) ? subPosition2Arg : null;
+            // 細分化ポジション設定（createRivalPlayerは外部から別途設定するのでデフォルト値のみ）
+            player.subPosition = MAIN_TO_DEFAULT_SUB[position] || position;
+            player.subPosition2 = null;
 
             // ポジション別のステータス補正（得意+高め、不得意-低め）
             // high=得意ステータスの加算幅, low=不得意ステータスの減算幅
