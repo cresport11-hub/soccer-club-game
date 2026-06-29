@@ -4600,11 +4600,11 @@ self.addEventListener('fetch', e => {
                 if (!p.subPosition) {
                     p.subPosition = MAIN_TO_DEFAULT_SUB[p.position] || p.position;
                 }
-                if (p.subPosition2 === undefined) {
-                    // 既存選手に副ポジを確率的に付与（50%）
+                // subPosition2がundefinedまたはnullの場合は強制再配布（70%）
+                if (p.subPosition2 === undefined || p.subPosition2 === null) {
                     const sp = p.subPosition;
                     const combos = VALID_POS_COMBOS.filter(c => c[0] === sp && c[1] !== null);
-                    p.subPosition2 = (combos.length > 0 && Math.random() < 0.60)
+                    p.subPosition2 = (combos.length > 0 && Math.random() < 0.70)
                         ? combos[Math.floor(Math.random() * combos.length)][1]
                         : null;
                 }
@@ -5317,7 +5317,7 @@ self.addEventListener('fetch', e => {
                 const randomAge = getRandomAbility(18, 29);
                 // 副ポジをVALID_POS_COMBOSから確率的に付与（50%）
                 const initCombos = VALID_POS_COMBOS.filter(c => c[0] === def.subPos && c[1] !== null);
-                const initSubPos2 = (initCombos.length > 0 && Math.random() < 0.60)
+                const initSubPos2 = (initCombos.length > 0 && Math.random() < 0.70)
                     ? initCombos[Math.floor(Math.random() * initCombos.length)][1]
                     : null;
                 gameData.players.push(createPlayer(def.name, def.pos, def.starter, null, randomAge, def.subPos, initSubPos2));
@@ -5513,7 +5513,7 @@ self.addEventListener('fetch', e => {
                 p.subPosition = sp;
                 // 副ポジをVALID_POS_COMBOSから確率的に付与（60%）
                 const rivalCombos = VALID_POS_COMBOS.filter(c => c[0] === sp && c[1] !== null);
-                p.subPosition2 = (rivalCombos.length > 0 && Math.random() < 0.60)
+                p.subPosition2 = (rivalCombos.length > 0 && Math.random() < 0.70)
                     ? rivalCombos[Math.floor(Math.random() * rivalCombos.length)][1]
                     : null;
                 p.id = 'rival_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 7);
@@ -11554,7 +11554,7 @@ self.addEventListener('fetch', e => {
                 // 副ポジをVALID_POS_COMBOSから確率的に付与
                 const specialCombos = VALID_POS_COMBOS.filter(c => c[0] === subPos && c[1] !== null);
                 let subPos2 = null;
-                if (specialCombos.length > 0 && Math.random() < 0.60) {
+                if (specialCombos.length > 0 && Math.random() < 0.70) {
                     subPos2 = specialCombos[Math.floor(Math.random() * specialCombos.length)][1];
                 }
 
@@ -11698,7 +11698,7 @@ self.addEventListener('fetch', e => {
                 const combos = VALID_POS_COMBOS.filter(c => c[0] === sp && c[1] !== null);
                 if (combos.length === 0) return null;
                 // 60%の確率で副ポジを付与
-                if (Math.random() < 0.60) {
+                if (Math.random() < 0.70) {
                     return combos[Math.floor(Math.random() * combos.length)][1];
                 }
                 return null;
