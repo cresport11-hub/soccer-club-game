@@ -2517,7 +2517,7 @@ self.addEventListener('fetch', e => {
                     <!-- 選手獲得 -->
                     <div id="help-recruit" class="card" style="margin-top:16px;">
                         <div class="card-title">👤 選手獲得の内容</div>
-                        <p style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:12px;">選手獲得タブでは通常獲得（4種）と名声消費の特別補強・スカウトが利用できます。選手数の上限は<strong style="color:#FFD700;">30名</strong>です。</p>
+                        <p style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:12px;">選手獲得タブでは通常獲得（4種）と名声消費の特別補強・スカウトが利用できます。選手数の上限は<strong style="color:#FFD700;">32名</strong>です。</p>
                         <table style="width:100%; border-collapse:collapse; font-size:13px; margin-bottom:14px;">
                             <tr style="background:rgba(255,255,255,0.08);">
                                 <td style="padding:6px 8px; font-weight:bold; color:#FFD700; width:36%;">種別</td>
@@ -6032,7 +6032,7 @@ self.addEventListener('fetch', e => {
             if (!gameData.transferMarket) return;
             const p = gameData.transferMarket.find(pl => pl.id === playerId);
             if (!p) return;
-            if (gameData.players.length >= 30) { showNotification('選手数が上限（30名）に達しています'); return; }
+            if (gameData.players.length >= 32) { showNotification('選手数が上限（32名）に達しています'); return; }
             // 監督スキル: transferDiscountを移籍金に反映
             const _mseTr = getManagerSkillEffects();
             const trDiscount = _mseTr.transferDiscount || 0;
@@ -6082,7 +6082,7 @@ self.addEventListener('fetch', e => {
             if (!gameData.transferMarket) return;
             const p = gameData.transferMarket.find(pl => pl.id === playerId);
             if (!p) return;
-            if (gameData.players.length >= 30) { showNotification('選手数が上限（30名）に達しています'); return; }
+            if (gameData.players.length >= 32) { showNotification('選手数が上限（32名）に達しています'); return; }
             if ((gameData.fame || 0) < p.loanFame) { showNotification('名声が不足しています（必要: ⭐' + p.loanFame + '）'); return; }
             if (!confirm(p.name + ' を期限付き移籍（レンタル）しますか？\n名声コスト: ⭐' + p.loanFame + '\nシーズン終了時に返却されます')) return;
             gameData.fame -= p.loanFame;
@@ -11463,8 +11463,8 @@ self.addEventListener('fetch', e => {
         let recruitCandidates = [];
 
         function openRecruitPanel(category) {
-            if (gameData.players.length >= 30) {
-                showNotification('選手数が上限（30名）に達しています');
+            if (gameData.players.length >= 32) {
+                showNotification('選手数が上限（32名）に達しています');
                 return;
             }
             const costs = { rookie: 100000, mid: 200000, veteran: 150000 };
@@ -11533,8 +11533,8 @@ self.addEventListener('fetch', e => {
 
         function signRecruitedPlayer(index) {
             if (currentRecruitCategory === null) return;
-            if (gameData.players.length >= 30) {
-                showNotification('選手数が上限（30名）に達しています');
+            if (gameData.players.length >= 32) {
+                showNotification('選手数が上限（32名）に達しています');
                 return;
             }
             const costs = { rookie: 100000, mid: 200000, veteran: 150000 };
@@ -11586,8 +11586,8 @@ self.addEventListener('fetch', e => {
         }
 
         function openSpecialRecruit(fameCost) {
-            if (gameData.players.length >= 30) {
-                showNotification('選手数が上限（30名）に達しています');
+            if (gameData.players.length >= 32) {
+                showNotification('選手数が上限（32名）に達しています');
                 return;
             }
             if (gameData.fame < fameCost) {
@@ -11754,8 +11754,8 @@ self.addEventListener('fetch', e => {
         let scoutCandidates = [];
 
         function openScoutRecruit() {
-            if (gameData.players.length >= 30) {
-                showNotification('選手数が上限（30名）に達しています');
+            if (gameData.players.length >= 32) {
+                showNotification('選手数が上限（32名）に達しています');
                 return;
             }
             const fameCost = 100;
@@ -11873,8 +11873,8 @@ self.addEventListener('fetch', e => {
         }
 
         function signScoutPlayer(index) {
-            if (gameData.players.length >= 30) {
-                showNotification('選手数が上限（30名）に達しています');
+            if (gameData.players.length >= 32) {
+                showNotification('選手数が上限（32名）に達しています');
                 return;
             }
             const scoutCost = 150000;
@@ -11895,8 +11895,8 @@ self.addEventListener('fetch', e => {
         }
 
         function signSpecialPlayer(index) {
-            if (gameData.players.length >= 30) {
-                showNotification('選手数が上限（30名）に達しています');
+            if (gameData.players.length >= 32) {
+                showNotification('選手数が上限（32名）に達しています');
                 return;
             }
             if (gameData.fame < specialRecruitFameCost) {
@@ -16627,8 +16627,8 @@ self.addEventListener('fetch', e => {
         }
 
         function openPlayerModal() {
-            if (gameData.players.length >= 30) {
-                showNotification('選手数が上限（30名）に達しています');
+            if (gameData.players.length >= 32) {
+                showNotification('選手数が上限（32名）に達しています');
                 return;
             }
             document.getElementById('playerModal').classList.add('active');
@@ -16653,8 +16653,8 @@ self.addEventListener('fetch', e => {
                 return;
             }
 
-            if (gameData.players.length >= 30) {
-                showNotification('選手数が上限（30名）に達しています');
+            if (gameData.players.length >= 32) {
+                showNotification('選手数が上限（32名）に達しています');
                 return;
             }
 
