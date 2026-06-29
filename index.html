@@ -8967,7 +8967,7 @@ self.addEventListener('fetch', e => {
                     <div class="player-card ${p.starter ? 'starter' : ''} ${p.injury ? 'injured' : ''}" onclick="showPlayerDetail('${p.id}')">
                         <button class="player-action-btn" onclick="releasePlayer('${p.id}', event)">放出</button>
                         <div class="player-name">${p.name}</div>
-                        <div class="player-position">${getSubPos(p)} Lv${p.level}/${p.maxLevel} ${p.age !== undefined ? p.age + '歳' : ''}</div>
+                        <div class="player-position">${getSubPos(p)}${p.subPosition2 ? '<span style="color:rgba(255,255,255,0.55);font-size:10px;"> / ' + p.subPosition2 + '</span>' : ''} Lv${p.level}/${p.maxLevel} ${p.age !== undefined ? p.age + '歳' : ''}</div>
                         <div class="player-stats">
                             <div>${p.position === 'GK' ? 'GK ' + p.keeper : '攻' + getPlayerAttack(p) + ' / 守' + getPlayerDefense(p)}</div>
                             <div style="color:${(p.fatigue||0) >= 90 ? '#ef5350' : (p.fatigue||0) >= 75 ? '#ff7043' : (p.fatigue||0) >= 50 ? '#ffa726' : 'rgba(255,255,255,0.6)'}">疲労 ${p.fatigue||0}</div>
@@ -9191,7 +9191,7 @@ self.addEventListener('fetch', e => {
                 return `<div class="pitch-bench-card${isSelected ? ' selected-source' : ''}" 
                     style="border-color:${borderColor};" 
                     onclick="onPitchBenchClick('${p.id}')">
-                    <div class="bench-pos">${getSubPos(p)}${isStarter ? ' ★' : ''}</div>
+                    <div class="bench-pos">${getSubPos(p)}${p.subPosition2 ? '<span style="font-size:8px;opacity:0.6;">/ ' + p.subPosition2 + '</span>' : ''}${isStarter ? ' ★' : ''}</div>
                     <div class="bench-name">${p.name}</div>
                     <div class="bench-stat">${statStr} 疲${p.fatigue||0}</div>
                     ${benchCondHtml}
@@ -9441,7 +9441,7 @@ self.addEventListener('fetch', e => {
                     return `
                     <div class="player-card ${p.injury ? 'injured' : ''}" onclick="toggleStarter('${p.id}')">
                         <div class="player-name">${p.name}</div>
-                        <div class="player-position">${getSubPos(p)} ${p.age !== undefined ? p.age + '歳' : ''}</div>
+                        <div class="player-position">${getSubPos(p)}${p.subPosition2 ? '<span style="color:rgba(255,255,255,0.55);font-size:10px;"> / ' + p.subPosition2 + '</span>' : ''} ${p.age !== undefined ? p.age + '歳' : ''}</div>
                         <div style="font-size: 11px; color: rgba(255,255,255,0.6);">
                             ${p.position === 'GK'
                                 ? 'GK ' + p.keeper + ' / <span style="color:' + ((p.fatigue||0) >= 90 ? '#ef5350' : (p.fatigue||0) >= 75 ? '#ff7043' : (p.fatigue||0) >= 50 ? '#ffa726' : 'rgba(255,255,255,0.6)') + '">疲労 ' + (p.fatigue||0) + '</span>'
@@ -9471,7 +9471,7 @@ self.addEventListener('fetch', e => {
                 <div class="player-card ${player.starter ? 'starter' : ''} ${!isValid ? 'invalid' : ''} ${player.injury ? 'injured' : ''}" onclick="toggleStarter('${player.id}')" style="position:relative;">
                     ${player.starter ? '<div class="starter-badge" style="position:absolute; top:6px; right:6px;">スタメン</div>' : ''}
                     <div class="player-name">${player.name}</div>
-                    <div class="player-position">${getSubPos(player)} ${player.age !== undefined ? player.age + '歳' : ''}</div>
+                    <div class="player-position">${getSubPos(player)}${player.subPosition2 ? '<span style="color:rgba(255,255,255,0.55);font-size:10px;"> / ' + player.subPosition2 + '</span>' : ''} ${player.age !== undefined ? player.age + '歳' : ''}</div>
                     <div style="font-size: 11px; color: rgba(255,255,255,0.6);">
                         ${player.position === 'GK'
                             ? 'GK ' + player.keeper + ' / <span style="color:' + ((player.fatigue||0) >= 90 ? '#ef5350' : (player.fatigue||0) >= 75 ? '#ff7043' : (player.fatigue||0) >= 50 ? '#ffa726' : 'rgba(255,255,255,0.6)') + '">疲労 ' + (player.fatigue||0) + '</span>'
