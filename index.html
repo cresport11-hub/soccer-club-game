@@ -6394,7 +6394,7 @@ self.addEventListener('fetch', e => {
                     else if (item.avg < 6.0) ratingColor = '#EF9A9A';
                     const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : (idx + 1) + '.';
                     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
-                        <span style="font-size:13px;">${medal} ${p.name} <span style="font-size:11px;color:rgba(255,255,255,0.5);">(${p.position})</span></span>
+                        <span style="font-size:13px;">${medal} ${p.name} <span style="font-size:11px;color:rgba(255,255,255,0.5);">(${getSubPos(p)})</span></span>
                         <span style="display:flex;align-items:center;gap:8px;">
                             <span style="font-size:11px;color:rgba(255,255,255,0.4);">${item.count}試合</span>
                             <span style="font-weight:700;font-size:16px;color:${ratingColor};">${item.avg.toFixed(2)}</span>
@@ -8967,7 +8967,7 @@ self.addEventListener('fetch', e => {
                     <div class="player-card ${p.starter ? 'starter' : ''} ${p.injury ? 'injured' : ''}" onclick="showPlayerDetail('${p.id}')">
                         <button class="player-action-btn" onclick="releasePlayer('${p.id}', event)">放出</button>
                         <div class="player-name">${p.name}</div>
-                        <div class="player-position">${p.position} Lv${p.level}/${p.maxLevel} ${p.age !== undefined ? p.age + '歳' : ''}</div>
+                        <div class="player-position">${getSubPos(p)} Lv${p.level}/${p.maxLevel} ${p.age !== undefined ? p.age + '歳' : ''}</div>
                         <div class="player-stats">
                             <div>${p.position === 'GK' ? 'GK ' + p.keeper : '攻' + getPlayerAttack(p) + ' / 守' + getPlayerDefense(p)}</div>
                             <div style="color:${(p.fatigue||0) >= 90 ? '#ef5350' : (p.fatigue||0) >= 75 ? '#ff7043' : (p.fatigue||0) >= 50 ? '#ffa726' : 'rgba(255,255,255,0.6)'}">疲労 ${p.fatigue||0}</div>
@@ -9191,7 +9191,7 @@ self.addEventListener('fetch', e => {
                 return `<div class="pitch-bench-card${isSelected ? ' selected-source' : ''}" 
                     style="border-color:${borderColor};" 
                     onclick="onPitchBenchClick('${p.id}')">
-                    <div class="bench-pos">${p.position}${isStarter ? ' ★' : ''}</div>
+                    <div class="bench-pos">${getSubPos(p)}${isStarter ? ' ★' : ''}</div>
                     <div class="bench-name">${p.name}</div>
                     <div class="bench-stat">${statStr} 疲${p.fatigue||0}</div>
                     ${benchCondHtml}
@@ -9441,7 +9441,7 @@ self.addEventListener('fetch', e => {
                     return `
                     <div class="player-card ${p.injury ? 'injured' : ''}" onclick="toggleStarter('${p.id}')">
                         <div class="player-name">${p.name}</div>
-                        <div class="player-position">${p.position} ${p.age !== undefined ? p.age + '歳' : ''}</div>
+                        <div class="player-position">${getSubPos(p)} ${p.age !== undefined ? p.age + '歳' : ''}</div>
                         <div style="font-size: 11px; color: rgba(255,255,255,0.6);">
                             ${p.position === 'GK'
                                 ? 'GK ' + p.keeper + ' / <span style="color:' + ((p.fatigue||0) >= 90 ? '#ef5350' : (p.fatigue||0) >= 75 ? '#ff7043' : (p.fatigue||0) >= 50 ? '#ffa726' : 'rgba(255,255,255,0.6)') + '">疲労 ' + (p.fatigue||0) + '</span>'
@@ -9471,7 +9471,7 @@ self.addEventListener('fetch', e => {
                 <div class="player-card ${player.starter ? 'starter' : ''} ${!isValid ? 'invalid' : ''} ${player.injury ? 'injured' : ''}" onclick="toggleStarter('${player.id}')" style="position:relative;">
                     ${player.starter ? '<div class="starter-badge" style="position:absolute; top:6px; right:6px;">スタメン</div>' : ''}
                     <div class="player-name">${player.name}</div>
-                    <div class="player-position">${player.position} ${player.age !== undefined ? player.age + '歳' : ''}</div>
+                    <div class="player-position">${getSubPos(player)} ${player.age !== undefined ? player.age + '歳' : ''}</div>
                     <div style="font-size: 11px; color: rgba(255,255,255,0.6);">
                         ${player.position === 'GK'
                             ? 'GK ' + player.keeper + ' / <span style="color:' + ((player.fatigue||0) >= 90 ? '#ef5350' : (player.fatigue||0) >= 75 ? '#ff7043' : (player.fatigue||0) >= 50 ? '#ffa726' : 'rgba(255,255,255,0.6)') + '">疲労 ' + (player.fatigue||0) + '</span>'
@@ -10497,7 +10497,7 @@ self.addEventListener('fetch', e => {
                         const expPct = p.level >= p.maxLevel ? 100 : Math.min(100, Math.round(exp / expNeeded * 100));
                         const expLabel = p.level >= p.maxLevel ? 'MAX' : `EXP ${exp}/${expNeeded}(${expPct}%)`;
                         return `<button class="btn btn-primary" onclick="doSoloTraining('${p.id}')" style="text-align:left; padding:10px 14px; font-size:13px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15);">
-                            <strong>${p.name}</strong> <span style="font-size:11px; opacity:0.7;">${p.position} Lv${p.level}/${p.maxLevel}${injLabel}</span>
+                            <strong>${p.name}</strong> <span style="font-size:11px; opacity:0.7;">${getSubPos(p)} Lv${p.level}/${p.maxLevel}${injLabel}</span>
                             <span style="float:right; font-size:11px; color:#f0e68c;">疲労:${p.fatigue || 0} ${expLabel}</span>
                         </button>`;
                     }).join('');
@@ -12116,7 +12116,7 @@ self.addEventListener('fetch', e => {
                 else if (fat >= 75) { fatigueLabel = '疲弊'; fatigueColor = '#e53935'; }
                 else if (fat >= 50) { fatigueLabel = '疲労'; fatigueColor = '#ef6c00'; }
                 return `<div style="background:rgba(255,255,255,0.06); border-radius:6px; padding:4px 7px; font-size:10px; border:1px solid rgba(255,255,255,0.1);">
-                    <span style="color:rgba(255,255,255,0.8); font-weight:700;">${p.position}</span>
+                    <span style="color:rgba(255,255,255,0.8); font-weight:700;">${getSubPos(p)}</span>
                     <span style="color:rgba(255,255,255,0.6); margin:0 3px;">${p.name}</span>
                     <span style="color:${condColor}; font-size:9px;">${condLabel}</span>
                     ${fatigueLabel ? `<span style="color:${fatigueColor}; font-size:9px; margin-left:3px;">💤${fatigueLabel}(${fat})</span>` : ''}
@@ -13244,7 +13244,7 @@ self.addEventListener('fetch', e => {
                     : `攻${getPlayerAttack(p)} 守${getPlayerDefense(p)}`;
                 return `<div onclick="halftimeSelectOut('${p.id}')" style="cursor:pointer; padding:6px 8px; border-radius:8px; font-size:11px; border:1px solid ${isPendingOut ? '#FFD700' : 'rgba(255,255,255,0.2)'}; background:${isPendingOut ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.05)'}; min-width:72px; text-align:center; line-height:1.6;">
                     <div style="font-weight:700; font-size:12px; color:${isPendingOut ? '#FFD700' : '#fff'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
-                    <div style="font-size:10px; color:rgba(255,255,255,0.5);">${p.position}${injBadge}</div>
+                    <div style="font-size:10px; color:rgba(255,255,255,0.5);">${getSubPos(p)}${injBadge}</div>
                     <div style="font-size:10px; color:rgba(255,255,255,0.75);">${abilityLine}</div>
                     <div style="font-size:10px;"><span style="color:${fatigueColor}">疲${fat}</span> <span style="color:${condColor};">${condText}</span></div>
                 </div>`;
@@ -13267,7 +13267,7 @@ self.addEventListener('fetch', e => {
                         : `攻${getPlayerAttack(p)} 守${getPlayerDefense(p)}`;
                     return `<div onclick="halftimeSelectIn('${p.id}')" style="cursor:pointer; padding:6px 8px; border-radius:8px; font-size:11px; border:1px solid ${canSub ? 'rgba(129,199,132,0.5)' : 'rgba(255,255,255,0.15)'}; background:${canSub ? 'rgba(129,199,132,0.08)' : 'rgba(255,255,255,0.03)'}; min-width:72px; text-align:center; line-height:1.6;">
                         <div style="font-weight:700; font-size:12px; color:#81C784; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
-                        <div style="font-size:10px; color:rgba(255,255,255,0.5);">${p.position}${injBadge2}${ssBadge}</div>
+                        <div style="font-size:10px; color:rgba(255,255,255,0.5);">${getSubPos(p)}${injBadge2}${ssBadge}</div>
                         <div style="font-size:10px; color:rgba(255,255,255,0.75);">${abilityLine2}</div>
                         <div style="font-size:10px;"><span style="color:${fatigueColor2}">疲${fat2}</span> <span style="color:${condColor2};">${condText2}</span></div>
                     </div>`;
