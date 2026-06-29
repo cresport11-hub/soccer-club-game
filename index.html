@@ -4601,7 +4601,12 @@ self.addEventListener('fetch', e => {
                     p.subPosition = MAIN_TO_DEFAULT_SUB[p.position] || p.position;
                 }
                 if (p.subPosition2 === undefined) {
-                    p.subPosition2 = null;
+                    // 既存選手に副ポジを確率的に付与（50%）
+                    const sp = p.subPosition;
+                    const combos = VALID_POS_COMBOS.filter(c => c[0] === sp && c[1] !== null);
+                    p.subPosition2 = (combos.length > 0 && Math.random() < 0.50)
+                        ? combos[Math.floor(Math.random() * combos.length)][1]
+                        : null;
                 }
             });
         }
@@ -5307,7 +5312,12 @@ self.addEventListener('fetch', e => {
             playerDefs.forEach(def => {
                 // ゲーム開始時の選手は18〜29歳のランダム年齢
                 const randomAge = getRandomAbility(18, 29);
-                gameData.players.push(createPlayer(def.name, def.pos, def.starter, null, randomAge, def.subPos));
+                // 副ポジをVALID_POS_COMBOSから確率的に付与（50%）
+                const initCombos = VALID_POS_COMBOS.filter(c => c[0] === def.subPos && c[1] !== null);
+                const initSubPos2 = (initCombos.length > 0 && Math.random() < 0.50)
+                    ? initCombos[Math.floor(Math.random() * initCombos.length)][1]
+                    : null;
+                gameData.players.push(createPlayer(def.name, def.pos, def.starter, null, randomAge, def.subPos, initSubPos2));
             });
         }
 
@@ -5498,7 +5508,11 @@ self.addEventListener('fetch', e => {
                 const sp = subSubPositions[idx] || MAIN_TO_DEFAULT_SUB[pos] || pos;
                 const p = createRivalPlayer(pos, leagueLevel);
                 p.subPosition = sp;
-                p.subPosition2 = null;
+                // 副ポジをVALID_POS_COMBOSから確率的に付与（60%）
+                const rivalCombos = VALID_POS_COMBOS.filter(c => c[0] === sp && c[1] !== null);
+                p.subPosition2 = (rivalCombos.length > 0 && Math.random() < 0.60)
+                    ? rivalCombos[Math.floor(Math.random() * rivalCombos.length)][1]
+                    : null;
                 p.id = 'rival_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 7);
                 return p;
             });
@@ -11534,7 +11548,14 @@ self.addEventListener('fetch', e => {
                 const maxLvMax = Math.round(10 - ageFactor * 6); // 19歳:10, 30歳:4
                 const maxLv = maxLvMin + Math.floor(Math.random() * (maxLvMax - maxLvMin + 1));
 
-                const p = createPlayer(generateRecruitName(), pos, false, maxLv, age, subPos);
+                // 副ポジをVALID_POS_COMBOSから確率的に付与
+                const specialCombos = VALID_POS_COMBOS.filter(c => c[0] === subPos && c[1] !== null);
+                let subPos2 = null;
+                if (specialCombos.length > 0 && Math.random() < 0.60) {
+                    subPos2 = specialCombos[Math.floor(Math.random() * specialCombos.length)][1];
+                }
+
+                const p = createPlayer(generateRecruitName(), pos, false, maxLv, age, subPos, subPos2);
 
                 // 年齢に応じた能力値ボーナス: 19歳→+0〜3, 30歳→+10〜15
                 const bonusMin = Math.round(ageFactor * 10); // 19歳:0, 30歳:10
@@ -11669,12 +11690,24 @@ self.addEventListener('fetch', e => {
             // 細分化ポジションでスカウト候補を生成
             const scoutSubPositions = ['CF','WG','CH','SH','DH','CB','SB','GK'];
             scoutCandidates = [];
+            // VALID_POS_COMBOSから副ポジ候補を取得するヘルパー
+            function pickSubPos2ForScout(sp) {
+                const combos = VALID_POS_COMBOS.filter(c => c[0] === sp && c[1] !== null);
+                if (combos.length === 0) return null;
+                // 60%の確率で副ポジを付与
+                if (Math.random() < 0.60) {
+                    return combos[Math.floor(Math.random() * combos.length)][1];
+                }
+                return null;
+            }
+
             for (let i = 0; i < 3; i++) {
                 const subPos = scoutSubPositions[Math.floor(Math.random() * scoutSubPositions.length)];
                 const pos = SUB_TO_MAIN[subPos] || 'MF';
+                const subPos2 = pickSubPos2ForScout(subPos);
                 const age = Math.floor(Math.random() * 5) + 16; // 16〜20歳
                 const maxLv = Math.floor(Math.random() * 7) + 8; // 8〜14
-                const p = createPlayer(generateRecruitName(), pos, false, maxLv, age, subPos);
+                const p = createPlayer(generateRecruitName(), pos, false, maxLv, age, subPos, subPos2);
                 // 若手なので能力値は低めに補正
                 const penalty = -10;
                 if (pos === 'GK') {
