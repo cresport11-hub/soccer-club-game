@@ -9182,9 +9182,15 @@ self.addEventListener('fetch', e => {
                     const slotInjuryHtml = player.injury === 'light'
                         ? '<div style="font-size:7px;color:#FF6B6B;font-weight:700;margin-top:1px;">軽傷</div>'
                         : '';
+                    const playerSubPos = getSubPos(player);
+                    const playerSubPos2 = getSubPos2(player);
+                    const playerSubPosColor = SUB_POS_COLOR[playerSubPos] || '#fff';
+                    const playerSubPosHtml = '<div style="font-size:7px;font-weight:700;color:' + playerSubPosColor + ';margin-top:1px;">' +
+                        playerSubPos + (playerSubPos2 ? '<span style="opacity:0.65;">/'+playerSubPos2+'</span>' : '') + '</div>';
                     el.innerHTML =
                         '<div class="slot-pos" style="color:' + slotPosColor + '">' + slotSubLabel + '</div>' +
                         '<div class="slot-name">' + player.name + '</div>' +
+                        playerSubPosHtml +
                         '<div class="slot-stat">' + statStr + '</div>' +
                         '<div style="font-size:7px;color:' + fatigueColor + ';margin-top:1px;">疲' + fatigue + '</div>' +
                         slotCondHtml +
@@ -13482,9 +13488,15 @@ self.addEventListener('fetch', e => {
                     const isInMatchInjured = halftimeState && halftimeState.firstHalfInjuredIds && halftimeState.firstHalfInjuredIds.includes(player.id);
                     const injMatchHtml = isInMatchInjured ? '<div style="font-size:6px;color:#ef5350;font-weight:700;">負傷</div>' : '';
                     const subbedOutHtml = isSubbedOut ? '<div style="font-size:6px;color:#81C784;font-weight:700;">交代済</div>' : '';
+                    const htPlayerSubPos = getSubPos(player);
+                    const htPlayerSubPos2 = getSubPos2(player);
+                    const htPlayerSubPosColor = SUB_POS_COLOR[htPlayerSubPos] || '#fff';
+                    const htPlayerSubPosHtml = '<div style="font-size:7px;font-weight:700;color:' + htPlayerSubPosColor + ';margin-top:1px;">' +
+                        htPlayerSubPos + (htPlayerSubPos2 ? '<span style="opacity:0.65;">/'+htPlayerSubPos2+'</span>' : '') + '</div>';
                     el.innerHTML =
                         '<div class="slot-pos" style="color:' + slotPosColor + '">' + slotSubLabel + '</div>' +
                         '<div class="slot-name">' + player.name + '</div>' +
+                        htPlayerSubPosHtml +
                         '<div class="slot-stat">' + statStr + '</div>' +
                         '<div style="font-size:7px;color:' + fatigueColor + ';margin-top:1px;">疲' + fat + '</div>' +
                         injHtml + injMatchHtml + subbedOutHtml;
