@@ -2584,7 +2584,26 @@ self.addEventListener('fetch', e => {
                                 <span style="color:#ffa726;">■疲労（31～60）</span>：能力-10%、怪我確率×1.2 &nbsp;
                                 <span style="color:#ff7043;">■疲弊（61～80）</span>：能力-25%、怪我確率×1.5 &nbsp;
                                 <span style="color:#ef5350;">■消耗尽（81～）</span>：能力-40%、怪我確率×2.0<br>
-                                <span style="color:#80DEEA;">■交代の活用</span>：ハーフタイムに疲労の高い選手を交代することで能力低下を防げる。「スーパーサブ（Bランク）」スキルを持つ選手は後半途中出場時に能力+10%のボーナスを発揮する（スタメン起用時は-5%）。</td>
+                                <span style="color:#80DEEA;">■交代の活用</span>：ハーフタイムに疲労の高い選手を交代することで能力低下を防げる。「スーパーサブ（Bランク）」スキルを持つ選手は後半途中出場時に能力+10%のボーナスを発揮する（スタメン起用時は-5%）。<br>
+                                <span style="color:#80DEEA;">■ハーフタイム交代時の疲労</span>：
+                                <table style="width:100%; border-collapse:collapse; margin-top:4px; font-size:12px;">
+                                  <tr style="background:rgba(255,255,255,0.05);">
+                                    <td style="padding:4px 8px; color:#FFD700;">フル出場（交代なし）</td>
+                                    <td style="padding:4px 8px;">通常蓄積（+8〜+13）</td>
+                                  </tr>
+                                  <tr>
+                                    <td style="padding:4px 8px; color:#FFD700;">交代アウト（前半のみ出場）</td>
+                                    <td style="padding:4px 8px;">通常の<strong>半分</strong>蓄積（+4〜+7）</td>
+                                  </tr>
+                                  <tr style="background:rgba(255,255,255,0.05);">
+                                    <td style="padding:4px 8px; color:#FFD700;">交代イン（後半のみ出場）</td>
+                                    <td style="padding:4px 8px;">通常の<strong>半分</strong>蓄積（+4〜+7）</td>
+                                  </tr>
+                                  <tr>
+                                    <td style="padding:4px 8px; color:#FFD700;">ベンチ（出場なし）</td>
+                                    <td style="padding:4px 8px;">通常回復（−20）</td>
+                                  </tr>
+                                </table></td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
                                 <td style="padding:8px 6px; color:#FFD700; font-weight:bold;">ケガ / 重傷</td>
