@@ -8807,6 +8807,9 @@ self.addEventListener('fetch', e => {
             gameData.campUsedThisWeek = true;
             saveGame();
             renderCampTab();
+            // スキル特訓タブの名声表示を更新
+            const stFameEl = document.getElementById('skillTrainingFame');
+            if (stFameEl) stFameEl.textContent = gameData.fame || 0;
 
             const sk = SKILLS[skillId];
             const rankColors = { S:'#FF5252', A:'#FFB300', B:'#66BB6A' };
