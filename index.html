@@ -5234,7 +5234,7 @@ self.addEventListener('fetch', e => {
             return Math.floor((Math.floor(baseSalary) + ageSalaryBonus + skillSalaryBonus) * 0.8);
         }
 
-        function createPlayer(name, position, starter = false, maxLevel = null, age = null) {
+        function createPlayer(name, position, starter = false, maxLevel = null, age = null, subPositionArg = null, subPosition2Arg = undefined) {
             if (maxLevel === null) {
                 maxLevel = getRandomAbility(2, 9);
             }
@@ -5397,8 +5397,8 @@ self.addEventListener('fetch', e => {
 
             const player = { name, position, age, level, skills: [] };
             // 細分化ポジション設定（引数で指定されていれば使用、なければデフォルト）
-            player.subPosition = (typeof arguments[5] !== 'undefined' && arguments[5]) ? arguments[5] : MAIN_TO_DEFAULT_SUB[position] || position;
-            player.subPosition2 = (typeof arguments[6] !== 'undefined') ? arguments[6] : null;
+            player.subPosition = subPositionArg ? subPositionArg : MAIN_TO_DEFAULT_SUB[position] || position;
+            player.subPosition2 = (subPosition2Arg !== undefined) ? subPosition2Arg : null;
 
             // ポジション別のステータス補正（得意+高め、不得意-低め）
             // high=得意ステータスの加算幅, low=不得意ステータスの減算幅
