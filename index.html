@@ -3458,13 +3458,25 @@ self.addEventListener('fetch', e => {
                 <input type="text" id="playerName" placeholder="例: 田中太郎">
             </div>
             <div class="input-group">
-                <label>ポジション</label>
-                <select id="playerPosition">
-                    <option value="FW">FW (フォワード)</option>
-                    <option value="MF">MF (ミッドフィールダー)</option>
-                    <option value="DF">DF (ディフェンダー)</option>
-                    <option value="GK">GK (ゴールキーパー)</option>
-                </select>
+                 <label>ポジション</label>
+                 <select id="playerPosition">
+                     <optgroup label="フォワード">
+                         <option value="CF">CF (センターフォワード)</option>
+                         <option value="WG">WG (ウィング)</option>
+                     </optgroup>
+                     <optgroup label="ミッドフィールダー">
+                         <option value="CH">CH (セントラルハーフ)</option>
+                         <option value="SH">SH (サイドハーフ)</option>
+                         <option value="DH">DH (ディフェンシブハーフ)</option>
+                     </optgroup>
+                     <optgroup label="ディフェンダー">
+                         <option value="CB">CB (センターバック)</option>
+                         <option value="SB">SB (サイドバック)</option>
+                     </optgroup>
+                     <optgroup label="ゴールキーパー">
+                         <option value="GK">GK (ゴールキーパー)</option>
+                     </optgroup>
+                 </select>
             </div>
             <div class="input-group">
                 <label>獲得費用: <span id="playerCost">10000</span> 円</label>
@@ -16340,7 +16352,15 @@ self.addEventListener('fetch', e => {
             // ユース昇格：16〜17歳でLv上限は低め・能力値は低い
             const youthAge = Math.floor(Math.random() * 2) + 16; // 16-17
             const youthMaxLv = Math.floor(Math.random() * 12) + 8; // 8〜19
-            const youthPlayer = createPlayer(name, position, false, youthMaxLv, youthAge);
+            // 細分化ポジションの判定（選択値がCF/WG/CH/SH/DH/CB/SB/GKの場合はそのまま使用）
+            const youthSubPos = SUB_TO_MAIN[position] ? position : (MAIN_TO_DEFAULT_SUB[position] || position);
+            const youthMainPos = SUB_TO_MAIN[youthSubPos] || position;
+            // 副ポジは必ずVALID_POS_COMBOSから付与（組み合わせがない場合のみnull）
+            const youthCombos = VALID_POS_COMBOS.filter(c => c[0] === youthSubPos && c[1] !== null);
+            const youthSubPos2 = youthCombos.length > 0
+                ? youthCombos[Math.floor(Math.random() * youthCombos.length)][1]
+                : null;
+            const youthPlayer = createPlayer(name, youthMainPos, false, youthMaxLv, youthAge, youthSubPos, youthSubPos2);
             // 能力値を低めに補正
             if (youthPlayer.position === 'GK') {
                 youthPlayer.keeper = Math.max(1, youthPlayer.keeper - 15);
