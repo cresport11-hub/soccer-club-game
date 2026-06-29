@@ -9188,7 +9188,7 @@ self.addEventListener('fetch', e => {
                 return `<div class="pitch-bench-card${isSelected ? ' selected-source' : ''}" 
                     style="border-color:${borderColor};" 
                     onclick="onPitchBenchClick('${p.id}')">
-                    <div class="bench-pos">${getSubPos(p)}${p.subPosition2 ? '<span style="font-size:8px;opacity:0.6;">/ ' + p.subPosition2 + '</span>' : ''}${isStarter ? ' ★' : ''}</div>
+                    <div class="bench-pos">${getSubPos(p)}${p.subPosition2 ? '<span style="font-size:8px;opacity:0.6;">/ ' + p.subPosition2 + '</span>' : ''}</div>
                     <div class="bench-name">${p.name}</div>
                     <div class="bench-stat">${statStr} 疲${p.fatigue||0}</div>
                     ${benchCondHtml}
