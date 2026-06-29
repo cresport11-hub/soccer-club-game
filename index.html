@@ -15427,6 +15427,7 @@ self.addEventListener('fetch', e => {
             if (gameData._pendingNotifications && gameData._pendingNotifications.length > 0) {
                 const msgs = gameData._pendingNotifications.splice(0);
                 msgs.forEach((msg, i) => setTimeout(() => showNotification(msg), 400 + i * 600));
+                saveGame(); // オファーデータを確実に保存
             }
             // カップ戦トリガーチェック（リーグ試合後にカップ戦ラウンドが発生するか確認）
             checkCupTrigger();
