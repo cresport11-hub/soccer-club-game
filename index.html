@@ -3960,21 +3960,21 @@ self.addEventListener('fetch', e => {
                 name: 'ダイヤモンドの堅守',
                 icon: '🛡️',
                 desc: '防御力90超のDFを保有',
-                check: (gd) => gd.players.some(p => p.position === 'DF' && p.defense >= 90)
+                check: (gd) => gd.players.some(p => (p.position === 'DF') && p.defense >= 90)
             },
             {
                 id: 'midfield_wizard',
                 name: 'ファンタジスタ',
                 icon: '✨',
                 desc: '攻撃・防御各80超のMFを保有',
-                check: (gd) => gd.players.some(p => p.position === 'MF' && p.offense >= 80 && p.defense >= 80)
+                check: (gd) => gd.players.some(p => (p.position === 'MF') && p.offense >= 80 && p.defense >= 80)
             },
             {
                 id: 'ace_fw',
                 name: 'エース誕生',
                 icon: '🔥',
                 desc: '攻撃力90以上のFWを保有',
-                check: (gd) => gd.players.some(p => p.position === 'FW' && p.offense >= 90)
+                check: (gd) => gd.players.some(p => (p.position === 'FW') && p.offense >= 90)
             },
             // ── 追加トロフィー20個 ──
             {
@@ -4443,6 +4443,169 @@ self.addEventListener('fetch', e => {
             adaptability:   { name: '適応力',             pos: ['FW','MF','DF','GK'], desc: 'アウェー試合時のペナルティを -50%軽減' }
         };
 
+
+        /* ===== ポジション細分化B 定数・ヘルパー ===== */
+        // 細分化ポジション一覧
+        const SUB_POSITIONS = ['CF','WG','CH','SH','DH','CB','SB'];
+
+        // 細分化ポジション → 大枠ポジション
+        const SUB_TO_MAIN = {
+            CF: 'FW', WG: 'FW',
+            CH: 'MF', SH: 'MF', DH: 'MF',
+            CB: 'DF', SB: 'DF',
+            GK: 'GK'
+        };
+
+        // 大枠ポジション → デフォルト細分化ポジション（既存選手変換用）
+        const MAIN_TO_DEFAULT_SUB = {
+            FW: 'CF',
+            MF: 'CH',
+            DF: 'CB',
+            GK: 'GK'
+        };
+
+        // 有効な（主ポジ, 副ポジ）の組み合わせ
+        // 副ポジなしは [pos, null] として扱う
+        const VALID_POS_COMBOS = [
+            ['CF', null],
+            ['CF', 'WG'],
+            ['CH', null],
+            ['CH', 'DH'],
+            ['CH', 'SH'],
+            ['WG', 'SH'],
+            ['CB', null],
+            ['CB', 'SB'],
+            ['SB', null],
+            ['SB', 'SH'],
+            ['GK', null]
+        ];
+
+        // 細分化ポジション表示色
+        const SUB_POS_COLOR = {
+            CF: '#EF9A9A', WG: '#FFAB91',
+            CH: '#81C784', SH: '#80DEEA', DH: '#A5D6A7',
+            CB: '#64B5F6', SB: '#90CAF9',
+            GK: '#FFB74D'
+        };
+
+        // 細分化ポジション表示ラベル（日本語）
+        const SUB_POS_LABEL = {
+            CF: 'CF', WG: 'WG',
+            CH: 'CH', SH: 'SH', DH: 'DH',
+            CB: 'CB', SB: 'SB',
+            GK: 'GK'
+        };
+
+        // 細分化ポジション別のステータス重み（OF計算用）
+        // 各ポジションのoffense/shoot/passing/dribble重み
+        const SUB_POS_OF_WEIGHT = {
+            CF: { offense:0.8, shoot:1.5, passing:0.5, dribble:0.8 },
+            WG: { offense:0.8, shoot:1.0, passing:0.6, dribble:1.5 },
+            CH: { offense:0.9, shoot:0.7, passing:1.3, dribble:0.5 },
+            SH: { offense:1.0, shoot:0.8, passing:1.1, dribble:1.0 },
+            DH: { offense:0.5, shoot:0.3, passing:1.0, dribble:0.3 },
+            CB: { offense:0.2, shoot:0.1, passing:0.3, dribble:0.1 },
+            SB: { offense:0.4, shoot:0.2, passing:0.6, dribble:0.5 },
+            GK: { offense:0,   shoot:0,   passing:0,   dribble:0   }
+        };
+
+        // 細分化ポジション別のステータス重み（DF計算用）
+        // 各ポジションのdefense/block/cover/tackle重み
+        const SUB_POS_DF_WEIGHT = {
+            CF: { defense:0.2, block:0.1, cover:0.1, tackle:0.1 },
+            WG: { defense:0.3, block:0.2, cover:0.2, tackle:0.2 },
+            CH: { defense:1.0, block:1.0, cover:1.0, tackle:1.0 },
+            SH: { defense:0.8, block:0.7, cover:0.7, tackle:0.8 },
+            DH: { defense:1.3, block:1.2, cover:1.2, tackle:1.2 },
+            CB: { defense:0.7, block:1.5, cover:1.3, tackle:1.0 },
+            SB: { defense:0.7, block:1.0, cover:1.0, tackle:1.3 },
+            GK: { defense:0,   block:0,   cover:0,   tackle:0   }
+        };
+
+        // フォーメーション×スロットidx → 細分化ポジションのマッピング
+        // pos: 大枠, idx: スロット番号
+        const FORMATION_SUB_POS = {
+            '4-4-2': {
+                FW: ['CF','CF'],
+                MF: ['SH','CH','CH','SH'],
+                DF: ['SB','CB','CB','SB']
+            },
+            '4-3-3': {
+                FW: ['CF','WG','WG'],
+                MF: ['CH','CH','CH'],
+                DF: ['SB','CB','CB','SB']
+            },
+            '3-5-2': {
+                FW: ['CF','CF'],
+                MF: ['CH','SH','DH','DH','SH'],
+                DF: ['CB','CB','CB']
+            },
+            '3-4-3': {
+                FW: ['WG','CF','WG'],
+                MF: ['CH','SH','SH','DH'],
+                DF: ['CB','CB','CB']
+            },
+            '3-6-1': {
+                FW: ['CF'],
+                MF: ['CH','CH','SH','SH','DH','DH'],
+                DF: ['CB','CB','CB']
+            },
+            '5-3-2': {
+                FW: ['CF','CF'],
+                MF: ['CH','CH','CH'],
+                DF: ['SB','CB','CB','CB','SB']
+            },
+            '4-5-1': {
+                FW: ['CF'],
+                MF: ['CH','SH','SH','DH','DH'],
+                DF: ['SB','CB','CB','SB']
+            },
+            '5-4-1': {
+                FW: ['CF'],
+                MF: ['SH','CH','CH','SH'],
+                DF: ['SB','CB','CB','CB','SB']
+            }
+        };
+
+        // 選手の主ポジション（細分化）を取得
+        function getSubPos(player) {
+            return player.subPosition || MAIN_TO_DEFAULT_SUB[player.position] || player.position;
+        }
+
+        // 選手の副ポジション（細分化）を取得
+        function getSubPos2(player) {
+            return player.subPosition2 || null;
+        }
+
+        // 選手がスロットの細分化ポジションに適正かどうか判定
+        // slotSubPos: スロットの細分化ポジション（FORMATION_SUB_POSから取得）
+        function isSubPosCompatible(player, slotSubPos) {
+            const sp = getSubPos(player);
+            const sp2 = getSubPos2(player);
+            return sp === slotSubPos || sp2 === slotSubPos;
+        }
+
+        // スロットキー（例: 'FW_0'）から細分化ポジションを取得
+        function getSlotSubPos(slotKey) {
+            const [pos, idxStr] = slotKey.split('_');
+            const idx = parseInt(idxStr);
+            const fm = FORMATION_SUB_POS[gameData.formation];
+            if (!fm || !fm[pos]) return pos; // フォールバック
+            return fm[pos][idx] || pos;
+        }
+
+        // 既存選手のsubPositionを初期化（セーブデータ互換）
+        function initSubPositions(players) {
+            players.forEach(p => {
+                if (!p.subPosition) {
+                    p.subPosition = MAIN_TO_DEFAULT_SUB[p.position] || p.position;
+                }
+                if (p.subPosition2 === undefined) {
+                    p.subPosition2 = null;
+                }
+            });
+        }
+
         const formations = {
             '4-4-2': { name: '4-4-2', desc: 'バランス型',         df: 4, mf: 4, fw: 2, offMod: 1.000, defMod: 1.000 },
             '4-3-3': { name: '4-3-3', desc: '攻撃的バランス', df: 4, mf: 3, fw: 3, offMod: 1.025, defMod: 0.975 },
@@ -4831,6 +4994,8 @@ self.addEventListener('fetch', e => {
                 }
                 // ログの補完（旧セーブデータ対応）
                 if (!gameData.notificationLog) gameData.notificationLog = [];
+                // 細分化ポジションの補完（旧セーブデータ対応）
+                if (gameData.players) initSubPositions(gameData.players);
                 // カップ戦データの後方互換補完（旧セーブデータ対応）
                 if (!gameData.cup) {
                     // セーブデータにカップ戦データがない場合、現在のシーズンに対応したカップ戦を初期化
@@ -5116,32 +5281,33 @@ self.addEventListener('fetch', e => {
 
         function createInitialPlayers() {
             // スタメン11人（4-4-2）＋控え7人（FW2・MF2・DF2・GK1）= 計18人
+            // 4-4-2: FW=CF,CF / MF=SH,CH,CH,SH / DF=SB,CB,CB,SB
             const playerDefs = [
                 // スタメン
-                { name: '田中 1',   pos: 'FW', starter: true },
-                { name: '鈴木 2',   pos: 'FW', starter: true },
-                { name: '高橋 3',   pos: 'MF', starter: true },
-                { name: '渡辺 4',   pos: 'MF', starter: true },
-                { name: '中村 5',   pos: 'MF', starter: true },
-                { name: '小林 6',   pos: 'MF', starter: true },
-                { name: '加藤 7',   pos: 'DF', starter: true },
-                { name: '佐藤 8',   pos: 'DF', starter: true },
-                { name: '山田 9',   pos: 'DF', starter: true },
-                { name: '佐々木 10', pos: 'DF', starter: true },
-                { name: '山本 11',  pos: 'GK', starter: true },
+                { name: '田中 1',   pos: 'FW', subPos: 'CF', starter: true },
+                { name: '鈴木 2',   pos: 'FW', subPos: 'CF', starter: true },
+                { name: '高橋 3',   pos: 'MF', subPos: 'SH', starter: true },
+                { name: '渡辺 4',   pos: 'MF', subPos: 'CH', starter: true },
+                { name: '中村 5',   pos: 'MF', subPos: 'CH', starter: true },
+                { name: '小林 6',   pos: 'MF', subPos: 'SH', starter: true },
+                { name: '加藤 7',   pos: 'DF', subPos: 'SB', starter: true },
+                { name: '佐藤 8',   pos: 'DF', subPos: 'CB', starter: true },
+                { name: '山田 9',   pos: 'DF', subPos: 'CB', starter: true },
+                { name: '佐々木 10', pos: 'DF', subPos: 'SB', starter: true },
+                { name: '山本 11',  pos: 'GK', subPos: 'GK', starter: true },
                 // 控え
-                { name: '伊藤 12',  pos: 'FW', starter: false },
-                { name: '山口 13',  pos: 'FW', starter: false },
-                { name: '木村 14',  pos: 'MF', starter: false },
-                { name: '山崎 15',  pos: 'MF', starter: false },
-                { name: '清水 16',  pos: 'DF', starter: false },
-                { name: '松本 17',  pos: 'DF', starter: false },
-                { name: '井上 18',  pos: 'GK', starter: false }
+                { name: '伊藤 12',  pos: 'FW', subPos: 'CF', starter: false },
+                { name: '山口 13',  pos: 'FW', subPos: 'WG', starter: false },
+                { name: '木村 14',  pos: 'MF', subPos: 'CH', starter: false },
+                { name: '山崎 15',  pos: 'MF', subPos: 'DH', starter: false },
+                { name: '清水 16',  pos: 'DF', subPos: 'CB', starter: false },
+                { name: '松本 17',  pos: 'DF', subPos: 'SB', starter: false },
+                { name: '井上 18',  pos: 'GK', subPos: 'GK', starter: false }
             ];
             playerDefs.forEach(def => {
                 // ゲーム開始時の選手は18〜29歳のランダム年齢
                 const randomAge = getRandomAbility(18, 29);
-                gameData.players.push(createPlayer(def.name, def.pos, def.starter, null, randomAge));
+                gameData.players.push(createPlayer(def.name, def.pos, def.starter, null, randomAge, def.subPos));
             });
         }
 
@@ -5220,6 +5386,9 @@ self.addEventListener('fetch', e => {
             const level = 1 + Math.floor(Math.random() * 5); // Lv1〜5
 
             const player = { name, position, age, level, skills: [] };
+            // 細分化ポジション設定（引数で指定されていれば使用、なければデフォルト）
+            player.subPosition = (typeof arguments[5] !== 'undefined' && arguments[5]) ? arguments[5] : MAIN_TO_DEFAULT_SUB[position] || position;
+            player.subPosition2 = (typeof arguments[6] !== 'undefined') ? arguments[6] : null;
 
             // ポジション別のステータス補正（得意+高め、不得意-低め）
             // high=得意ステータスの加算幅, low=不得意ステータスの減算幅
@@ -5228,12 +5397,22 @@ self.addEventListener('fetch', e => {
                 MF: { offense:+4,  shoot:+2,  dribble:+6,  passing:+12, defense:+4, block:0,  cover:+4,  tackle:+4  },
                 DF: { offense:-18, shoot:-22, dribble:-16, passing:0,   defense:+12, block:+14, cover:+12, tackle:+14 }
             };
+            // 細分化ポジション別のposBonus上書き
+            const subPosBonus = {
+                CF: { offense:+14, shoot:+16, dribble:+8,  passing:-2,  defense:-20, block:-24, cover:-20, tackle:-22 },
+                WG: { offense:+10, shoot:+10, dribble:+16, passing:+2,  defense:-18, block:-22, cover:-18, tackle:-20 },
+                CH: { offense:+4,  shoot:+2,  dribble:+4,  passing:+14, defense:+4,  block:0,   cover:+4,  tackle:+4  },
+                SH: { offense:+8,  shoot:+4,  dribble:+8,  passing:+10, defense:+2,  block:-2,  cover:+2,  tackle:+2  },
+                DH: { offense:-2,  shoot:-4,  dribble:0,   passing:+10, defense:+8,  block:+4,  cover:+8,  tackle:+8  },
+                CB: { offense:-20, shoot:-24, dribble:-18, passing:-2,  defense:+14, block:+16, cover:+14, tackle:+14 },
+                SB: { offense:-10, shoot:-16, dribble:-8,  passing:+4,  defense:+10, block:+10, cover:+10, tackle:+14 }
+            };
             const rnd = () => Math.floor(Math.random() * 14) - 6; // ±6のランダム
             if (position === 'GK') {
                 player.keeper = Math.max(1, Math.min(max, min + Math.floor(Math.random() * (max - min + 1))));
             } else {
                 const base = min + Math.floor(Math.random() * (max - min + 1));
-                const b = posBonus[position] || posBonus['MF'];
+                const b = subPosBonus[player.subPosition] || posBonus[position] || posBonus['MF'];
                 player.offense = Math.max(1, Math.min(max, base + b.offense + rnd()));
                 player.defense = Math.max(1, Math.min(max, base + b.defense + rnd()));
                 player.passing = Math.max(1, Math.min(max, base + b.passing + rnd()));
@@ -5290,6 +5469,12 @@ self.addEventListener('fetch', e => {
             for (let i = 0; i < fm.df; i++) positions.push('DF');
             for (let i = 0; i < fm.mf; i++) positions.push('MF');
             for (let i = 0; i < fm.fw; i++) positions.push('FW');
+            // 細分化ポジションの割り当て
+            const fmSubPos = FORMATION_SUB_POS[formationKey] || FORMATION_SUB_POS['4-4-2'];
+            const subPosQueue = ['GK'];
+            (fmSubPos.DF || []).forEach(sp => subPosQueue.push(sp));
+            (fmSubPos.MF || []).forEach(sp => subPosQueue.push(sp));
+            (fmSubPos.FW || []).forEach(sp => subPosQueue.push(sp));
             // 控え5名: GK1, DF1-2, MF1-2, FW1 (合計5名)
             // df>=4なら控えDF2名、df<=3なら控えDF1名
             const subGK = 1;
@@ -5302,8 +5487,18 @@ self.addEventListener('fetch', e => {
             for (let i = 0; i < Math.max(0, subMF); i++) subPositions.push('MF');
             for (let i = 0; i < subFW; i++) subPositions.push('FW');
             const allPositions = [...positions, ...subPositions];
+            // 控え選手の細分化ポジション（フォーメーションに合わせてランダムに割り当て）
+            const subSubPositions = [...subPosQueue];
+            for (let i = subSubPositions.length; i < allPositions.length; i++) {
+                const p2 = allPositions[i];
+                const fmSp = fmSubPos[p2] || [];
+                subSubPositions.push(fmSp.length > 0 ? fmSp[Math.floor(Math.random() * fmSp.length)] : MAIN_TO_DEFAULT_SUB[p2] || p2);
+            }
             return allPositions.map((pos, idx) => {
+                const sp = subSubPositions[idx] || MAIN_TO_DEFAULT_SUB[pos] || pos;
                 const p = createRivalPlayer(pos, leagueLevel);
+                p.subPosition = sp;
+                p.subPosition2 = null;
                 p.id = 'rival_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 7);
                 return p;
             });
@@ -5598,11 +5793,13 @@ self.addEventListener('fetch', e => {
             }
 
             // 他クラブ選手が足りない場合は架空選手で補充
+            const marketSubPosPool = ['CF','WG','CH','SH','DH','CB','SB','GK'];
             while (gameData.transferMarket.length < targetCount) {
-                const p = createRivalPlayer(
-                    ['FW','MF','DF','GK'][Math.floor(Math.random() * 4)],
-                    gameData.league
-                );
+                const mSubPos = marketSubPosPool[Math.floor(Math.random() * marketSubPosPool.length)];
+                const mPos = SUB_TO_MAIN[mSubPos] || 'MF';
+                const p = createRivalPlayer(mPos, gameData.league);
+                p.subPosition = mSubPos;
+                p.subPosition2 = null;
                 p.id = 'market_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
                 p.fromClub = gameData.leagueStandings
                     ? gameData.leagueStandings.filter(t => t.name !== gameData.clubName)[Math.floor(Math.random() * Math.max(1, gameData.leagueStandings.length - 1))].name
@@ -5719,6 +5916,7 @@ self.addEventListener('fetch', e => {
             const p = (gameData.transferMarket || []).find(pl => pl.id === playerId);
             if (!p) return;
             const posColor = { GK: '#FFB74D', DF: '#64B5F6', MF: '#81C784', FW: '#EF9A9A' };
+            const subPosColorMap = SUB_POS_COLOR;
             document.getElementById('transferDetailName').textContent = p.name;
             const skills = (p.skills && p.skills.length > 0)
                 ? p.skills.map(s => SKILLS[s] ? SKILLS[s].name : s).join('、')
@@ -5734,7 +5932,19 @@ self.addEventListener('fetch', e => {
                    <div class="ability-row"><span class="ability-label">ブロック</span><span class="ability-value">${p.block !== undefined ? p.block : '-'}</span></div>
                    <div class="ability-row"><span class="ability-label">カバー</span><span class="ability-value">${p.cover !== undefined ? p.cover : '-'}</span></div>`;
             document.getElementById('transferDetailBody').innerHTML = `
-                <div class="ability-row"><span class="ability-label">ポジション</span><span class="ability-value" style="color:${posColor[p.position]}">${p.position}</span></div>
+                <div class="ability-row"><span class="ability-label">ポジション</span><span class="ability-value" style="color:${subPosColorMap[getSubPos(p)] || posColor[p.position]}">${getSubPos(p)}${p.subPosition2 ? ' / ' + p.subPosition2 : ''}</span></div>
+                <div class="ability-row" style="align-items:flex-start;">
+                  <span class="ability-label" style="padding-top:4px;">副ポジ変更</span>
+                  <span class="ability-value">
+                    <select id="subPos2Select_${p.id}" onchange="changeSubPos2('${p.id}', this.value)"
+                      style="background:#1a3a2a;color:#fff;border:1px solid #4CAF50;border-radius:4px;padding:2px 6px;font-size:12px;">
+                      <option value="">なし</option>
+                      ${VALID_POS_COMBOS.filter(c => c[0] === getSubPos(p) && c[1]).map(c =>
+                        '<option value="' + c[1] + '"' + (p.subPosition2 === c[1] ? ' selected' : '') + '>' + c[1] + '</option>'
+                      ).join('')}
+                    </select>
+                  </span>
+                </div>
                 <div class="ability-row"><span class="ability-label">年齢</span><span class="ability-value">${p.age}歳</span></div>
                 <div class="ability-row"><span class="ability-label">所属</span><span class="ability-value">${p.fromClub}</span></div>
                 <div class="ability-row"><span class="ability-label">レベル</span><span class="ability-value">Lv${p.level} / 最大Lv${p.maxLevel || '-'}</span></div>
@@ -5925,7 +6135,7 @@ self.addEventListener('fetch', e => {
                         <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
                             <span style="font-size:18px;">📨</span>
                             <div style="flex:1;">
-                                <div style="font-size:13px; font-weight:700; cursor:pointer; text-decoration:underline; color:#90CAF9;" onclick="showPlayerDetail('${player.id}')">${player.name} <span style="color:${posColor[player.position]}; text-decoration:none;">(${player.position})</span></div>
+                                <div style="font-size:13px; font-weight:700; cursor:pointer; text-decoration:underline; color:#90CAF9;" onclick="showPlayerDetail('${player.id}')">${player.name} <span style="color:${SUB_POS_COLOR[getSubPos(player)] || posColor[player.position]}; text-decoration:none;">(${getSubPos(player)}${player.subPosition2 ? '/' + player.subPosition2 : ''})</span></div>
                                 <div style="font-size:11px; color:rgba(255,255,255,0.6);">${o.fromClub} からのオファー</div>
                             </div>
                             <div style="text-align:right;">
@@ -5955,7 +6165,7 @@ self.addEventListener('fetch', e => {
                 return `
                 <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:10px; margin-bottom:8px;">
                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                        <span style="font-size:12px; font-weight:700; color:${posColor[p.position]}; width:28px;">${p.position}</span>
+                        <span style="font-size:12px; font-weight:700; color:${SUB_POS_COLOR[getSubPos(p)] || posColor[p.position]}; width:28px;">${getSubPos(p)}</span>
                         <div style="flex:1;">
                             <div style="font-size:13px; font-weight:700; cursor:pointer; text-decoration:underline; color:#90CAF9;" onclick="showTransferPlayerDetail('${p.id}', 'market')">${p.name} <span style="font-size:11px; color:rgba(255,255,255,0.5); text-decoration:none;">${p.age}歳</span></div>
                             <div style="font-size:11px; color:rgba(255,255,255,0.5);">${p.fromClub} ・ Lv${p.level}${p.fromLeague ? ' <span style="font-size:10px;background:rgba(100,181,246,0.2);border:1px solid rgba(100,181,246,0.4);border-radius:3px;padding:0 4px;color:#90CAF9;">' + p.fromLeague + '</span>' : ''}</div>
@@ -5979,7 +6189,7 @@ self.addEventListener('fetch', e => {
             const loanedHtml = loanedPlayers.length > 0
                 ? loanedPlayers.map(p => `
                     <div style="background:rgba(100,181,246,0.1); border:1px solid rgba(100,181,246,0.3); border-radius:8px; padding:8px 10px; margin-bottom:6px; display:flex; align-items:center; gap:8px;">
-                        <span style="font-size:12px; color:${posColor[p.position]}; font-weight:700;">${p.position}</span>
+                        <span style="font-size:12px; color:${SUB_POS_COLOR[getSubPos(p)] || posColor[p.position]}; font-weight:700;">${getSubPos(p)}</span>
                         <span style="flex:1; font-size:13px;">${p.name} <span style="font-size:11px; color:rgba(255,255,255,0.5);">${p.age}歳 Lv${p.level}</span></span>
                         <span style="font-size:11px; color:#64B5F6;">レンタル中</span>
                     </div>`).join('')
@@ -6101,7 +6311,7 @@ self.addEventListener('fetch', e => {
                 .map(([id, g]) => {
                     const p = gameData.players.find(pl => pl.id === id);
                     return p ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
-                        <span style="font-size:13px;">${p.name} <span style="font-size:11px;color:rgba(255,255,255,0.5);">(${p.position})</span></span>
+                        <span style="font-size:13px;">${p.name} <span style="font-size:11px;color:rgba(255,255,255,0.5);">(${getSubPos(p)})</span></span>
                         <span style="font-weight:700;color:#FFD700;">${g}点</span></div>` : '';
                 }).join('') || '<div style="color:rgba(255,255,255,0.4);font-size:13px;">データなし</div>';
 
@@ -6112,7 +6322,7 @@ self.addEventListener('fetch', e => {
                 .map(([id, a]) => {
                     const p = gameData.players.find(pl => pl.id === id);
                     return p ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
-                        <span style="font-size:13px;">${p.name} <span style="font-size:11px;color:rgba(255,255,255,0.5);">(${p.position})</span></span>
+                        <span style="font-size:13px;">${p.name} <span style="font-size:11px;color:rgba(255,255,255,0.5);">(${getSubPos(p)})</span></span>
                         <span style="font-weight:700;color:#80DEEA;">${a}A</span></div>` : '';
                 }).join('') || '<div style="color:rgba(255,255,255,0.4);font-size:13px;">データなし</div>';
 
@@ -6123,7 +6333,7 @@ self.addEventListener('fetch', e => {
                 .map(([id, a]) => {
                     const p = gameData.players.find(pl => pl.id === id);
                     return p ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
-                        <span style="font-size:13px;">${p.name} <span style="font-size:11px;color:rgba(255,255,255,0.5);">(${p.position})</span></span>
+                        <span style="font-size:13px;">${p.name} <span style="font-size:11px;color:rgba(255,255,255,0.5);">(${getSubPos(p)})</span></span>
                         <span style="font-weight:700;color:#81C784;">${a}試合</span></div>` : '';
                 }).join('') || '<div style="color:rgba(255,255,255,0.4);font-size:13px;">データなし</div>';
 
@@ -7531,7 +7741,27 @@ self.addEventListener('fetch', e => {
         function isOutOfPosition(player, slotPos) {
             if (!slotPos) return false;
             if (player.position === 'GK' || slotPos === 'GK') return false;
-            return player.position !== slotPos;
+            // 大枠ポジションが違う場合は適正外
+            if (player.position !== slotPos) return true;
+            // 大枠が同じでも細分化ポジションが合わない場合は適正外（ペナルティ軽減版）
+            // ※ スロットの細分化ポジションはgetSlotSubPosで取得するが、
+            //   ここではslotPosしか渡されないため大枠チェックのみ行う
+            return false;
+        }
+
+        // 細分化ポジション適正外チェック（ピッチ配置時に使用）
+        function isSubPosOutOfPosition(player, slotKey) {
+            if (!slotKey) return false;
+            const slotSubPos = getSlotSubPos(slotKey);
+            if (!slotSubPos || slotSubPos === 'GK') return false;
+            const sp = getSubPos(player);
+            const sp2 = getSubPos2(player);
+            // 主ポジか副ポジが一致すれば適正内
+            if (sp === slotSubPos || sp2 === slotSubPos) return false;
+            // 大枠が同じなら軽微な適正外（ペナルティ小）
+            const mainSlot = SUB_TO_MAIN[slotSubPos] || slotSubPos;
+            if (player.position === mainSlot) return 'minor'; // 軽微
+            return true; // 完全適正外
         }
 
         function calculateTeamStrength(players, pitchAssign) {
@@ -7575,22 +7805,24 @@ self.addEventListener('fetch', e => {
             return calculateTeamStrength(gameData.players);
         }
 
-        // 選手個人の攻撃総合値（ポジション別重み付き、小数点以下切り捨て）
+        // 選手個人の攻撃総合値（細分化ポジション別重み付き、小数点以下切り捨て）
         function getPlayerAttack(p) {
             if (p.position === 'GK') return null; // GKは別項目
-            if (p.position === 'FW') return Math.floor((p.offense * 0.8 + (p.shoot || 0) * 1.5 + (p.passing || 0) * 0.5) / 2.8);
-            if (p.position === 'MF') return Math.floor((p.offense * 0.9 + (p.shoot || 0) * 0.7 + (p.passing || 0) * 1.3) / 2.9);
-            // DF: 攻撃参加小（offense主軸）
-            return Math.floor((p.offense * 1.2 + (p.passing || 0) * 0.5 + (p.shoot || 0) * 0.3) / 2.0);
+            const sp = getSubPos(p);
+            const w = SUB_POS_OF_WEIGHT[sp] || SUB_POS_OF_WEIGHT['CH'];
+            const denom = w.offense + w.shoot + w.passing;
+            if (denom < 0.1) return Math.floor(p.offense * 0.5);
+            return Math.floor((p.offense * w.offense + (p.shoot || 0) * w.shoot + (p.passing || 0) * w.passing) / denom);
         }
 
-        // 選手個人の守備総合値（ポジション別重み付き）
+        // 選手個人の守備総合値（細分化ポジション別重み付き）
         function getPlayerDefense(p) {
             if (p.position === 'GK') return null; // GKは別項目
-            if (p.position === 'DF') return Math.floor((p.defense * 0.7 + (p.tackle || 0) + (p.block || 0) * 1.1 + (p.cover || 0) * 1.1) / 3.9);
-            if (p.position === 'MF') return Math.floor(((p.defense + (p.block || 0) + (p.cover || 0)) / 3) + (p.tackle || 0) * 0.25);
-            // FW: プレッシング小（defense主軸）
-            return Math.floor((p.defense * 1.2 + (p.block || 0) * 0.5 + (p.cover || 0) * 0.3) / 2.0);
+            const sp = getSubPos(p);
+            const w = SUB_POS_DF_WEIGHT[sp] || SUB_POS_DF_WEIGHT['CH'];
+            const denom = w.defense + w.tackle + w.block + w.cover;
+            if (denom < 0.1) return Math.floor(p.defense * 0.5);
+            return Math.floor((p.defense * w.defense + (p.tackle || 0) * w.tackle + (p.block || 0) * w.block + (p.cover || 0) * w.cover) / denom);
         }
 
         function calculateOffenseStrength(players, pitchAssign) {
@@ -7621,18 +7853,22 @@ self.addEventListener('fetch', e => {
                 // FWはshoot値を主軸（重み1.5）、MFはpassing値を主軸（重み1.3）
                 // 分母をスキル重みに応じて動的に変更し、スキル持ちでも値が膨らまないよう正規化
                 let v;
-                if (p.position === 'FW') {
-                    const denomFW = 0.8 + 1.5 * shooterWeight + 0.5 * passerWeight;
-                    v = (p.offense * 0.8 + (p.shoot || 0) * 1.5 * shooterWeight + (p.passing || 0) * 0.5 * passerWeight) / denomFW + passingBonus + dribbleBonus;
-                } else {
-                    const denomMF = 0.9 + 0.7 * shooterWeight + 1.3 * passerWeight;
-                    v = (p.offense * 0.9 + (p.shoot || 0) * 0.7 * shooterWeight + (p.passing || 0) * 1.3 * passerWeight) / denomMF + passingBonus + dribbleBonus;
+                {
+                    // 細分化ポジション別重みを使用
+                    const sp = getSubPos(p);
+                    const w = SUB_POS_OF_WEIGHT[sp] || SUB_POS_OF_WEIGHT['CH'];
+                    const denomOF = w.offense + w.shoot * shooterWeight + w.passing * passerWeight;
+                    v = (p.offense * w.offense + (p.shoot || 0) * w.shoot * shooterWeight + (p.passing || 0) * w.passing * passerWeight) / Math.max(0.1, denomOF) + passingBonus + dribbleBonus;
                 }
 
-                // 適正外ポジションペナルティ: -20%
+                // 適正外ポジションペナルティ（細分化対応）
                 if (pitchAssign) {
                     const slotEntry = Object.entries(pitchAssign).find(([k, vv]) => vv === p.id);
-                    if (slotEntry && isOutOfPosition(p, slotEntry[0].split('_')[0])) v *= 0.80;
+                    if (slotEntry) {
+                        const oopResult = isSubPosOutOfPosition(p, slotEntry[0]);
+                        if (oopResult === true) v *= 0.80;       // 完全適正外: -20%
+                        else if (oopResult === 'minor') v *= 0.92; // 軽微適正外: -8%
+                    }
                 }
 
                 // 年齢補正: ピーク24〜29歳=+5%、若手〜21歳=-3%（経験不足）、ベテラン33歳〜=-5%（体力低下）
@@ -7700,10 +7936,14 @@ self.addEventListener('fetch', e => {
                     v = (p.defense + (p.block || 0) * blockWeight + (p.cover || 0) * coverWeight) / denomMFD + tackleBonus;
                 }
 
-                // 適正外ポジションペナルティ: -20%
+                // 適正外ポジションペナルティ（細分化対応）
                 if (pitchAssign) {
                     const slotEntry = Object.entries(pitchAssign).find(([k, vv]) => vv === p.id);
-                    if (slotEntry && isOutOfPosition(p, slotEntry[0].split('_')[0])) v *= 0.80;
+                    if (slotEntry) {
+                        const oopResult = isSubPosOutOfPosition(p, slotEntry[0]);
+                        if (oopResult === true) v *= 0.80;       // 完全適正外: -20%
+                        else if (oopResult === 'minor') v *= 0.92; // 軽微適正外: -8%
+                    }
                 }
 
                 // 年齢補正: ピーク24〜29歳=+5%、若手〜21歳=-3%、ベテラン33歳〜=-5%
@@ -8439,16 +8679,17 @@ self.addEventListener('fetch', e => {
             const posColors = { FW:'#ef5350', MF:'#42a5f5', DF:'#66bb6a', GK:'#ffa726' };
             inner.innerHTML = '<div style="font-size:16px;font-weight:bold;color:#4CAF50;margin-bottom:14px;">🎓 スキル獲得特訓 — 選手を選択</div>' +
                 '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Bランク⭐8(15%) / Aランク⭐15(10%) / Sランク⭐30(5%)</div>' +
-                gameData.players.map(p => {
-                    const pos = p.position || p.pos || '?';
-                    const pc = posColors[pos] || '#fff';
-                    const skills = (p.skills || []).map(id => SKILLS[id]?.name || id).join('・') || 'なし';
-                    return `<button onclick="openSkillPickModal('${p.id}')" style="display:block;width:100%;text-align:left;padding:10px 12px;margin-bottom:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:8px;color:#fff;cursor:pointer;">
-                        <span style="color:${pc};font-weight:700;font-size:12px;">${pos}</span> <strong>${p.name}</strong>
-                        <span style="font-size:11px;color:rgba(255,255,255,0.5);"> Lv${p.level||p.lv||1}</span><br>
-                        <span style="font-size:10px;color:rgba(255,255,255,0.4);">習得済: ${skills}</span>
-                    </button>`;
-                }).join('') +
+                                gameData.players.map(p => {
+                     const pos = p.position || p.pos || '?';
+                     const subPosDisp = getSubPos(p) + (p.subPosition2 ? '/' + p.subPosition2 : '');
+                     const pc = SUB_POS_COLOR[getSubPos(p)] || posColors[pos] || '#fff';
+                     const skills = (p.skills || []).map(id => SKILLS[id]?.name || id).join('・') || 'なし';
+                     return `<button onclick="openSkillPickModal('${p.id}')" style="display:block;width:100%;text-align:left;padding:10px 12px;margin-bottom:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:8px;color:#fff;cursor:pointer;">
+                         <span style="color:${pc};font-weight:700;font-size:12px;">${subPosDisp}</span> <strong>${p.name}</strong>
+                         <span style="font-size:11px;color:rgba(255,255,255,0.5);"> Lv${p.level||p.lv||1}</span><br>
+                         <span style="font-size:10px;color:rgba(255,255,255,0.4);">習得済: ${skills}</span>
+                     </button>`;
+                 }).join('') +
                 '<button onclick="document.getElementById(\'skillTrainingModal\').remove()" style="margin-top:10px;width:100%;padding:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;cursor:pointer;">キャンセル</button>';
             modal.appendChild(inner);
             document.body.appendChild(modal);
@@ -8821,22 +9062,30 @@ self.addEventListener('fetch', e => {
                     const slotCondHtml = slotCond !== 2
                         ? '<div style="font-size:7px;color:' + slotCondColors[slotCond] + ';font-weight:700;margin-top:1px;">' + slotCondLabels[slotCond] + '</div>'
                         : '';
-                    // 適正外ポジションチェック
-                    const outOfPos = isOutOfPosition(player, slot.pos);
-                    if (outOfPos) {
+                    // 適正外ポジションチェック（細分化対応）
+                    const outOfPosResult = isSubPosOutOfPosition(player, slotKey);
+                    if (outOfPosResult === true) {
                         el.style.borderColor = '#ff5252';
                         el.style.boxShadow = '0 0 6px rgba(255,82,82,0.7)';
+                    } else if (outOfPosResult === 'minor') {
+                        el.style.borderColor = '#ffa726';
+                        el.style.boxShadow = '0 0 4px rgba(255,167,38,0.5)';
                     }
-                    const outOfPosHtml = outOfPos
+                    const outOfPosHtml = outOfPosResult === true
                         ? '<div style="font-size:6px;color:#ff5252;font-weight:700;margin-top:1px;">⚠適正外(-20%)</div>'
+                        : outOfPosResult === 'minor'
+                        ? '<div style="font-size:6px;color:#ffa726;font-weight:700;margin-top:1px;">⚠少し外(-8%)</div>'
                         : '';
+                    // スロットの細分化ポジションラベル
+                    const slotSubLabel = getSlotSubPos(slotKey);
+                    const slotPosColor = SUB_POS_COLOR[slotSubLabel] || '#fff';
                     const fatigue = player.fatigue || 0;
                     const fatigueColor = fatigue >= 90 ? '#ef5350' : fatigue >= 75 ? '#ff7043' : fatigue >= 50 ? '#ffa726' : 'rgba(255,255,255,0.5)';
                     const slotInjuryHtml = player.injury === 'light'
                         ? '<div style="font-size:7px;color:#FF6B6B;font-weight:700;margin-top:1px;">軽傷</div>'
                         : '';
                     el.innerHTML =
-                        '<div class="slot-pos">' + slot.pos + '</div>' +
+                        '<div class="slot-pos" style="color:' + slotPosColor + '">' + slotSubLabel + '</div>' +
                         '<div class="slot-name">' + player.name + '</div>' +
                         '<div class="slot-stat">' + statStr + '</div>' +
                         '<div style="font-size:7px;color:' + fatigueColor + ';margin-top:1px;">疲' + fatigue + '</div>' +
@@ -8844,7 +9093,9 @@ self.addEventListener('fetch', e => {
                         slotInjuryHtml +
                         outOfPosHtml;
                 } else {
-                    el.innerHTML = '<div class="slot-pos">' + slot.pos + '</div><div class="slot-name" style="color:rgba(255,255,255,0.35);font-size:9px;">空き</div>';
+                    const emptySlotSubLabel = getSlotSubPos(slotKey);
+                    const emptySlotColor = SUB_POS_COLOR[emptySlotSubLabel] || '#fff';
+                    el.innerHTML = '<div class="slot-pos" style="color:' + emptySlotColor + '">' + emptySlotSubLabel + '</div><div class="slot-name" style="color:rgba(255,255,255,0.35);font-size:9px;">空き</div>';
                 }
 
                 el.addEventListener('click', () => onPitchSlotClick(slotKey, slot.pos));
@@ -10035,7 +10286,8 @@ self.addEventListener('fetch', e => {
 
             list.innerHTML = sorted.map(p => {
                 const pos = p.position || p.pos || '?';
-                const pc  = posColors[pos] || '#fff';
+                const subPosDisp = getSubPos(p) + (p.subPosition2 ? '/' + p.subPosition2 : '');
+                const pc  = SUB_POS_COLOR[getSubPos(p)] || posColors[pos] || '#fff';
                 const acquirable = Object.keys(SKILLS).filter(id => {
                     const sk = SKILLS[id];
                     return sk.pos.includes(pos) && !(p.skills || []).includes(id);
@@ -10047,7 +10299,7 @@ self.addEventListener('fetch', e => {
                     background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);
                     border-radius:8px;color:${canLearn ? '#fff' : 'rgba(255,255,255,0.35)'};
                     cursor:${canLearn ? 'pointer' : 'not-allowed'};">
-                    <span style="color:${pc};font-weight:700;font-size:12px;">${pos}</span>
+                    <span style="color:${pc};font-weight:700;font-size:12px;">${subPosDisp}</span>
                     <strong style="margin-left:6px;">${p.name}</strong>
                     <span style="font-size:11px;color:rgba(255,255,255,0.5);"> Lv${p.level || p.lv || 1}<span style="color:rgba(255,255,255,0.35);">/${p.maxLevel || '?'}</span></span>
                     <span style="font-size:11px;color:rgba(255,255,255,0.4);margin-left:6px;">${p.age !== undefined ? p.age + '歳' : ''}</span>
@@ -10697,7 +10949,7 @@ self.addEventListener('fetch', e => {
                     ? p.skills.map(function(s){ return '<span style="font-size:10px;background:rgba(76,175,80,0.3);border-radius:4px;padding:1px 5px;margin-left:4px;">' + (SKILLS[s] ? SKILLS[s].name : s) + '</span>'; }).join('')
                     : '';
                 listHtml += '<div onclick="showRivalPlayerDetail(' + idx + ')" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.07);cursor:pointer;' + (isStarter ? '' : 'opacity:0.65;') + '">' +
-                    '<span style="font-size:11px;font-weight:700;color:' + (posColor[p.position]||'#fff') + ';width:28px;">' + p.position + '</span>' +
+                    '<span style="font-size:11px;font-weight:700;color:' + (SUB_POS_COLOR[getSubPos(p)]||posColor[p.position]||'#fff') + ';width:28px;">' + getSubPos(p) + '</span>' +
                     '<span style="font-size:13px;flex:1;">' + p.name + '</span>' +
                     '<span style="font-size:11px;color:rgba(255,255,255,0.6);">' + (p.age||'?') + '歳</span>' +
                     '<span style="font-size:11px;color:#4CAF50;">Lv' + (p.level||1) + '</span>' +
@@ -10764,7 +11016,7 @@ self.addEventListener('fetch', e => {
                     : '';
                 const rowBg = isStarter ? '' : 'opacity:0.65;';
                 return sectionHeader + `<div onclick="showRivalPlayerDetail(${idx})" style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.08);cursor:pointer;transition:background 0.15s;${rowBg}" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=''">
-                    <span style="font-size:11px;font-weight:700;color:${posColor[p.position]};width:28px;">${p.position}</span>
+                    <span style="font-size:11px;font-weight:700;color:${SUB_POS_COLOR[getSubPos(p)]||posColor[p.position]};width:28px;">${getSubPos(p)}</span>
                     <span style="font-size:13px;flex:1;">${p.name}</span>
                     <span style="font-size:11px;color:rgba(255,255,255,0.6);">${p.age}歳</span>
                     <span style="font-size:11px;color:#4CAF50;">Lv${p.level}</span>
@@ -11171,7 +11423,7 @@ self.addEventListener('fetch', e => {
                 return `
                     <div style="flex:1; min-width:200px; background:rgba(255,255,255,0.07); border-radius:10px; padding:14px; border:1px solid rgba(255,255,255,0.15);" onclick="signRecruitedPlayer(${i})" style="cursor:pointer;">
                         <div style="font-size:14px; font-weight:bold; margin-bottom:4px;">${p.name}</div>
-                        <div style="font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:10px;">${p.position} / ${p.age}歳 / Lv上限${p.maxLevel}</div>
+                        <div style="font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:10px;">${getSubPos(p)}${p.subPosition2 ? "/" + p.subPosition2 : ""} / ${p.age}歳 / Lv上限${p.maxLevel}</div>
                         <div style="margin-bottom:8px;">${statsHtml}</div>
                         ${skillsHtml}
                         <div style="font-size:11px; color:rgba(255,255,255,0.5); margin-top:6px;">年俸: ${formatNumber(p.salary)}円</div>
@@ -11268,8 +11520,11 @@ self.addEventListener('fetch', e => {
                 return 30;
             }
 
+            // 細分化ポジションで候補生成
+            const specialSubPositions = ['CF','WG','CH','SH','DH','CB','SB','GK'];
             for (let i = 0; i < candidateCount; i++) {
-                const pos = positions[Math.floor(Math.random() * positions.length)];
+                const subPos = specialSubPositions[Math.floor(Math.random() * specialSubPositions.length)];
+                const pos = SUB_TO_MAIN[subPos] || 'MF';
                 const age = pickRecruitAge(); // 19〜30歳（若いほど出にくい）
 
                 // 年齢に応じたレベル上限: 19歳→6〜10, 30歳→1〜4
@@ -11279,7 +11534,7 @@ self.addEventListener('fetch', e => {
                 const maxLvMax = Math.round(10 - ageFactor * 6); // 19歳:10, 30歳:4
                 const maxLv = maxLvMin + Math.floor(Math.random() * (maxLvMax - maxLvMin + 1));
 
-                const p = createPlayer(generateRecruitName(), pos, false, maxLv, age);
+                const p = createPlayer(generateRecruitName(), pos, false, maxLv, age, subPos);
 
                 // 年齢に応じた能力値ボーナス: 19歳→+0〜3, 30歳→+10〜15
                 const bonusMin = Math.round(ageFactor * 10); // 19歳:0, 30歳:10
@@ -11380,7 +11635,7 @@ self.addEventListener('fetch', e => {
                 return `
                     <div style="flex:1; min-width:200px; background:rgba(255,215,0,0.06); border-radius:10px; padding:14px; border:1px solid rgba(255,215,0,0.3);" onclick="signSpecialPlayer(${i})" style="cursor:pointer;">
                         <div style="font-size:14px; font-weight:bold; margin-bottom:4px;">${p.name}</div>
-                        <div style="font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:10px;">${p.position} / ${p.age}歳 / Lv上限${p.maxLevel}</div>
+                        <div style="font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:10px;">${getSubPos(p)}${p.subPosition2 ? "/" + p.subPosition2 : ""} / ${p.age}歳 / Lv上限${p.maxLevel}</div>
                         <div style="margin-bottom:8px;">${statsHtml}</div>
                         ${skillsHtml}
                         <div style="font-size:11px; color:rgba(255,255,255,0.5); margin-top:6px;">年俸: ${formatNumber(p.salary)}円</div>
@@ -11411,13 +11666,15 @@ self.addEventListener('fetch', e => {
             gameData.fame -= fameCost;
             updateHeader();
             // 高maxLevelの若手選手（maxLv 8〜14）を候補として生成
-            const positions = ['FW','MF','DF','GK'];
+            // 細分化ポジションでスカウト候補を生成
+            const scoutSubPositions = ['CF','WG','CH','SH','DH','CB','SB','GK'];
             scoutCandidates = [];
             for (let i = 0; i < 3; i++) {
-                const pos = positions[Math.floor(Math.random() * positions.length)];
+                const subPos = scoutSubPositions[Math.floor(Math.random() * scoutSubPositions.length)];
+                const pos = SUB_TO_MAIN[subPos] || 'MF';
                 const age = Math.floor(Math.random() * 5) + 16; // 16〜20歳
                 const maxLv = Math.floor(Math.random() * 7) + 8; // 8〜14
-                const p = createPlayer(generateRecruitName(), pos, false, maxLv, age);
+                const p = createPlayer(generateRecruitName(), pos, false, maxLv, age, subPos);
                 // 若手なので能力値は低めに補正
                 const penalty = -10;
                 if (pos === 'GK') {
@@ -11488,7 +11745,7 @@ self.addEventListener('fetch', e => {
                 return `
                     <div style="flex:1; min-width:200px; background:rgba(0,200,255,0.06); border-radius:10px; padding:14px; border:1px solid rgba(0,200,255,0.25);">
                         <div style="font-size:14px; font-weight:bold; margin-bottom:4px;">${p.name}</div>
-                        <div style="font-size:12px; color:#80DEEA; margin-bottom:10px;">${p.position} / ${p.age}歳 / <strong>Lv上限${p.maxLevel}</strong></div>
+                        <div style="font-size:12px; color:#80DEEA; margin-bottom:10px;">${getSubPos(p)}${p.subPosition2 ? ' / ' + p.subPosition2 : ''} / ${p.age}歳 / <strong>Lv上限${p.maxLevel}</strong></div>
                         <div style="margin-bottom:8px;">${statsHtml}</div>
                         ${skillsHtml}
                         <div style="font-size:11px; color:rgba(255,255,255,0.5); margin-top:6px;">年俸: ${formatNumber(p.salary)}円</div>
@@ -11513,7 +11770,7 @@ self.addEventListener('fetch', e => {
                 return;
             }
             const player = scoutCandidates[index];
-            if (!confirm(player.name + '（' + player.position + ' / ' + player.age + '歳）を\n' + formatNumber(scoutCost) + '円で獲得しますか？')) return;
+            if (!confirm(player.name + '（' + getSubPos(player) + (player.subPosition2 ? '/' + player.subPosition2 : '') + ' / ' + player.age + '歳）を\n' + formatNumber(scoutCost) + '円で獲得しますか？')) return;
             gameData.money -= scoutCost;
             gameData.totalSpent = (gameData.totalSpent || 0) + scoutCost;
             gameData.players.push(player);
@@ -15359,6 +15616,15 @@ self.addEventListener('fetch', e => {
         }
 
         // ④ チームメニューからのレベルアップ（selectedPlayerDetailを正しく参照）
+        function changeSubPos2(playerId, newSubPos2) {
+            const p = gameData.players.find(pl => pl.id === playerId);
+            if (!p) return;
+            p.subPosition2 = newSubPos2 || null;
+            saveGame();
+            showNotification('副ポジションを' + (newSubPos2 || 'なし') + 'に変更しました');
+            showPlayerDetail(playerId); // 再描画
+        }
+
         function showPlayerDetail(playerId) {
             const player = gameData.players.find(p => p.id === playerId);
             if (!player) return;
@@ -16453,6 +16719,7 @@ self.addEventListener('fetch', e => {
         window.openRecruitPanel = openRecruitPanel;
         window.signPlayer = signPlayer;
         window.signRecruitedPlayer = signRecruitedPlayer;
+        window.changeSubPos2 = changeSubPos2;
         window.signScoutPlayer = signScoutPlayer;
         window.signSpecialPlayer = signSpecialPlayer;
         window.openScoutRecruit = openScoutRecruit;
