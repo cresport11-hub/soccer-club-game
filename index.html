@@ -6207,7 +6207,7 @@ self.addEventListener('fetch', e => {
                 return `
                 <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:10px; margin-bottom:8px;">
                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                        <span style="font-size:12px; font-weight:700; color:${SUB_POS_COLOR[getSubPos(p)] || posColor[p.position]}; width:28px;">${getSubPos(p)}</span>
+                        <span style="font-size:12px; font-weight:700; color:${SUB_POS_COLOR[getSubPos(p)] || posColor[p.position]}; min-width:28px;">${getSubPos(p)}${p.subPosition2 ? '<span style="font-size:10px;opacity:0.65;">/ ' + p.subPosition2 + '</span>' : ''}</span>
                         <div style="flex:1;">
                             <div style="font-size:13px; font-weight:700; cursor:pointer; text-decoration:underline; color:#90CAF9;" onclick="showTransferPlayerDetail('${p.id}', 'market')">${p.name} <span style="font-size:11px; color:rgba(255,255,255,0.5); text-decoration:none;">${p.age}歳</span></div>
                             <div style="font-size:11px; color:rgba(255,255,255,0.5);">${p.fromClub} ・ Lv${p.level}${p.fromLeague ? ' <span style="font-size:10px;background:rgba(100,181,246,0.2);border:1px solid rgba(100,181,246,0.4);border-radius:3px;padding:0 4px;color:#90CAF9;">' + p.fromLeague + '</span>' : ''}</div>
@@ -6231,7 +6231,7 @@ self.addEventListener('fetch', e => {
             const loanedHtml = loanedPlayers.length > 0
                 ? loanedPlayers.map(p => `
                     <div style="background:rgba(100,181,246,0.1); border:1px solid rgba(100,181,246,0.3); border-radius:8px; padding:8px 10px; margin-bottom:6px; display:flex; align-items:center; gap:8px;">
-                        <span style="font-size:12px; color:${SUB_POS_COLOR[getSubPos(p)] || posColor[p.position]}; font-weight:700;">${getSubPos(p)}</span>
+                        <span style="font-size:12px; color:${SUB_POS_COLOR[getSubPos(p)] || posColor[p.position]}; font-weight:700;">${getSubPos(p)}${p.subPosition2 ? '<span style="font-size:10px;opacity:0.65;">/ ' + p.subPosition2 + '</span>' : ''}</span>
                         <span style="flex:1; font-size:13px;">${p.name} <span style="font-size:11px; color:rgba(255,255,255,0.5);">${p.age}歳 Lv${p.level}</span></span>
                         <span style="font-size:11px; color:#64B5F6;">レンタル中</span>
                     </div>`).join('')
