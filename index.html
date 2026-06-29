@@ -5296,8 +5296,7 @@ self.addEventListener('fetch', e => {
             }
             // ⑤ 年齢設定: 新人は18歳、ゲーム開始時はランダム
             const playerAge = age !== null ? age : 18;
-            // 細分化ポジション別の能力値ベース値（メインポジションに合わせた設定）
-            const _sp = subPositionArg || (position === 'FW' ? 'CF' : position === 'MF' ? 'CH' : position === 'DF' ? 'CB' : 'GK');
+            // 細分化ポジション別の能力値ベース値（主ポジ7:副ポジ3で按分）
             const _SUB_BASE = {
                 // offense, defense, passing, shoot, block, cover, dribble, tackle
                 CF: { offense:52, defense:26, passing:40, shoot:58, block:20, cover:26, dribble:58, tackle:22 },
@@ -5309,16 +5308,23 @@ self.addEventListener('fetch', e => {
                 SB: { offense:36, defense:48, passing:44, shoot:28, block:48, cover:50, dribble:36, tackle:54 },
                 GK: { keeper:65 }
             };
-            const _bs = _SUB_BASE[_sp] || _SUB_BASE['CH'];
-            const baseOffense = _bs.offense || 40;
-            const baseDefense = _bs.defense || 40;
-            const basePassing = _bs.passing || 40;
-            const baseShoot   = _bs.shoot   || 30;
-            const baseBlock   = _bs.block   || 30;
-            const baseCover   = _bs.cover   || 30;
-            const baseKeeper  = position === 'GK' ? (_bs.keeper || 65) : 20;
-            const baseDribble = _bs.dribble || 35;
-            const baseTackle  = _bs.tackle  || 35;
+            const _sp1 = subPositionArg || (position === 'FW' ? 'CF' : position === 'MF' ? 'CH' : position === 'DF' ? 'CB' : 'GK');
+            const _sp2 = (subPosition2Arg !== undefined && subPosition2Arg !== null) ? subPosition2Arg : null;
+            const _bs1 = _SUB_BASE[_sp1] || _SUB_BASE['CH'];
+            const _bs2 = _sp2 ? (_SUB_BASE[_sp2] || _bs1) : null;
+            // 副ポジがある場合は7:3按分、ない場合は主ポジのみ
+            const _blend = (k) => _bs2
+                ? Math.round(_bs1[k] * 0.7 + _bs2[k] * 0.3)
+                : (_bs1[k] || 0);
+            const baseOffense = _blend('offense') || 40;
+            const baseDefense = _blend('defense') || 40;
+            const basePassing = _blend('passing') || 40;
+            const baseShoot   = _blend('shoot')   || 30;
+            const baseBlock   = _blend('block')   || 30;
+            const baseCover   = _blend('cover')   || 30;
+            const baseKeeper  = position === 'GK' ? (_bs1.keeper || 65) : 20;
+            const baseDribble = _blend('dribble') || 35;
+            const baseTackle  = _blend('tackle')  || 35;
 
             const player = {
                 id: 'player_' + Date.now() + Math.random(),
