@@ -14359,7 +14359,7 @@ self.addEventListener('fetch', e => {
                     starters
                 });
                 // 選手採点を計算・保存（コンディション変化も適用）
-                _lastMatchRatings = calcPlayerRatings(starters, myScore, oppScore, myShots, oppShots, cardEvents, goalEvents);
+                _lastMatchRatings = calcPlayerRatings(starters, myScore, oppScore, myShots, oppShots, cardEvents, goalEvents, halftimeSubstitutions);
                 applyRatingConditionChange(_lastMatchRatings);
                 // 採点ボタンをリセット（次試合まで非表示）
                 const _ratingBtnDiv = document.getElementById('playerRatingBtnDiv');
@@ -15132,14 +15132,23 @@ self.addEventListener('fetch', e => {
         // 試合後に格納される採点データ
         let _lastMatchRatings = null;
 
-        function calcPlayerRatings(starters, myScore, oppScore, myShots, oppShots, cardEvents, goalEvents) {
+                function calcPlayerRatings(starters, myScore, oppScore, myShots, oppShots, cardEvents, goalEvents, htSubs) {
             const won  = myScore > oppScore;
             const drew = myScore === oppScore;
             const lost = myScore < oppScore;
             const cleanSheet = oppScore === 0;
             const ratings = [];
-
-            starters.forEach(p => {
+            // ハーフタイム交代退場選手を追加（前半のみ出場）
+            const htSubOutIds = new Set((htSubs || []).map(s => s.out));
+            const subOutPlayers = (htSubs || []).map(s => {
+                const p = gameData.players.find(gp => gp.id === s.out);
+                return p ? { ...p, _htSubOut: true } : null;
+            }).filter(Boolean);
+            const allRatingPlayers = [
+                ...starters.map(p => ({ ...p, _htSubOut: false })),
+                ...subOutPlayers
+            ];
+            allRatingPlayers.forEach(p => {
                 let base = 6.0;
                 const pos = p.position;
 
@@ -15200,10 +15209,14 @@ self.addEventListener('fetch', e => {
                 base = Math.max(5.0, Math.min(9.0, base));
                 base = Math.round(base * 2) / 2;
 
+                                // 前半交代退場選手は前半のみ出場なので採点を少し下げる
+                if (p._htSubOut) {
+                    base = Math.max(5.0, base - 0.5);
+                    base = Math.round(base * 2) / 2;
+                }
                 // 短評コメント生成
                 const comment = generateRatingComment(p, base, myScore, oppScore, cleanSheet, _hasRed, _hasYellow, _personalGoals);
-
-                ratings.push({ player: p, score: base, comment });
+                ratings.push({ player: p, score: base, comment, htSubOut: p._htSubOut || false });
             });
 
             // MOM: 最高点の選手（複数いれば最初の1人）
@@ -15335,11 +15348,11 @@ self.addEventListener('fetch', e => {
                 else if (condDelta < 0) condHtml = `<span class="rating-cond-change rating-cond-down">▼${Math.abs(condDelta)}</span>`;
                 else condHtml = `<span class="rating-cond-change rating-cond-same">—</span>`;
 
-                const momBadge = r.isMOM ? '<span class="rating-mom-badge">MOM</span>' : '';
-
+                                const momBadge = r.isMOM ? '<span class="rating-mom-badge">MOM</span>' : '';
+                const htBadge = r.htSubOut ? '<span style="font-size:10px; background:rgba(255,180,0,0.25); color:#FFB300; border-radius:3px; padding:1px 4px; margin-left:3px;">前半交代</span>' : '';
                 html += `<div class="rating-row">
                     <span class="rating-pos-badge ${posClass}">${pos}</span>
-                    <span class="rating-name">${r.player.name}${momBadge ? ' ' + momBadge : ''}</span>
+                    <span class="rating-name">${r.player.name}${momBadge ? ' ' + momBadge : ''}${htBadge}</span>
                     <span class="rating-comment">${r.comment}</span>
                     ${condHtml}
                     <span class="rating-score ${scoreClass}">${r.score.toFixed(1)}</span>
