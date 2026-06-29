@@ -11282,8 +11282,15 @@ self.addEventListener('fetch', e => {
         }
 
         function createRecruitPlayer(category) {
-            const positions = ['FW','MF','DF','GK'];
-            const pos = positions[Math.floor(Math.random() * positions.length)];
+            // 細分化ポジションからランダム選択（GKは低確率）
+            const subPositions = ['CF','WG','CH','SH','DH','CB','SB','CF','WG','CH','SH','DH','CB','SB','GK'];
+            const subPos = subPositions[Math.floor(Math.random() * subPositions.length)];
+            const pos = SUB_TO_MAIN[subPos] || 'MF';
+            // 副ポジは必ずVALID_POS_COMBOSから付与
+            const recruitCombos = VALID_POS_COMBOS.filter(c => c[0] === subPos && c[1] !== null);
+            const subPos2 = recruitCombos.length > 0
+                ? recruitCombos[Math.floor(Math.random() * recruitCombos.length)][1]
+                : null;
             let age, abilityBonus, maxLevelRange;
 
             if (category === 'rookie') {
@@ -11309,7 +11316,7 @@ self.addEventListener('fetch', e => {
             const _mseSc = getManagerSkillEffects();
             const scoutBonusVal = (_mseSc.scoutBonus || 0) * 3; // 1当たり+3能力値
             const maxLevel = getRandomAbility(maxLevelRange[0], maxLevelRange[1]);
-            const p = createPlayer(generateRecruitName(), pos, false, maxLevel, age);
+            const p = createPlayer(generateRecruitName(), pos, false, maxLevel, age, subPos, subPos2);
 
             // カテゴリ別の能力補正を適用
             if (pos === 'GK') {
@@ -15334,10 +15341,18 @@ self.addEventListener('fetch', e => {
 
             // 新人を1名入団（⑤ 新人は18歳）
             if (gameData.players.length < 30) {
-                const position = positions[getRandomAbility(0, 3)];
+                // 細分化ポジションからランダム選択
+                const seasonSubPositions = ['CF','WG','CH','SH','DH','CB','SB','CF','WG','CH','SH','DH','CB','SB','GK'];
+                const seasonSubPos = seasonSubPositions[Math.floor(Math.random() * seasonSubPositions.length)];
+                const position = SUB_TO_MAIN[seasonSubPos] || 'MF';
+                // 副ポジは必ずVALID_POS_COMBOSから付与
+                const seasonCombos = VALID_POS_COMBOS.filter(c => c[0] === seasonSubPos && c[1] !== null);
+                const seasonSubPos2 = seasonCombos.length > 0
+                    ? seasonCombos[Math.floor(Math.random() * seasonCombos.length)][1]
+                    : null;
                 const maxLevel = 2 + gameData.facilities.academy;
                 const name = '新人 シーズン' + (gameData.seasonCount || 1);
-                const newPlayer = createPlayer(name, position, false, maxLevel, 18);
+                const newPlayer = createPlayer(name, position, false, maxLevel, 18, seasonSubPos, seasonSubPos2);
                 // アカデミーLvに応じたスキル付与
                 if (!newPlayer.skills) newPlayer.skills = [];
                 const _bS = ['dribbler','speedster','chanceMaker','tackleMaster','resilience','youngTalent','steelBody','homeStar'];
