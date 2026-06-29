@@ -2158,9 +2158,9 @@ self.addEventListener('fetch', e => {
                         </div>
                         <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; align-items: center;">
                             <span style="font-size: 12px; color: rgba(255,255,255,0.7); align-self: center;">並び替え:</span>
-                            <button class="sort-btn active" id="sortBtnDefault" onclick="setSortMode('default')">デフォルト</button>
+                            <button class="sort-btn" id="sortBtnDefault" onclick="setSortMode('default')">デフォルト</button>
                             <button class="sort-btn" id="sortBtnAge" onclick="setSortMode('age')">年齢順</button>
-                            <button class="sort-btn" id="sortBtnPosition" onclick="setSortMode('position')">ポジション順</button>
+                            <button class="sort-btn active" id="sortBtnPosition" onclick="setSortMode('position')">ポジション順</button>
                             <button class="sort-btn" id="sortBtnSalary" onclick="setSortMode('salary')">年俸順</button>
                             <button class="sort-btn" id="sortBtnDir" onclick="toggleSortDir()" style="min-width:52px; background:rgba(255,255,255,0.12);">↑ 昇順</button>
                         </div>
@@ -4836,7 +4836,7 @@ self.addEventListener('fetch', e => {
         let _firstHalfHighlightRaw = ''; // 前半ハイライトの生文字列（<br>区切り）
         let halftimeSubstitutions = []; // ハーフタイム交代記録 [{out: id, in: id}]
         let halftimeSubPendingOut = null; // 交代候補のスタメン選手 ID
-        let currentSortMode = 'default';
+        let currentSortMode = 'position';
         let sortAscending = true; // true=昇順, false=降順
 
         // ⑦ スタジアム収容上限計算
@@ -8944,8 +8944,10 @@ self.addEventListener('fetch', e => {
             if (currentSortMode === 'age') {
                 players.sort((a, b) => dir * ((a.age !== undefined ? a.age : 99) - (b.age !== undefined ? b.age : 99)));
             } else if (currentSortMode === 'position') {
+                const subPosOrder = { 'CF':0, 'WG':1, 'CH':2, 'SH':3, 'DH':4, 'CB':5, 'SB':6, 'GK':7 };
                 players.sort((a, b) => {
-                    const posDiff = dir * ((posOrder[a.position] ?? 9) - (posOrder[b.position] ?? 9));
+                    const aSp = getSubPos(a), bSp = getSubPos(b);
+                    const posDiff = dir * ((subPosOrder[aSp] ?? 9) - (subPosOrder[bSp] ?? 9));
                     if (posDiff !== 0) return posDiff;
                     return dir * ((a.age !== undefined ? a.age : 99) - (b.age !== undefined ? b.age : 99));
                 });
