@@ -14363,7 +14363,10 @@ self.addEventListener('fetch', e => {
             (halftimeSubstitutions || []).forEach(sub => { htSubIds.add(sub.out); htSubIds.add(sub.in); htSubOutIds.add(sub.out); htSubInIds.add(sub.in); });
             gameData.players.forEach(player => {
                 if (player.fatigue === undefined) player.fatigue = 0;
-                if (player.starter && player.injury !== 'heavy') {
+                const isHtOut = htSubOutIds.has(player.id); // 前半のみ出場した交代アウト選手
+                const isHtIn  = htSubInIds.has(player.id);  // 後半のみ出場した交代イン選手
+                // フル出場（スタメンかつインでない）またはハーフタイム交代選手は疲労蓄積処理
+                if ((player.starter || isHtOut || isHtIn) && player.injury !== 'heavy') {
                     let gain = 8 + Math.floor(Math.random() * 6);
                     if (player.position === 'GK') gain = Math.ceil(gain / 2);
                     if (player.skills && player.skills.includes('ironMan')) gain = Math.ceil(gain / 2);
@@ -14376,24 +14379,25 @@ self.addEventListener('fetch', e => {
                     // フィジカルコーチ室: スタメン疲労蓄積量をLv×1%削減
                     const physLv = gameData.facilities.physicalCoach || 1;
                     gain = Math.ceil(gain * (1 - (physLv - 1) * 0.01));
-                    // ハーフタイム交代選手（イン・アウト両方）は疲労増加量を3〜3に変更
-                    if (htSubIds.has(player.id)) gain = Math.floor(Math.random() * 7) - 3;
+                    // ハーフタイム交代アウト：前半のみ出場 → 通常の半分蓄積
+                    if (isHtOut) gain = Math.ceil(gain / 2);
+                    // ハーフタイム交代イン：後半のみ出場 → 通常の半分蓄積
+                    if (isHtIn) gain = Math.ceil(gain / 2);
                     player.fatigue = Math.max(0, Math.min(100, player.fatigue + gain));
-                } else if (!player.starter) {
-                    // ハーフタイム交代アウト選手はベンチ回復なし（前半フル出場のため）
-                    if (!htSubOutIds.has(player.id)) {
-                        // フィジカルコーチ室: ベンチ選手の疲労回復をLv×1追加
-                        const physLvBench = gameData.facilities.physicalCoach || 1;
-                        // 監督スキル: recoveryBonusを回復量に反映
-                        const _mseRec = getManagerSkillEffects();
-                        const recMult = 1.0 + (_mseRec.recoveryBonus || 0);
-                        player.fatigue = Math.max(0, player.fatigue - Math.floor((20 + (physLvBench - 1)) * recMult));
-                        // ターンオーバースキル：スタメン起用せず、ハーフタイムで交代インもしなかった場合、疲労が追加15回復
-                        if (player.skills && player.skills.includes('turnover') && !htSubInIds.has(player.id)) {
-                            player.fatigue = Math.max(0, player.fatigue - 15);
-                        }
+                } else if (!player.starter && !isHtOut && !isHtIn) {
+                    // 純粋なベンチ選手：通常回復
+                    // フィジカルコーチ室: ベンチ選手の疲労回復をLv×1追加
+                    const physLvBench = gameData.facilities.physicalCoach || 1;
+                    // 監督スキル: recoveryBonusを回復量に反映
+                    const _mseRec = getManagerSkillEffects();
+                    const recMult = 1.0 + (_mseRec.recoveryBonus || 0);
+                    player.fatigue = Math.max(0, player.fatigue - Math.floor((20 + (physLvBench - 1)) * recMult));
+                    // ターンオーバースキル：スタメン起用せず、ハーフタイムで交代インもしなかった場合、疲労が追加15回復
+                    if (player.skills && player.skills.includes('turnover')) {
+                        player.fatigue = Math.max(0, player.fatigue - 15);
                     }
                 }
+                // ハーフタイム交代イン選手は疲労回復なし（上の蓄積処理のみ）
             });
 
             // EXP付与
