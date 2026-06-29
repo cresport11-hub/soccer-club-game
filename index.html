@@ -12914,9 +12914,9 @@ self.addEventListener('fetch', e => {
             const condBonus = avgCond >= 3.5 ? 0.10 : avgCond >= 3.0 ? 0.05 : avgCond <= 0.5 ? -0.10 : avgCond <= 1.0 ? -0.05 : 0;
 
             // 得点期待値は 0～2.5 の範囲にクランプ（低めに抑えてゼロを増やす）
-            let myScoreBase = Math.min(2.5, myAttackRatio * 1.2) * 0.9 + (yourStrength / 120) * 1.0 * 0.1
+            let myScoreBase = Math.min(2.5, myAttackRatio * 1.2) * 0.9
                 + aceBonus + chanceBonus + condBonus;
-            let oppScoreBase = Math.min(2.5, oppAttackRatio * 1.2) * 0.9 + (opponentStrength / 120) * 1.0 * 0.1
+            let oppScoreBase = Math.min(2.5, oppAttackRatio * 1.2) * 0.9
                 - gkSaveReduction - tackleReduction;
 
             // スキル: スナイパー（FW）: 得点期待値 +0.4
@@ -12987,10 +12987,10 @@ self.addEventListener('fetch', e => {
             const myOffVsOppDef = adjYourOff - adjOppDef; // 自攻撃 vs 相手守備の差
             const oppOffVsMyDef = adjOppOff - adjYourDef; // 相手攻撃 vs 自守備の差
             // 不利側（差が負）はランダム幅を縮小、有利側（差が正）はランダム幅を拡大して戦力差を結果に反映
-            const myRandRange  = Math.max(0.15, 0.65 + myOffVsOppDef / 200) * 2;
-            const oppRandRange = Math.max(0.15, 0.65 + oppOffVsMyDef / 200) * 2;
-            let myScore = Math.max(0, Math.min(3, Math.round(myScoreBase * 0.4 + (Math.random() - 0.5) * myRandRange)));
-            let oppScore = Math.max(0, Math.min(3, Math.round(oppScoreBase * 0.4 + (Math.random() - 0.5) * oppRandRange)));
+            const myRandRange  = Math.max(0.10, 0.40 + myOffVsOppDef / 300) * 2;
+            const oppRandRange = Math.max(0.10, 0.40 + oppOffVsMyDef / 300) * 2;
+            let myScore = Math.max(0, Math.min(3, Math.round(myScoreBase * 0.65 + (Math.random() - 0.5) * myRandRange)));
+            let oppScore = Math.max(0, Math.min(3, Math.round(oppScoreBase * 0.65 + (Math.random() - 0.5) * oppRandRange)));
 
             // スキル: 神セーブ（GK）: 失点を1点防ぐ確率 25%
             if (oppScore > 0 && startersHaveSkill(starters, 'divineSave') && Math.random() < 0.20) {
@@ -13737,9 +13737,9 @@ self.addEventListener('fetch', e => {
             const avgCond2 = starters.length > 0 ? starters.reduce((s, p) => s + (p.condition !== undefined ? p.condition : 2), 0) / starters.length : 2;
             const condBonus2 = avgCond2 >= 3.5 ? 0.10 : avgCond2 >= 3.0 ? 0.05 : avgCond2 <= 0.5 ? -0.10 : avgCond2 <= 1.0 ? -0.05 : 0;
 
-            let myScoreBase2 = Math.min(2.5, myAttackRatio2 * 1.2) * 0.9 + (yourStrength / 120) * 1.0 * 0.1
+            let myScoreBase2 = Math.min(2.5, myAttackRatio2 * 1.2) * 0.9
                 + aceBonus2 + chanceBonus2 + condBonus2;
-            let oppScoreBase2 = Math.min(2.5, oppAttackRatio2 * 1.2) * 0.9 + (opponentStrength / 120) * 1.0 * 0.1
+            let oppScoreBase2 = Math.min(2.5, oppAttackRatio2 * 1.2) * 0.9
                 - gkSaveReduction2 - tackleReduction2;
 
             if (startersHaveSkill(starters, 'sniper')) myScoreBase2 += 0.25;
@@ -13788,10 +13788,10 @@ self.addEventListener('fetch', e => {
             // 後半スコア（最大3点）
             // 動的ランダム幅（後半も同じ計算式を適用）
             // 不利側（差が負）はランダム幅を縮小、有利側（差が正）はランダム幅を拡大して戦力差を結果に反映
-            const myRandRange2  = Math.max(0.15, 0.65 + (adjYourOff2 - adjOppDef2) / 200) * 2;
-            const oppRandRange2 = Math.max(0.15, 0.65 + (adjOppOff2 - adjYourDef2) / 200) * 2;
-            let myScore2 = Math.max(0, Math.min(3, Math.round(myScoreBase2 * 0.4 + (Math.random() - 0.5) * myRandRange2)));
-            let oppScore2 = Math.max(0, Math.min(3, Math.round(oppScoreBase2 * 0.4 + (Math.random() - 0.5) * oppRandRange2)));
+            const myRandRange2  = Math.max(0.10, 0.40 + (adjYourOff2 - adjOppDef2) / 300) * 2;
+            const oppRandRange2 = Math.max(0.10, 0.40 + (adjOppOff2 - adjYourDef2) / 300) * 2;
+            let myScore2 = Math.max(0, Math.min(3, Math.round(myScoreBase2 * 0.65 + (Math.random() - 0.5) * myRandRange2)));
+            let oppScore2 = Math.max(0, Math.min(3, Math.round(oppScoreBase2 * 0.65 + (Math.random() - 0.5) * oppRandRange2)));
 
             if (oppScore2 > 0 && startersHaveSkill(starters, 'divineSave') && Math.random() < 0.20) oppScore2 = Math.max(0, oppScore2 - 1);
             if (oppScore2 > 0 && startersHaveSkill(starters, 'cleanSheet') && Math.random() < 0.05) oppScore2 = 0;
