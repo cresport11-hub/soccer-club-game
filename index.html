@@ -4499,16 +4499,24 @@ self.addEventListener('fetch', e => {
         const VALID_POS_COMBOS = [
             ['CF', null],
             ['CF', 'WG'],
+            ['WG', null],
+            ['WG', 'CF'],
+            ['WG', 'SH'],
             ['CH', null],
             ['CH', 'DH'],
             ['CH', 'SH'],
-            ['WG', 'SH'],
+            ['SH', null],
+            ['SH', 'CH'],
+            ['SH', 'WG'],
+            ['SH', 'SB'],
+            ['DH', null],
+            ['DH', 'CH'],
+            ['DH', 'CB'],
             ['CB', null],
             ['CB', 'SB'],
             ['CB', 'DH'],
-            ['DH', null],
-            ['DH', 'CB'],
             ['SB', null],
+            ['SB', 'CB'],
             ['SB', 'SH'],
             ['GK', null]
         ];
@@ -5288,16 +5296,29 @@ self.addEventListener('fetch', e => {
             }
             // ⑤ 年齢設定: 新人は18歳、ゲーム開始時はランダム
             const playerAge = age !== null ? age : 18;
-
-            const baseOffense = position === 'FW' ? 50 : position === 'MF' ? 42 : 28; // 難易度調整
-            const baseDefense = position === 'DF' ? 50 : position === 'MF' ? 42 : 28;
-            const basePassing = position === 'MF' ? 50 : 40;
-            const baseShoot = position === 'FW' ? 55 : position === 'MF' ? 38 : 22;
-            const baseBlock = position === 'DF' ? 55 : position === 'MF' ? 38 : 22;
-            const baseCover = position === 'DF' ? 50 : position === 'MF' ? 42 : 28;
-            const baseKeeper = position === 'GK' ? 65 : 20;
-            const baseDribble = position === 'FW' ? 55 : position === 'MF' ? 45 : 25; // ドリブル精度（攻撃系）
-            const baseTackle  = position === 'DF' ? 55 : position === 'MF' ? 45 : 25; // タックル（守備系）
+            // 細分化ポジション別の能力値ベース値（メインポジションに合わせた設定）
+            const _sp = subPositionArg || (position === 'FW' ? 'CF' : position === 'MF' ? 'CH' : position === 'DF' ? 'CB' : 'GK');
+            const _SUB_BASE = {
+                // offense, defense, passing, shoot, block, cover, dribble, tackle
+                CF: { offense:52, defense:26, passing:40, shoot:58, block:20, cover:26, dribble:58, tackle:22 },
+                WG: { offense:50, defense:28, passing:42, shoot:50, block:22, cover:28, dribble:62, tackle:24 },
+                CH: { offense:44, defense:44, passing:52, shoot:36, block:38, cover:44, dribble:42, tackle:44 },
+                SH: { offense:48, defense:36, passing:48, shoot:42, block:32, cover:36, dribble:50, tackle:38 },
+                DH: { offense:34, defense:52, passing:48, shoot:26, block:50, cover:52, dribble:32, tackle:54 },
+                CB: { offense:26, defense:54, passing:40, shoot:20, block:58, cover:52, dribble:24, tackle:56 },
+                SB: { offense:36, defense:48, passing:44, shoot:28, block:48, cover:50, dribble:36, tackle:54 },
+                GK: { keeper:65 }
+            };
+            const _bs = _SUB_BASE[_sp] || _SUB_BASE['CH'];
+            const baseOffense = _bs.offense || 40;
+            const baseDefense = _bs.defense || 40;
+            const basePassing = _bs.passing || 40;
+            const baseShoot   = _bs.shoot   || 30;
+            const baseBlock   = _bs.block   || 30;
+            const baseCover   = _bs.cover   || 30;
+            const baseKeeper  = position === 'GK' ? (_bs.keeper || 65) : 20;
+            const baseDribble = _bs.dribble || 35;
+            const baseTackle  = _bs.tackle  || 35;
 
             const player = {
                 id: 'player_' + Date.now() + Math.random(),
