@@ -5841,7 +5841,8 @@ self.addEventListener('fetch', e => {
                 const mPos = SUB_TO_MAIN[mSubPos] || 'MF';
                 const p = createRivalPlayer(mPos, gameData.league);
                 p.subPosition = mSubPos;
-                p.subPosition2 = null;
+                const mCombos = VALID_POS_COMBOS.filter(c => c[0] === mSubPos && c[1]);
+                p.subPosition2 = (mCombos.length > 0 && Math.random() < 0.50) ? mCombos[Math.floor(Math.random() * mCombos.length)][1] : null;
                 p.id = 'market_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
                 p.fromClub = gameData.leagueStandings
                     ? gameData.leagueStandings.filter(t => t.name !== gameData.clubName)[Math.floor(Math.random() * Math.max(1, gameData.leagueStandings.length - 1))].name
