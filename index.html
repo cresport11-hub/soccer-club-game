@@ -8867,7 +8867,7 @@ self.addEventListener('fetch', e => {
                     resultEl.style.display = 'block';
                     document.getElementById('campResultIcon').textContent = '🎓';
                     document.getElementById('campResultTitle').textContent = p.name + ' が「' + sk.name + '」を習得！';
-                    document.getElementById('campResultEffect').textContent = '⭐' + cfg.fame + '消費 | ' + Math.round(cfg.chance * 100) + '%の確率で成功！';
+                    document.getElementById('campResultEffect').textContent = '⭐' + actualFameCost + '消費 | ' + Math.round(cfg.chance * 100) + '%の確率で成功！';
                 }
                 showNotification('🎓 ' + p.name + ' が「' + sk.name + '」を習得しました！');
             } else {
@@ -8876,7 +8876,7 @@ self.addEventListener('fetch', e => {
                     resultEl.style.display = 'block';
                     document.getElementById('campResultIcon').textContent = '😓';
                     document.getElementById('campResultTitle').textContent = '「' + sk.name + '」の習得に失敗...';
-                    document.getElementById('campResultEffect').textContent = '⭐' + cfg.fame + '消費 | 次回また挑戦しよう！';
+                    document.getElementById('campResultEffect').textContent = '⭐' + actualFameCost + '消費 | 次回また挑戦しよう！';
                 }
                 showNotification('😓 ' + p.name + ' の「' + sk.name + '」習得は失敗しました。');
             }
@@ -10427,16 +10427,19 @@ self.addEventListener('fetch', e => {
             const rankLabels = { S: 'Sランク ⭐30 (5%)', A: 'Aランク ⭐15 (10%)', B: 'Bランク ⭐8 (15%)' };
             const fame = gameData.fame || 0;
 
+                        // 監督スキル割引を反映した実際コストを計算
+            const _mseDisp = getManagerSkillEffects();
+            const _discountDisp = _mseDisp.skillTrainDiscount || 0;
             let html = `<div style="font-size:15px;font-weight:bold;color:#4CAF50;margin-bottom:4px;">🎓 ${p.name} のスキル特訓</div>`;
             html += `<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:14px;">現在の名声: <span style="color:#FFD700;">${fame}⭐</span></div>`;
-
             let lastRank = null;
             acquirable.forEach(id => {
                 const sk = SKILLS[id];
                 const rank = getSkillRank(id);
                 const rc = rankColors[rank] || '#66BB6A';
                 const cfg = SKILL_TRAINING_RANKS[rank];
-                const canAfford = fame >= cfg.fame;
+                const dispCost = Math.max(1, Math.floor(cfg.fame * (1 - _discountDisp)));
+                const canAfford = fame >= dispCost;
                 if (rank !== lastRank) {
                     html += `<div style="font-size:11px;font-weight:700;color:${rc};margin:10px 0 6px;border-bottom:1px solid ${rc}33;padding-bottom:4px;">${rankLabels[rank]}</div>`;
                     lastRank = rank;
@@ -10446,7 +10449,7 @@ self.addEventListener('fetch', e => {
                     background:rgba(255,255,255,0.06);border:1px solid ${rc}55;border-radius:8px;
                     color:${canAfford ? '#fff' : 'rgba(255,255,255,0.3)'};
                     cursor:${canAfford ? 'pointer' : 'not-allowed'};">
-                    <span style="color:${rc};font-weight:700;font-size:12px;">[${rank}]</span> <strong>${sk.name}</strong><br>
+                    <span style="color:${rc};font-weight:700;font-size:12px;">[${rank}]</span> <strong>${sk.name}</strong> <span style="color:#FFD700;font-size:10px;">⭐${dispCost}</span><br>
                     <span style="font-size:10px;color:rgba(255,255,255,0.5);">${sk.desc}</span>
                 </button>`;
             });
@@ -10458,23 +10461,25 @@ self.addEventListener('fetch', e => {
         }
 
         // スキル特訓タブ用：キャンプ期間チェックなし、campUsedThisWeekを更新しない
-        function applySkillTrainingFromTab(playerId, skillId) {
+                function applySkillTrainingFromTab(playerId, skillId) {
             const p = gameData.players.find(pl => pl.id === playerId);
             if (!p) return;
             const rank = getSkillRank(skillId);
             const cfg = SKILL_TRAINING_RANKS[rank];
+            // 監督スキル: skillTrainDiscountをコストに反映
+            const _mseTab = getManagerSkillEffects();
+            const discountTab = _mseTab.skillTrainDiscount || 0;
+            const actualFameCost = Math.max(1, Math.floor(cfg.fame * (1 - discountTab)));
             const fame = gameData.fame || 0;
-            if (fame < cfg.fame) {
-                showNotification('名声が不足しています（⭐' + cfg.fame + '必要）。');
+            if (fame < actualFameCost) {
+                showNotification('名声が不足しています（⭐' + actualFameCost + '必要）。');
                 return;
             }
             const modal = document.getElementById('skillPickModal');
             if (modal) modal.remove();
-
-            gameData.fame = Math.max(0, fame - cfg.fame);
+            gameData.fame = Math.max(0, fame - actualFameCost);
             const success = Math.random() < cfg.chance;
             saveGame();
-
             const sk = SKILLS[skillId];
             const rankColors = { S: '#FF5252', A: '#FFB300', B: '#66BB6A' };
 
@@ -10485,7 +10490,7 @@ self.addEventListener('fetch', e => {
                 renderTeam();
                 showNotification('🎓 ' + p.name + ' が「' + sk.name + '」を習得しました！');
             } else {
-                showNotification('😓 ' + p.name + ' の「' + sk.name + '」習得は失敗しました。名声⭐' + cfg.fame + '消費。');
+                showNotification('😓 ' + p.name + ' の「' + sk.name + '」習得は失敗しました。名声⭐' + actualFameCost + '消費。');
             }
 
             // タブを再描画して名声を更新
