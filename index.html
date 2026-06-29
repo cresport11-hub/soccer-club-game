@@ -7291,13 +7291,14 @@ self.addEventListener('fetch', e => {
                 showNotification('スタメンが11名である必要があります（重症の選手は出場できません）');
                 return;
             }
-            const formation = formations[gameData.formation];
-            const fwCount = starters.filter(p => p.position === 'FW').length;
-            const mfCount = starters.filter(p => p.position === 'MF').length;
-            const dfCount = starters.filter(p => p.position === 'DF').length;
-            const gkCount = starters.filter(p => p.position === 'GK').length;
-            if (fwCount !== formation.fw || mfCount !== formation.mf || dfCount !== formation.df || gkCount !== 1) {
-                showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
+            // pitchAssignmentベースでスロット充足チェック
+            const pa = gameData.pitchAssignment || {};
+            const slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
+            const assignedIds = new Set(Object.values(pa).filter(Boolean));
+            const filledSlots = slots.filter(s => pa[s.pos + '_' + s.idx]);
+            const gkSlotFilled = slots.filter(s => s.pos === 'GK').every(s => pa[s.pos + '_' + s.idx]);
+            if (filledSlots.length !== slots.length || !gkSlotFilled) {
+                showNotification('フォーメーションの全スロットに選手をセットしてください');
                 return;
             }
             const yourOffenseBase = getFormationAdjustedOffense(starters, gameData.pitchAssignment);
@@ -12183,17 +12184,15 @@ self.addEventListener('fetch', e => {
                 return;
             }
 
-            const formation = formations[gameData.formation];
-            const fwCount = starters.filter(p => p.position === 'FW').length;
-            const mfCount = starters.filter(p => p.position === 'MF').length;
-            const dfCount = starters.filter(p => p.position === 'DF').length;
-            const gkCount = starters.filter(p => p.position === 'GK').length;
-
-            if (fwCount !== formation.fw || mfCount !== formation.mf || dfCount !== formation.df || gkCount !== 1) {
-                showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
+                        // pitchAssignmentベースでスロット充足チェック
+            const pa = gameData.pitchAssignment || {};
+            const slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
+            const filledSlots = slots.filter(s => pa[s.pos + '_' + s.idx]);
+            const gkSlotFilled = slots.filter(s => s.pos === 'GK').every(s => pa[s.pos + '_' + s.idx]);
+            if (filledSlots.length !== slots.length || !gkSlotFilled) {
+                showNotification('フォーメーションの全スロットに選手をセットしてください');
                 return;
             }
-
             const yourStrength = calculateTeamStrength(starters);
             const opponentName = currentMatch.opponent;
             const opponentStrength = getOpponentStrength(opponentName);
@@ -16690,14 +16689,13 @@ self.addEventListener('fetch', e => {
                 showNotification('スタメンは11名である必要があります');
                 return;
             }
-            const formation = formations[gameData.formation];
-            const fwCount = starters.filter(p => p.position === 'FW').length;
-            const mfCount = starters.filter(p => p.position === 'MF').length;
-            const dfCount = starters.filter(p => p.position === 'DF').length;
-            const gkCount = starters.filter(p => p.position === 'GK').length;
-
-            if (fwCount !== formation.fw || mfCount !== formation.mf || dfCount !== formation.df || gkCount !== 1) {
-                showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
+                        // pitchAssignmentベースでスロット充足チェック
+            const pa = gameData.pitchAssignment || {};
+            const slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
+            const filledSlots = slots.filter(s => pa[s.pos + '_' + s.idx]);
+            const gkSlotFilled = slots.filter(s => s.pos === 'GK').every(s => pa[s.pos + '_' + s.idx]);
+            if (filledSlots.length !== slots.length || !gkSlotFilled) {
+                showNotification('フォーメーションの全スロットに選手をセットしてください');
                 return;
             }
             saveGame();
