@@ -2334,6 +2334,7 @@ self.addEventListener('fetch', e => {
                             <a href="#help-clubinfo" style="color:#FFD700; text-decoration:none;">🏠 クラブ情報の見方</a><br>
                             <a href="#help-dashboard" style="color:#FFD700; text-decoration:none;">📊 ダッシュボードの見方</a><br>
                             <a href="#help-starter" style="color:#FFD700; text-decoration:none;">📍 スタメン画面の使い方</a><br>
+                            <a href="#help-position" style="color:#FFD700; text-decoration:none;">⚽ ポジション解説</a><br>
                             <a href="#help-team" style="color:#FFD700; text-decoration:none;">👥 選手データの解説</a><br>
                             <a href="#help-recruit" style="color:#FFD700; text-decoration:none;">👤 選手獲得の内容</a><br>
                             <a href="#help-facility" style="color:#FFD700; text-decoration:none;">🏗️ 施設の効果</a><br>
@@ -2457,6 +2458,88 @@ self.addEventListener('fetch', e => {
                         </div>
                     </div>
 
+                    <!-- ポジション解説 -->
+                    <div id="help-position" class="card" style="margin-top:16px;">
+                        <div class="card-title">⚽ ポジション解説</div>
+                        <p style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:12px;">選手には<strong style="color:#FFD700;">メインポジション</strong>と<strong style="color:#FFD700;">副ポジション</strong>があります。メインポジションが選手の能力値の傾向を決定し、副ポジションとの組み合わせで7:3の按分で能力値が生成されます。</p>
+                        <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:14px;">
+                            <tr style="background:rgba(255,255,255,0.08);">
+                                <th style="padding:6px 8px; text-align:left; color:#FFD700;">ポジション</th>
+                                <th style="padding:6px 8px; text-align:left; color:#FFD700;">略称</th>
+                                <th style="padding:6px 8px; text-align:left; color:#FFD700;">特徴</th>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
+                                <td style="padding:6px 8px; color:#EF9A9A; font-weight:bold;">センターフォワード</td>
+                                <td style="padding:6px 8px; color:#EF9A9A; font-weight:bold;">CF</td>
+                                <td style="padding:6px 8px; color:rgba(255,255,255,0.8);">シュート・ドリブル・オフェンスが高い純粋なストライカー。得点力に特化。</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
+                                <td style="padding:6px 8px; color:#FFAB91; font-weight:bold;">ウィンガー</td>
+                                <td style="padding:6px 8px; color:#FFAB91; font-weight:bold;">WG</td>
+                                <td style="padding:6px 8px; color:rgba(255,255,255,0.8);">ドリブルが最も高いサイドアタッカー。突破力とスピードが武器。</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
+                                <td style="padding:6px 8px; color:#A5D6A7; font-weight:bold;">セントラルハーフ</td>
+                                <td style="padding:6px 8px; color:#A5D6A7; font-weight:bold;">CH</td>
+                                <td style="padding:6px 8px; color:rgba(255,255,255,0.8);">パスを中心にオフェンス・ディフェンスがバランスよく高い万能型MF。</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
+                                <td style="padding:6px 8px; color:#80CBC4; font-weight:bold;">サイドハーフ</td>
+                                <td style="padding:6px 8px; color:#80CBC4; font-weight:bold;">SH</td>
+                                <td style="padding:6px 8px; color:rgba(255,255,255,0.8);">オフェンスとパスが高めのサイドMF。攻撃参加と守備のバランスをとる。</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
+                                <td style="padding:6px 8px; color:#B0BEC5; font-weight:bold;">ディフェンシブハーフ</td>
+                                <td style="padding:6px 8px; color:#B0BEC5; font-weight:bold;">DH</td>
+                                <td style="padding:6px 8px; color:rgba(255,255,255,0.8);">タックル・ブロック・カバーが高い守備的MF。中盤の底で相手の攻撃を潰す。</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
+                                <td style="padding:6px 8px; color:#90CAF9; font-weight:bold;">センターバック</td>
+                                <td style="padding:6px 8px; color:#90CAF9; font-weight:bold;">CB</td>
+                                <td style="padding:6px 8px; color:rgba(255,255,255,0.8);">ブロック・タックル・カバーが最も高い守備の要。失点抑制に最も貢献する。</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
+                                <td style="padding:6px 8px; color:#CE93D8; font-weight:bold;">サイドバック</td>
+                                <td style="padding:6px 8px; color:#CE93D8; font-weight:bold;">SB</td>
+                                <td style="padding:6px 8px; color:rgba(255,255,255,0.8);">タックル・カバーが高いサイドDF。CBより攻撃参加もこなせるバランス型。</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 8px; color:#FFD700; font-weight:bold;">ゴールキーパー</td>
+                                <td style="padding:6px 8px; color:#FFD700; font-weight:bold;">GK</td>
+                                <td style="padding:6px 8px; color:rgba(255,255,255,0.8);">GK能力値専用。失点を大きく左右する。フィールドプレーヤーとは別の能力体系。</td>
+                            </tr>
+                        </table>
+                        <div style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:10px;">
+                            <strong style="color:#FFD700;">メイン / 副ポジションの組み合わせ</strong><br>
+                            選手カードには <strong>メインポジ / 副ポジ</strong>（例：<span style="color:#EF9A9A;">CF</span>/<span style="color:#FFAB91;">WG</span>）が表示されます。メインポジションが能力値の70%を決定し、副ポジションが30%影響します。CF/WGの選手とWG/CFの選手は同じポジションの組み合わせでも能力傾向が異なります。
+                        </div>
+                        <div style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:10px;">
+                            <strong style="color:#FFD700;">ポジション適性（少し外・適正外）</strong><br>
+                            選手をスロットに配置する際、選手のポジションとスロットのポジションが一致しない場合にペナルティが発生します。
+                        </div>
+                        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                            <tr style="background:rgba(255,255,255,0.08);">
+                                <th style="padding:6px 8px; text-align:left; color:#FFD700;">表示</th>
+                                <th style="padding:6px 8px; text-align:left; color:#FFD700;">条件</th>
+                                <th style="padding:6px 8px; text-align:center; color:#FFD700;">能力補正</th>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
+                                <td style="padding:6px 8px; color:#81C784;">（なし）</td>
+                                <td style="padding:6px 8px; color:rgba(255,255,255,0.8);">選手のポジションとスロットが一致</td>
+                                <td style="padding:6px 8px; text-align:center; color:#81C784;">±0%</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
+                                <td style="padding:6px 8px; color:#FFD700;">少し外（-8%）</td>
+                                <td style="padding:6px 8px; color:rgba(255,255,255,0.8);">大枠（FW/MF/DF）は同じだがポジションが不一致</td>
+                                <td style="padding:6px 8px; text-align:center; color:#FFD700;">-8%</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 8px; color:#FF8A65;">適正外（-20%）</td>
+                                <td style="padding:6px 8px; color:rgba(255,255,255,0.8);">大枠のポジションも不一致</td>
+                                <td style="padding:6px 8px; text-align:center; color:#FF8A65;">-20%</td>
+                            </tr>
+                        </table>
+                    </div>
                     <!-- チーム -->
                     <div id="help-team" class="card" style="margin-top:16px;">
                         <div class="card-title">👥 チーム画面：選手データの解説</div>
