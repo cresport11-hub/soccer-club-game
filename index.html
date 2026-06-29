@@ -12985,8 +12985,9 @@ self.addEventListener('fetch', e => {
             // 差+15: ±0.65、差+30: ±0.50、差±0: ±0.80（基本）、差-15: ±0.65（不利側も収束）
             const myOffVsOppDef = adjYourOff - adjOppDef; // 自攻撃 vs 相手守備の差
             const oppOffVsMyDef = adjOppOff - adjYourDef; // 相手攻撃 vs 自守備の差
-            const myRandRange  = Math.max(0.30, 0.80 - Math.abs(myOffVsOppDef) / 100) * 2;
-            const oppRandRange = Math.max(0.30, 0.80 - Math.abs(oppOffVsMyDef) / 100) * 2;
+            // 不利側（差が負）はランダム幅を縮小、有利側（差が正）はランダム幅を拡大して戦力差を結果に反映
+            const myRandRange  = Math.max(0.15, 0.65 + myOffVsOppDef / 200) * 2;
+            const oppRandRange = Math.max(0.15, 0.65 + oppOffVsMyDef / 200) * 2;
             let myScore = Math.max(0, Math.min(3, Math.round(myScoreBase * 0.4 + (Math.random() - 0.5) * myRandRange)));
             let oppScore = Math.max(0, Math.min(3, Math.round(oppScoreBase * 0.4 + (Math.random() - 0.5) * oppRandRange)));
 
@@ -13785,8 +13786,9 @@ self.addEventListener('fetch', e => {
             }
             // 後半スコア（最大3点）
             // 動的ランダム幅（後半も同じ計算式を適用）
-            const myRandRange2  = Math.max(0.30, 0.80 - Math.abs(adjYourOff2 - adjOppDef2) / 100) * 2;
-            const oppRandRange2 = Math.max(0.30, 0.80 - Math.abs(adjOppOff2 - adjYourDef2) / 100) * 2;
+            // 不利側（差が負）はランダム幅を縮小、有利側（差が正）はランダム幅を拡大して戦力差を結果に反映
+            const myRandRange2  = Math.max(0.15, 0.65 + (adjYourOff2 - adjOppDef2) / 200) * 2;
+            const oppRandRange2 = Math.max(0.15, 0.65 + (adjOppOff2 - adjYourDef2) / 200) * 2;
             let myScore2 = Math.max(0, Math.min(3, Math.round(myScoreBase2 * 0.4 + (Math.random() - 0.5) * myRandRange2)));
             let oppScore2 = Math.max(0, Math.min(3, Math.round(oppScoreBase2 * 0.4 + (Math.random() - 0.5) * oppRandRange2)));
 
