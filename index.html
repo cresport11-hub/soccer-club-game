@@ -12975,8 +12975,8 @@ self.addEventListener('fetch', e => {
             const oppOffVsMyDef = adjOppOff - adjYourDef; // 相手攻撃 vs 自守備の差
             const myRandRange  = Math.max(0.30, 0.80 - Math.abs(myOffVsOppDef) / 100) * 2;
             const oppRandRange = Math.max(0.30, 0.80 - Math.abs(oppOffVsMyDef) / 100) * 2;
-            let myScore = Math.max(0, Math.min(3, Math.round(myScoreBase * 0.5 + (Math.random() - 0.5) * myRandRange)));
-            let oppScore = Math.max(0, Math.min(3, Math.round(oppScoreBase * 0.5 + (Math.random() - 0.5) * oppRandRange)));
+            let myScore = Math.max(0, Math.min(3, Math.round(myScoreBase * 0.4 + (Math.random() - 0.5) * myRandRange)));
+            let oppScore = Math.max(0, Math.min(3, Math.round(oppScoreBase * 0.4 + (Math.random() - 0.5) * oppRandRange)));
 
             // スキル: 神セーブ（GK）: 失点を1点防ぐ確率 25%
             if (oppScore > 0 && startersHaveSkill(starters, 'divineSave') && Math.random() < 0.20) {
@@ -13773,8 +13773,8 @@ self.addEventListener('fetch', e => {
             // 動的ランダム幅（後半も同じ計算式を適用）
             const myRandRange2  = Math.max(0.30, 0.80 - Math.abs(adjYourOff2 - adjOppDef2) / 100) * 2;
             const oppRandRange2 = Math.max(0.30, 0.80 - Math.abs(adjOppOff2 - adjYourDef2) / 100) * 2;
-            let myScore2 = Math.max(0, Math.min(3, Math.round(myScoreBase2 * 0.5 + (Math.random() - 0.5) * myRandRange2)));
-            let oppScore2 = Math.max(0, Math.min(3, Math.round(oppScoreBase2 * 0.5 + (Math.random() - 0.5) * oppRandRange2)));
+            let myScore2 = Math.max(0, Math.min(3, Math.round(myScoreBase2 * 0.4 + (Math.random() - 0.5) * myRandRange2)));
+            let oppScore2 = Math.max(0, Math.min(3, Math.round(oppScoreBase2 * 0.4 + (Math.random() - 0.5) * oppRandRange2)));
 
             if (oppScore2 > 0 && startersHaveSkill(starters, 'divineSave') && Math.random() < 0.20) oppScore2 = Math.max(0, oppScore2 - 1);
             if (oppScore2 > 0 && startersHaveSkill(starters, 'cleanSheet') && Math.random() < 0.05) oppScore2 = 0;
