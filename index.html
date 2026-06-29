@@ -13178,6 +13178,7 @@ self.addEventListener('fetch', e => {
                 cardEvents, // カードイベント（後半ハイライトで使用）
                 cardMessages, // カードメッセージ（後半結果表示で使用）
                 injuryEvents, // 試合中怪我イベント（後半ハイライトで使用）
+                goalEvents, // 得点者記録（後半採点で使用）
                 firstHalfInjuredIds: [...firstHalfInjuredIds], // 前半怪我選手ID一覧
             };
             halftimeSubstitutions = [];
@@ -13573,7 +13574,8 @@ self.addEventListener('fetch', e => {
                     isCupMatch, savedPendingMatch,
                     firstHalfMyScore, firstHalfOppScore, firstHalfSpecialEvents,
                     cardEvents = [], cardMessages = [],
-                    injuryEvents: htInjuryEvents = [] } = ht;
+                    injuryEvents: htInjuryEvents = [],
+                    goalEvents = [] } = ht;
 
             // 後半のスタメン（ハーフタイム交代後）
             const starters = gameData.players.filter(p => p.starter && p.injury !== 'heavy');
