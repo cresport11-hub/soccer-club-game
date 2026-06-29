@@ -5975,18 +5975,7 @@ self.addEventListener('fetch', e => {
                    <div class="ability-row"><span class="ability-label">カバー</span><span class="ability-value">${p.cover !== undefined ? p.cover : '-'}</span></div>`;
             document.getElementById('transferDetailBody').innerHTML = `
                 <div class="ability-row"><span class="ability-label">ポジション</span><span class="ability-value" style="color:${subPosColorMap[getSubPos(p)] || posColor[p.position]}">${getSubPos(p)}${p.subPosition2 ? ' / ' + p.subPosition2 : ''}</span></div>
-                <div class="ability-row" style="align-items:flex-start;">
-                  <span class="ability-label" style="padding-top:4px;">副ポジ変更</span>
-                  <span class="ability-value">
-                    <select id="subPos2Select_${p.id}" onchange="changeSubPos2('${p.id}', this.value)"
-                      style="background:#1a3a2a;color:#fff;border:1px solid #4CAF50;border-radius:4px;padding:2px 6px;font-size:12px;">
-                      <option value="">なし</option>
-                      ${VALID_POS_COMBOS.filter(c => c[0] === getSubPos(p) && c[1]).map(c =>
-                        '<option value="' + c[1] + '"' + (p.subPosition2 === c[1] ? ' selected' : '') + '>' + c[1] + '</option>'
-                      ).join('')}
-                    </select>
-                  </span>
-                </div>
+                
                 <div class="ability-row"><span class="ability-label">年齢</span><span class="ability-value">${p.age}歳</span></div>
                 <div class="ability-row"><span class="ability-label">所属</span><span class="ability-value">${p.fromClub}</span></div>
                 <div class="ability-row"><span class="ability-label">レベル</span><span class="ability-value">Lv${p.level} / 最大Lv${p.maxLevel || '-'}</span></div>
