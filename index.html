@@ -4976,7 +4976,7 @@ self.addEventListener('fetch', e => {
                 // 練習システムの補完
                 if (gameData.trainingUsed === undefined) gameData.trainingUsed = false;
                 if (gameData.soloTrainingUsed === undefined) gameData.soloTrainingUsed = false;
-                if (!gameData.allLeagues) { gameData.allLeagues = null; initAllLeagues(); }
+                if (!gameData.allLeagues || Object.keys(gameData.allLeagues).length === 0) { gameData.allLeagues = {}; initAllLeagues(); }
                 // allLeagues内の他クラブ選手にも細分化ポジション補完を適用
                 if (gameData.allLeagues) {
                     Object.values(gameData.allLeagues).forEach(ld => {
