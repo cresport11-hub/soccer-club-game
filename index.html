@@ -2172,6 +2172,18 @@ self.addEventListener('fetch', e => {
 
                 <!-- スタメン選出 -->
                 <div id="lineup" style="display: none;">
+                    <!-- 作戦設定枠 -->
+                    <div class="card" style="padding: 14px 16px;">
+                        <div class="card-title" style="margin-bottom: 10px;">⚙️ 作戦設定</div>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+                            <button id="lineup-tactic-ultra_attack" class="tactic-btn" onclick="setPreviewTactics('ultra_attack')" style="font-size:12px; padding:6px 10px;">超攻撃的</button>
+                            <button id="lineup-tactic-attack" class="tactic-btn" onclick="setPreviewTactics('attack')" style="font-size:12px; padding:6px 10px;">攻撃的</button>
+                            <button id="lineup-tactic-balance" class="tactic-btn" onclick="setPreviewTactics('balance')" style="font-size:12px; padding:6px 10px;">バランス</button>
+                            <button id="lineup-tactic-defend" class="tactic-btn" onclick="setPreviewTactics('defend')" style="font-size:12px; padding:6px 10px;">守備的</button>
+                            <button id="lineup-tactic-ultra_defend" class="tactic-btn" onclick="setPreviewTactics('ultra_defend')" style="font-size:12px; padding:6px 10px;">超守備的</button>
+                        </div>
+                        <div id="lineupTacticsDesc" style="font-size: 12px; color: rgba(255,255,255,0.6);"></div>
+                    </div>
                     <div class="card">
                         <div class="card-title">フォーメーション選択</div>
                         <div class="formation-grid" id="formationGrid"></div>
@@ -9168,6 +9180,13 @@ self.addEventListener('fetch', e => {
                 const btn = document.getElementById('tactic-' + id);
                 if (btn) btn.classList.toggle('tactic-active', id === t);
             });
+            // スタメン画面の作戦ボタンも同期
+            ['ultra_attack','attack','balance','defend','ultra_defend'].forEach(id => {
+                const btn = document.getElementById('lineup-tactic-' + id);
+                if (btn) btn.classList.toggle('tactic-active', id === t);
+            });
+            const lineupDescEl = document.getElementById('lineupTacticsDesc');
+            if (lineupDescEl) lineupDescEl.textContent = DESCS[t] || '';
         }
 
         // 体調バッジ生成ヘルパー
@@ -9661,6 +9680,21 @@ self.addEventListener('fetch', e => {
         }
 
         function renderLineup() {
+            // スタメン画面の作戦ボタン初期化
+            const _lineupDESCS = {
+                ultra_attack: 'OF+12% / DF-18%｜攻撃力は上がるが守備が大きく崩れる',
+                attack:       'OF+6% / DF-9%｜攻撃重視だが守備の穴が目立つ',
+                balance:      '補正なし｜攻守バランスの取れた標準設定',
+                defend:       'OF-9% / DF+6%｜守備は固まるが攻撃力が大きく落ちる',
+                ultra_defend: 'OF-18% / DF+12%｜守備は堅いが得点がほぼ期待できない',
+            };
+            const _curTactic = gameData.tactics || 'balance';
+            ['ultra_attack','attack','balance','defend','ultra_defend'].forEach(id => {
+                const btn = document.getElementById('lineup-tactic-' + id);
+                if (btn) btn.classList.toggle('tactic-active', id === _curTactic);
+            });
+            const _lineupDescEl = document.getElementById('lineupTacticsDesc');
+            if (_lineupDescEl) _lineupDescEl.textContent = _lineupDESCS[_curTactic] || '';
             const formationGrid = document.getElementById('formationGrid');
             formationGrid.innerHTML = Object.entries(formations).map(([key, form]) => `
                 <div class="formation-card ${gameData.formation === key ? 'selected' : ''}" onclick="selectFormation('${key}')">
