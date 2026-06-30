@@ -5249,24 +5249,10 @@ self.addEventListener('fetch', e => {
                 // 練習システムの補完
                 if (gameData.trainingUsed === undefined) gameData.trainingUsed = false;
                 if (gameData.soloTrainingUsed === undefined) gameData.soloTrainingUsed = false;
-                if (!gameData.allLeagues || Object.keys(gameData.allLeagues).length === 0) { gameData.allLeagues = {}; initAllLeagues(); }
-                // allLeagues内の他クラブのsquadを再生成（保存時に除外されたため）
-                if (gameData.allLeagues) {
-                    Object.keys(gameData.allLeagues).forEach(tierKey => {
-                        const tier = parseInt(tierKey);
-                        const ld = gameData.allLeagues[tier];
-                        if (!ld || !ld.standings) return;
-                        ld.standings.forEach(team => {
-                            if (!team.squad || team.squad.length === 0) {
-                                // squadがない場合は再生成
-                                team.squad = generateRivalSquad(tier, team.formation || '4-4-2');
-                                team.offense = calcRivalOffense(team.squad, team.formation || '4-4-2');
-                                team.defense = calcRivalDefense(team.squad, team.formation || '4-4-2');
-                            }
-                            initSubPositions(team.squad);
-                        });
-                    });
-                }
+                // allLeaguesはゲーム起動後に遅延生成する（iOSでの重い処理を避けるため）
+                // ロード時は生成しない。必要になったタイミング（他リーグ画面表示時など）で生成する
+                if (!gameData.allLeagues) gameData.allLeagues = {};
+                // allLeagues内の他クラブのsquadは必要時に再生成（ロード時は省略）
                 // ※ロード時の他リーグ追いつかせ処理は削除（iOSでメモリ不足エラーの原因）
                 // allLeaguesのデータはセーブ時点の状態が保存されているため再計算不要
                 // カップ戦データの補完（旧セーブデータ対応）
