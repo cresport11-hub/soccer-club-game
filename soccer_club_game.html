@@ -5216,14 +5216,20 @@ self.addEventListener('fetch', e => {
                 if (gameData.trainingUsed === undefined) gameData.trainingUsed = false;
                 if (gameData.soloTrainingUsed === undefined) gameData.soloTrainingUsed = false;
                 if (!gameData.allLeagues || Object.keys(gameData.allLeagues).length === 0) { gameData.allLeagues = {}; initAllLeagues(); }
-                // allLeagues内の他クラブ選手にも細分化ポジション補完を適用
+                // allLeagues内の他クラブのsquadを再生成（保存時に除外されたため）
                 if (gameData.allLeagues) {
-                    Object.values(gameData.allLeagues).forEach(ld => {
+                    Object.keys(gameData.allLeagues).forEach(tierKey => {
+                        const tier = parseInt(tierKey);
+                        const ld = gameData.allLeagues[tier];
                         if (!ld || !ld.standings) return;
                         ld.standings.forEach(team => {
-                            if (team.squad && team.squad.length > 0) {
-                                initSubPositions(team.squad);
+                            if (!team.squad || team.squad.length === 0) {
+                                // squadがない場合は再生成
+                                team.squad = generateRivalSquad(tier, team.formation || '4-4-2');
+                                team.offense = calcRivalOffense(team.squad, team.formation || '4-4-2');
+                                team.defense = calcRivalDefense(team.squad, team.formation || '4-4-2');
                             }
+                            initSubPositions(team.squad);
                         });
                     });
                 }
@@ -5299,7 +5305,24 @@ self.addEventListener('fetch', e => {
         }
         function saveGame() {
             try {
-                localStorage.setItem('soccerGame_tamatsuku', JSON.stringify(gameData));
+                // allLeaguesのsquadを除外して保存（セーブデータ容量削減）
+                // squadはロード時に再生成するため保存不要
+                const saveObj = Object.assign({}, gameData);
+                if (saveObj.allLeagues) {
+                    const compactLeagues = {};
+                    Object.keys(saveObj.allLeagues).forEach(tier => {
+                        const ld = saveObj.allLeagues[tier];
+                        if (!ld) { compactLeagues[tier] = ld; return; }
+                        const compactStandings = (ld.standings || []).map(team => {
+                            const t = Object.assign({}, team);
+                            delete t.squad; // squadを除外（ロード時に再生成）
+                            return t;
+                        });
+                        compactLeagues[tier] = Object.assign({}, ld, { standings: compactStandings });
+                    });
+                    saveObj.allLeagues = compactLeagues;
+                }
+                localStorage.setItem('soccerGame_tamatsuku', JSON.stringify(saveObj));
             } catch(e) {
                 // QuotaExceededErrorなどストレージ満杯時
                 console.error('saveGameエラー:', e);
@@ -5342,17 +5365,28 @@ self.addEventListener('fetch', e => {
             reader.onload = function(e) {
                 try {
                     const data = e.target.result;
-                    JSON.parse(data); // パーステスト
+                    const parsed = JSON.parse(data); // パーステスト
                     if (!confirm('現在のセーブデータに上書きします。よろしいですか？')) return;
-                    localStorage.setItem('soccerGame_tamatsuku', data);
+                    // allLeaguesのsquadを除外して保存（容量削減のため）
+                    if (parsed.allLeagues) {
+                        Object.keys(parsed.allLeagues).forEach(tier => {
+                            const ld = parsed.allLeagues[tier];
+                            if (ld && ld.standings) {
+                                ld.standings.forEach(team => { delete team.squad; });
+                            }
+                        });
+                    }
+                    const compactData = JSON.stringify(parsed);
+                    localStorage.setItem('soccerGame_tamatsuku', compactData);
                     showNotification('📤 セーブデータをインポートしました。ページを再読み込みします。');
                     setTimeout(() => location.reload(), 1500);
                 } catch(err) {
+                    console.error('import error:', err);
                     showNotification('❗ ファイルが正しくありません。正しいJSONファイルを選んでください。');
                 }
             };
             reader.readAsText(file);
-            event.target.value = ''; // 同じファイルを再選択できるようリセット
+            event.target.value = ''; // 同じファイルを再選択できるよりリセット
         }
 
         function getRandomAbility(min, max) {
