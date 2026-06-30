@@ -3,136 +3,155 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>デバッグ</title>
+<title>デバッグ v2</title>
 <style>
 body { font-family: monospace; font-size: 12px; padding: 10px; background: #000; color: #0f0; }
-.err { color: #f00; }
+.err { color: #f00; font-weight: bold; }
 .ok { color: #0f0; }
 .warn { color: #ff0; }
-pre { white-space: pre-wrap; word-break: break-all; }
-button { font-size: 16px; padding: 10px; margin: 5px; display: block; width: 100%; }
+.step { color: #0ff; }
+pre { white-space: pre-wrap; word-break: break-all; margin: 2px 0; }
+button { font-size: 15px; padding: 10px; margin: 5px 0; display: block; width: 100%; background: #222; color: #fff; border: 1px solid #555; border-radius: 6px; }
 </style>
 </head>
 <body>
-<h2>デバッグページ</h2>
-<button onclick="checkStorage()">① localStorageを確認</button>
-<button onclick="runLoadGame()">② loadGameを実行してエラー確認</button>
-<button onclick="clearStorage()">③ localStorageをクリア</button>
+<h2>デバッグ v2</h2>
+<button onclick="runFullTest()">▶ 全ステップ実行</button>
+<button onclick="clearStorage()">🗑 localStorageクリア</button>
 <div id="output"></div>
 
 <script>
+var out = document.getElementById('output');
 function log(msg, type) {
-    var d = document.getElementById('output');
     var p = document.createElement('pre');
-    p.className = type || '';
+    p.className = type || 'ok';
     p.textContent = msg;
-    d.appendChild(p);
+    out.appendChild(p);
 }
+function step(msg) { log('→ ' + msg, 'step'); }
+function ok(msg) { log('  ✓ ' + msg, 'ok'); }
+function err(msg, e) { 
+    log('  ✗ エラー: ' + msg, 'err'); 
+    if (e) { log('    ' + e.message, 'err'); log('    ' + (e.stack||'').split('\n')[0], 'err'); }
+}
+function warn(msg) { log('  ⚠ ' + msg, 'warn'); }
 
-function checkStorage() {
-    document.getElementById('output').innerHTML = '';
+function runFullTest() {
+    out.innerHTML = '';
+    log('=== loadGame ステップ別テスト ===', 'warn');
+
+    // STEP 1: localStorage読み込み
+    step('STEP1: localStorage読み込み');
+    var saved;
     try {
-        var s = localStorage.getItem('soccerGame_tamatsuku');
-        if (!s) { log('localStorageにデータなし', 'warn'); return; }
-        log('データサイズ: ' + s.length + ' bytes (' + (s.length/1024).toFixed(1) + ' KB)', 'ok');
-        var p = JSON.parse(s);
-        log('gameStarted: ' + p.gameStarted, 'ok');
-        log('players: ' + (p.players||[]).length + '人', 'ok');
-        log('money: ' + p.money, 'ok');
-        log('clubName: ' + p.clubName, 'ok');
-        log('leagueStandings: ' + (p.leagueStandings||[]).length + 'チーム', 'ok');
-        log('currentMatchIndex: ' + p.currentMatchIndex, 'ok');
-        log('allLeagues: ' + (p.allLeagues ? Object.keys(p.allLeagues).length + 'リーグ' : 'なし'), 'ok');
-        // 各フィールドのサイズ
-        var sizes = [];
-        Object.keys(p).forEach(function(k) {
-            sizes.push([k, JSON.stringify(p[k]).length]);
-        });
-        sizes.sort(function(a,b){return b[1]-a[1];});
-        log('\n--- フィールド別サイズ (上位10) ---', 'warn');
-        sizes.slice(0,10).forEach(function(x) {
-            log(x[0] + ': ' + (x[1]/1024).toFixed(1) + 'KB', 'ok');
-        });
-    } catch(e) {
-        log('エラー: ' + e.message, 'err');
-        log(e.stack || '', 'err');
-    }
-}
+        saved = localStorage.getItem('soccerGame_tamatsuku');
+        if (!saved) { warn('データなし'); return; }
+        ok('データあり: ' + (saved.length/1024).toFixed(1) + 'KB');
+    } catch(e) { err('localStorage読み込み失敗', e); return; }
 
-function runLoadGame() {
-    document.getElementById('output').innerHTML = '';
-    var s = localStorage.getItem('soccerGame_tamatsuku');
-    if (!s) { log('localStorageにデータなし', 'warn'); return; }
-    
-    log('JSONパース開始...', 'warn');
+    // STEP 2: JSONパース
+    step('STEP2: JSONパース');
     var parsed;
     try {
-        parsed = JSON.parse(s);
-        log('JSONパース: OK', 'ok');
-    } catch(e) {
-        log('JSONパースエラー: ' + e.message, 'err');
-        return;
-    }
-    
-    log('gameStarted: ' + parsed.gameStarted, 'ok');
-    log('players: ' + (parsed.players||[]).length, 'ok');
-    
-    // leagueStandings処理
-    log('\nleagueStandings処理開始...', 'warn');
+        parsed = JSON.parse(saved);
+        ok('パース成功 gameStarted=' + parsed.gameStarted + ' players=' + (parsed.players||[]).length);
+    } catch(e) { err('JSONパース失敗', e); return; }
+
+    // STEP 3: leagueStandings squad削除
+    step('STEP3: leagueStandings.squad削除');
     try {
         if (parsed.leagueStandings) {
-            parsed.leagueStandings.forEach(function(team) {
-                if (team.squad) { delete team.squad; }
-            });
+            parsed.leagueStandings.forEach(function(t){ if(t.squad) delete t.squad; });
         }
-        log('leagueStandings処理: OK (' + (parsed.leagueStandings||[]).length + 'チーム)', 'ok');
-    } catch(e) {
-        log('leagueStandings処理エラー: ' + e.message, 'err');
-        log(e.stack || '', 'err');
-        return;
-    }
-    
-    // allLeagues処理
-    log('\nallLeagues処理開始...', 'warn');
+        ok('完了 ' + (parsed.leagueStandings||[]).length + 'チーム');
+    } catch(e) { err('leagueStandings処理失敗', e); return; }
+
+    // STEP 4: allLeagues squad削除
+    step('STEP4: allLeagues.squad削除');
     try {
         if (parsed.allLeagues) {
-            var keys = Object.keys(parsed.allLeagues);
-            log('allLeaguesキー数: ' + keys.length, 'ok');
-            keys.forEach(function(tier) {
+            Object.keys(parsed.allLeagues).forEach(function(tier){
                 var ld = parsed.allLeagues[tier];
-                if (ld && ld.standings) {
-                    ld.standings.forEach(function(team) {
-                        if (team.squad) { delete team.squad; }
-                    });
-                }
+                if (ld && ld.standings) ld.standings.forEach(function(t){ if(t.squad) delete t.squad; });
             });
         }
-        log('allLeagues処理: OK', 'ok');
-    } catch(e) {
-        log('allLeagues処理エラー: ' + e.message, 'err');
-        log(e.stack || '', 'err');
-        return;
-    }
-    
-    // localStorage再保存
-    log('\nlocalStorage再保存...', 'warn');
+        ok('完了');
+    } catch(e) { err('allLeagues処理失敗', e); return; }
+
+    // STEP 5: 整合性チェック
+    step('STEP5: 整合性チェック');
     try {
-        localStorage.setItem('soccerGame_tamatsuku', JSON.stringify(parsed));
-        var newSize = localStorage.getItem('soccerGame_tamatsuku').length;
-        log('再保存: OK (' + (newSize/1024).toFixed(1) + 'KB)', 'ok');
-    } catch(e) {
-        log('再保存エラー: ' + e.message, 'err');
-        return;
-    }
-    
-    log('\n--- 全処理完了 ---', 'ok');
-    log('ゲームページに戻ってリロードしてください', 'warn');
+        if (parsed.gameStarted && (!parsed.players || parsed.players.length === 0)) {
+            warn('gameStarted=true だが players=0 → リセット対象');
+        } else if (parsed.gameStarted && (!parsed.leagueStandings || parsed.leagueStandings.length === 0)) {
+            warn('gameStarted=true だが leagueStandings=0 → リセット対象');
+        } else {
+            ok('整合性OK');
+        }
+    } catch(e) { err('整合性チェック失敗', e); return; }
+
+    // STEP 6: Object.assign
+    step('STEP6: Object.assign(gameData, parsed)');
+    // gameDataの簡易版を作成
+    var gameData = {
+        clubName:'FC日本', money:1000000, fame:60, league:5, rank:20,
+        players:[], leagueStandings:[], schedule:[], allLeagues:null,
+        facilities:{stadium:1,training:1,scout:1,medical:1,youth:1,analysis:1,physicalCoach:1,mentalCoach:1},
+        gameStarted:false
+    };
+    try {
+        Object.assign(gameData, parsed);
+        ok('完了 players=' + gameData.players.length + ' money=' + gameData.money);
+    } catch(e) { err('Object.assign失敗', e); return; }
+
+    // STEP 7: facilities補完チェック
+    step('STEP7: facilities補完チェック');
+    try {
+        ok('facilities=' + JSON.stringify(gameData.facilities));
+        if (gameData.facilities === undefined || gameData.facilities === null) {
+            warn('facilities が null/undefined！');
+        }
+        var _ = gameData.facilities.analysis;
+        ok('facilities.analysis=' + _);
+    } catch(e) { err('facilities補完チェック失敗', e); return; }
+
+    // STEP 8: players補完
+    step('STEP8: players補完（dribble/tackle）');
+    try {
+        if (gameData.players) {
+            gameData.players.forEach(function(p) {
+                if (p.fatigue === undefined) p.fatigue = 0;
+            });
+        }
+        ok('完了 ' + (gameData.players||[]).length + '人');
+    } catch(e) { err('players補完失敗', e); return; }
+
+    // STEP 9: transferMarket補完
+    step('STEP9: transferMarket補完');
+    try {
+        ok('transferMarket=' + (gameData.transferMarket||[]).length + '人');
+    } catch(e) { err('transferMarket補完失敗', e); return; }
+
+    // STEP 10: allLeagues確認
+    step('STEP10: allLeagues確認');
+    try {
+        ok('allLeagues=' + (gameData.allLeagues ? JSON.stringify(Object.keys(gameData.allLeagues)) : 'null'));
+    } catch(e) { err('allLeagues確認失敗', e); return; }
+
+    log('', '');
+    log('=== 全ステップ完了 ===', 'ok');
+    log('gameStarted=' + gameData.gameStarted, 'ok');
+    log('players=' + (gameData.players||[]).length + '人', 'ok');
+    log('money=' + gameData.money, 'ok');
+    log('', '');
+    log('上記が全てOKなら、問題はrenderGame()内にあります。', 'warn');
+    log('エラーがあった場合は、そのSTEPが原因です。', 'warn');
 }
 
 function clearStorage() {
-    if (confirm('localStorageを削除しますか？（ゲームデータが消えます）')) {
+    if (confirm('localStorageを削除しますか？')) {
         localStorage.removeItem('soccerGame_tamatsuku');
-        log('localStorageをクリアしました', 'warn');
+        log('クリアしました', 'warn');
     }
 }
 </script>
