@@ -14700,6 +14700,8 @@ self.addEventListener('fetch', e => {
                 comebackWin: comebackWin
             });
 
+            // 試合終了後に作戦をバランスにリセット
+            gameData.tactics = 'balance';
             saveGame();
             // ゲームオーバーチェック（試合後）
             if (checkGameOver()) return;
