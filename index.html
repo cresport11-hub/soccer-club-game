@@ -5089,6 +5089,8 @@ self.addEventListener('fetch', e => {
         // 初期化
         function init() {
             loadGame();
+            // デバッグ: init()内でのgameData状態確認
+            console.log('[init] loadGame後: players=' + (gameData.players ? gameData.players.length : 'null') + ', money=' + gameData.money + ', gameStarted=' + gameData.gameStarted);
             const isFirstLaunch = !gameData.gameStarted;
             if (isFirstLaunch) {
                 // 初回起動時は難易度選択モーダルを表示
@@ -5303,9 +5305,12 @@ self.addEventListener('fetch', e => {
                     // (initCupは後でrenderGame前に呼ばれるため、フラグだけ立てておく)
                                         gameData._needCupInit = true;
                 }
+                // デバッグ: loadGame完了時のgameData状態をログ出力
+                console.log('[loadGame完了] players=' + (gameData.players ? gameData.players.length : 'null') + ', money=' + gameData.money + ', gameStarted=' + gameData.gameStarted + ', clubName=' + gameData.clubName);
             }
             } catch(e) {
                 console.error('loadGame error:', e);
+                console.error('loadGame error stack:', e.stack);
                 // エラー時はゲームデータを完全リセット（中途半端な状態を防ぐ）
                 gameData.gameStarted = false;
                 gameData.players = [];
