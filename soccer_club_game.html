@@ -5113,10 +5113,20 @@ self.addEventListener('fetch', e => {
             gameData.fame  = s.fame;
             gameData.difficulty = level;
             gameData.fameActionsUsed = [];
-            gameData.gameStarted = true;
             // シーズン開幕前キャンプを開始
             gameData.campWeek = 1;
             gameData.campUsedThisWeek = false;
+            // 必ず初期化してから各処理を実行（途中エラーで中途半端な状態にならないよう）
+            gameData.players = [];
+            gameData.leagueStandings = [];
+            gameData.schedule = [];
+            gameData.otherTeamMatches = {};
+            gameData.allLeagues = null;
+            gameData.transferMarket = [];
+            gameData.seasonGoals = [];
+            gameData.seasonGoalsAchieved = [];
+            gameData.rivalClub = null;
+            gameData.rivalRecord = { win: 0, draw: 0, loss: 0 };
             createInitialPlayers();
             generateLeagueStandings();
             generateSchedule();
@@ -5128,6 +5138,8 @@ self.addEventListener('fetch', e => {
             gameData.seasonHistory = [];
             gameData.managerSkills = { xp: 0, sp: 0, totalSp: 0, learned: [] };
             initSeasonStats();
+            // 全ての初期化処理が完了してからgameStarted=trueをセット
+            gameData.gameStarted = true;
             saveGame();
             renderGame();
             // チュートリアル表示
@@ -5300,7 +5312,13 @@ self.addEventListener('fetch', e => {
             }
             } catch(e) {
                 console.error('loadGame error:', e);
-                // エラー時はセーブデータを無視して初期状態で起動
+                // エラー時はゲームデータを完全リセット（中途半端な状態を防ぐ）
+                gameData.gameStarted = false;
+                gameData.players = [];
+                gameData.leagueStandings = [];
+                gameData.schedule = [];
+                gameData.money = 1000000;
+                gameData.fame = 60;
             }
         }
         function saveGame() {
