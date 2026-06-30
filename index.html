@@ -7420,13 +7420,12 @@ self.addEventListener('fetch', e => {
                 showNotification('スタメンが11名である必要があります（重症の選手は出場できません）');
                 return;
             }
-            // pitchAssignmentベースでスロット充足チェック
+            // pitchAssignmentベースでスロット充足チェック（割り当て済み選手11人＋GK1人）
             const pa = gameData.pitchAssignment || {};
             const slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
             const assignedIds = new Set(Object.values(pa).filter(Boolean));
-            const filledSlots = slots.filter(s => pa[s.pos + '_' + s.idx]);
             const gkSlotFilled = slots.filter(s => s.pos === 'GK').every(s => pa[s.pos + '_' + s.idx]);
-            if (filledSlots.length !== slots.length || !gkSlotFilled) {
+            if (assignedIds.size !== slots.length || !gkSlotFilled) {
                 showNotification('フォーメーションの全スロットに選手をセットしてください');
                 return;
             }
@@ -12340,12 +12339,12 @@ self.addEventListener('fetch', e => {
                 return;
             }
 
-                        // pitchAssignmentベースでスロット充足チェック
+                        // pitchAssignmentベースでスロット充足チェック（割り当て済み選手11人＋GK1人）
             const pa = gameData.pitchAssignment || {};
             const slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
-            const filledSlots = slots.filter(s => pa[s.pos + '_' + s.idx]);
+            const assignedIds = new Set(Object.values(pa).filter(Boolean));
             const gkSlotFilled = slots.filter(s => s.pos === 'GK').every(s => pa[s.pos + '_' + s.idx]);
-            if (filledSlots.length !== slots.length || !gkSlotFilled) {
+            if (assignedIds.size !== slots.length || !gkSlotFilled) {
                 showNotification('フォーメーションの全スロットに選手をセットしてください');
                 return;
             }
@@ -16874,12 +16873,12 @@ self.addEventListener('fetch', e => {
                 showNotification('スタメンは11名である必要があります');
                 return;
             }
-                        // pitchAssignmentベースでスロット充足チェック
+                        // pitchAssignmentベースでスロット充足チェック（割り当て済み選手11人＋GK1人）
             const pa = gameData.pitchAssignment || {};
             const slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
-            const filledSlots = slots.filter(s => pa[s.pos + '_' + s.idx]);
+            const assignedIds = new Set(Object.values(pa).filter(Boolean));
             const gkSlotFilled = slots.filter(s => s.pos === 'GK').every(s => pa[s.pos + '_' + s.idx]);
-            if (filledSlots.length !== slots.length || !gkSlotFilled) {
+            if (assignedIds.size !== slots.length || !gkSlotFilled) {
                 showNotification('フォーメーションの全スロットに選手をセットしてください');
                 return;
             }
