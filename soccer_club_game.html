@@ -5089,8 +5089,6 @@ self.addEventListener('fetch', e => {
         // 初期化
         function init() {
             loadGame();
-            // デバッグ: loadGame後のgameDataの状態をアラートで表示
-            alert('loadGame完了\ngameStarted=' + gameData.gameStarted + '\nplayers=' + (gameData.players||[]).length + '\nmoney=' + gameData.money + '\nfame=' + gameData.fame + '\nclubName=' + gameData.clubName);
             const isFirstLaunch = !gameData.gameStarted;
             if (isFirstLaunch) {
                 // 初回起動時は難易度選択モーダルを表示
@@ -5178,18 +5176,8 @@ self.addEventListener('fetch', e => {
                     try { localStorage.setItem('soccerGame_tamatsuku', JSON.stringify(parsed)); } catch(e) {}
                 }
                 // ── セーブデータ整合性チェック ──
-                // gameStarted=true なのに選手が0人の場合は壊れたデータとみなしてリセット
-                if (parsed.gameStarted && (!parsed.players || parsed.players.length === 0)) {
-                    console.warn('セーブデータが壊れています（gameStarted=true, players=0）。リセットします。');
-                    localStorage.removeItem('soccerGame_tamatsuku');
-                    return; // gameData は初期値のまま（gameStarted=false）
-                }
-                // leagueStandingsが空の場合も壊れたデータとみなしてリセット
-                if (parsed.gameStarted && (!parsed.leagueStandings || parsed.leagueStandings.length === 0)) {
-                    console.warn('セーブデータが壊れています（leagueStandings空）。リセットします。');
-                    localStorage.removeItem('soccerGame_tamatsuku');
-                    return;
-                }
+                // 注意: 誤検知を防ぐため、整合性チェックは行わない。
+                // Object.assignでデータを反映し、不足フィールドは後続処理で補完する。
                 Object.assign(gameData, parsed);
                 // totalSpentがない古いデータを補完
                 if (gameData.totalSpent === undefined) gameData.totalSpent = 0;
@@ -5318,8 +5306,6 @@ self.addEventListener('fetch', e => {
             }
             } catch(e) {
                 console.error('loadGame error:', e);
-                // エラー内容をアラートで表示（デバッグ用）
-                alert('loadGameエラー:\n' + e.message + '\n\nスタック:\n' + (e.stack || '').slice(0, 300));
                 // エラー時はゲームデータを完全リセット（中途半端な状態を防ぐ）
                 gameData.gameStarted = false;
                 gameData.players = [];

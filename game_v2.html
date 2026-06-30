@@ -5089,20 +5089,6 @@ self.addEventListener('fetch', e => {
         // 初期化
         function init() {
             loadGame();
-            // デバッグ: loadGame後のgameDataの状態を画面に表示
-            var dbg = document.createElement('div');
-            dbg.id = 'debug-overlay';
-            dbg.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#000;color:#0f0;font-family:monospace;font-size:13px;padding:20px;z-index:999999;overflow:auto;';
-            dbg.innerHTML = '<h2>DEBUG: loadGame後の状態</h2>' +
-                '<p>gameStarted=' + gameData.gameStarted + '</p>' +
-                '<p>players=' + (gameData.players||[]).length + '</p>' +
-                '<p>money=' + gameData.money + '</p>' +
-                '<p>fame=' + gameData.fame + '</p>' +
-                '<p>clubName=' + gameData.clubName + '</p>' +
-                '<p>leagueStandings=' + (gameData.leagueStandings||[]).length + '</p>' +
-                '<p>schedule=' + (gameData.schedule||[]).length + '</p>' +
-                '<button onclick="document.getElementById(\"debug-overlay\").remove();" style="font-size:18px;padding:10px 20px;margin-top:20px;">閉じる</button>';
-            document.body.appendChild(dbg);
             const isFirstLaunch = !gameData.gameStarted;
             if (isFirstLaunch) {
                 // 初回起動時は難易度選択モーダルを表示
@@ -5190,18 +5176,8 @@ self.addEventListener('fetch', e => {
                     try { localStorage.setItem('soccerGame_tamatsuku', JSON.stringify(parsed)); } catch(e) {}
                 }
                 // ── セーブデータ整合性チェック ──
-                // gameStarted=true なのに選手が0人の場合は壊れたデータとみなしてリセット
-                if (parsed.gameStarted && (!parsed.players || parsed.players.length === 0)) {
-                    console.warn('セーブデータが壊れています（gameStarted=true, players=0）。リセットします。');
-                    localStorage.removeItem('soccerGame_tamatsuku');
-                    return; // gameData は初期値のまま（gameStarted=false）
-                }
-                // leagueStandingsが空の場合も壊れたデータとみなしてリセット
-                if (parsed.gameStarted && (!parsed.leagueStandings || parsed.leagueStandings.length === 0)) {
-                    console.warn('セーブデータが壊れています（leagueStandings空）。リセットします。');
-                    localStorage.removeItem('soccerGame_tamatsuku');
-                    return;
-                }
+                // 注意: 誤検知を防ぐため、整合性チェックは行わない。
+                // Object.assignでデータを反映し、不足フィールドは後続処理で補完する。
                 Object.assign(gameData, parsed);
                 // totalSpentがない古いデータを補完
                 if (gameData.totalSpent === undefined) gameData.totalSpent = 0;
@@ -5330,8 +5306,6 @@ self.addEventListener('fetch', e => {
             }
             } catch(e) {
                 console.error('loadGame error:', e);
-                // エラー内容をアラートで表示（デバッグ用）
-                alert('loadGameエラー:\n' + e.message + '\n\nスタック:\n' + (e.stack || '').slice(0, 300));
                 // エラー時はゲームデータを完全リセット（中途半端な状態を防ぐ）
                 gameData.gameStarted = false;
                 gameData.players = [];
