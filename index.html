@@ -5186,6 +5186,7 @@ self.addEventListener('fetch', e => {
                 // squadが存在しない、またはフォーメーションとポジション別人数が不一致の場合に再生成
                 if (gameData.leagueStandings) {
                     gameData.leagueStandings.forEach(team => {
+                        try {
                         if (team.name === gameData.clubName) return;
                         const fm = formations[team.formation] || formations['4-4-2'];
                         const needRegen = !team.squad ||
@@ -5206,10 +5207,13 @@ self.addEventListener('fetch', e => {
                             });
                         }
                         // 他クラブ選手の細分化ポジション補完
-                        initSubPositions(team.squad);
+                        if (team.squad) initSubPositions(team.squad);
                         // 旧セーブデータに監督スキルがない場合は生成して補完
                         if (!team.managerSkills) {
                             team.managerSkills = generateRivalManagerSkills(gameData.league);
+                        }
+                        } catch(squadErr) {
+                            console.warn('[loadGame] squad再生成エラー:', team.name, squadErr);
                         }
                     });
                 }
@@ -5309,15 +5313,18 @@ self.addEventListener('fetch', e => {
                 console.log('[loadGame完了] players=' + (gameData.players ? gameData.players.length : 'null') + ', money=' + gameData.money + ', gameStarted=' + gameData.gameStarted + ', clubName=' + gameData.clubName);
             }
             } catch(e) {
-                console.error('loadGame error:', e);
-                console.error('loadGame error stack:', e.stack);
-                // エラー時はゲームデータを完全リセット（中途半端な状態を防ぐ）
-                gameData.gameStarted = false;
-                gameData.players = [];
-                gameData.leagueStandings = [];
-                gameData.schedule = [];
-                gameData.money = 1000000;
-                gameData.fame = 60;
+                console.error('[loadGame catch] error:', e);
+                console.error('[loadGame catch] stack:', e.stack);
+                // エラー時: gameStartedがtrueの場合はデータを保持してrenderGameに進む
+                // （中途半端なリセットでゲームが壊れるのを防ぐ）
+                // gameStartedがfalseの場合のみ初期化する
+                if (!gameData.gameStarted) {
+                    gameData.players = [];
+                    gameData.leagueStandings = [];
+                    gameData.schedule = [];
+                    gameData.money = 1000000;
+                    gameData.fame = 60;
+                }
             }
         }
         function saveGame() {
