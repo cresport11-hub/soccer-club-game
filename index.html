@@ -16621,9 +16621,10 @@ self.addEventListener('fetch', e => {
             }
             if (condBestBtn) {
                 condBestBtn.disabled = cond2 >= 4;
-                condBestBtn.style.opacity = cond2 >= 4 ? '0.4' : '1';
+                                condBestBtn.style.opacity = cond2 >= 4 ? '0.4' : '1';
             }
-
+            document.getElementById('playerDetailModal').classList.add('active');
+        }
         function openRenameModal() {
             if (!selectedPlayerDetail) return;
             document.getElementById('newPlayerName').value = selectedPlayerDetail.name;
