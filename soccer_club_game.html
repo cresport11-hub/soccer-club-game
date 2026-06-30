@@ -2117,6 +2117,15 @@ self.addEventListener('fetch', e => {
 
                 <!-- ダッシュボード -->
                 <div id="dashboard">
+                    <!-- iPhoneバックアップ促進バナー（初回のみ表示） -->
+                    <div id="backupReminderBanner" style="display:none; background:rgba(255,200,0,0.15); border:1px solid rgba(255,200,0,0.5); border-radius:10px; padding:12px 14px; margin-bottom:12px; font-size:13px; color:rgba(255,255,255,0.95); line-height:1.7;">
+                        💾 <strong>定期バックアップをおすすめします！</strong><br>
+                        iPhoneのSafariはブラウザデータを消去することがあります。「💾 セーブ」タブからエクスポートしておきましょう。
+                        <div style="display:flex; gap:8px; margin-top:10px;">
+                            <button onclick="switchTab('save', null)" style="flex:1; background:rgba(255,200,0,0.3); border:1px solid rgba(255,200,0,0.6); border-radius:6px; color:#fff; font-size:13px; padding:8px; cursor:pointer; font-weight:bold;">📥 エクスポートする</button>
+                            <button onclick="document.getElementById('backupReminderBanner').style.display='none'; localStorage.setItem('soccerGame_backupReminderDismissed','1')" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:6px; color:rgba(255,255,255,0.6); font-size:12px; padding:8px 12px; cursor:pointer;">閉じる</button>
+                        </div>
+                    </div>
                     <div class="card">
                         <div class="card-title">次の試合</div>
                         <div id="nextMatch">
@@ -3228,11 +3237,15 @@ self.addEventListener('fetch', e => {
                 <div id="save" style="display: none;">
                     <div class="card">
                         <div class="card-title">💾 セーブデータ管理</div>
-                        <p style="font-size:13px; color:rgba(255,255,255,0.75); margin-bottom:16px; line-height:1.7;">ブラウザのキャッシュを消すとデータが失われる場合があります。定期的にエクスポートしてバックアップすることをおすすめします。</p>
+                        <div style="background:rgba(255,200,0,0.15); border:1px solid rgba(255,200,0,0.4); border-radius:8px; padding:12px; margin-bottom:16px; font-size:13px; color:rgba(255,255,255,0.9); line-height:1.7;">
+                            ⚠️ <strong>iPhoneのSafariはブラウザのデータをいつでも消去することがあります。</strong><br>
+                            定期的に「エクスポート」でバックアップを取ることを強くおすすめします。<br>
+                            バックアップファイルがあれば「インポート」でいつでも復元できます。
+                        </div>
                         <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:24px;">
-                            <button class="btn btn-primary" onclick="exportSaveData()" style="flex:1; min-width:140px; font-size:14px; padding:14px;">📥 エクスポート</button>
+                            <button class="btn btn-primary" onclick="exportSaveData()" style="flex:1; min-width:140px; font-size:14px; padding:14px;">📥 エクスポート（バックアップ）</button>
                             <label class="btn btn-secondary" style="flex:1; min-width:140px; font-size:14px; padding:14px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
-                                📤 インポート
+                                📤 インポート（復元）
                                 <input type="file" id="importFileInputSave" accept=".json" style="display:none;" onchange="importSaveData(event)">
                             </label>
                         </div>
@@ -5124,9 +5137,24 @@ self.addEventListener('fetch', e => {
         }
 
         function loadGame() {
+            try {
             const saved = localStorage.getItem('soccerGame_tamatsuku');
             if (saved) {
-                Object.assign(gameData, JSON.parse(saved));
+                const parsed = JSON.parse(saved);
+                // ── セーブデータ整合性チェック ──
+                // gameStarted=true なのに選手が0人の場合は壊れたデータとみなしてリセット
+                if (parsed.gameStarted && (!parsed.players || parsed.players.length === 0)) {
+                    console.warn('セーブデータが壊れています（gameStarted=true, players=0）。リセットします。');
+                    localStorage.removeItem('soccerGame_tamatsuku');
+                    return; // gameData は初期値のまま（gameStarted=false）
+                }
+                // leagueStandingsが空の場合も壊れたデータとみなしてリセット
+                if (parsed.gameStarted && (!parsed.leagueStandings || parsed.leagueStandings.length === 0)) {
+                    console.warn('セーブデータが壊れています（leagueStandings空）。リセットします。');
+                    localStorage.removeItem('soccerGame_tamatsuku');
+                    return;
+                }
+                Object.assign(gameData, parsed);
                 // totalSpentがない古いデータを補完
                 if (gameData.totalSpent === undefined) gameData.totalSpent = 0;
                 // squadが存在しない、またはフォーメーションとポジション別人数が不一致の場合に再生成
@@ -5261,13 +5289,24 @@ self.addEventListener('fetch', e => {
                 if (!gameData.cup) {
                     // セーブデータにカップ戦データがない場合、現在のシーズンに対応したカップ戦を初期化
                     // (initCupは後でrenderGame前に呼ばれるため、フラグだけ立てておく)
-                    gameData._needCupInit = true;
+                                        gameData._needCupInit = true;
                 }
             }
+            } catch(e) {
+                console.error('loadGame error:', e);
+                // エラー時はセーブデータを無視して初期状態で起動
+            }
         }
-
         function saveGame() {
-            localStorage.setItem('soccerGame_tamatsuku', JSON.stringify(gameData));
+            try {
+                localStorage.setItem('soccerGame_tamatsuku', JSON.stringify(gameData));
+            } catch(e) {
+                // QuotaExceededErrorなどストレージ満杯時
+                console.error('saveGameエラー:', e);
+                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                    showNotification('⚠️ ストレージ容量不足でセーブできませんでした。「セーブ」タブからエクスポートしてバックアップしてください。');
+                }
+            }
         }
 
         // セーブデータエクスポート
@@ -8707,6 +8746,14 @@ self.addEventListener('fetch', e => {
         }
 
         function renderDashboard() {
+            // iPhoneバックアップ促進バナー（一度閉じたら表示しない）
+            const backupBanner = document.getElementById('backupReminderBanner');
+            if (backupBanner) {
+                const dismissed = localStorage.getItem('soccerGame_backupReminderDismissed');
+                // iOS Safariかどうかを判定
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                backupBanner.style.display = (isIOS && !dismissed) ? 'block' : 'none';
+            }
             renderSeasonGoalCard();
             renderRivalInfo();
             renderCupStatusCard();
