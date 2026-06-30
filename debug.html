@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>デバッグ</title>
+<style>
+body { font-family: monospace; font-size: 12px; padding: 10px; background: #000; color: #0f0; }
+.err { color: #f00; }
+.ok { color: #0f0; }
+.warn { color: #ff0; }
+pre { white-space: pre-wrap; word-break: break-all; }
+button { font-size: 16px; padding: 10px; margin: 5px; display: block; width: 100%; }
+</style>
+</head>
+<body>
+<h2>デバッグページ</h2>
+<button onclick="checkStorage()">① localStorageを確認</button>
+<button onclick="runLoadGame()">② loadGameを実行してエラー確認</button>
+<button onclick="clearStorage()">③ localStorageをクリア</button>
+<div id="output"></div>
+
+<script>
+function log(msg, type) {
+    var d = document.getElementById('output');
+    var p = document.createElement('pre');
+    p.className = type || '';
+    p.textContent = msg;
+    d.appendChild(p);
+}
+
+function checkStorage() {
+    document.getElementById('output').innerHTML = '';
+    try {
+        var s = localStorage.getItem('soccerGame_tamatsuku');
+        if (!s) { log('localStorageにデータなし', 'warn'); return; }
+        log('データサイズ: ' + s.length + ' bytes (' + (s.length/1024).toFixed(1) + ' KB)', 'ok');
+        var p = JSON.parse(s);
+        log('gameStarted: ' + p.gameStarted, 'ok');
+        log('players: ' + (p.players||[]).length + '人', 'ok');
+        log('money: ' + p.money, 'ok');
+        log('clubName: ' + p.clubName, 'ok');
+        log('leagueStandings: ' + (p.leagueStandings||[]).length + 'チーム', 'ok');
+        log('currentMatchIndex: ' + p.currentMatchIndex, 'ok');
+        log('allLeagues: ' + (p.allLeagues ? Object.keys(p.allLeagues).length + 'リーグ' : 'なし'), 'ok');
+        // 各フィールドのサイズ
+        var sizes = [];
+        Object.keys(p).forEach(function(k) {
+            sizes.push([k, JSON.stringify(p[k]).length]);
+        });
+        sizes.sort(function(a,b){return b[1]-a[1];});
+        log('\n--- フィールド別サイズ (上位10) ---', 'warn');
+        sizes.slice(0,10).forEach(function(x) {
+            log(x[0] + ': ' + (x[1]/1024).toFixed(1) + 'KB', 'ok');
+        });
+    } catch(e) {
+        log('エラー: ' + e.message, 'err');
+        log(e.stack || '', 'err');
+    }
+}
+
+function runLoadGame() {
+    document.getElementById('output').innerHTML = '';
+    var s = localStorage.getItem('soccerGame_tamatsuku');
+    if (!s) { log('localStorageにデータなし', 'warn'); return; }
+    
+    log('JSONパース開始...', 'warn');
+    var parsed;
+    try {
+        parsed = JSON.parse(s);
+        log('JSONパース: OK', 'ok');
+    } catch(e) {
+        log('JSONパースエラー: ' + e.message, 'err');
+        return;
+    }
+    
+    log('gameStarted: ' + parsed.gameStarted, 'ok');
+    log('players: ' + (parsed.players||[]).length, 'ok');
+    
+    // leagueStandings処理
+    log('\nleagueStandings処理開始...', 'warn');
+    try {
+        if (parsed.leagueStandings) {
+            parsed.leagueStandings.forEach(function(team) {
+                if (team.squad) { delete team.squad; }
+            });
+        }
+        log('leagueStandings処理: OK (' + (parsed.leagueStandings||[]).length + 'チーム)', 'ok');
+    } catch(e) {
+        log('leagueStandings処理エラー: ' + e.message, 'err');
+        log(e.stack || '', 'err');
+        return;
+    }
+    
+    // allLeagues処理
+    log('\nallLeagues処理開始...', 'warn');
+    try {
+        if (parsed.allLeagues) {
+            var keys = Object.keys(parsed.allLeagues);
+            log('allLeaguesキー数: ' + keys.length, 'ok');
+            keys.forEach(function(tier) {
+                var ld = parsed.allLeagues[tier];
+                if (ld && ld.standings) {
+                    ld.standings.forEach(function(team) {
+                        if (team.squad) { delete team.squad; }
+                    });
+                }
+            });
+        }
+        log('allLeagues処理: OK', 'ok');
+    } catch(e) {
+        log('allLeagues処理エラー: ' + e.message, 'err');
+        log(e.stack || '', 'err');
+        return;
+    }
+    
+    // localStorage再保存
+    log('\nlocalStorage再保存...', 'warn');
+    try {
+        localStorage.setItem('soccerGame_tamatsuku', JSON.stringify(parsed));
+        var newSize = localStorage.getItem('soccerGame_tamatsuku').length;
+        log('再保存: OK (' + (newSize/1024).toFixed(1) + 'KB)', 'ok');
+    } catch(e) {
+        log('再保存エラー: ' + e.message, 'err');
+        return;
+    }
+    
+    log('\n--- 全処理完了 ---', 'ok');
+    log('ゲームページに戻ってリロードしてください', 'warn');
+}
+
+function clearStorage() {
+    if (confirm('localStorageを削除しますか？（ゲームデータが消えます）')) {
+        localStorage.removeItem('soccerGame_tamatsuku');
+        log('localStorageをクリアしました', 'warn');
+    }
+}
+</script>
+</body>
+</html>
