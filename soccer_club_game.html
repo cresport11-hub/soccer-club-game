@@ -5089,6 +5089,8 @@ self.addEventListener('fetch', e => {
         // 初期化
         function init() {
             loadGame();
+            // デバッグ: loadGame後のgameDataの状態をアラートで表示
+            alert('loadGame完了\ngameStarted=' + gameData.gameStarted + '\nplayers=' + (gameData.players||[]).length + '\nmoney=' + gameData.money + '\nfame=' + gameData.fame + '\nclubName=' + gameData.clubName);
             const isFirstLaunch = !gameData.gameStarted;
             if (isFirstLaunch) {
                 // 初回起動時は難易度選択モーダルを表示
