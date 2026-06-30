@@ -5316,6 +5316,8 @@ self.addEventListener('fetch', e => {
             }
             } catch(e) {
                 console.error('loadGame error:', e);
+                // エラー内容をアラートで表示（デバッグ用）
+                alert('loadGameエラー:\n' + e.message + '\n\nスタック:\n' + (e.stack || '').slice(0, 300));
                 // エラー時はゲームデータを完全リセット（中途半端な状態を防ぐ）
                 gameData.gameStarted = false;
                 gameData.players = [];
