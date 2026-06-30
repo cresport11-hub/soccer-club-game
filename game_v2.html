@@ -5089,8 +5089,20 @@ self.addEventListener('fetch', e => {
         // 初期化
         function init() {
             loadGame();
-            // デバッグ: loadGame後のgameDataの状態をアラートで表示
-            alert('loadGame完了\ngameStarted=' + gameData.gameStarted + '\nplayers=' + (gameData.players||[]).length + '\nmoney=' + gameData.money + '\nfame=' + gameData.fame + '\nclubName=' + gameData.clubName);
+            // デバッグ: loadGame後のgameDataの状態を画面に表示
+            var dbg = document.createElement('div');
+            dbg.id = 'debug-overlay';
+            dbg.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#000;color:#0f0;font-family:monospace;font-size:13px;padding:20px;z-index:999999;overflow:auto;';
+            dbg.innerHTML = '<h2>DEBUG: loadGame後の状態</h2>' +
+                '<p>gameStarted=' + gameData.gameStarted + '</p>' +
+                '<p>players=' + (gameData.players||[]).length + '</p>' +
+                '<p>money=' + gameData.money + '</p>' +
+                '<p>fame=' + gameData.fame + '</p>' +
+                '<p>clubName=' + gameData.clubName + '</p>' +
+                '<p>leagueStandings=' + (gameData.leagueStandings||[]).length + '</p>' +
+                '<p>schedule=' + (gameData.schedule||[]).length + '</p>' +
+                '<button onclick="document.getElementById(\"debug-overlay\").remove();" style="font-size:18px;padding:10px 20px;margin-top:20px;">閉じる</button>';
+            document.body.appendChild(dbg);
             const isFirstLaunch = !gameData.gameStarted;
             if (isFirstLaunch) {
                 // 初回起動時は難易度選択モーダルを表示
