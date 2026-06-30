@@ -5267,12 +5267,8 @@ self.addEventListener('fetch', e => {
                         });
                     });
                 }
-                // 既存セーブデータで他リーグが遅れている場合、現在の節まで一括で追いつかせる
-                if (gameData.allLeagues && gameData.currentMatchIndex > 0) {
-                    for (let day = 1; day <= gameData.currentMatchIndex; day++) {
-                        advanceAllOtherLeagues(day);
-                    }
-                }
+                // ※ロード時の他リーグ追いつかせ処理は削除（iOSでメモリ不足エラーの原因）
+                // allLeaguesのデータはセーブ時点の状態が保存されているため再計算不要
                 // カップ戦データの補完（旧セーブデータ対応）
                 if (!gameData.cup) { gameData.cup = null; }
                 // ピッチ図配置の補完
