@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>デバッグ v4</title>
+<title>デバッグ v5</title>
 <style>
 body { background:#000; color:#0f0; font-family:monospace; padding:20px; font-size:14px; }
 button { display:block; width:100%; padding:14px; margin:8px 0; font-size:16px; background:#1a1a1a; color:#0f0; border:1px solid #0f0; border-radius:8px; cursor:pointer; }
@@ -14,19 +14,15 @@ button { display:block; width:100%; padding:14px; margin:8px 0; font-size:16px; 
 </style>
 </head>
 <body>
-<h2>デバッグ v4</h2>
-<button onclick="testLocalStorage()">① localStorage 書き込みテスト</button>
-<button onclick="checkSaveData()">② 現在のセーブデータ確認</button>
-<button onclick="testSaveLoad()">③ 簡易セーブ→ロードテスト</button>
-<button onclick="simulateLoadGame()">④ loadGame処理シミュレート（重要）</button>
-<button onclick="checkConsoleLog()">⑤ コンソールログ確認方法</button>
+<h2>デバッグ v5</h2>
+<button onclick="checkSaveData()">① セーブデータ詳細確認</button>
+<button onclick="simulateFullCycle()">② saveGame→loadGameサイクルテスト（重要）</button>
+<button onclick="checkConsoleLog()">③ コンソールログ確認方法</button>
 <button onclick="clearAll()">🗑 localStorageクリア</button>
 <div id="log"></div>
-
 <script>
 const KEY = 'soccerGame_tamatsuku';
 const log = document.getElementById('log');
-
 function addLog(msg, cls) {
     const p = document.createElement('p');
     p.style.margin = '2px 0';
@@ -35,42 +31,11 @@ function addLog(msg, cls) {
     log.appendChild(p);
 }
 
-function testLocalStorage() {
-    log.innerHTML = '<p>== ① localStorage書き込みテスト ==</p>';
-    
-    try {
-        localStorage.setItem('test_small', 'hello');
-        const v = localStorage.getItem('test_small');
-        localStorage.removeItem('test_small');
-        addLog('✓ 小さいデータ(5bytes): OK', 'ok');
-    } catch(e) {
-        addLog('✗ 小さいデータ書き込み失敗: ' + e.message, 'err');
-    }
-    
-    try {
-        const data50k = JSON.stringify({test: 'x'.repeat(50000)});
-        localStorage.setItem('test_50k', data50k);
-        const v = localStorage.getItem('test_50k');
-        localStorage.removeItem('test_50k');
-        addLog('✓ 50KBデータ: OK', 'ok');
-    } catch(e) {
-        addLog('✗ 50KBデータ書き込み失敗: ' + e.message, 'err');
-    }
-    
-    let total = 0;
-    for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        const v = localStorage.getItem(k);
-        total += k.length + (v ? v.length : 0);
-    }
-    addLog('現在のlocalStorage使用量: ' + (total/1024).toFixed(1) + 'KB (' + localStorage.length + 'キー)', 'warn');
-}
-
 function checkSaveData() {
-    log.innerHTML = '<p>== ② セーブデータ確認 ==</p>';
+    log.innerHTML = '<p>== ① セーブデータ詳細確認 ==</p>';
     const saved = localStorage.getItem(KEY);
     if (!saved) {
-        addLog('⚠ セーブデータなし（キー: ' + KEY + '）', 'warn');
+        addLog('△ セーブデータなし（キー: ' + KEY + '）', 'warn');
         addLog('localStorageの全キー数: ' + localStorage.length, 'warn');
         for (let i = 0; i < localStorage.length; i++) {
             addLog('  キー[' + i + ']: ' + localStorage.key(i), 'warn');
@@ -81,177 +46,150 @@ function checkSaveData() {
     try {
         const d = JSON.parse(saved);
         addLog('✓ JSONパース: OK', 'ok');
-        addLog('  gameStarted: ' + d.gameStarted, d.gameStarted ? 'ok' : 'err');
-        addLog('  players: ' + (d.players ? d.players.length : 0) + '人', (d.players && d.players.length > 0) ? 'ok' : 'err');
-        addLog('  money: ' + d.money, 'ok');
-        addLog('  fame: ' + d.fame, 'ok');
-        addLog('  clubName: ' + d.clubName, 'ok');
-        addLog('  leagueStandings: ' + (d.leagueStandings ? d.leagueStandings.length : 0) + 'チーム', 'ok');
-        addLog('  season: ' + d.season, 'ok');
-        addLog('  league: ' + d.league, 'ok');
-        // leagueStandingsのsquad確認
-        if (d.leagueStandings && d.leagueStandings.length > 0) {
-            const withSquad = d.leagueStandings.filter(t => t.squad && t.squad.length > 0).length;
-            addLog('  leagueStandings squad有り: ' + withSquad + '/' + d.leagueStandings.length + 'チーム', withSquad === 0 ? 'ok' : 'warn');
+        addLog('gameStarted: ' + d.gameStarted, d.gameStarted ? 'ok' : 'err');
+        addLog('players: ' + (d.players ? d.players.length : 'null') + '人', (d.players && d.players.length > 0) ? 'ok' : 'err');
+        addLog('money: ' + d.money, (d.money > 0) ? 'ok' : 'err');
+        addLog('fame: ' + d.fame);
+        addLog('clubName: ' + d.clubName);
+        addLog('league: ' + d.league);
+        addLog('season: ' + d.season);
+        addLog('difficulty: ' + d.difficulty);
+        addLog('leagueStandings: ' + (d.leagueStandings ? d.leagueStandings.length + 'チーム' : 'null'));
+        addLog('allLeagues: ' + (d.allLeagues ? Object.keys(d.allLeagues).length + 'リーグ' : 'null'));
+        addLog('schedule: ' + (d.schedule ? d.schedule.length + '試合' : 'null'));
+        addLog('currentMatchIndex: ' + d.currentMatchIndex);
+        if (d.players && d.players.length > 0) {
+            const p0 = d.players[0];
+            addLog('--- 選手[0]サンプル ---');
+            addLog('  name: ' + p0.name + ', pos: ' + p0.position + ', level: ' + p0.level);
         }
     } catch(e) {
-        addLog('✗ JSONパース失敗: ' + e.message, 'err');
+        addLog('✗ JSONパースエラー: ' + e.message, 'err');
     }
 }
 
-function testSaveLoad() {
-    log.innerHTML = '<p>== ③ 簡易セーブ→ロードテスト ==</p>';
-    
-    const testData = {
-        gameStarted: true,
-        clubName: 'テストFC',
-        money: 1234567,
-        fame: 99,
-        players: Array.from({length: 22}, (_, i) => ({id: 'p'+i, name: '選手'+i, level: 50})),
-        leagueStandings: Array.from({length: 20}, (_, i) => ({name: 'チーム'+i, win: 5, draw: 2, loss: 3})),
-        schedule: Array.from({length: 38}, (_, i) => ({round: i+1, home: 'チームA', away: 'チームB'})),
-        season: 1,
-        league: 5
-    };
-    
-    const jsonStr = JSON.stringify(testData);
-    addLog('テストデータサイズ: ' + jsonStr.length + 'bytes (' + (jsonStr.length/1024).toFixed(1) + 'KB)', 'warn');
-    
-    try {
-        localStorage.setItem(KEY, jsonStr);
-        addLog('✓ 書き込み: OK', 'ok');
-    } catch(e) {
-        addLog('✗ 書き込み失敗: ' + e.message, 'err');
-        return;
-    }
-    
-    try {
-        const loaded = localStorage.getItem(KEY);
-        if (!loaded) {
-            addLog('✗ 読み込み: データが消えた！', 'err');
-            return;
-        }
-        const parsed = JSON.parse(loaded);
-        addLog('✓ 読み込み: OK (' + loaded.length + 'bytes)', 'ok');
-        addLog('  gameStarted: ' + parsed.gameStarted, parsed.gameStarted ? 'ok' : 'err');
-        addLog('  players: ' + parsed.players.length + '人', parsed.players.length > 0 ? 'ok' : 'err');
-        addLog('  money: ' + parsed.money, parsed.money === 1234567 ? 'ok' : 'err');
-        
-        if (parsed.players.length === 22 && parsed.money === 1234567) {
-            addLog('✓✓ セーブ→ロード: 完全成功！', 'ok');
-        } else {
-            addLog('✗ データが変わっている！', 'err');
-        }
-    } catch(e) {
-        addLog('✗ 読み込み/パース失敗: ' + e.message, 'err');
-    }
-}
-
-function simulateLoadGame() {
-    log.innerHTML = '<p>== ④ loadGame処理シミュレート ==</p>';
-    
+function simulateFullCycle() {
+    log.innerHTML = '<p>== ② saveGame→loadGameサイクルテスト ==</p>';
     const saved = localStorage.getItem(KEY);
     if (!saved) {
-        addLog('⚠ セーブデータなし。先にゲームをプレイしてセーブしてください。', 'warn');
+        addLog('△ セーブデータなし。ゲームをプレイしてからテストしてください。', 'warn');
         return;
     }
-    
-    addLog('セーブデータサイズ: ' + (saved.length/1024).toFixed(1) + 'KB', 'warn');
-    
-    // ステップ1: JSON.parse
-    let parsed;
+    addLog('元データサイズ: ' + (saved.length/1024).toFixed(1) + 'KB', 'ok');
+
+    // ステップ1: 元データをパース
+    let d;
     try {
-        parsed = JSON.parse(saved);
-        addLog('✓ ステップ1 JSON.parse: OK', 'ok');
-        addLog('  players: ' + (parsed.players ? parsed.players.length : 0) + '人', 'ok');
-        addLog('  money: ' + parsed.money, 'ok');
-        addLog('  gameStarted: ' + parsed.gameStarted, 'ok');
+        d = JSON.parse(saved);
+        addLog('✓ ステップ1 元データパース: OK', 'ok');
+        addLog('  players: ' + (d.players ? d.players.length : 'null') + '人', (d.players && d.players.length > 0) ? 'ok' : 'err');
+        addLog('  money: ' + d.money, (d.money > 0) ? 'ok' : 'err');
+        addLog('  gameStarted: ' + d.gameStarted, d.gameStarted ? 'ok' : 'err');
     } catch(e) {
-        addLog('✗ ステップ1 JSON.parse失敗: ' + e.message, 'err');
+        addLog('✗ ステップ1 パースエラー: ' + e.message, 'err');
         return;
     }
-    
-    // ステップ2: leagueStandingsのsquad確認
-    if (parsed.leagueStandings) {
-        const withSquad = parsed.leagueStandings.filter(t => t.squad && t.squad.length > 0).length;
-        addLog('ステップ2 leagueStandings squad有り: ' + withSquad + '/' + parsed.leagueStandings.length + 'チーム', withSquad === 0 ? 'ok' : 'warn');
-        if (withSquad > 0) {
-            addLog('  → squadが保存されている（古い形式）', 'warn');
+
+    // ステップ2: saveGame処理をシミュレート（squadを除外して保存）
+    addLog('--- ステップ2: saveGame処理シミュレート ---');
+    const saveObj = Object.assign({}, d);
+    if (saveObj.leagueStandings) {
+        saveObj.leagueStandings = saveObj.leagueStandings.map(function(team) {
+            const t = Object.assign({}, team);
+            delete t.squad;
+            return t;
+        });
+    }
+    if (saveObj.allLeagues) {
+        const compactLeagues = {};
+        Object.keys(saveObj.allLeagues).forEach(function(tier) {
+            const ld = saveObj.allLeagues[tier];
+            if (!ld) { compactLeagues[tier] = ld; return; }
+            const compactStandings = (ld.standings || []).map(function(team) {
+                const t = Object.assign({}, team);
+                delete t.squad;
+                return t;
+            });
+            compactLeagues[tier] = Object.assign({}, ld, { standings: compactStandings });
+        });
+        saveObj.allLeagues = compactLeagues;
+    }
+    let savedJson;
+    try {
+        savedJson = JSON.stringify(saveObj);
+        addLog('✓ saveGame後サイズ: ' + (savedJson.length/1024).toFixed(1) + 'KB', 'ok');
+    } catch(e) {
+        addLog('✗ JSON.stringify失敗: ' + e.message, 'err');
+        return;
+    }
+
+    // ステップ3: 実際にlocalStorageに書き込み→読み込み
+    addLog('--- ステップ3: localStorage書き込み→読み込み ---');
+    try {
+        localStorage.setItem(KEY + '_cycletest', savedJson);
+        const reread = localStorage.getItem(KEY + '_cycletest');
+        localStorage.removeItem(KEY + '_cycletest');
+        if (!reread) {
+            addLog('✗ 書き込み後に読み込めない！', 'err');
+            return;
+        }
+        addLog('✓ 書き込み→読み込み: OK (' + reread.length + 'bytes)', 'ok');
+
+        // ステップ4: 再パース（loadGame処理）
+        addLog('--- ステップ4: loadGame処理（再パース） ---');
+        const reloaded = JSON.parse(reread);
+        addLog('再ロード後 players: ' + (reloaded.players ? reloaded.players.length : 'null') + '人', (reloaded.players && reloaded.players.length > 0) ? 'ok' : 'err');
+        addLog('再ロード後 money: ' + reloaded.money, (reloaded.money > 0) ? 'ok' : 'err');
+        addLog('再ロード後 gameStarted: ' + reloaded.gameStarted, reloaded.gameStarted ? 'ok' : 'err');
+
+        // ステップ5: Object.assign
+        addLog('--- ステップ5: Object.assign ---');
+        const gameDataSim = { gameStarted: false, players: [], money: 1000000, fame: 60 };
+        Object.assign(gameDataSim, reloaded);
+        addLog('assign後 players: ' + (gameDataSim.players ? gameDataSim.players.length : 'null') + '人', (gameDataSim.players && gameDataSim.players.length > 0) ? 'ok' : 'err');
+        addLog('assign後 money: ' + gameDataSim.money, (gameDataSim.money > 0) ? 'ok' : 'err');
+        addLog('assign後 gameStarted: ' + gameDataSim.gameStarted, gameDataSim.gameStarted ? 'ok' : 'err');
+
+        // 最終判定
+        addLog('--- 最終判定 ---');
+        if (gameDataSim.players && gameDataSim.players.length > 0 && gameDataSim.money > 0 && gameDataSim.gameStarted) {
+            addLog('✓✓ saveGame→loadGameサイクル: 完全正常！', 'ok');
+            addLog('→ localStorageとJSONの処理は問題なし', 'ok');
+            addLog('→ 問題はゲームのJavaScript実行中にある', 'warn');
+            addLog('→ renderGame()またはその後の処理が原因の可能性', 'warn');
+            addLog('→ ゲームページのコンソールログを確認してください', 'warn');
         } else {
-            addLog('  → squadなし（正常：ロード時に再生成される）', 'ok');
+            addLog('✗✗ saveGame→loadGameサイクルでデータ消失！', 'err');
+            addLog('  players: ' + (gameDataSim.players ? gameDataSim.players.length : 'null'), 'err');
+            addLog('  money: ' + gameDataSim.money, 'err');
+            addLog('  gameStarted: ' + gameDataSim.gameStarted, 'err');
         }
-    }
-    
-    // ステップ3: Object.assign シミュレート
-    const gameDataSim = {
-        gameStarted: false,
-        players: [],
-        money: 1000000,
-        fame: 60,
-        clubName: 'FC日本',
-        leagueStandings: [],
-        schedule: [],
-    };
-    
-    try {
-        Object.assign(gameDataSim, parsed);
-        addLog('✓ ステップ3 Object.assign: OK', 'ok');
-        addLog('  players後: ' + (gameDataSim.players ? gameDataSim.players.length : 0) + '人', (gameDataSim.players && gameDataSim.players.length > 0) ? 'ok' : 'err');
-        addLog('  money後: ' + gameDataSim.money, 'ok');
-        addLog('  gameStarted後: ' + gameDataSim.gameStarted, gameDataSim.gameStarted ? 'ok' : 'err');
     } catch(e) {
-        addLog('✗ ステップ3 Object.assign失敗: ' + e.message, 'err');
-        return;
-    }
-    
-    // ステップ4: leagueStandingsのsquad再生成（問題の可能性がある処理）
-    if (gameDataSim.leagueStandings && gameDataSim.leagueStandings.length > 0) {
-        const needRegenCount = gameDataSim.leagueStandings.filter(t => {
-            if (t.name === gameDataSim.clubName) return false;
-            return !t.squad || t.squad.length < 16;
-        }).length;
-        addLog('ステップ4 squad再生成が必要なチーム数: ' + needRegenCount + '/' + gameDataSim.leagueStandings.length, needRegenCount > 0 ? 'warn' : 'ok');
-        if (needRegenCount > 0) {
-            addLog('  → ' + needRegenCount + 'チーム分のgenerateRivalSquad()が呼ばれる', 'warn');
-            addLog('  → これがiOSで問題を起こしている可能性あり', 'warn');
-        }
-    }
-    
-    // 最終確認
-    addLog('--- 最終状態 ---', 'warn');
-    addLog('players: ' + (gameDataSim.players ? gameDataSim.players.length : 0) + '人', (gameDataSim.players && gameDataSim.players.length > 0) ? 'ok' : 'err');
-    addLog('money: ' + gameDataSim.money, 'ok');
-    addLog('gameStarted: ' + gameDataSim.gameStarted, gameDataSim.gameStarted ? 'ok' : 'err');
-    
-    if (gameDataSim.players && gameDataSim.players.length > 0 && gameDataSim.gameStarted) {
-        addLog('✓✓ データは正常にロードできる！', 'ok');
-        addLog('→ 問題はloadGame後の別の処理にある可能性が高い', 'warn');
-    } else {
-        addLog('✗ データのロードに問題がある！', 'err');
+        addLog('✗ エラー: ' + e.message, 'err');
     }
 }
 
 function checkConsoleLog() {
-    log.innerHTML = '<p>== ⑤ コンソールログ確認方法 ==</p>';
+    log.innerHTML = '<p>== ③ コンソールログ確認方法 ==</p>';
     addLog('iPhoneのSafariでコンソールを見る方法:', 'warn');
-    addLog('1. MacのSafariを開く', 'ok');
-    addLog('2. 環境設定→詳細→「メニューバーに開発メニューを表示」をON', 'ok');
-    addLog('3. iPhoneのSafariでゲームページを開く', 'ok');
-    addLog('4. MacのSafari→開発→[iPhoneの名前]→ゲームのURL', 'ok');
-    addLog('5. コンソールタブで[loadGame完了]と[init]のログを確認', 'ok');
-    addLog('', '');
-    addLog('または: iPhoneのSafari設定→詳細→Webインスペクタをオン', 'warn');
-    addLog('', '');
-    addLog('ゲームページ(index.html)で確認すべきログ:', 'warn');
-    addLog('  [loadGame完了] players=XX, money=XXXXXX, gameStarted=true', 'ok');
-    addLog('  [init] loadGame後: players=XX, money=XXXXXX, gameStarted=true', 'ok');
-    addLog('もしplayersが0またはgameStarted=falseなら問題あり', 'err');
+    addLog('1. MacのSafariを開く');
+    addLog('2. 環境設定→詳細→「メニューバーに開発メニューを表示」をON');
+    addLog('3. iPhoneのSafariでゲームページを開く');
+    addLog('4. MacのSafari→開発→[iPhoneの名前]→ゲームのURL');
+    addLog('5. コンソールタブで[loadGame完了]と[init]のログを確認');
+    addLog('');
+    addLog('または: iPhoneのSafari設定→詳細→Webインスペクタをオン');
+    addLog('');
+    addLog('ゲームページ(index.html)で確認すべきログ:');
+    addLog('[loadGame完了] players=XX, money=XXXXXX, gameStarted=true', 'ok');
+    addLog('[init] loadGame後: players=XX, money=XXXXXX, gameStarted=true', 'ok');
+    addLog('もしplayers=0またはgameStarted=falseなら問題あり', 'err');
 }
 
 function clearAll() {
     if (confirm('localStorageを全てクリアしますか？')) {
         localStorage.clear();
-        addLog('localStorageをクリアしました', 'warn');
+        log.innerHTML = '<p>localStorageをクリアしました</p>';
     }
 }
 </script>
