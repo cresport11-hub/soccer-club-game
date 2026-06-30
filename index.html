@@ -3434,12 +3434,7 @@ self.addEventListener('fetch', e => {
                 <button class="btn btn-secondary" onclick="openRenameModal()">名前変更</button>
                 <button class="btn btn-primary" id="upgradeBtnDetail" onclick="upgradePlayerDetail()">レベルアップ</button>
             </div>
-            <!-- ポジションコンバート -->
-            <div id="convertPanel" style="margin-top:10px; background:rgba(100,181,246,0.07); border:1px solid rgba(100,181,246,0.3); border-radius:10px; padding:12px;">
-                <div style="font-size:12px; font-weight:bold; color:#64B5F6; margin-bottom:8px;">🔄 ポジションコンバート（50,000円）</div>
-                <div style="font-size:11px; color:rgba(255,255,255,0.6); margin-bottom:8px;">※ GKとの相互コンバートは不可。コンバート後のポジション専用スキルは失われます。</div>
-                <div id="convertButtons" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
-            </div>
+
             <!-- 名声消費：コンディション回復・怪我即回復 -->
             <div id="fameRecoveryPanel" style="margin-top:10px; background:rgba(255,215,0,0.07); border:1px solid rgba(255,215,0,0.3); border-radius:10px; padding:12px;">
                 <div style="font-size:12px; font-weight:bold; color:#FFD700; margin-bottom:8px;">⭐ 名声消費アクション</div>
@@ -16664,151 +16659,6 @@ self.addEventListener('fetch', e => {
                 condBestBtn.style.opacity = cond2 >= 4 ? '0.4' : '1';
             }
 
-            // ポジションコンバートボタン生成
-            const convertButtons = document.getElementById('convertButtons');
-            if (convertButtons) {
-                const allPositions = ['FW', 'MF', 'DF', 'GK'];
-                const currentPos = player.position;
-                // GKとの相互コンバートは不可
-                const convertable = allPositions.filter(p => p !== currentPos && !(p === 'GK' || currentPos === 'GK'));
-                if (convertable.length === 0) {
-                    convertButtons.innerHTML = '<div style="font-size:11px; color:rgba(255,255,255,0.4);">このポジションからのコンバートは不可</div>';
-                } else {
-                    convertButtons.innerHTML = convertable.map(pos =>
-                        `<button class="btn btn-secondary" onclick="convertPosition('${pos}')" style="font-size:12px; flex:1; background:rgba(100,181,246,0.15); border:1px solid rgba(100,181,246,0.4);">${pos}へコンバート</button>`
-                    ).join('');
-                }
-            }
-
-            // 今シーズン成績の表示
-            const ssContent = document.getElementById('seasonStatsDetailContent');
-            if (ssContent) {
-                const s = gameData.seasonStats;
-                const apps = s ? (s.playerApps[player.id] || 0) : 0;
-                const goals = s ? (s.playerGoals[player.id] || 0) : 0;
-                const assists = s ? (s.playerAssists[player.id] || 0) : 0;
-                const statStyle = 'text-align:center; background:rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;';
-                const labelStyle = 'font-size:10px; color:rgba(255,255,255,0.5); display:block; margin-bottom:4px;';
-                const valStyle = 'font-size:18px; font-weight:700; color:#FFD700;';
-                ssContent.innerHTML =
-                    `<div style="${statStyle}"><span style="${labelStyle}">出場</span><span style="${valStyle}">${apps}</span></div>` +
-                    `<div style="${statStyle}"><span style="${labelStyle}">得点</span><span style="${valStyle}">${goals}</span></div>` +
-                    `<div style="${statStyle}"><span style="${labelStyle}">アシスト</span><span style="${valStyle}">${assists}</span></div>`;
-            }
-
-            document.getElementById('playerDetailModal').classList.add('active');
-        }
-
-        // 名声消費：体調引き上げ
-        function fameBoostCondition(targetCond) {
-            if (!selectedPlayerDetail) return;
-            const player = gameData.players.find(p => p.id === selectedPlayerDetail.id);
-            if (!player) return;
-            const fameCost = targetCond >= 4 ? 50 : 30;
-            if (gameData.fame < fameCost) {
-                showNotification('名声が不足しています（必要: ' + fameCost + '）');
-                return;
-            }
-            const currentCond = player.condition !== undefined ? player.condition : 2;
-            if (currentCond >= targetCond) {
-                showNotification('すでに' + (targetCond >= 4 ? '絶好調' : '好調') + '以上です');
-                return;
-            }
-            gameData.fame -= fameCost;
-            player.condition = targetCond;
-            selectedPlayerDetail = player;
-            saveGame();
-            showPlayerDetail(player.id);
-            updateHeader();
-            showNotification('⭐' + fameCost + '消費：' + player.name + 'の体調を「' + (targetCond >= 4 ? '絶好調' : '好調') + '」に引き上げました！');
-        }
-
-        // 名声消費：重傷即時回復
-        function fameHealInjury() {
-            if (!selectedPlayerDetail) return;
-            const player = gameData.players.find(p => p.id === selectedPlayerDetail.id);
-            if (!player) return;
-            if (player.injury !== 'heavy') {
-                showNotification('重傷状態ではありません');
-                return;
-            }
-            const fameCost = 80;
-            if (gameData.fame < fameCost) {
-                showNotification('名声が不足しています（必要: ' + fameCost + '）');
-                return;
-            }
-            gameData.fame -= fameCost;
-            player.injury = null;
-            player.injuryRecovery = 0;
-            selectedPlayerDetail = player;
-            saveGame();
-            showPlayerDetail(player.id);
-            renderGame();
-            showNotification('⭐80消費：' + player.name + 'の重傷が回復しました！');
-        }
-
-        function closePlayerDetail() {
-            document.getElementById('playerDetailModal').classList.remove('active');
-            selectedPlayerDetail = null;
-        }
-
-        // ポジションコンバート
-        function convertPosition(newPos) {
-            if (!selectedPlayerDetail) return;
-            const player = gameData.players.find(p => p.id === selectedPlayerDetail.id);
-            if (!player) return;
-
-            const cost = 50000;
-            if (gameData.money < cost) {
-                showNotification('資金が不足しています（必要: ' + formatNumber(cost) + '円）');
-                return;
-            }
-
-            const oldPos = player.position;
-            // GKとの相互コンバート不可
-            if (oldPos === 'GK' || newPos === 'GK') {
-                showNotification('GKとの相互コンバートは不可です');
-                return;
-            }
-
-            if (!confirm(player.name + ' を ' + oldPos + ' → ' + newPos + ' にコンバートしますか？\nコスト: ' + formatNumber(cost) + '円\nポジション専用スキルは失われます。')) return;
-
-            gameData.money -= cost;
-            player.position = newPos;
-
-            // ポジション専用スキルを削除（共通スキルは維持）
-            if (player.skills && player.skills.length > 0) {
-                player.skills = player.skills.filter(id => {
-                    const sk = SKILLS[id];
-                    if (!sk) return false;
-                    // 全ポジション共通スキルは維持
-                    if (sk.pos.length === 4) return true;
-                    // 新ポジションに対応しているスキルは維持
-                    return sk.pos.includes(newPos);
-                });
-            }
-
-            // コンバート後のポジションに必要なステータスを補完（未定義の場合のみ初期化）
-            const avg = Math.round(((player.offense || 30) + (player.defense || 30)) / 2);
-            if (player.offense === undefined) player.offense = avg;
-            if (player.defense === undefined) player.defense = avg;
-            if (player.passing === undefined) player.passing = Math.max(20, avg - 10);
-            if (player.shoot  === undefined) player.shoot   = newPos === 'FW' ? Math.max(30, avg - 5) : Math.max(15, avg - 20);
-            if (player.block  === undefined) player.block   = newPos === 'DF' ? Math.max(30, avg - 5) : Math.max(15, avg - 20);
-            if (player.cover  === undefined) player.cover   = newPos === 'DF' ? Math.max(30, avg - 5) : Math.max(15, avg - 20);
-            if (player.dribble === undefined) player.dribble = newPos === 'FW' ? Math.max(30, avg - 5) : Math.max(15, avg - 20);
-            if (player.tackle  === undefined) player.tackle  = newPos === 'DF' ? Math.max(30, avg - 5) : Math.max(15, avg - 20);
-
-            // 年俸再計算
-            player.salary = calculatePlayerSalary(player);
-
-            selectedPlayerDetail = player;
-            saveGame();
-            showPlayerDetail(player.id);
-            renderGame();
-            showNotification(player.name + ' を ' + oldPos + ' → ' + newPos + ' にコンバート！');
-        }
-
         function openRenameModal() {
             if (!selectedPlayerDetail) return;
             document.getElementById('newPlayerName').value = selectedPlayerDetail.name;
@@ -17549,7 +17399,6 @@ self.addEventListener('fetch', e => {
         window.toggleStarter = toggleStarter;
         window.onPitchBenchClick = onPitchBenchClick;
         window.selectFormation = selectFormation;
-        window.convertPosition = convertPosition;
         window.openPlayerModal = openPlayerModal;
         window.closePlayerModal = closePlayerModal;
         window.showPlayerDetail = showPlayerDetail;
