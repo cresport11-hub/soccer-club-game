@@ -9099,7 +9099,9 @@ self.addEventListener('fetch', e => {
             gameData.campUsedThisWeek = true;
             saveGame();
             renderCampTab();
-            // スキル特訓タブの名声表示を更新
+            // 名声表示を更新（右上ヘッダー + スキル特訓タブ）
+            const fameDisplayEl = document.getElementById('fameDisplay');
+            if (fameDisplayEl) fameDisplayEl.textContent = gameData.fame || 0;
             const stFameEl = document.getElementById('skillTrainingFame');
             if (stFameEl) stFameEl.textContent = gameData.fame || 0;
 
@@ -10749,6 +10751,9 @@ self.addEventListener('fetch', e => {
                 showNotification('😓 ' + p.name + ' の「' + sk.name + '」習得は失敗しました。名声⭐' + actualFameCost + '消費。');
             }
 
+            // 名声表示を更新（右上ヘッダー）
+            const fameDisplayElTab = document.getElementById('fameDisplay');
+            if (fameDisplayElTab) fameDisplayElTab.textContent = gameData.fame || 0;
             // タブを再描画して名声を更新
             renderSkillTrainingTab();
         }
