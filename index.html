@@ -1839,7 +1839,7 @@
             window.addEventListener('load', function() {
                 // インラインService Workerを使用
                 var swCode = `
-const CACHE_NAME = 'soccer-kingdom-v1';
+const CACHE_NAME = 'soccer-kingdom-202606301356';
 self.addEventListener('install', e => {
     self.skipWaiting();
 });
@@ -1853,7 +1853,7 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
     e.respondWith(
-        caches.match(e.request).then(cached => cached || fetch(e.request))
+        fetch(e.request).catch(() => caches.match(e.request))
     );
 });
 `;
@@ -1875,7 +1875,7 @@ self.addEventListener('fetch', e => {
                         var banner = document.createElement('div');
                         banner.id = 'ios-pwa-banner';
                         banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#1a472a;color:#fff;padding:12px 16px;font-size:13px;text-align:center;z-index:99999;border-top:2px solid #FFD700;';
-                        banner.innerHTML = '📱 ホーム画面に追加するとアプリのように使えます！<br><span style="font-size:11px;opacity:0.8;">Safariの共有ボタン → 「ホーム画面に追加」</span><button onclick="document.getElementById('ios-pwa-banner').remove();localStorage.setItem('pwa_banner_shown','1')" style="margin-left:12px;background:#FFD700;color:#000;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">閉じる</button>';
+                        banner.innerHTML = '📱 ホーム画面に追加するとアプリのように使えます！<br><span style="font-size:11px;opacity:0.8;">Safariの共有ボタン → 「ホーム画面に追加」</span><button onclick="document.getElementById(\u0022ios-pwa-banner\u0022).remove();localStorage.setItem(\u0022pwa_banner_shown\u0022,\u00221\u0022)" style="margin-left:12px;background:#FFD700;color:#000;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">閉じる</button>';
                         document.body.appendChild(banner);
                     }, 3000);
                 });
@@ -2117,6 +2117,15 @@ self.addEventListener('fetch', e => {
 
                 <!-- ダッシュボード -->
                 <div id="dashboard">
+                    <!-- iPhoneバックアップ促進バナー（初回のみ表示） -->
+                    <div id="backupReminderBanner" style="display:none; background:rgba(255,200,0,0.15); border:1px solid rgba(255,200,0,0.5); border-radius:10px; padding:12px 14px; margin-bottom:12px; font-size:13px; color:rgba(255,255,255,0.95); line-height:1.7;">
+                        💾 <strong>定期バックアップをおすすめします！</strong><br>
+                        iPhoneのSafariはブラウザデータを消去することがあります。「💾 セーブ」タブからエクスポートしておきましょう。
+                        <div style="display:flex; gap:8px; margin-top:10px;">
+                            <button onclick="switchTab('save', null)" style="flex:1; background:rgba(255,200,0,0.3); border:1px solid rgba(255,200,0,0.6); border-radius:6px; color:#fff; font-size:13px; padding:8px; cursor:pointer; font-weight:bold;">📥 エクスポートする</button>
+                            <button onclick="document.getElementById('backupReminderBanner').style.display='none'; localStorage.setItem('soccerGame_backupReminderDismissed','1')" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:6px; color:rgba(255,255,255,0.6); font-size:12px; padding:8px 12px; cursor:pointer;">閉じる</button>
+                        </div>
+                    </div>
                     <div class="card">
                         <div class="card-title">次の試合</div>
                         <div id="nextMatch">
@@ -3228,11 +3237,15 @@ self.addEventListener('fetch', e => {
                 <div id="save" style="display: none;">
                     <div class="card">
                         <div class="card-title">💾 セーブデータ管理</div>
-                        <p style="font-size:13px; color:rgba(255,255,255,0.75); margin-bottom:16px; line-height:1.7;">ブラウザのキャッシュを消すとデータが失われる場合があります。定期的にエクスポートしてバックアップすることをおすすめします。</p>
+                        <div style="background:rgba(255,200,0,0.15); border:1px solid rgba(255,200,0,0.4); border-radius:8px; padding:12px; margin-bottom:16px; font-size:13px; color:rgba(255,255,255,0.9); line-height:1.7;">
+                            ⚠️ <strong>iPhoneのSafariはブラウザのデータをいつでも消去することがあります。</strong><br>
+                            定期的に「エクスポート」でバックアップを取ることを強くおすすめします。<br>
+                            バックアップファイルがあれば「インポート」でいつでも復元できます。
+                        </div>
                         <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:24px;">
-                            <button class="btn btn-primary" onclick="exportSaveData()" style="flex:1; min-width:140px; font-size:14px; padding:14px;">📥 エクスポート</button>
+                            <button class="btn btn-primary" onclick="exportSaveData()" style="flex:1; min-width:140px; font-size:14px; padding:14px;">📥 エクスポート（バックアップ）</button>
                             <label class="btn btn-secondary" style="flex:1; min-width:140px; font-size:14px; padding:14px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
-                                📤 インポート
+                                📤 インポート（復元）
                                 <input type="file" id="importFileInputSave" accept=".json" style="display:none;" onchange="importSaveData(event)">
                             </label>
                         </div>
@@ -5100,10 +5113,20 @@ self.addEventListener('fetch', e => {
             gameData.fame  = s.fame;
             gameData.difficulty = level;
             gameData.fameActionsUsed = [];
-            gameData.gameStarted = true;
             // シーズン開幕前キャンプを開始
             gameData.campWeek = 1;
             gameData.campUsedThisWeek = false;
+            // 必ず初期化してから各処理を実行（途中エラーで中途半端な状態にならないよう）
+            gameData.players = [];
+            gameData.leagueStandings = [];
+            gameData.schedule = [];
+            gameData.otherTeamMatches = {};
+            gameData.allLeagues = null;
+            gameData.transferMarket = [];
+            gameData.seasonGoals = [];
+            gameData.seasonGoalsAchieved = [];
+            gameData.rivalClub = null;
+            gameData.rivalRecord = { win: 0, draw: 0, loss: 0 };
             createInitialPlayers();
             generateLeagueStandings();
             generateSchedule();
@@ -5115,6 +5138,8 @@ self.addEventListener('fetch', e => {
             gameData.seasonHistory = [];
             gameData.managerSkills = { xp: 0, sp: 0, totalSp: 0, learned: [] };
             initSeasonStats();
+            // 全ての初期化処理が完了してからgameStarted=trueをセット
+            gameData.gameStarted = true;
             saveGame();
             renderGame();
             // チュートリアル表示
@@ -5124,9 +5149,46 @@ self.addEventListener('fetch', e => {
         }
 
         function loadGame() {
+            try {
             const saved = localStorage.getItem('soccerGame_tamatsuku');
             if (saved) {
-                Object.assign(gameData, JSON.parse(saved));
+                const parsed = JSON.parse(saved);
+                // 古い形式（squadあり）のデータを自動圧縮し直す
+                // leagueStandingsのsquadを除外
+                let needResave = false;
+                if (parsed.leagueStandings) {
+                    parsed.leagueStandings.forEach(team => {
+                        if (team.squad) { delete team.squad; needResave = true; }
+                    });
+                }
+                // allLeaguesのsquadを除外
+                if (parsed.allLeagues) {
+                    Object.keys(parsed.allLeagues).forEach(tier => {
+                        const ld = parsed.allLeagues[tier];
+                        if (ld && ld.standings) {
+                            ld.standings.forEach(team => {
+                                if (team.squad) { delete team.squad; needResave = true; }
+                            });
+                        }
+                    });
+                }
+                if (needResave) {
+                    try { localStorage.setItem('soccerGame_tamatsuku', JSON.stringify(parsed)); } catch(e) {}
+                }
+                // ── セーブデータ整合性チェック ──
+                // gameStarted=true なのに選手が0人の場合は壊れたデータとみなしてリセット
+                if (parsed.gameStarted && (!parsed.players || parsed.players.length === 0)) {
+                    console.warn('セーブデータが壊れています（gameStarted=true, players=0）。リセットします。');
+                    localStorage.removeItem('soccerGame_tamatsuku');
+                    return; // gameData は初期値のまま（gameStarted=false）
+                }
+                // leagueStandingsが空の場合も壊れたデータとみなしてリセット
+                if (parsed.gameStarted && (!parsed.leagueStandings || parsed.leagueStandings.length === 0)) {
+                    console.warn('セーブデータが壊れています（leagueStandings空）。リセットします。');
+                    localStorage.removeItem('soccerGame_tamatsuku');
+                    return;
+                }
+                Object.assign(gameData, parsed);
                 // totalSpentがない古いデータを補完
                 if (gameData.totalSpent === undefined) gameData.totalSpent = 0;
                 // squadが存在しない、またはフォーメーションとポジション別人数が不一致の場合に再生成
@@ -5188,14 +5250,20 @@ self.addEventListener('fetch', e => {
                 if (gameData.trainingUsed === undefined) gameData.trainingUsed = false;
                 if (gameData.soloTrainingUsed === undefined) gameData.soloTrainingUsed = false;
                 if (!gameData.allLeagues || Object.keys(gameData.allLeagues).length === 0) { gameData.allLeagues = {}; initAllLeagues(); }
-                // allLeagues内の他クラブ選手にも細分化ポジション補完を適用
+                // allLeagues内の他クラブのsquadを再生成（保存時に除外されたため）
                 if (gameData.allLeagues) {
-                    Object.values(gameData.allLeagues).forEach(ld => {
+                    Object.keys(gameData.allLeagues).forEach(tierKey => {
+                        const tier = parseInt(tierKey);
+                        const ld = gameData.allLeagues[tier];
                         if (!ld || !ld.standings) return;
                         ld.standings.forEach(team => {
-                            if (team.squad && team.squad.length > 0) {
-                                initSubPositions(team.squad);
+                            if (!team.squad || team.squad.length === 0) {
+                                // squadがない場合は再生成
+                                team.squad = generateRivalSquad(tier, team.formation || '4-4-2');
+                                team.offense = calcRivalOffense(team.squad, team.formation || '4-4-2');
+                                team.defense = calcRivalDefense(team.squad, team.formation || '4-4-2');
                             }
+                            initSubPositions(team.squad);
                         });
                     });
                 }
@@ -5261,13 +5329,56 @@ self.addEventListener('fetch', e => {
                 if (!gameData.cup) {
                     // セーブデータにカップ戦データがない場合、現在のシーズンに対応したカップ戦を初期化
                     // (initCupは後でrenderGame前に呼ばれるため、フラグだけ立てておく)
-                    gameData._needCupInit = true;
+                                        gameData._needCupInit = true;
                 }
             }
+            } catch(e) {
+                console.error('loadGame error:', e);
+                // エラー時はゲームデータを完全リセット（中途半端な状態を防ぐ）
+                gameData.gameStarted = false;
+                gameData.players = [];
+                gameData.leagueStandings = [];
+                gameData.schedule = [];
+                gameData.money = 1000000;
+                gameData.fame = 60;
+            }
         }
-
         function saveGame() {
-            localStorage.setItem('soccerGame_tamatsuku', JSON.stringify(gameData));
+            try {
+                // squadを除外して保存（セーブデータ容量削減）
+                // squadはロード時に再生成するため保存不要
+                const saveObj = Object.assign({}, gameData);
+                // leagueStandingsのsquadを除外
+                if (saveObj.leagueStandings) {
+                    saveObj.leagueStandings = saveObj.leagueStandings.map(team => {
+                        const t = Object.assign({}, team);
+                        delete t.squad;
+                        return t;
+                    });
+                }
+                // allLeaguesのsquadを除外
+                if (saveObj.allLeagues) {
+                    const compactLeagues = {};
+                    Object.keys(saveObj.allLeagues).forEach(tier => {
+                        const ld = saveObj.allLeagues[tier];
+                        if (!ld) { compactLeagues[tier] = ld; return; }
+                        const compactStandings = (ld.standings || []).map(team => {
+                            const t = Object.assign({}, team);
+                            delete t.squad; // squadを除外（ロード時に再生成）
+                            return t;
+                        });
+                        compactLeagues[tier] = Object.assign({}, ld, { standings: compactStandings });
+                    });
+                    saveObj.allLeagues = compactLeagues;
+                }
+                localStorage.setItem('soccerGame_tamatsuku', JSON.stringify(saveObj));
+            } catch(e) {
+                // QuotaExceededErrorなどストレージ満杯時
+                console.error('saveGameエラー:', e);
+                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                    showNotification('⚠️ ストレージ容量不足でセーブできませんでした。「セーブ」タブからエクスポートしてバックアップしてください。');
+                }
+            }
         }
 
         // セーブデータエクスポート
@@ -5303,17 +5414,32 @@ self.addEventListener('fetch', e => {
             reader.onload = function(e) {
                 try {
                     const data = e.target.result;
-                    JSON.parse(data); // パーステスト
+                    const parsed = JSON.parse(data); // パーステスト
                     if (!confirm('現在のセーブデータに上書きします。よろしいですか？')) return;
-                    localStorage.setItem('soccerGame_tamatsuku', data);
+                    // leagueStandingsのsquadを除外（容量削減）
+                    if (parsed.leagueStandings) {
+                        parsed.leagueStandings.forEach(team => { delete team.squad; });
+                    }
+                    // allLeaguesのsquadを除外して保存（容量削減のため）
+                    if (parsed.allLeagues) {
+                        Object.keys(parsed.allLeagues).forEach(tier => {
+                            const ld = parsed.allLeagues[tier];
+                            if (ld && ld.standings) {
+                                ld.standings.forEach(team => { delete team.squad; });
+                            }
+                        });
+                    }
+                    const compactData = JSON.stringify(parsed);
+                    localStorage.setItem('soccerGame_tamatsuku', compactData);
                     showNotification('📤 セーブデータをインポートしました。ページを再読み込みします。');
                     setTimeout(() => location.reload(), 1500);
                 } catch(err) {
+                    console.error('import error:', err);
                     showNotification('❗ ファイルが正しくありません。正しいJSONファイルを選んでください。');
                 }
             };
             reader.readAsText(file);
-            event.target.value = ''; // 同じファイルを再選択できるようリセット
+            event.target.value = ''; // 同じファイルを再選択できるよりリセット
         }
 
         function getRandomAbility(min, max) {
@@ -8707,6 +8833,14 @@ self.addEventListener('fetch', e => {
         }
 
         function renderDashboard() {
+            // iPhoneバックアップ促進バナー（一度閉じたら表示しない）
+            const backupBanner = document.getElementById('backupReminderBanner');
+            if (backupBanner) {
+                const dismissed = localStorage.getItem('soccerGame_backupReminderDismissed');
+                // iOS Safariかどうかを判定
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                backupBanner.style.display = (isIOS && !dismissed) ? 'block' : 'none';
+            }
             renderSeasonGoalCard();
             renderRivalInfo();
             renderCupStatusCard();
