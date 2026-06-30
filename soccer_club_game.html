@@ -5153,6 +5153,28 @@ self.addEventListener('fetch', e => {
             const saved = localStorage.getItem('soccerGame_tamatsuku');
             if (saved) {
                 const parsed = JSON.parse(saved);
+                // 古い形式（squadあり）のデータを自動圧縮し直す
+                // leagueStandingsのsquadを除外
+                let needResave = false;
+                if (parsed.leagueStandings) {
+                    parsed.leagueStandings.forEach(team => {
+                        if (team.squad) { delete team.squad; needResave = true; }
+                    });
+                }
+                // allLeaguesのsquadを除外
+                if (parsed.allLeagues) {
+                    Object.keys(parsed.allLeagues).forEach(tier => {
+                        const ld = parsed.allLeagues[tier];
+                        if (ld && ld.standings) {
+                            ld.standings.forEach(team => {
+                                if (team.squad) { delete team.squad; needResave = true; }
+                            });
+                        }
+                    });
+                }
+                if (needResave) {
+                    try { localStorage.setItem('soccerGame_tamatsuku', JSON.stringify(parsed)); } catch(e) {}
+                }
                 // ── セーブデータ整合性チェック ──
                 // gameStarted=true なのに選手が0人の場合は壊れたデータとみなしてリセット
                 if (parsed.gameStarted && (!parsed.players || parsed.players.length === 0)) {
@@ -5323,9 +5345,18 @@ self.addEventListener('fetch', e => {
         }
         function saveGame() {
             try {
-                // allLeaguesのsquadを除外して保存（セーブデータ容量削減）
+                // squadを除外して保存（セーブデータ容量削減）
                 // squadはロード時に再生成するため保存不要
                 const saveObj = Object.assign({}, gameData);
+                // leagueStandingsのsquadを除外
+                if (saveObj.leagueStandings) {
+                    saveObj.leagueStandings = saveObj.leagueStandings.map(team => {
+                        const t = Object.assign({}, team);
+                        delete t.squad;
+                        return t;
+                    });
+                }
+                // allLeaguesのsquadを除外
                 if (saveObj.allLeagues) {
                     const compactLeagues = {};
                     Object.keys(saveObj.allLeagues).forEach(tier => {
@@ -5385,6 +5416,10 @@ self.addEventListener('fetch', e => {
                     const data = e.target.result;
                     const parsed = JSON.parse(data); // パーステスト
                     if (!confirm('現在のセーブデータに上書きします。よろしいですか？')) return;
+                    // leagueStandingsのsquadを除外（容量削減）
+                    if (parsed.leagueStandings) {
+                        parsed.leagueStandings.forEach(team => { delete team.squad; });
+                    }
                     // allLeaguesのsquadを除外して保存（容量削減のため）
                     if (parsed.allLeagues) {
                         Object.keys(parsed.allLeagues).forEach(tier => {
