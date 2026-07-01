@@ -17027,6 +17027,35 @@
         function closePlayerDetail() {
             document.getElementById('playerDetailModal').classList.remove('active');
         }
+        function fameBoostCondition(level) {
+            if (!gameData.gameStarted) { showNotification('ゲームを開始してください。'); return; }
+            const cost = level === 4 ? 50 : 30;
+            if ((gameData.fame || 0) < cost) { showNotification('名声が足りません。必要: ⭐' + cost); return; }
+            const player = selectedPlayerDetail;
+            if (!player) return;
+            if ((player.condition || 3) >= level) { showNotification('すでに体調は十分です。'); return; }
+            gameData.fame -= cost;
+            player.condition = level;
+            saveGame();
+            renderGame();
+            showNotification('⭐' + cost + '消費：体調を引き上げました！');
+            closePlayerDetail();
+        }
+        function fameHealInjury() {
+            if (!gameData.gameStarted) { showNotification('ゲームを開始してください。'); return; }
+            const cost = 80;
+            if ((gameData.fame || 0) < cost) { showNotification('名声が足りません。必要: ⭐' + cost); return; }
+            const player = selectedPlayerDetail;
+            if (!player) return;
+            if (!player.injury) { showNotification('この選手は怪我をしていません。'); return; }
+            gameData.fame -= cost;
+            player.injury = null;
+            player.injuryRecovery = 0;
+            saveGame();
+            renderGame();
+            showNotification('⭐' + cost + '消費：重傷を即時回復しました！');
+            closePlayerDetail();
+        }
 
         function signPlayer() {
             const name = document.getElementById('playerName').value.trim();
