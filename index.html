@@ -13951,6 +13951,9 @@
         // ===== 後半処理 =====
         function executeSecondHalf() {
             if (!halftimeState) return;
+            _executeSecondHalfCore();
+        }
+        function _executeSecondHalfCore() {
             const ht = halftimeState;
             halftimeState = null;
 
