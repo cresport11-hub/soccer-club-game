@@ -1834,35 +1834,20 @@
         var el = document.getElementById('pwa-manifest');
         if (el) el.href = url;
 
-        // Service Worker登録（https または localhost のみ）
+        // Service Worker: 全登録解除 & 全キャッシュ削除（古いSWキャッシュ問題を修正）
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                // インラインService Workerを使用
-                var swCode = `
-const CACHE_NAME = 'soccer-kingdom-202606301356';
-self.addEventListener('install', e => {
-    self.skipWaiting();
-});
-self.addEventListener('activate', e => {
-    e.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-        )
-    );
-    self.clients.claim();
-});
-self.addEventListener('fetch', e => {
-    e.respondWith(
-        fetch(e.request).catch(() => caches.match(e.request))
-    );
-});
-`;
-                var swBlob = new Blob([swCode], {type: 'application/javascript'});
-                var swUrl = URL.createObjectURL(swBlob);
-                navigator.serviceWorker.register(swUrl, {scope: './'}).then(function(reg) {
-                    console.log('SW registered');
-                }).catch(function(err) {
-                    console.log('SW registration failed:', err);
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for (var reg of registrations) {
+                    reg.unregister();
+                    console.log('SW unregistered:', reg.scope);
+                }
+            });
+        }
+        if ('caches' in window) {
+            caches.keys().then(function(keys) {
+                keys.forEach(function(key) {
+                    caches.delete(key);
+                    console.log('Cache deleted:', key);
                 });
             });
         }
