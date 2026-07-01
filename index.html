@@ -5091,9 +5091,41 @@
                 document.getElementById('difficultyOverlay').classList.add('active');
                 return;
             }
-            renderGame();
+            // ===== renderGame()エラーキャッチ =====
+            try {
+                updateHeader();
+            } catch(e) { _showErrOverlay('updateHeader', e); return; }
+            try {
+                renderDashboard();
+            } catch(e) { _showErrOverlay('renderDashboard', e); return; }
+            try {
+                updateCampUI();
+            } catch(e) { _showErrOverlay('updateCampUI', e); return; }
+            try {
+                renderTeam();
+            } catch(e) { _showErrOverlay('renderTeam', e); return; }
+            try {
+                renderLineup();
+            } catch(e) { _showErrOverlay('renderLineup', e); return; }
+            try {
+                renderFacilities();
+            } catch(e) { _showErrOverlay('renderFacilities', e); return; }
+            try {
+                renderLeague();
+            } catch(e) { _showErrOverlay('renderLeague', e); return; }
         }
-
+        function _showErrOverlay(funcName, err) {
+            var el = document.createElement('div');
+            el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);color:#f00;font-family:monospace;font-size:13px;padding:15px;z-index:99999;overflow:auto;word-break:break-all;';
+            el.innerHTML = '<b style="color:#ff0">== JS ERROR ==</b><br><b>関数: ' + funcName + '</b><br><br>' +
+                '<b>エラー:</b> ' + (err ? err.message : 'unknown') + '<br><br>' +
+                '<b>スタック:</b><br>' + (err && err.stack ? err.stack.replace(/\n/g,'<br>') : 'なし') + '<br><br>' +
+                '<b>gameData.money:</b> ' + gameData.money + '<br>' +
+                '<b>gameData.players:</b> ' + (gameData.players ? gameData.players.length : 'null') + '人<br>' +
+                '<b>gameData.gameStarted:</b> ' + gameData.gameStarted + '<br>' +
+                '<button onclick="this.parentElement.remove()" style="margin-top:10px;background:#ff0;color:#000;border:none;padding:8px 16px;font-size:14px;cursor:pointer;">閉じる</button>';
+            document.body.appendChild(el);
+        }
         // 難易度選択後の処理
         function selectDifficulty(level) {
             document.getElementById('difficultyOverlay').classList.remove('active');
