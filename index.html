@@ -5177,10 +5177,24 @@
         }
 
         function loadGame() {
+            // loadGameデバッグ用オーバーレイ
+            var _lgDbg = document.createElement('div');
+            _lgDbg.id = '_lgDbg';
+            _lgDbg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:rgba(0,0,128,0.95);color:#0ff;font-family:monospace;font-size:11px;padding:8px;z-index:999998;overflow:auto;max-height:50vh;word-break:break-all;';
+            _lgDbg.innerHTML = '<b>[loadGame開始]</b><br>';
+            document.body.appendChild(_lgDbg);
+            function _lg(msg) {
+                _lgDbg.innerHTML += msg + '<br>';
+                console.log('[loadGame]', msg);
+            }
             try {
+            _lg('LS取得開始');
             const saved = localStorage.getItem('soccerGame_tamatsuku');
+            _lg('LS取得完了: ' + (saved ? saved.length + 'bytes' : 'null'));
             if (saved) {
+                _lg('JSON.parse開始');
                 const parsed = JSON.parse(saved);
+                _lg('JSON.parse完了: gameStarted=' + parsed.gameStarted + ', players=' + (parsed.players ? parsed.players.length : 'null'));
                 // 古い形式（squadあり）のデータを自動圧縮し直す
                 // leagueStandingsのsquadを除外
                 let needResave = false;
@@ -5206,9 +5220,12 @@
                 // ── セーブデータ整合性チェック ──
                 // 注意: 誤検知を防ぐため、整合性チェックは行わない。
                 // Object.assignでデータを反映し、不足フィールドは後続処理で補完する。
+                _lg('Object.assign開始');
                 Object.assign(gameData, parsed);
+                _lg('Object.assign完了: gameStarted=' + gameData.gameStarted + ', money=' + gameData.money + ', players=' + (gameData.players ? gameData.players.length : 'null'));
                 // totalSpentがない古いデータを補完
                 if (gameData.totalSpent === undefined) gameData.totalSpent = 0;
+                _lg('squad再生成チェック開始: leagueStandings=' + (gameData.leagueStandings ? gameData.leagueStandings.length : 'null') + 'チーム');
                 // squadが存在しない、またはフォーメーションとポジション別人数が不一致の場合に再生成
                 if (gameData.leagueStandings) {
                     gameData.leagueStandings.forEach(team => {
@@ -5240,9 +5257,11 @@
                         }
                         } catch(squadErr) {
                             console.warn('[loadGame] squad再生成エラー:', team.name, squadErr);
+                            _lg('⚠️ squadエラー: ' + team.name + ' - ' + squadErr.message);
                         }
                     });
                 }
+                _lg('squad再生成完了');
                 // カード・出場停止フィールドの補完
                 if (gameData.seasonYellows === undefined) gameData.seasonYellows = {};
                 if (gameData.seasonReds === undefined) gameData.seasonReds = 0;
@@ -5336,9 +5355,12 @@
                                         gameData._needCupInit = true;
                 }
                 // デバッグ: loadGame完了時のgameData状態をログ出力
+                _lg('✅ loadGame完了! players=' + (gameData.players ? gameData.players.length : 'null') + ', money=' + gameData.money + ', gameStarted=' + gameData.gameStarted);
                 console.log('[loadGame完了] players=' + (gameData.players ? gameData.players.length : 'null') + ', money=' + gameData.money + ', gameStarted=' + gameData.gameStarted + ', clubName=' + gameData.clubName);
             }
             } catch(e) {
+                _lg('❌ loadGame catchエラー: ' + e.message);
+                _lg('スタック: ' + (e.stack ? e.stack.substring(0, 200) : 'なし'));
                 console.error('[loadGame catch] error:', e);
                 console.error('[loadGame catch] stack:', e.stack);
                 // エラー時: gameStartedがtrueの場合はデータを保持してrenderGameに進む
