@@ -15,7 +15,7 @@ button { background: #4fc3f7; color: #000; border: none; padding: 12px 24px; bor
 <h1>🔍 ゲームエラーチェック</h1>
 <div id="log">読み込み中...</div>
 <button onclick="checkAll()">全てチェック</button>
-<button onclick="clearAll()">デバッグログをクリア</button>
+<button onclick="clearAll()">ログをクリア</button>
 <button onclick="loadGamePage()">ゲームページを開く</button>
 <script>
 var logEl = document.getElementById('log');
@@ -38,14 +38,10 @@ function checkAll() {
         }
     } catch(e) { addLog('❌ LSエラー: ' + e.message); }
 
-    addLog('\n=== 後半デバッグログ ===');
-    var dbg2nd = localStorage.getItem('_dbg_2nd');
-    if (dbg2nd) { addLog('後半ボタン押下ログ: ' + dbg2nd); }
-    else { addLog('⚠️ _dbg_2nd なし（後半ボタンが押されていない）'); }
-
-    var dbg2ndErr = localStorage.getItem('_dbg_2nd_err');
-    if (dbg2ndErr) { addLog('❌ 後半エラー: ' + dbg2ndErr); }
-    else { addLog('✅ 後半エラーなし'); }
+    addLog('\n=== エラーログ（window.onerror） ===');
+    var errLog = localStorage.getItem('_dbgErrLog');
+    if (errLog) { addLog(errLog); }
+    else { addLog('なし'); }
 
     addLog('\n=== 旧デバッグログ ===');
     var dbg = localStorage.getItem('_dbgLog');
@@ -54,10 +50,11 @@ function checkAll() {
 }
 function clearAll() {
     localStorage.removeItem('_dbgLog');
+    localStorage.removeItem('_dbgErrLog');
     localStorage.removeItem('_dbg_2nd');
     localStorage.removeItem('_dbg_2nd_err');
     logEl.textContent = '';
-    addLog('デバッグログをクリアしました');
+    addLog('ログをクリアしました');
 }
 function loadGamePage() {
     addLog('ゲームページに移動します...');

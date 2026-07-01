@@ -3923,6 +3923,14 @@
     </div>
 
     <script>
+        // グローバルエラーハンドラー（デバッグ用）
+        window.onerror = function(msg, src, line, col, err) {
+            try {
+                var log = localStorage.getItem('_dbgErrLog') || '';
+                var entry = new Date().toTimeString().slice(0,8) + ': ' + msg + ' [' + (src||'').split('/').pop() + ':' + line + ':' + col + ']\n';
+                localStorage.setItem('_dbgErrLog', (log + entry).slice(-3000));
+            } catch(e) {}
+        };
         // ゲームデータ
         const gameData = {
             clubName: 'FC日本',
@@ -13950,6 +13958,7 @@
 
         // ===== 後半処理 =====
         function executeSecondHalf() {
+            try { var _l=localStorage.getItem('_dbgErrLog')||''; localStorage.setItem('_dbgErrLog',(_l+new Date().toTimeString().slice(0,8)+': executeSecondHalf called, hs='+!!halftimeState+'\n').slice(-3000)); } catch(e){}
             if (!halftimeState) return;
             _executeSecondHalfCore();
         }
