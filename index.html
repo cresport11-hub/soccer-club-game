@@ -1867,20 +1867,7 @@ self.addEventListener('fetch', e => {
             });
         }
 
-        // iOSでホーム画面追加バナーを表示（初回のみ）
-        if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !navigator.standalone) {
-            if (!localStorage.getItem('pwa_banner_shown')) {
-                window.addEventListener('load', function() {
-                    setTimeout(function() {
-                        var banner = document.createElement('div');
-                        banner.id = 'ios-pwa-banner';
-                        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#1a472a;color:#fff;padding:10px 16px;font-size:13px;text-align:center;z-index:99999;border-bottom:2px solid #FFD700;';
-                        banner.innerHTML = '📱 ホーム画面に追加するとアプリのように使えます！<br><span style="font-size:11px;opacity:0.8;">Safariの共有ボタン → 「ホーム画面に追加」</span><button onclick="document.getElementById(\u0022ios-pwa-banner\u0022).remove();localStorage.setItem(\u0022pwa_banner_shown\u0022,\u00221\u0022)" style="margin-left:12px;background:#FFD700;color:#000;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">閉じる</button>';
-                        document.body.appendChild(banner);
-                    }, 3000);
-                });
-            }
-        }
+        // iOSホーム画面追加バナー: 削除済み
     })();
     </script>
 </head>
