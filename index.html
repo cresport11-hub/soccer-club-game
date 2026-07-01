@@ -5060,71 +5060,14 @@
 
         // 初期化
         function init() {
-            alert('DEBUG: init() called, gameData.money=' + gameData.money + ', players=' + gameData.players.length);
             loadGame();
-            alert('DEBUG: after loadGame(), gameData.money=' + gameData.money + ', players=' + gameData.players.length + ', gameStarted=' + gameData.gameStarted);
-            // デバッグ: init()内でのgameData状態確認
-            console.log('[init] loadGame後: players=' + (gameData.players ? gameData.players.length : 'null') + ', money=' + gameData.money + ', gameStarted=' + gameData.gameStarted);
-            // ===== 画面デバッグ表示 =====
-            var _lsRaw = localStorage.getItem('soccerGame_tamatsuku');
-            var _lsParsed = null;
-            try { _lsParsed = _lsRaw ? JSON.parse(_lsRaw) : null; } catch(e) {}
-            var _dbgEl = document.createElement('div');
-            _dbgEl.id = 'debug-overlay';
-            _dbgEl.style.cssText = 'position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.92);color:#0f0;font-family:monospace;font-size:12px;padding:10px;z-index:99999;border-bottom:2px solid #0f0;';
-            _dbgEl.innerHTML =
-                '<b>== DEBUG (loadGame後) ==</b><br>' +
-                'LS size: ' + (_lsRaw ? _lsRaw.length : 0) + 'bytes<br>' +
-                'LS.money: ' + (_lsParsed ? _lsParsed.money : 'null') + '<br>' +
-                'LS.players: ' + (_lsParsed && _lsParsed.players ? _lsParsed.players.length : 'null') + '人<br>' +
-                'LS.gameStarted: ' + (_lsParsed ? _lsParsed.gameStarted : 'null') + '<br>' +
-                '--- gameData (after loadGame) ---<br>' +
-                'gameData.money: <b>' + gameData.money + '</b><br>' +
-                'gameData.players: <b>' + (gameData.players ? gameData.players.length : 'null') + '</b>人<br>' +
-                'gameData.gameStarted: <b>' + gameData.gameStarted + '</b><br>' +
-                '<button onclick="document.getElementById(\"debug-overlay\").remove()" style="margin-top:6px;background:#0f0;color:#000;border:none;padding:4px 12px;cursor:pointer;font-size:13px;">閉じる</button>';
-            document.body.appendChild(_dbgEl);
-            // ===== 画面デバッグ表示ここまで =====
             const isFirstLaunch = !gameData.gameStarted;
             if (isFirstLaunch) {
                 // 初回起動時は難易度選択モーダルを表示
                 document.getElementById('difficultyOverlay').classList.add('active');
                 return;
             }
-            // ===== renderGame()エラーキャッチ =====
-            try {
-                updateHeader();
-            } catch(e) { _showErrOverlay('updateHeader', e); return; }
-            try {
-                renderDashboard();
-            } catch(e) { _showErrOverlay('renderDashboard', e); return; }
-            try {
-                updateCampUI();
-            } catch(e) { _showErrOverlay('updateCampUI', e); return; }
-            try {
-                renderTeam();
-            } catch(e) { _showErrOverlay('renderTeam', e); return; }
-            try {
-                renderLineup();
-            } catch(e) { _showErrOverlay('renderLineup', e); return; }
-            try {
-                renderFacilities();
-            } catch(e) { _showErrOverlay('renderFacilities', e); return; }
-            try {
-                renderLeague();
-            } catch(e) { _showErrOverlay('renderLeague', e); return; }
-        }
-        function _showErrOverlay(funcName, err) {
-            var el = document.createElement('div');
-            el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);color:#f00;font-family:monospace;font-size:13px;padding:15px;z-index:99999;overflow:auto;word-break:break-all;';
-            el.innerHTML = '<b style="color:#ff0">== JS ERROR ==</b><br><b>関数: ' + funcName + '</b><br><br>' +
-                '<b>エラー:</b> ' + (err ? err.message : 'unknown') + '<br><br>' +
-                '<b>スタック:</b><br>' + (err && err.stack ? err.stack.replace(/\n/g,'<br>') : 'なし') + '<br><br>' +
-                '<b>gameData.money:</b> ' + gameData.money + '<br>' +
-                '<b>gameData.players:</b> ' + (gameData.players ? gameData.players.length : 'null') + '人<br>' +
-                '<b>gameData.gameStarted:</b> ' + gameData.gameStarted + '<br>' +
-                '<button onclick="this.parentElement.remove()" style="margin-top:10px;background:#ff0;color:#000;border:none;padding:8px 16px;font-size:14px;cursor:pointer;">閉じる</button>';
-            document.body.appendChild(el);
+            renderGame();
         }
         // 難易度選択後の処理
         function selectDifficulty(level) {
@@ -5177,24 +5120,10 @@
         }
 
         function loadGame() {
-            // loadGameデバッグ用オーバーレイ
-            var _lgDbg = document.createElement('div');
-            _lgDbg.id = '_lgDbg';
-            _lgDbg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:rgba(0,0,128,0.95);color:#0ff;font-family:monospace;font-size:11px;padding:8px;z-index:999998;overflow:auto;max-height:50vh;word-break:break-all;';
-            _lgDbg.innerHTML = '<b>[loadGame開始]</b><br>';
-            document.body.appendChild(_lgDbg);
-            function _lg(msg) {
-                _lgDbg.innerHTML += msg + '<br>';
-                console.log('[loadGame]', msg);
-            }
             try {
-            _lg('LS取得開始');
             const saved = localStorage.getItem('soccerGame_tamatsuku');
-            _lg('LS取得完了: ' + (saved ? saved.length + 'bytes' : 'null'));
             if (saved) {
-                _lg('JSON.parse開始');
                 const parsed = JSON.parse(saved);
-                _lg('JSON.parse完了: gameStarted=' + parsed.gameStarted + ', players=' + (parsed.players ? parsed.players.length : 'null'));
                 // 古い形式（squadあり）のデータを自動圧縮し直す
                 // leagueStandingsのsquadを除外
                 let needResave = false;
@@ -5220,12 +5149,9 @@
                 // ── セーブデータ整合性チェック ──
                 // 注意: 誤検知を防ぐため、整合性チェックは行わない。
                 // Object.assignでデータを反映し、不足フィールドは後続処理で補完する。
-                _lg('Object.assign開始');
                 Object.assign(gameData, parsed);
-                _lg('Object.assign完了: gameStarted=' + gameData.gameStarted + ', money=' + gameData.money + ', players=' + (gameData.players ? gameData.players.length : 'null'));
                 // totalSpentがない古いデータを補完
                 if (gameData.totalSpent === undefined) gameData.totalSpent = 0;
-                _lg('squad再生成チェック開始: leagueStandings=' + (gameData.leagueStandings ? gameData.leagueStandings.length : 'null') + 'チーム');
                 // squadが存在しない、またはフォーメーションとポジション別人数が不一致の場合に再生成
                 if (gameData.leagueStandings) {
                     gameData.leagueStandings.forEach(team => {
@@ -5257,11 +5183,9 @@
                         }
                         } catch(squadErr) {
                             console.warn('[loadGame] squad再生成エラー:', team.name, squadErr);
-                            _lg('⚠️ squadエラー: ' + team.name + ' - ' + squadErr.message);
                         }
                     });
                 }
-                _lg('squad再生成完了');
                 // カード・出場停止フィールドの補完
                 if (gameData.seasonYellows === undefined) gameData.seasonYellows = {};
                 if (gameData.seasonReds === undefined) gameData.seasonReds = 0;
@@ -5355,12 +5279,9 @@
                                         gameData._needCupInit = true;
                 }
                 // デバッグ: loadGame完了時のgameData状態をログ出力
-                _lg('✅ loadGame完了! players=' + (gameData.players ? gameData.players.length : 'null') + ', money=' + gameData.money + ', gameStarted=' + gameData.gameStarted);
                 console.log('[loadGame完了] players=' + (gameData.players ? gameData.players.length : 'null') + ', money=' + gameData.money + ', gameStarted=' + gameData.gameStarted + ', clubName=' + gameData.clubName);
             }
             } catch(e) {
-                _lg('❌ loadGame catchエラー: ' + e.message);
-                _lg('スタック: ' + (e.stack ? e.stack.substring(0, 200) : 'なし'));
                 console.error('[loadGame catch] error:', e);
                 console.error('[loadGame catch] stack:', e.stack);
                 // エラー時: gameStartedがtrueの場合はデータを保持してrenderGameに進む
@@ -17595,62 +17516,7 @@
         window.renderLogTab = renderLogTab;
 
         // 初期化
-        // グローバルエラーハンドラー
-        window.onerror = function(msg, src, line, col, err) {
-            var el = document.getElementById('_globalErrOverlay');
-            if (!el) {
-                el = document.createElement('div');
-                el.id = '_globalErrOverlay';
-                el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.97);color:#f55;font-family:monospace;font-size:12px;padding:15px;z-index:999999;overflow:auto;word-break:break-all;';
-                document.body.appendChild(el);
-            }
-            el.innerHTML += '<b style="color:#ff0">[GLOBAL ERROR]</b><br>' +
-                'メッセージ: ' + msg + '<br>' +
-                '行: ' + line + ', 列: ' + col + '<br>' +
-                'スタック: ' + (err && err.stack ? err.stack.replace(/\n/g,'<br>') : 'なし') + '<br><hr>';
-            return false;
-        };
-        window.addEventListener('unhandledrejection', function(e) {
-            var el = document.getElementById('_globalErrOverlay');
-            if (!el) {
-                el = document.createElement('div');
-                el.id = '_globalErrOverlay';
-                el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.97);color:#f55;font-family:monospace;font-size:12px;padding:15px;z-index:999999;overflow:auto;word-break:break-all;';
-                document.body.appendChild(el);
-            }
-            el.innerHTML += '<b style="color:#ff0">[PROMISE ERROR]</b><br>' + e.reason + '<br><hr>';
-        });
-        try {
-            init();
-        } catch(e) {
-            var el = document.createElement('div');
-            el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.97);color:#f55;font-family:monospace;font-size:13px;padding:15px;z-index:999999;overflow:auto;word-break:break-all;';
-            el.innerHTML = '<b style="color:#ff0">[init() ERROR]</b><br>エラー: ' + e.message + '<br><br>スタック:<br>' + (e.stack ? e.stack.replace(/\n/g,'<br>') : 'なし') + '<br><button onclick="this.parentElement.remove()" style="margin-top:10px;background:#ff0;color:#000;border:none;padding:8px 16px;font-size:14px;cursor:pointer;">閉じる</button>';
-            document.body.appendChild(el);
-        }
-        // ===== デバッグボタン =====
-        (function() {
-            var btn = document.createElement('button');
-            btn.textContent = '🔍 DEBUG';
-            btn.style.cssText = 'position:fixed;bottom:80px;right:10px;z-index:99998;background:#ff0;color:#000;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:bold;cursor:pointer;opacity:0.85;';
-            btn.onclick = function() {
-                var lsRaw = localStorage.getItem('soccerGame_tamatsuku');
-                var lsParsed = null;
-                try { lsParsed = lsRaw ? JSON.parse(lsRaw) : null; } catch(e) {}
-                var msg = '== DEBUG INFO ==\n' +
-                    'LS size: ' + (lsRaw ? lsRaw.length : 0) + 'bytes\n' +
-                    'LS.money: ' + (lsParsed ? lsParsed.money : 'null') + '\n' +
-                    'LS.players: ' + (lsParsed && lsParsed.players ? lsParsed.players.length : 'null') + '\u4eba\n' +
-                    'LS.gameStarted: ' + (lsParsed ? lsParsed.gameStarted : 'null') + '\n' +
-                    '--- gameData ---\n' +
-                    'gameData.money: ' + (typeof gameData !== 'undefined' ? gameData.money : 'UNDEFINED') + '\n' +
-                    'gameData.players: ' + (typeof gameData !== 'undefined' && gameData.players ? gameData.players.length : 'UNDEFINED') + '\u4eba\n' +
-                    'gameData.gameStarted: ' + (typeof gameData !== 'undefined' ? gameData.gameStarted : 'UNDEFINED');
-                alert(msg);
-            };
-            document.body.appendChild(btn);
-        })();
-        // ===== デバッグボタンここまで =====
+        init();
     </script>
 </body>
 </html>
