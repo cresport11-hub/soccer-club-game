@@ -5091,6 +5091,26 @@ self.addEventListener('fetch', e => {
             loadGame();
             // デバッグ: init()内でのgameData状態確認
             console.log('[init] loadGame後: players=' + (gameData.players ? gameData.players.length : 'null') + ', money=' + gameData.money + ', gameStarted=' + gameData.gameStarted);
+            // ===== 画面デバッグ表示 =====
+            var _lsRaw = localStorage.getItem('soccerGame_tamatsuku');
+            var _lsParsed = null;
+            try { _lsParsed = _lsRaw ? JSON.parse(_lsRaw) : null; } catch(e) {}
+            var _dbgEl = document.createElement('div');
+            _dbgEl.id = 'debug-overlay';
+            _dbgEl.style.cssText = 'position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,0.92);color:#0f0;font-family:monospace;font-size:12px;padding:10px;z-index:99999;border-bottom:2px solid #0f0;';
+            _dbgEl.innerHTML =
+                '<b>== DEBUG (loadGame後) ==</b><br>' +
+                'LS size: ' + (_lsRaw ? _lsRaw.length : 0) + 'bytes<br>' +
+                'LS.money: ' + (_lsParsed ? _lsParsed.money : 'null') + '<br>' +
+                'LS.players: ' + (_lsParsed && _lsParsed.players ? _lsParsed.players.length : 'null') + '人<br>' +
+                'LS.gameStarted: ' + (_lsParsed ? _lsParsed.gameStarted : 'null') + '<br>' +
+                '--- gameData (after loadGame) ---<br>' +
+                'gameData.money: <b>' + gameData.money + '</b><br>' +
+                'gameData.players: <b>' + (gameData.players ? gameData.players.length : 'null') + '</b>人<br>' +
+                'gameData.gameStarted: <b>' + gameData.gameStarted + '</b><br>' +
+                '<button onclick="document.getElementById(\"debug-overlay\").remove()" style="margin-top:6px;background:#0f0;color:#000;border:none;padding:4px 12px;cursor:pointer;font-size:13px;">閉じる</button>';
+            document.body.appendChild(_dbgEl);
+            // ===== 画面デバッグ表示ここまで =====
             const isFirstLaunch = !gameData.gameStarted;
             if (isFirstLaunch) {
                 // 初回起動時は難易度選択モーダルを表示
