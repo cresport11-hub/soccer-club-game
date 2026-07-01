@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>キャッシュクリア中...</title>
+<style>
+body {
+    font-family: -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    background: #1a1a2e;
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+h1 { font-size: 24px; margin-bottom: 16px; }
+p { font-size: 16px; color: #aaa; margin-bottom: 8px; }
+#status { font-size: 18px; color: #4fc3f7; margin-top: 20px; }
+.spinner {
+    width: 48px; height: 48px;
+    border: 5px solid #333;
+    border-top-color: #4fc3f7;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#go-btn {
+    display: none;
+    margin-top: 24px;
+    padding: 16px 32px;
+    background: #4fc3f7;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+</style>
+</head>
+<body>
+<h1>⚽ サッカークラブゲーム</h1>
+<div class="spinner" id="spinner"></div>
+<div id="status">キャッシュをクリア中...</div>
+<p id="detail"></p>
+<button id="go-btn" onclick="goToGame()">ゲームを開始する</button>
+
+<script>
+var statusEl = document.getElementById('status');
+var detailEl = document.getElementById('detail');
+var spinnerEl = document.getElementById('spinner');
+var btnEl = document.getElementById('go-btn');
+
+function goToGame() {
+    location.href = './index.html?nocache=' + Date.now();
+}
+
+async function clearAll() {
+    var swCount = 0;
+    var cacheCount = 0;
+
+    // 全Service Worker登録解除
+    if ('serviceWorker' in navigator) {
+        try {
+            var regs = await navigator.serviceWorker.getRegistrations();
+            swCount = regs.length;
+            for (var reg of regs) {
+                await reg.unregister();
+            }
+        } catch(e) {
+            detailEl.textContent = 'SW削除エラー: ' + e.message;
+        }
+    }
+
+    // 全キャッシュ削除
+    if ('caches' in window) {
+        try {
+            var keys = await caches.keys();
+            cacheCount = keys.length;
+            for (var key of keys) {
+                await caches.delete(key);
+            }
+        } catch(e) {
+            detailEl.textContent = 'キャッシュ削除エラー: ' + e.message;
+        }
+    }
+
+    // 完了
+    spinnerEl.style.display = 'none';
+    statusEl.textContent = '✅ クリア完了！';
+    detailEl.textContent = 'SW: ' + swCount + '件削除、キャッシュ: ' + cacheCount + '件削除';
+    btnEl.style.display = 'block';
+
+    // 3秒後に自動でゲームへ
+    setTimeout(goToGame, 3000);
+}
+
+clearAll();
+</script>
+</body>
+</html>
