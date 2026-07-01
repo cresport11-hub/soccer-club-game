@@ -17573,7 +17573,39 @@
         window.renderLogTab = renderLogTab;
 
         // 初期化
-        init();
+        // グローバルエラーハンドラー
+        window.onerror = function(msg, src, line, col, err) {
+            var el = document.getElementById('_globalErrOverlay');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = '_globalErrOverlay';
+                el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.97);color:#f55;font-family:monospace;font-size:12px;padding:15px;z-index:999999;overflow:auto;word-break:break-all;';
+                document.body.appendChild(el);
+            }
+            el.innerHTML += '<b style="color:#ff0">[GLOBAL ERROR]</b><br>' +
+                'メッセージ: ' + msg + '<br>' +
+                '行: ' + line + ', 列: ' + col + '<br>' +
+                'スタック: ' + (err && err.stack ? err.stack.replace(/\n/g,'<br>') : 'なし') + '<br><hr>';
+            return false;
+        };
+        window.addEventListener('unhandledrejection', function(e) {
+            var el = document.getElementById('_globalErrOverlay');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = '_globalErrOverlay';
+                el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.97);color:#f55;font-family:monospace;font-size:12px;padding:15px;z-index:999999;overflow:auto;word-break:break-all;';
+                document.body.appendChild(el);
+            }
+            el.innerHTML += '<b style="color:#ff0">[PROMISE ERROR]</b><br>' + e.reason + '<br><hr>';
+        });
+        try {
+            init();
+        } catch(e) {
+            var el = document.createElement('div');
+            el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.97);color:#f55;font-family:monospace;font-size:13px;padding:15px;z-index:999999;overflow:auto;word-break:break-all;';
+            el.innerHTML = '<b style="color:#ff0">[init() ERROR]</b><br>エラー: ' + e.message + '<br><br>スタック:<br>' + (e.stack ? e.stack.replace(/\n/g,'<br>') : 'なし') + '<br><button onclick="this.parentElement.remove()" style="margin-top:10px;background:#ff0;color:#000;border:none;padding:8px 16px;font-size:14px;cursor:pointer;">閉じる</button>';
+            document.body.appendChild(el);
+        }
         // ===== デバッグボタン =====
         (function() {
             var btn = document.createElement('button');
