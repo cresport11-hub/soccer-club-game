@@ -3923,10 +3923,6 @@
     </div>
 
     <script>
-        // デバッグログ関数（最初に定義）
-        function _dbgLog(msg) { try { var prev = localStorage.getItem('_dbgLog') || ''; localStorage.setItem('_dbgLog', prev + '\n' + new Date().toISOString().slice(11,19) + ': ' + msg); } catch(e) {} }
-        window.onerror = function(msg, src, line, col, err) { _dbgLog('onerror: ' + msg + ' at line ' + line + ':' + col); };
-        _dbgLog('script2開始');
         // ゲームデータ
         const gameData = {
             clubName: 'FC日本',
@@ -3997,7 +3993,6 @@
         };
 
         // トロフィー定義
-        _dbgLog('TROPHY_DEFS定義開始');
         const TROPHY_DEFS = [
             // ── 施設強化（スタジアム→練習→アカデミー→メディカル） ──
             {
@@ -4245,7 +4240,6 @@
         }
 
         // スポンサー名プール
-        _dbgLog('SPONSOR_NAMES定義開始');
         const SPONSOR_NAMES = [
             'タマスポーツ', 'ゴールドスター飲料', 'キックオフ銀行', 'フィールドモータース',
             'ネットワーク通信', 'サンライズ食品', 'ブルーウェーブ保険', 'アクティブウェア',
@@ -4575,7 +4569,6 @@
         };
 
         // 大枠ポジション → デフォルト細分化ポジション（既存選手変換用）
-        _dbgLog('MAIN_TO_DEFAULT_SUB定義開始');
         const MAIN_TO_DEFAULT_SUB = {
             FW: 'CF',
             MF: 'CH',
@@ -4585,7 +4578,6 @@
 
         // 有効な（主ポジ, 副ポジ）の組み合わせ
         // 副ポジなしは [pos, null] として扱う
-        _dbgLog('VALID_POS_COMBOS定義開始');
         const VALID_POS_COMBOS = [
             ['CF', null],
             ['CF', 'WG'],
@@ -4742,7 +4734,6 @@
             });
         }
 
-        _dbgLog('formations定義開始');
         const formations = {
             '4-4-2': { name: '4-4-2', desc: 'バランス型',         df: 4, mf: 4, fw: 2, offMod: 1.000, defMod: 1.000 },
             '4-3-3': { name: '4-3-3', desc: '攻撃的バランス', df: 4, mf: 3, fw: 3, offMod: 1.025, defMod: 0.975 },
@@ -4771,7 +4762,6 @@
 
         const positions = ['FW', 'MF', 'DF', 'GK'];
         // リーグ別クラブ名テーブル（各リーグにユニークな19クラブ）
-        _dbgLog('LEAGUE_TEAMS定義開始');
         const LEAGUE_TEAMS = {
             5: [
                 '🌟南川アストルズ', '❄️北海ブリザード', '🔥東山フェニックス', '⚡西湖スパークス', '🌊中川ユナイテッド',
@@ -5070,10 +5060,7 @@
 
         // 初期化
         function init() {
-            localStorage.removeItem('_dbgLog');
-            _dbgLog('init開始');
             loadGame();
-            _dbgLog('loadGame後 isFirstLaunch=' + !gameData.gameStarted + ' gameStarted=' + gameData.gameStarted);
             const isFirstLaunch = !gameData.gameStarted;
             if (isFirstLaunch) {
                 // 初回起動時は難易度選択モーダルを表示
@@ -5133,13 +5120,10 @@
         }
 
         function loadGame() {
-            _dbgLog('loadGame開始');
             try {
             const saved = localStorage.getItem('soccerGame_tamatsuku');
-            _dbgLog('saved=' + (saved ? saved.length + 'bytes' : 'null'));
             if (saved) {
                 const parsed = JSON.parse(saved);
-                _dbgLog('JSON.parse成功 gameStarted=' + parsed.gameStarted + ' players=' + (parsed.players ? parsed.players.length : 'null'));
                 // 古い形式（squadあり）のデータを自動圧縮し直す
                 // leagueStandingsのsquadを除外
                 let needResave = false;
@@ -5165,9 +5149,7 @@
                 // ── セーブデータ整合性チェック ──
                 // 注意: 誤検知を防ぐため、整合性チェックは行わない。
                 // Object.assignでデータを反映し、不足フィールドは後続処理で補完する。
-                _dbgLog('Object.assign前');
                 Object.assign(gameData, parsed);
-                _dbgLog('Object.assign後 gameStarted=' + gameData.gameStarted + ' players=' + (gameData.players ? gameData.players.length : 'null'));
                 // totalSpentがない古いデータを補完
                 if (gameData.totalSpent === undefined) gameData.totalSpent = 0;
                 // squadが存在しない、またはフォーメーションとポジション別人数が不一致の場合に再生成
@@ -5298,10 +5280,8 @@
                 }
                 // デバッグ: loadGame完了時のgameData状態をログ出力
                 console.log('[loadGame完了] players=' + (gameData.players ? gameData.players.length : 'null') + ', money=' + gameData.money + ', gameStarted=' + gameData.gameStarted + ', clubName=' + gameData.clubName);
-                _dbgLog('loadGame完了 players=' + (gameData.players ? gameData.players.length : 'null') + ' gameStarted=' + gameData.gameStarted);
             }
             } catch(e) {
-                _dbgLog('loadGame catch エラー: ' + e.message + ' stack:' + (e.stack || '').slice(0,200));
                 console.error('[loadGame catch] error:', e);
                 console.error('[loadGame catch] stack:', e.stack);
                 // エラー時: gameStartedがtrueの場合はデータを保持してrenderGameに進む
@@ -17043,6 +17023,9 @@
 
         function closePlayerModal() {
             document.getElementById('playerModal').classList.remove('active');
+        }
+        function closePlayerDetail() {
+            document.getElementById('playerDetailModal').classList.remove('active');
         }
 
         function signPlayer() {
