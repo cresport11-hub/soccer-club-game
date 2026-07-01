@@ -5060,7 +5060,10 @@
 
         // 初期化
         function init() {
+            localStorage.removeItem('_dbgLog');
+            _dbgLog('init開始');
             loadGame();
+            _dbgLog('loadGame後 isFirstLaunch=' + !gameData.gameStarted + ' gameStarted=' + gameData.gameStarted);
             const isFirstLaunch = !gameData.gameStarted;
             if (isFirstLaunch) {
                 // 初回起動時は難易度選択モーダルを表示
@@ -5119,11 +5122,15 @@
             }
         }
 
+        function _dbgLog(msg) { try { var prev = localStorage.getItem('_dbgLog') || ''; localStorage.setItem('_dbgLog', prev + '\n' + new Date().toISOString().slice(11,19) + ': ' + msg); } catch(e) {} }
         function loadGame() {
+            _dbgLog('loadGame開始');
             try {
             const saved = localStorage.getItem('soccerGame_tamatsuku');
+            _dbgLog('saved=' + (saved ? saved.length + 'bytes' : 'null'));
             if (saved) {
                 const parsed = JSON.parse(saved);
+                _dbgLog('JSON.parse成功 gameStarted=' + parsed.gameStarted + ' players=' + (parsed.players ? parsed.players.length : 'null'));
                 // 古い形式（squadあり）のデータを自動圧縮し直す
                 // leagueStandingsのsquadを除外
                 let needResave = false;
@@ -5149,7 +5156,9 @@
                 // ── セーブデータ整合性チェック ──
                 // 注意: 誤検知を防ぐため、整合性チェックは行わない。
                 // Object.assignでデータを反映し、不足フィールドは後続処理で補完する。
+                _dbgLog('Object.assign前');
                 Object.assign(gameData, parsed);
+                _dbgLog('Object.assign後 gameStarted=' + gameData.gameStarted + ' players=' + (gameData.players ? gameData.players.length : 'null'));
                 // totalSpentがない古いデータを補完
                 if (gameData.totalSpent === undefined) gameData.totalSpent = 0;
                 // squadが存在しない、またはフォーメーションとポジション別人数が不一致の場合に再生成
@@ -5280,8 +5289,10 @@
                 }
                 // デバッグ: loadGame完了時のgameData状態をログ出力
                 console.log('[loadGame完了] players=' + (gameData.players ? gameData.players.length : 'null') + ', money=' + gameData.money + ', gameStarted=' + gameData.gameStarted + ', clubName=' + gameData.clubName);
+                _dbgLog('loadGame完了 players=' + (gameData.players ? gameData.players.length : 'null') + ' gameStarted=' + gameData.gameStarted);
             }
             } catch(e) {
+                _dbgLog('loadGame catch エラー: ' + e.message + ' stack:' + (e.stack || '').slice(0,200));
                 console.error('[loadGame catch] error:', e);
                 console.error('[loadGame catch] stack:', e.stack);
                 // エラー時: gameStartedがtrueの場合はデータを保持してrenderGameに進む

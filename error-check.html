@@ -3,67 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>エラーチェック</title>
+<title>ゲームエラーチェック</title>
 <style>
-body { font-family: -apple-system, sans-serif; padding: 20px; background: #1a1a2e; color: #fff; }
-#log { background: #000; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; margin-top: 10px; min-height: 200px; }
-button { background: #4fc3f7; color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-size: 16px; margin: 5px; cursor: pointer; }
+body { background: #1a1a2e; color: #eee; font-family: monospace; padding: 20px; }
+h1 { color: #fff; }
+#log { background: #000; padding: 15px; border-radius: 8px; font-size: 13px; line-height: 1.8; white-space: pre-wrap; word-break: break-all; }
+button { background: #4fc3f7; color: #000; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; margin: 8px 4px; cursor: pointer; display: block; width: 100%; }
 </style>
 </head>
 <body>
-<h2>🔍 ゲームエラーチェック</h2>
+<h1>🔍 ゲームエラーチェック</h1>
 <div id="log">読み込み中...</div>
 <button onclick="checkLS()">LocalStorageを確認</button>
+<button onclick="checkDbgLog()">デバッグログを確認</button>
+<button onclick="clearDbgLog()">デバッグログをクリア</button>
 <button onclick="loadGamePage()">ゲームページを開く</button>
-
 <script>
 var logEl = document.getElementById('log');
-var logs = [];
-
 function addLog(msg) {
-    logs.push(new Date().toLocaleTimeString() + ': ' + msg);
-    logEl.textContent = logs.join('\n');
+    logEl.textContent += '\n' + new Date().toTimeString().slice(0,8) + ': ' + msg;
 }
-
-// エラーをキャッチ
-window.onerror = function(msg, src, line, col, err) {
-    addLog('❌ エラー: ' + msg + ' (行' + line + ')');
-    return false;
-};
-
-window.addEventListener('unhandledrejection', function(e) {
-    addLog('❌ Promise拒否: ' + e.reason);
-});
-
 function checkLS() {
     try {
         var raw = localStorage.getItem('soccerGame_tamatsuku');
-        if (!raw) {
-            addLog('⚠️ LocalStorageにデータなし');
-            return;
-        }
+        if (!raw) { addLog('⚠️ LocalStorageにデータなし'); return; }
         addLog('✅ LSサイズ: ' + raw.length + ' bytes');
         var parsed = JSON.parse(raw);
         addLog('✅ LS.money: ' + parsed.money);
         addLog('✅ LS.players: ' + (parsed.players ? parsed.players.length : 'null') + '人');
         addLog('✅ LS.gameStarted: ' + parsed.gameStarted);
         addLog('✅ LS.clubName: ' + parsed.clubName);
-    } catch(e) {
-        addLog('❌ LSエラー: ' + e.message);
-    }
+    } catch(e) { addLog('❌ LSエラー: ' + e.message); }
 }
-
-// ゲームページをiframeで読み込んでエラーを確認
+function checkDbgLog() {
+    var dbg = localStorage.getItem('_dbgLog');
+    if (!dbg) { addLog('⚠️ デバッグログなし（ゲームページを開いてから確認してください）'); return; }
+    addLog('=== デバッグログ ===');
+    addLog(dbg);
+    addLog('=== ログ終わり ===');
+}
+function clearDbgLog() {
+    localStorage.removeItem('_dbgLog');
+    addLog('デバッグログをクリアしました');
+}
 function loadGamePage() {
     addLog('ゲームページに移動します...');
-    setTimeout(function() {
-        location.href = './index.html';
-    }, 500);
+    setTimeout(function() { window.location.href = './'; }, 200);
 }
-
+// 初回自動チェック
+logEl.textContent = '';
 addLog('エラーチェックページ読み込み完了');
-addLog('iOSバージョン: ' + navigator.userAgent);
 checkLS();
+var dbg = localStorage.getItem('_dbgLog');
+if (dbg) { addLog('--- 前回のデバッグログあり ---'); addLog(dbg); }
 </script>
 </body>
 </html>
