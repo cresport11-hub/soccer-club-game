@@ -5220,6 +5220,37 @@
                 // allLeagues内の他クラブのsquadは必要時に再生成（ロード時は省略）
                 // ※ロード時の他リーグ追いつかせ処理は削除（iOSでメモリ不足エラーの原因）
                 // allLeaguesのデータはセーブ時点の状態が保存されているため再計算不要
+                // クラブ名をLEAGUE_TEAMSの最新名称に同期（旧セーブデータ対応）
+                (function syncTeamNames() {
+                    // allLeaguesの各リーグのチーム名を更新
+                    for (let tier = 0; tier <= 5; tier++) {
+                        const newNames = LEAGUE_TEAMS[tier];
+                        if (!newNames || !gameData.allLeagues[tier] || !gameData.allLeagues[tier].standings) continue;
+                        const standings = gameData.allLeagues[tier].standings;
+                        if (standings.length !== newNames.length) continue;
+                        standings.forEach((team, i) => { team.name = newNames[i]; });
+                        // otherTeamMatchesのキーも更新
+                        if (gameData.allLeagues[tier].otherTeamMatches) {
+                            const otm = gameData.allLeagues[tier].otherTeamMatches;
+                            const oldNames = standings.map((_, i) => standings[i].name);
+                            // standings.nameはすでに更新済みなので旧名→新名のマッピングは不要
+                            // otherTeamMatchesは試合スケジュールなので名前変更の影響は軽微
+                        }
+                    }
+                    // leagueStandingsのチーム名も更新（自クラブ以外）
+                    if (gameData.leagueStandings && gameData.leagueStandings.length > 0) {
+                        const newNames = LEAGUE_TEAMS[gameData.league];
+                        if (newNames) {
+                            let newIdx = 0;
+                            gameData.leagueStandings.forEach(team => {
+                                if (team.name === gameData.clubName) return;
+                                if (newIdx < newNames.length) {
+                                    team.name = newNames[newIdx++];
+                                }
+                            });
+                        }
+                    }
+                })();
                 // カップ戦データの補完（旧セーブデータ対応）
                 if (!gameData.cup) { gameData.cup = null; }
                 // ピッチ図配置の補完
