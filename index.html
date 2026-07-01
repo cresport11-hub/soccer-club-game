@@ -13950,7 +13950,11 @@
 
         // ===== 後半処理 =====
         function executeSecondHalf() {
-            if (!halftimeState) return;
+            try { localStorage.setItem('_dbg_2nd', JSON.stringify({t: Date.now(), hs: !!halftimeState})); } catch(e){}
+            if (!halftimeState) { try { localStorage.setItem('_dbg_2nd_err', 'halftimeState is null'); } catch(e){} return; }
+            try { _executeSecondHalfCore(); } catch(e) { try { localStorage.setItem('_dbg_2nd_err', String(e) + ' | ' + (e.stack||'').slice(0,300)); } catch(e2){} alert('後半エラー: ' + e.message); }
+        }
+        function _executeSecondHalfCore() {
             const ht = halftimeState;
             halftimeState = null;
 

@@ -14,36 +14,49 @@ button { background: #4fc3f7; color: #000; border: none; padding: 12px 24px; bor
 <body>
 <h1>🔍 ゲームエラーチェック</h1>
 <div id="log">読み込み中...</div>
-<button onclick="checkLS()">LocalStorageを確認</button>
-<button onclick="checkDbgLog()">デバッグログを確認</button>
-<button onclick="clearDbgLog()">デバッグログをクリア</button>
+<button onclick="checkAll()">全てチェック</button>
+<button onclick="clearAll()">デバッグログをクリア</button>
 <button onclick="loadGamePage()">ゲームページを開く</button>
 <script>
 var logEl = document.getElementById('log');
 function addLog(msg) {
     logEl.textContent += '\n' + new Date().toTimeString().slice(0,8) + ': ' + msg;
 }
-function checkLS() {
+function checkAll() {
+    logEl.textContent = '';
+    addLog('=== LocalStorageチェック ===');
     try {
         var raw = localStorage.getItem('soccerGame_tamatsuku');
-        if (!raw) { addLog('⚠️ LocalStorageにデータなし'); return; }
-        addLog('✅ LSサイズ: ' + raw.length + ' bytes');
-        var parsed = JSON.parse(raw);
-        addLog('✅ LS.money: ' + parsed.money);
-        addLog('✅ LS.players: ' + (parsed.players ? parsed.players.length : 'null') + '人');
-        addLog('✅ LS.gameStarted: ' + parsed.gameStarted);
-        addLog('✅ LS.clubName: ' + parsed.clubName);
+        if (!raw) { addLog('⚠️ LocalStorageにデータなし'); }
+        else {
+            addLog('✅ LSサイズ: ' + raw.length + ' bytes');
+            var parsed = JSON.parse(raw);
+            addLog('✅ LS.money: ' + parsed.money);
+            addLog('✅ LS.players: ' + (parsed.players ? parsed.players.length : 'null') + '人');
+            addLog('✅ LS.gameStarted: ' + parsed.gameStarted);
+            addLog('✅ LS.clubName: ' + parsed.clubName);
+        }
     } catch(e) { addLog('❌ LSエラー: ' + e.message); }
-}
-function checkDbgLog() {
+
+    addLog('\n=== 後半デバッグログ ===');
+    var dbg2nd = localStorage.getItem('_dbg_2nd');
+    if (dbg2nd) { addLog('後半ボタン押下ログ: ' + dbg2nd); }
+    else { addLog('⚠️ _dbg_2nd なし（後半ボタンが押されていない）'); }
+
+    var dbg2ndErr = localStorage.getItem('_dbg_2nd_err');
+    if (dbg2ndErr) { addLog('❌ 後半エラー: ' + dbg2ndErr); }
+    else { addLog('✅ 後半エラーなし'); }
+
+    addLog('\n=== 旧デバッグログ ===');
     var dbg = localStorage.getItem('_dbgLog');
-    if (!dbg) { addLog('⚠️ デバッグログなし（ゲームページを開いてから確認してください）'); return; }
-    addLog('=== デバッグログ ===');
-    addLog(dbg);
-    addLog('=== ログ終わり ===');
+    if (dbg) { addLog(dbg); }
+    else { addLog('なし'); }
 }
-function clearDbgLog() {
+function clearAll() {
     localStorage.removeItem('_dbgLog');
+    localStorage.removeItem('_dbg_2nd');
+    localStorage.removeItem('_dbg_2nd_err');
+    logEl.textContent = '';
     addLog('デバッグログをクリアしました');
 }
 function loadGamePage() {
@@ -53,9 +66,7 @@ function loadGamePage() {
 // 初回自動チェック
 logEl.textContent = '';
 addLog('エラーチェックページ読み込み完了');
-checkLS();
-var dbg = localStorage.getItem('_dbgLog');
-if (dbg) { addLog('--- 前回のデバッグログあり ---'); addLog(dbg); }
+checkAll();
 </script>
 </body>
 </html>
