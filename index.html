@@ -3923,14 +3923,6 @@
     </div>
 
     <script>
-        // グローバルエラーハンドラー（デバッグ用）
-        window.onerror = function(msg, src, line, col, err) {
-            try {
-                var log = localStorage.getItem('_dbgErrLog') || '';
-                var entry = new Date().toTimeString().slice(0,8) + ': ' + msg + ' [' + (src||'').split('/').pop() + ':' + line + ':' + col + ']\n';
-                localStorage.setItem('_dbgErrLog', (log + entry).slice(-3000));
-            } catch(e) {}
-        };
         // ゲームデータ
         const gameData = {
             clubName: 'FC日本',
@@ -5269,6 +5261,10 @@
                 }
                 // 統計データの補完（旧セーブデータ対応）
                 if (!gameData.seasonStats) initSeasonStats();
+                if (gameData.seasonStats && !gameData.seasonStats.playerGoals) gameData.seasonStats.playerGoals = {};
+                if (gameData.seasonStats && !gameData.seasonStats.playerAssists) gameData.seasonStats.playerAssists = {};
+                if (gameData.seasonStats && !gameData.seasonStats.playerApps) gameData.seasonStats.playerApps = {};
+                if (gameData.seasonStats && !gameData.seasonStats.playerRatings) gameData.seasonStats.playerRatings = {};
                 if (!gameData.seasonHistory) gameData.seasonHistory = [];
                 // 監督スキルの補完（旧セーブデータ対応）
                 if (!gameData.managerSkills) {
@@ -6623,6 +6619,11 @@
         function updateSeasonStats({ myScore, oppScore, isCupMatch, myShots, oppShots, myOnTarget, myPoss, myFk, myCk, myKm, starters }) {
             if (!gameData.seasonStats) initSeasonStats();
             const s = gameData.seasonStats;
+            // 古いセーブデータとの互換性: 不足プロパティを補完
+            if (!s.playerGoals) s.playerGoals = {};
+            if (!s.playerAssists) s.playerAssists = {};
+            if (!s.playerApps) s.playerApps = {};
+            if (!s.playerRatings) s.playerRatings = {};
             if (isCupMatch) {
                 s.cupMatches++;
                 if (myScore > oppScore) s.cupWins++;
@@ -13958,7 +13959,6 @@
 
         // ===== 後半処理 =====
         function executeSecondHalf() {
-            try { var _l=localStorage.getItem('_dbgErrLog')||''; localStorage.setItem('_dbgErrLog',(_l+new Date().toTimeString().slice(0,8)+': executeSecondHalf called, hs='+!!halftimeState+'\n').slice(-3000)); } catch(e){}
             if (!halftimeState) return;
             _executeSecondHalfCore();
         }
