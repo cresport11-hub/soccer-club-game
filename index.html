@@ -5075,7 +5075,9 @@ self.addEventListener('fetch', e => {
 
         // 初期化
         function init() {
+            alert('DEBUG: init() called, gameData.money=' + gameData.money + ', players=' + gameData.players.length);
             loadGame();
+            alert('DEBUG: after loadGame(), gameData.money=' + gameData.money + ', players=' + gameData.players.length + ', gameStarted=' + gameData.gameStarted);
             // デバッグ: init()内でのgameData状態確認
             console.log('[init] loadGame後: players=' + (gameData.players ? gameData.players.length : 'null') + ', money=' + gameData.money + ', gameStarted=' + gameData.gameStarted);
             // ===== 画面デバッグ表示 =====
