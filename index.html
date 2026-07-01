@@ -17555,6 +17555,29 @@ self.addEventListener('fetch', e => {
 
         // 初期化
         init();
+        // ===== デバッグボタン =====
+        (function() {
+            var btn = document.createElement('button');
+            btn.textContent = '🔍 DEBUG';
+            btn.style.cssText = 'position:fixed;bottom:80px;right:10px;z-index:99998;background:#ff0;color:#000;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:bold;cursor:pointer;opacity:0.85;';
+            btn.onclick = function() {
+                var lsRaw = localStorage.getItem('soccerGame_tamatsuku');
+                var lsParsed = null;
+                try { lsParsed = lsRaw ? JSON.parse(lsRaw) : null; } catch(e) {}
+                var msg = '== DEBUG INFO ==\n' +
+                    'LS size: ' + (lsRaw ? lsRaw.length : 0) + 'bytes\n' +
+                    'LS.money: ' + (lsParsed ? lsParsed.money : 'null') + '\n' +
+                    'LS.players: ' + (lsParsed && lsParsed.players ? lsParsed.players.length : 'null') + '\u4eba\n' +
+                    'LS.gameStarted: ' + (lsParsed ? lsParsed.gameStarted : 'null') + '\n' +
+                    '--- gameData ---\n' +
+                    'gameData.money: ' + (typeof gameData !== 'undefined' ? gameData.money : 'UNDEFINED') + '\n' +
+                    'gameData.players: ' + (typeof gameData !== 'undefined' && gameData.players ? gameData.players.length : 'UNDEFINED') + '\u4eba\n' +
+                    'gameData.gameStarted: ' + (typeof gameData !== 'undefined' ? gameData.gameStarted : 'UNDEFINED');
+                alert(msg);
+            };
+            document.body.appendChild(btn);
+        })();
+        // ===== デバッグボタンここまで =====
     </script>
 </body>
 </html>
