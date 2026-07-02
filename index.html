@@ -9089,8 +9089,8 @@
         // ===== スキル獲得特訓 =====
         const SKILL_TRAINING_RANKS = {
             S: { fame: 20, chance: 0.05 },
-            A: { fame: 10, chance: 0.07 },
-            B: { fame: 5,  chance: 0.10 }
+            A: { fame: 10, chance: 0.05 },
+            B: { fame: 5,  chance: 0.05 }
         };
         const SKILL_RANK_MAP = {
             // Sランク
@@ -9128,7 +9128,7 @@
 
             const posColors = { FW:'#ef5350', MF:'#42a5f5', DF:'#66bb6a', GK:'#ffa726' };
             inner.innerHTML = '<div style="font-size:16px;font-weight:bold;color:#4CAF50;margin-bottom:14px;">🎓 スキル獲得特訓 — 選手を選択</div>' +
-                '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Bランク⭐5(10%) / Aランク⭐10(7%) / Sランク⭐20(5%)</div>' +
+                '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Bランク⭐5(5%) / Aランク⭐10(5%) / Sランク⭐20(5%)</div>' +
                                 gameData.players.map(p => {
                      const pos = p.position || p.pos || '?';
                      const subPosDisp = getSubPos(p) + (p.subPosition2 ? '/' + p.subPosition2 : '');
@@ -9172,7 +9172,7 @@
             inner.style.cssText = 'background:#1a1a2e;border-radius:16px;padding:20px;max-width:380px;width:92%;max-height:82vh;overflow-y:auto;';
 
             const rankColors = { S:'#FF5252', A:'#FFB300', B:'#66BB6A' };
-            const rankLabels = { S:'Sランク ⭐20 (5%)', A:'Aランク ⭐10 (7%)', B:'Bランク ⭐5 (10%)' };
+            const rankLabels = { S:'Sランク ⭐20 (5%)', A:'Aランク ⭐10 (5%)', B:'Bランク ⭐5 (5%)' };
             const fame = gameData.fame || 0;
 
             let html = `<div style="font-size:15px;font-weight:bold;color:#4CAF50;margin-bottom:4px;">🎓 ${p.name} のスキル特訓</div>`;
