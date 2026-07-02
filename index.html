@@ -9088,9 +9088,9 @@
         }
         // ===== スキル獲得特訓 =====
         const SKILL_TRAINING_RANKS = {
-            S: { fame: 30, chance: 0.05 },
-            A: { fame: 15, chance: 0.10 },
-            B: { fame: 8,  chance: 0.15 }
+            S: { fame: 20, chance: 0.07 },
+            A: { fame: 10, chance: 0.15 },
+            B: { fame: 5,  chance: 0.20 }
         };
         const SKILL_RANK_MAP = {
             // Sランク
@@ -9172,7 +9172,7 @@
             inner.style.cssText = 'background:#1a1a2e;border-radius:16px;padding:20px;max-width:380px;width:92%;max-height:82vh;overflow-y:auto;';
 
             const rankColors = { S:'#FF5252', A:'#FFB300', B:'#66BB6A' };
-            const rankLabels = { S:'Sランク ⭐30 (5%)', A:'Aランク ⭐15 (10%)', B:'Bランク ⭐8 (15%)' };
+            const rankLabels = { S:'Sランク ⭐20 (7%)', A:'Aランク ⭐10 (15%)', B:'Bランク ⭐5 (20%)' };
             const fame = gameData.fame || 0;
 
             let html = `<div style="font-size:15px;font-weight:bold;color:#4CAF50;margin-bottom:4px;">🎓 ${p.name} のスキル特訓</div>`;
