@@ -1834,53 +1834,25 @@
         var el = document.getElementById('pwa-manifest');
         if (el) el.href = url;
 
-        // Service Worker登録（https または localhost のみ）
+        // Service Worker: 全登録解除 & 全キャッシュ削除（古いSWキャッシュ問題を修正）
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                // インラインService Workerを使用
-                var swCode = `
-const CACHE_NAME = 'soccer-kingdom-202606301356';
-self.addEventListener('install', e => {
-    self.skipWaiting();
-});
-self.addEventListener('activate', e => {
-    e.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-        )
-    );
-    self.clients.claim();
-});
-self.addEventListener('fetch', e => {
-    e.respondWith(
-        fetch(e.request).catch(() => caches.match(e.request))
-    );
-});
-`;
-                var swBlob = new Blob([swCode], {type: 'application/javascript'});
-                var swUrl = URL.createObjectURL(swBlob);
-                navigator.serviceWorker.register(swUrl, {scope: './'}).then(function(reg) {
-                    console.log('SW registered');
-                }).catch(function(err) {
-                    console.log('SW registration failed:', err);
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for (var reg of registrations) {
+                    reg.unregister();
+                    console.log('SW unregistered:', reg.scope);
+                }
+            });
+        }
+        if ('caches' in window) {
+            caches.keys().then(function(keys) {
+                keys.forEach(function(key) {
+                    caches.delete(key);
+                    console.log('Cache deleted:', key);
                 });
             });
         }
 
-        // iOSでホーム画面追加バナーを表示（初回のみ）
-        if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !navigator.standalone) {
-            if (!localStorage.getItem('pwa_banner_shown')) {
-                window.addEventListener('load', function() {
-                    setTimeout(function() {
-                        var banner = document.createElement('div');
-                        banner.id = 'ios-pwa-banner';
-                        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#1a472a;color:#fff;padding:10px 16px;font-size:13px;text-align:center;z-index:99999;border-bottom:2px solid #FFD700;';
-                        banner.innerHTML = '📱 ホーム画面に追加するとアプリのように使えます！<br><span style="font-size:11px;opacity:0.8;">Safariの共有ボタン → 「ホーム画面に追加」</span><button onclick="document.getElementById(\u0022ios-pwa-banner\u0022).remove();localStorage.setItem(\u0022pwa_banner_shown\u0022,\u00221\u0022)" style="margin-left:12px;background:#FFD700;color:#000;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">閉じる</button>';
-                        document.body.appendChild(banner);
-                    }, 3000);
-                });
-            }
-        }
+        // iOSホーム画面追加バナー: 削除済み
     })();
     </script>
 </head>
@@ -2841,18 +2813,18 @@ self.addEventListener('fetch', e => {
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#FF5252; font-weight:700;">Sランク</td>
-                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐10</td>
+                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐20</td>
                                 <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">5%</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#FFB300; font-weight:700;">Aランク</td>
-                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐5</td>
-                                <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">10%</td>
+                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐10</td>
+                                <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">5%</td>
                             </tr>
                             <tr>
                                 <td style="padding:7px 8px; color:#66BB6A; font-weight:700;">Bランク</td>
-                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐3</td>
-                                <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">15%</td>
+                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐5</td>
+                                <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">5%</td>
                             </tr>
                         </table>
                         <div style="font-size:12px; color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.04); border-radius:8px; padding:10px; margin-top:10px; line-height:1.7;">
@@ -3194,9 +3166,9 @@ self.addEventListener('fetch', e => {
                         <p style="font-size:13px; color:rgba(255,255,255,0.75); margin-bottom:12px; line-height:1.7;">選手を選んで習得可能なスキルに挑戦できます。名声を消費して確率判定。失敗しても名声は消費されます。</p>
                         <div style="font-size:13px; color:#FFD700; margin-bottom:14px;">現在の名声: <span id="skillTrainingFame" style="font-weight:bold;"></span> ⭐</div>
                         <div style="font-size:12px; color:rgba(255,255,255,0.5); margin-bottom:16px; background:rgba(255,255,255,0.05); border-radius:8px; padding:10px;">
-                            <div style="margin-bottom:4px;"><span style="color:#FF5252; font-weight:700;">[Sランク]</span> 名声⭐10 → 確率 5%</div>
-                            <div style="margin-bottom:4px;"><span style="color:#FFB300; font-weight:700;">[Aランク]</span> 名声⭐5 → 確率 10%</div>
-                            <div><span style="color:#66BB6A; font-weight:700;">[Bランク]</span> 名声⭐3 → 確率 15%</div>
+                            <div style="margin-bottom:4px;"><span style="color:#FF5252; font-weight:700;">[Sランク]</span> 名声⭐20 → 確率 5%</div>
+                            <div style="margin-bottom:4px;"><span style="color:#FFB300; font-weight:700;">[Aランク]</span> 名声⭐10 → 確率 5%</div>
+                            <div><span style="color:#66BB6A; font-weight:700;">[Bランク]</span> 名声⭐5 → 確率 5%</div>
                         </div>
                         <div id="skillTrainingPlayerList"></div>
                     </div>
@@ -5097,7 +5069,6 @@ self.addEventListener('fetch', e => {
             }
             renderGame();
         }
-
         // 難易度選択後の処理
         function selectDifficulty(level) {
             document.getElementById('difficultyOverlay').classList.remove('active');
@@ -5131,6 +5102,7 @@ self.addEventListener('fetch', e => {
             generateLeagueStandings();
             generateSchedule();
             initializeOtherTeamMatches();
+            initAllLeagues(); // 他リーグデータを初期化（リセット後のリーグ表表示に必要）
             generateSeasonGoals();
             assignRivalClub();
             refreshTransferMarket();
@@ -5184,6 +5156,7 @@ self.addEventListener('fetch', e => {
                 // squadが存在しない、またはフォーメーションとポジション別人数が不一致の場合に再生成
                 if (gameData.leagueStandings) {
                     gameData.leagueStandings.forEach(team => {
+                        try {
                         if (team.name === gameData.clubName) return;
                         const fm = formations[team.formation] || formations['4-4-2'];
                         const needRegen = !team.squad ||
@@ -5204,10 +5177,13 @@ self.addEventListener('fetch', e => {
                             });
                         }
                         // 他クラブ選手の細分化ポジション補完
-                        initSubPositions(team.squad);
+                        if (team.squad) initSubPositions(team.squad);
                         // 旧セーブデータに監督スキルがない場合は生成して補完
                         if (!team.managerSkills) {
                             team.managerSkills = generateRivalManagerSkills(gameData.league);
+                        }
+                        } catch(squadErr) {
+                            console.warn('[loadGame] squad再生成エラー:', team.name, squadErr);
                         }
                     });
                 }
@@ -5245,6 +5221,37 @@ self.addEventListener('fetch', e => {
                 // allLeagues内の他クラブのsquadは必要時に再生成（ロード時は省略）
                 // ※ロード時の他リーグ追いつかせ処理は削除（iOSでメモリ不足エラーの原因）
                 // allLeaguesのデータはセーブ時点の状態が保存されているため再計算不要
+                // クラブ名をLEAGUE_TEAMSの最新名称に同期（旧セーブデータ対応）
+                (function syncTeamNames() {
+                    // allLeaguesの各リーグのチーム名を更新
+                    for (let tier = 0; tier <= 5; tier++) {
+                        const newNames = LEAGUE_TEAMS[tier];
+                        if (!newNames || !gameData.allLeagues[tier] || !gameData.allLeagues[tier].standings) continue;
+                        const standings = gameData.allLeagues[tier].standings;
+                        if (standings.length !== newNames.length) continue;
+                        standings.forEach((team, i) => { team.name = newNames[i]; });
+                        // otherTeamMatchesのキーも更新
+                        if (gameData.allLeagues[tier].otherTeamMatches) {
+                            const otm = gameData.allLeagues[tier].otherTeamMatches;
+                            const oldNames = standings.map((_, i) => standings[i].name);
+                            // standings.nameはすでに更新済みなので旧名→新名のマッピングは不要
+                            // otherTeamMatchesは試合スケジュールなので名前変更の影響は軽微
+                        }
+                    }
+                    // leagueStandingsのチーム名も更新（自クラブ以外）
+                    if (gameData.leagueStandings && gameData.leagueStandings.length > 0) {
+                        const newNames = LEAGUE_TEAMS[gameData.league];
+                        if (newNames) {
+                            let newIdx = 0;
+                            gameData.leagueStandings.forEach(team => {
+                                if (team.name === gameData.clubName) return;
+                                if (newIdx < newNames.length) {
+                                    team.name = newNames[newIdx++];
+                                }
+                            });
+                        }
+                    }
+                })();
                 // カップ戦データの補完（旧セーブデータ対応）
                 if (!gameData.cup) { gameData.cup = null; }
                 // ピッチ図配置の補完
@@ -5286,6 +5293,10 @@ self.addEventListener('fetch', e => {
                 }
                 // 統計データの補完（旧セーブデータ対応）
                 if (!gameData.seasonStats) initSeasonStats();
+                if (gameData.seasonStats && !gameData.seasonStats.playerGoals) gameData.seasonStats.playerGoals = {};
+                if (gameData.seasonStats && !gameData.seasonStats.playerAssists) gameData.seasonStats.playerAssists = {};
+                if (gameData.seasonStats && !gameData.seasonStats.playerApps) gameData.seasonStats.playerApps = {};
+                if (gameData.seasonStats && !gameData.seasonStats.playerRatings) gameData.seasonStats.playerRatings = {};
                 if (!gameData.seasonHistory) gameData.seasonHistory = [];
                 // 監督スキルの補完（旧セーブデータ対応）
                 if (!gameData.managerSkills) {
@@ -5303,16 +5314,22 @@ self.addEventListener('fetch', e => {
                     // (initCupは後でrenderGame前に呼ばれるため、フラグだけ立てておく)
                                         gameData._needCupInit = true;
                 }
+                // デバッグ: loadGame完了時のgameData状態をログ出力
+                console.log('[loadGame完了] players=' + (gameData.players ? gameData.players.length : 'null') + ', money=' + gameData.money + ', gameStarted=' + gameData.gameStarted + ', clubName=' + gameData.clubName);
             }
             } catch(e) {
-                console.error('loadGame error:', e);
-                // エラー時はゲームデータを完全リセット（中途半端な状態を防ぐ）
-                gameData.gameStarted = false;
-                gameData.players = [];
-                gameData.leagueStandings = [];
-                gameData.schedule = [];
-                gameData.money = 1000000;
-                gameData.fame = 60;
+                console.error('[loadGame catch] error:', e);
+                console.error('[loadGame catch] stack:', e.stack);
+                // エラー時: gameStartedがtrueの場合はデータを保持してrenderGameに進む
+                // （中途半端なリセットでゲームが壊れるのを防ぐ）
+                // gameStartedがfalseの場合のみ初期化する
+                if (!gameData.gameStarted) {
+                    gameData.players = [];
+                    gameData.leagueStandings = [];
+                    gameData.schedule = [];
+                    gameData.money = 1000000;
+                    gameData.fame = 60;
+                }
             }
         }
         function saveGame() {
@@ -6634,6 +6651,11 @@ self.addEventListener('fetch', e => {
         function updateSeasonStats({ myScore, oppScore, isCupMatch, myShots, oppShots, myOnTarget, myPoss, myFk, myCk, myKm, starters }) {
             if (!gameData.seasonStats) initSeasonStats();
             const s = gameData.seasonStats;
+            // 古いセーブデータとの互換性: 不足プロパティを補完
+            if (!s.playerGoals) s.playerGoals = {};
+            if (!s.playerAssists) s.playerAssists = {};
+            if (!s.playerApps) s.playerApps = {};
+            if (!s.playerRatings) s.playerRatings = {};
             if (isCupMatch) {
                 s.cupMatches++;
                 if (myScore > oppScore) s.cupWins++;
@@ -9066,20 +9088,22 @@ self.addEventListener('fetch', e => {
         }
         // ===== スキル獲得特訓 =====
         const SKILL_TRAINING_RANKS = {
-            S: { fame: 30, chance: 0.05 },
-            A: { fame: 15, chance: 0.10 },
-            B: { fame: 8,  chance: 0.15 }
+            S: { fame: 20, chance: 0.05 },
+            A: { fame: 10, chance: 0.05 },
+            B: { fame: 5,  chance: 0.05 }
         };
         const SKILL_RANK_MAP = {
             // Sランク
             sniper:'S', ironWall:'S', divineSave:'S', comeback:'S', cleanSheet:'S',
+            hatTricker:'S', gameLeader:'S', superSave:'S', growthBoost:'S',
             midDominator:'S', fantasista:'S', maestro:'S',
             steelGuardian:'S', stopper:'S', libero:'S', superSub:'B',
             // Aランク
             playmaker:'A', pressMaster:'A', aerial:'A', coaching:'A', bigHands:'A', reflexes:'A',
             goalHunter:'A', lineControl:'A', penaltyKing:'A', goalGetter:'A', clutchPlayer:'A',
             firstTouch:'A', boxToBox:'A', gameController:'A', setpieceMaster:'A', sweeper:'A',
-            manMarker:'A', positioning:'A', commander:'A', lastLine:'A', ironMan:'A',
+            coverShadow:'A', manMarker:'A', headClear:'A',
+            positioning:'A', commander:'A', lastLine:'A', ironMan:'A', veteranWisdom:'A',
             captaincy:'A', counterKing:'A', targetMan:'A', boxPenalty:'A', counterPress:'A',
             pressureBlock:'A', dominantHeader:'A', penaltyStopper:'A', sweepingGK:'A',
             falseNine:'A', fieldGeneral:'A', lastManStanding:'A', clutchSave:'A',
@@ -9104,7 +9128,7 @@ self.addEventListener('fetch', e => {
 
             const posColors = { FW:'#ef5350', MF:'#42a5f5', DF:'#66bb6a', GK:'#ffa726' };
             inner.innerHTML = '<div style="font-size:16px;font-weight:bold;color:#4CAF50;margin-bottom:14px;">🎓 スキル獲得特訓 — 選手を選択</div>' +
-                '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Bランク⭐8(15%) / Aランク⭐15(10%) / Sランク⭐30(5%)</div>' +
+                '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Bランク⭐5(5%) / Aランク⭐10(5%) / Sランク⭐20(5%)</div>' +
                                 gameData.players.map(p => {
                      const pos = p.position || p.pos || '?';
                      const subPosDisp = getSubPos(p) + (p.subPosition2 ? '/' + p.subPosition2 : '');
@@ -9148,7 +9172,7 @@ self.addEventListener('fetch', e => {
             inner.style.cssText = 'background:#1a1a2e;border-radius:16px;padding:20px;max-width:380px;width:92%;max-height:82vh;overflow-y:auto;';
 
             const rankColors = { S:'#FF5252', A:'#FFB300', B:'#66BB6A' };
-            const rankLabels = { S:'Sランク ⭐30 (5%)', A:'Aランク ⭐15 (10%)', B:'Bランク ⭐8 (15%)' };
+            const rankLabels = { S:'Sランク ⭐20 (5%)', A:'Aランク ⭐10 (5%)', B:'Bランク ⭐5 (5%)' };
             const fame = gameData.fame || 0;
 
             let html = `<div style="font-size:15px;font-weight:bold;color:#4CAF50;margin-bottom:4px;">🎓 ${p.name} のスキル特訓</div>`;
@@ -11919,7 +11943,7 @@ self.addEventListener('fetch', e => {
         function updateSpecialRecruitButtons() {
             const useCount = gameData.specialRecruitUseCount || 0;
             const extra = useCount * 10;
-            const costs = [60 + extra, 140 + extra, 260 + extra];
+            const costs = [60 + extra, 140 + extra, 300 + extra];
             const tiers = [
                 { label: 'Bスキル確定「3候補', bg: 'linear-gradient(135deg,#1a6b3c,#2d9e5f)' },
                 { label: 'Aスキル確定「3候補', bg: 'linear-gradient(135deg,#1a3a6b,#2d5e9e)' },
@@ -12027,7 +12051,7 @@ self.addEventListener('fetch', e => {
                 if (fameCost >= 300) {
                     pickSp(sSkills); // Sスキル確定
                     pickSp(aSkills); // Aスキルも追加
-                } else if (fameCost >= 160) {
+                } else if (fameCost >= 140) {
                     pickSp(aSkills); // Aスキル確定
                     if (Math.random() < 0.5) pickSp(bSkills);
                 } else {
@@ -12040,8 +12064,8 @@ self.addEventListener('fetch', e => {
 
             // パネル表示
             const tierLabel = fameCost >= 300 ? '⭐300消費 「Sスキル確定」特別補強交渉' :
-                              fameCost >= 160 ? '⭐160消費 「Aスキル確定」特別補強交渉' :
-                                               '⭐80消費 「Bスキル確定」特別補強交渉';
+                              fameCost >= 140 ? '⭐' + fameCost + '消費 「Aスキル確定」特別補強交渉' :
+                                               '⭐' + fameCost + '消費 「Bスキル確定」特別補強交渉';
             const container = document.getElementById('recruitCandidates');
             document.getElementById('recruitPanelTitle').textContent = tierLabel;
             document.getElementById('recruitPanel').style.display = 'block';
@@ -12075,8 +12099,8 @@ self.addEventListener('fetch', e => {
                       p.skills.map(id => {
                           const sk = SKILLS[id];
                           if (!sk) return '';
-                          const isSSkill = ['sniper','ironWall','divineSave','comeback','cleanSheet'].includes(id);
-                          const isASkill = ['playmaker','pressMaster','aerial','coaching','bigHands','reflexes','goalHunter','lineControl'].includes(id);
+                          const isSSkill = ['sniper','ironWall','divineSave','comeback','cleanSheet','hatTricker','gameLeader','superSave','growthBoost','midDominator','fantasista','maestro','steelGuardian','stopper','libero','falseNine','fieldGeneral','lastManStanding','clutchSave'].includes(id);
+                          const isASkill = ['playmaker','pressMaster','aerial','coaching','bigHands','reflexes','goalHunter','lineControl','penaltyKing','goalGetter','clutchPlayer','firstTouch','boxToBox','gameController','setpieceMaster','coverShadow','sweeper','manMarker','headClear','positioning','commander','lastLine','veteranWisdom','ironMan','captaincy','counterKing','targetMan','boxPenalty','counterPress','pressureBlock','dominantHeader','penaltyStopper','sweepingGK'].includes(id);
                           const bg = isSSkill ? 'linear-gradient(135deg,#6b1a1a,#9e2d2d)' : isASkill ? 'linear-gradient(135deg,#1a3a6b,#2d5e9e)' : 'linear-gradient(135deg,#1a472a,#2d6a4f)';
                           const border = isSSkill ? '#EF5350' : isASkill ? '#64B5F6' : '#4CAF50';
                           return `<div style="background:${bg}; border:1px solid ${border}; border-radius:6px; padding:2px 7px; font-size:10px; color:#f0e68c; font-weight:700;">★ ${sk.name}</div>`;
@@ -13295,56 +13319,67 @@ self.addEventListener('fetch', e => {
             myScoreBase  = Math.min(2.5, Math.max(0.05, myScoreBase));
             oppScoreBase = Math.min(2.5, Math.max(0.05, oppScoreBase));
 
-            // スキル: スナイパー（FW）: 得点期待値 +0.4
-            if (startersHaveSkill(starters, 'sniper')) myScoreBase += 0.25;
-            // スキル: ペナルティキング（FW）: 得点期待値 +0.15
-            if (startersHaveSkill(starters, 'penaltyKing')) myScoreBase += 0.15;
-            // スキル: クラッチプレイヤー（FW）: 得点期待値 +0.1
-            if (startersHaveSkill(starters, 'clutchPlayer')) myScoreBase += 0.1;
-            // スキル: セットピースマスター（MF）: 得点期待値 +0.1
-            if (startersHaveSkill(starters, 'setpieceMaster')) myScoreBase += 0.1;
-            // スキル: ビッグハンド（GK）: 失点期待値 -0.2
-            if (startersHaveSkill(starters, 'bigHands')) oppScoreBase = Math.max(0, oppScoreBase - 0.2);
-            // スキル: 鱄壁（DF）: 失点期待値 -0.25
-            if (startersHaveSkill(starters, 'ironWall')) oppScoreBase = Math.max(0, oppScoreBase - 0.25);
-            // スキル: ヘッドクリア（DF）: 失点期待値 -0.1
-            if (startersHaveSkill(starters, 'headClear')) oppScoreBase = Math.max(0, oppScoreBase - 0.1);
-            // スキル: ビジョン（MF）: チャンスメイカーと共存時、得点期待値 +0.1
-            if (startersHaveSkill(starters, 'vision') && startersHaveSkill(starters, 'chanceMaker')) myScoreBase += 0.1;
-            // スキル: ヘディングキング（FW）: 空中戦の強さ（DF）と共存時、得点期待値 +0.1
-            if (startersHaveSkill(starters, 'headingKing') && startersHaveSkill(starters, 'aerial')) myScoreBase += 0.1;
-            // スキル: 勝負師（共通）: ホーム試合時、得点期待値 +0.2、失点期待値 +0.2
+            // ===== 自チームスキルボーナス（前半）=====
+            // 攻撃スキルボーナス（上限+0.25）
+            let mySkillBonus = 0;
+            if (startersHaveSkill(starters, 'sniper')) mySkillBonus += 0.12;
+            if (startersHaveSkill(starters, 'penaltyKing')) mySkillBonus += 0.08;
+            if (startersHaveSkill(starters, 'clutchPlayer')) mySkillBonus += 0.05;
+            if (startersHaveSkill(starters, 'setpieceMaster')) mySkillBonus += 0.05;
+            if (startersHaveSkill(starters, 'vision') && startersHaveSkill(starters, 'chanceMaker')) mySkillBonus += 0.05;
+            if (startersHaveSkill(starters, 'headingKing') && startersHaveSkill(starters, 'aerial')) mySkillBonus += 0.05;
+            if (startersHaveSkill(starters, 'fantasista')) mySkillBonus += 0.10;
+            if (startersHaveSkill(starters, 'acrobatic')) mySkillBonus += 0.05;
+            if (startersHaveSkill(starters, 'counterKing') && adjOppOff > adjYourOff) mySkillBonus += 0.10;
+            if (startersHaveSkill(starters, 'pressureResist') && adjOppDef > adjYourOff) mySkillBonus += 0.03;
+            if (startersHaveSkill(starters, 'boxPenalty') && starters.some(p => p.position === 'FW')) mySkillBonus += 0.05;
+            mySkillBonus = Math.min(0.25, mySkillBonus); // 攻撃スキル上限
+            myScoreBase += mySkillBonus;
+
+            // 守備スキルボーナス（上限-0.30）
+            let defSkillReduction = 0;
+            if (startersHaveSkill(starters, 'bigHands')) defSkillReduction += 0.10;
+            if (startersHaveSkill(starters, 'ironWall')) defSkillReduction += 0.12;
+            if (startersHaveSkill(starters, 'headClear')) defSkillReduction += 0.05;
+            if (startersHaveSkill(starters, 'steelGuardian')) defSkillReduction += 0.20;
+            if (startersHaveSkill(starters, 'lastManStanding')) defSkillReduction += 0.15;
+            defSkillReduction = Math.min(0.30, defSkillReduction); // 守備スキル上限
+            oppScoreBase = Math.max(0.05, oppScoreBase - defSkillReduction);
+
+            // スキル: 勝負師（共通）: ホーム試合時、得点期待値 +0.1、失点期待値 +0.1
             const isHome = isCupMatch ? savedPendingMatch.isHome : (currentMatch.home === true || currentMatch.location === 'home' || !currentMatch.away);
-            if (isHome && startersHaveSkill(starters, 'homeStar')) { myScoreBase += 0.2; oppScoreBase += 0.2; }
+            if (isHome && startersHaveSkill(starters, 'homeStar')) { myScoreBase += 0.10; oppScoreBase += 0.10; }
+
+            // ===== 相手チームスキルボーナス（前半）=====
+            const oppTeam = findTeamAcrossLeagues(opponent);
+            if (oppTeam && oppTeam.squad) {
+                const oppStarters = oppTeam.squad.length > 11 ? selectRivalStarters(oppTeam.squad, oppTeam.formation) : oppTeam.squad;
+                const oppHasSkill = (id) => oppStarters.some(p => p.skills && p.skills.includes(id));
+                let oppSkillBonus = 0;
+                if (oppHasSkill('sniper')) oppSkillBonus += 0.12;
+                if (oppHasSkill('penaltyKing')) oppSkillBonus += 0.08;
+                if (oppHasSkill('clutchPlayer')) oppSkillBonus += 0.05;
+                if (oppHasSkill('fantasista')) oppSkillBonus += 0.10;
+                if (oppHasSkill('acrobatic')) oppSkillBonus += 0.05;
+                if (oppHasSkill('counterKing') && adjYourOff > adjOppOff) oppSkillBonus += 0.10;
+                oppSkillBonus = Math.min(0.25, oppSkillBonus);
+                oppScoreBase += oppSkillBonus;
+                let oppDefReduction = 0;
+                if (oppHasSkill('bigHands')) oppDefReduction += 0.10;
+                if (oppHasSkill('ironWall')) oppDefReduction += 0.12;
+                if (oppHasSkill('headClear')) oppDefReduction += 0.05;
+                if (oppHasSkill('steelGuardian')) oppDefReduction += 0.20;
+                oppDefReduction = Math.min(0.30, oppDefReduction);
+                myScoreBase = Math.max(0.05, myScoreBase - oppDefReduction);
+            }
 
             // 案F: アウェー不利補正（3部以上で強化）
-            // リーグ別のアウェーペナルティ（得点期待値減少）
             const awayPenalty = { 5: 0.05, 4: 0.08, 3: 0.15, 2: 0.22, 1: 0.30, 0: 0.38 };
             if (!isHome) {
                 let pen = awayPenalty[gameData.league] || 0.05;
-                // 適応力: アウェーペナルティ -50%
                 if (startersHaveSkill(starters, 'adaptability')) pen *= 0.5;
                 myScoreBase = Math.max(0, myScoreBase - pen);
-                oppScoreBase += pen * 0.5; // アウェー時は相手の得点期待値も微増
-            }
-
-            // スキル: ファンタジスタ（MF S）: 得点期待値 +0.2
-            if (startersHaveSkill(starters, 'fantasista')) myScoreBase += 0.2;
-            // スキル: 鬼壁（DF S）: 失点期待値 -0.4
-            if (startersHaveSkill(starters, 'steelGuardian')) oppScoreBase = Math.max(0, oppScoreBase - 0.4);
-            // 追加スキル: 得点期待値加算（前半）
-            // FW: アクロバット: 得点期待値 +0.1
-            if (startersHaveSkill(starters, 'acrobatic')) myScoreBase += 0.1;
-            // FW: カウンターキング: 相手OFが自チームより高い場合 +0.2
-            if (startersHaveSkill(starters, 'counterKing') && adjOppOff > adjYourOff) myScoreBase += 0.2;
-            // FW: プレッシャー耐性: 相手DFが自チームOFより高い場合のOF低下を軽減
-            if (startersHaveSkill(starters, 'pressureResist') && adjOppDef > adjYourOff) myScoreBase += 0.05;
-            // MF: ペナルティボックス: FWスタメン時 +0.1
-            if (startersHaveSkill(starters, 'boxPenalty') && starters.some(p => p.position === 'FW')) myScoreBase += 0.1;
-            // DF: 最後の砦: 失点期待値 -0.3、0失点時さらに -0.2
-            if (startersHaveSkill(starters, 'lastManStanding')) {
-                oppScoreBase = Math.max(0, oppScoreBase - 0.3);
-                if (oppScoreBase <= 0.1) oppScoreBase = Math.max(0, oppScoreBase - 0.2);
+                oppScoreBase += pen * 0.5;
             }
             // GK: PKStoppar: PK判定時の失点確率 -30%（pk処理内で考慮するためフラグのみ）
             // GK: スイーピングGK: 相手3点以上時に1点を確率 20%で防ぐ（後段処理）
@@ -13970,6 +14005,9 @@ self.addEventListener('fetch', e => {
         // ===== 後半処理 =====
         function executeSecondHalf() {
             if (!halftimeState) return;
+            _executeSecondHalfCore();
+        }
+        function _executeSecondHalfCore() {
             const ht = halftimeState;
             halftimeState = null;
 
@@ -14134,41 +14172,66 @@ self.addEventListener('fetch', e => {
             let oppScoreBase2 = Math.min(2.5, Math.max(0.05, 0.80 * Math.exp(oppDiff2 / 60)))
                 - gkSaveReduction2 - tackleReduction2;
 
-            if (startersHaveSkill(starters, 'sniper')) myScoreBase2 += 0.25;
-            if (startersHaveSkill(starters, 'penaltyKing')) myScoreBase2 += 0.15;
-            if (startersHaveSkill(starters, 'clutchPlayer')) myScoreBase2 += 0.1;
-            if (startersHaveSkill(starters, 'setpieceMaster')) myScoreBase2 += 0.1;
-            if (startersHaveSkill(starters, 'bigHands')) oppScoreBase2 = Math.max(0, oppScoreBase2 - 0.2);
-            if (startersHaveSkill(starters, 'ironWall')) oppScoreBase2 = Math.max(0, oppScoreBase2 - 0.25);
-            if (startersHaveSkill(starters, 'headClear')) oppScoreBase2 = Math.max(0, oppScoreBase2 - 0.1);
-            if (startersHaveSkill(starters, 'vision') && startersHaveSkill(starters, 'chanceMaker')) myScoreBase2 += 0.1;
-            if (startersHaveSkill(starters, 'headingKing') && startersHaveSkill(starters, 'aerial')) myScoreBase2 += 0.1;
+            // ===== 自チームスキルボーナス（後半）=====
+            let mySkillBonus2 = 0;
+            if (startersHaveSkill(starters, 'sniper')) mySkillBonus2 += 0.12;
+            if (startersHaveSkill(starters, 'penaltyKing')) mySkillBonus2 += 0.08;
+            if (startersHaveSkill(starters, 'clutchPlayer')) mySkillBonus2 += 0.05;
+            if (startersHaveSkill(starters, 'setpieceMaster')) mySkillBonus2 += 0.05;
+            if (startersHaveSkill(starters, 'vision') && startersHaveSkill(starters, 'chanceMaker')) mySkillBonus2 += 0.05;
+            if (startersHaveSkill(starters, 'headingKing') && startersHaveSkill(starters, 'aerial')) mySkillBonus2 += 0.05;
+            if (startersHaveSkill(starters, 'fantasista')) mySkillBonus2 += 0.10;
+            if (startersHaveSkill(starters, 'acrobatic')) mySkillBonus2 += 0.05;
+            if (startersHaveSkill(starters, 'counterKing') && adjOppOff2 > adjYourOff2) mySkillBonus2 += 0.10;
+            if (startersHaveSkill(starters, 'pressureResist') && adjOppDef2 > adjYourOff2) mySkillBonus2 += 0.03;
+            if (startersHaveSkill(starters, 'boxPenalty') && starters.some(p => p.position === 'FW')) mySkillBonus2 += 0.05;
+            if (startersHaveSkill(starters, 'counterPress') && firstHalfOppScore > 0) mySkillBonus2 += 0.08;
+            mySkillBonus2 = Math.min(0.25, mySkillBonus2);
+            myScoreBase2 += mySkillBonus2;
+
+            let defSkillReduction2 = 0;
+            if (startersHaveSkill(starters, 'bigHands')) defSkillReduction2 += 0.10;
+            if (startersHaveSkill(starters, 'ironWall')) defSkillReduction2 += 0.12;
+            if (startersHaveSkill(starters, 'headClear')) defSkillReduction2 += 0.05;
+            if (startersHaveSkill(starters, 'steelGuardian')) defSkillReduction2 += 0.20;
+            if (startersHaveSkill(starters, 'lastManStanding')) defSkillReduction2 += 0.15;
+            defSkillReduction2 = Math.min(0.30, defSkillReduction2);
+            oppScoreBase2 = Math.max(0.05, oppScoreBase2 - defSkillReduction2);
+
             const isHome = isCupMatch ? savedPendingMatch.isHome : (currentMatch.home === true || currentMatch.location === 'home' || !currentMatch.away);
-            if (isHome && startersHaveSkill(starters, 'homeStar')) { myScoreBase2 += 0.2; oppScoreBase2 += 0.2; }
+            if (isHome && startersHaveSkill(starters, 'homeStar')) { myScoreBase2 += 0.10; oppScoreBase2 += 0.10; }
+
+            // ===== 相手チームスキルボーナス（後半）=====
+            const oppTeam2 = findTeamAcrossLeagues(ht.opponent);
+            if (oppTeam2 && oppTeam2.squad) {
+                const oppStarters2 = oppTeam2.squad.length > 11 ? selectRivalStarters(oppTeam2.squad, oppTeam2.formation) : oppTeam2.squad;
+                const oppHasSkill2 = (id) => oppStarters2.some(p => p.skills && p.skills.includes(id));
+                let oppSkillBonus2 = 0;
+                if (oppHasSkill2('sniper')) oppSkillBonus2 += 0.12;
+                if (oppHasSkill2('penaltyKing')) oppSkillBonus2 += 0.08;
+                if (oppHasSkill2('clutchPlayer')) oppSkillBonus2 += 0.05;
+                if (oppHasSkill2('fantasista')) oppSkillBonus2 += 0.10;
+                if (oppHasSkill2('acrobatic')) oppSkillBonus2 += 0.05;
+                if (oppHasSkill2('counterKing') && adjYourOff2 > adjOppOff2) oppSkillBonus2 += 0.10;
+                oppSkillBonus2 = Math.min(0.25, oppSkillBonus2);
+                oppScoreBase2 += oppSkillBonus2;
+                let oppDefReduction2 = 0;
+                if (oppHasSkill2('bigHands')) oppDefReduction2 += 0.10;
+                if (oppHasSkill2('ironWall')) oppDefReduction2 += 0.12;
+                if (oppHasSkill2('headClear')) oppDefReduction2 += 0.05;
+                if (oppHasSkill2('steelGuardian')) oppDefReduction2 += 0.20;
+                oppDefReduction2 = Math.min(0.30, oppDefReduction2);
+                myScoreBase2 = Math.max(0.05, myScoreBase2 - oppDefReduction2);
+            }
 
             // 案F: アウェー不利補正（後半も同様に適用）
             if (!isHome) {
                 const awayPenalty2 = { 5: 0.05, 4: 0.08, 3: 0.15, 2: 0.22, 1: 0.30, 0: 0.38 };
                 let pen2 = awayPenalty2[gameData.league] || 0.05;
-                // 適応力: アウェーペナルティ -50%
                 if (startersHaveSkill(starters, 'adaptability')) pen2 *= 0.5;
                 myScoreBase2 = Math.max(0, myScoreBase2 - pen2);
                 oppScoreBase2 += pen2 * 0.5;
             }
-
-            if (startersHaveSkill(starters, 'fantasista')) myScoreBase2 += 0.2;
-            if (startersHaveSkill(starters, 'steelGuardian')) oppScoreBase2 = Math.max(0, oppScoreBase2 - 0.4);
-            // 追加スキル: 得点期待値加算（後半）
-            if (startersHaveSkill(starters, 'acrobatic')) myScoreBase2 += 0.1;
-            if (startersHaveSkill(starters, 'counterKing') && adjOppOff2 > adjYourOff2) myScoreBase2 += 0.2;
-            if (startersHaveSkill(starters, 'pressureResist') && adjOppDef2 > adjYourOff2) myScoreBase2 += 0.05;
-            if (startersHaveSkill(starters, 'boxPenalty') && starters.some(p => p.position === 'FW')) myScoreBase2 += 0.1;
-            if (startersHaveSkill(starters, 'lastManStanding')) {
-                oppScoreBase2 = Math.max(0, oppScoreBase2 - 0.3);
-                if (oppScoreBase2 <= 0.1) oppScoreBase2 = Math.max(0, oppScoreBase2 - 0.2);
-            }
-            // MF: カウンタープレス: 失点直後の次の得点期待値 +0.15
-            if (startersHaveSkill(starters, 'counterPress') && firstHalfOppScore > 0) myScoreBase2 += 0.15;
 
             // 監督スキル: goalChance・setPlayBonus・concedeMult・cleanSheetBonusを後半にも反映
             myScoreBase2 += (_mse.goalChance || 0) * 2.5;
@@ -17043,6 +17106,38 @@ self.addEventListener('fetch', e => {
         function closePlayerModal() {
             document.getElementById('playerModal').classList.remove('active');
         }
+        function closePlayerDetail() {
+            document.getElementById('playerDetailModal').classList.remove('active');
+        }
+        function fameBoostCondition(level) {
+            if (!gameData.gameStarted) { showNotification('ゲームを開始してください。'); return; }
+            const cost = level === 4 ? 50 : 30;
+            if ((gameData.fame || 0) < cost) { showNotification('名声が足りません。必要: ⭐' + cost); return; }
+            const player = selectedPlayerDetail;
+            if (!player) return;
+            if ((player.condition || 3) >= level) { showNotification('すでに体調は十分です。'); return; }
+            gameData.fame -= cost;
+            player.condition = level;
+            saveGame();
+            renderGame();
+            showNotification('⭐' + cost + '消費：体調を引き上げました！');
+            closePlayerDetail();
+        }
+        function fameHealInjury() {
+            if (!gameData.gameStarted) { showNotification('ゲームを開始してください。'); return; }
+            const cost = 80;
+            if ((gameData.fame || 0) < cost) { showNotification('名声が足りません。必要: ⭐' + cost); return; }
+            const player = selectedPlayerDetail;
+            if (!player) return;
+            if (!player.injury) { showNotification('この選手は怪我をしていません。'); return; }
+            gameData.fame -= cost;
+            player.injury = null;
+            player.injuryRecovery = 0;
+            saveGame();
+            renderGame();
+            showNotification('⭐' + cost + '消費：重傷を即時回復しました！');
+            closePlayerDetail();
+        }
 
         function signPlayer() {
             const name = document.getElementById('playerName').value.trim();
@@ -17533,6 +17628,8 @@ self.addEventListener('fetch', e => {
         window.showRetirementCeremony = showRetirementCeremony;
         window.closeRetirementCeremony = closeRetirementCeremony;
         window.renderLogTab = renderLogTab;
+        window.exportSaveData = exportSaveData;
+        window.htBenchClick = htBenchClick;
 
         // 初期化
         init();
