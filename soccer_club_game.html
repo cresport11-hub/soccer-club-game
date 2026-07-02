@@ -13343,7 +13343,7 @@
             if (startersHaveSkill(starters, 'headClear')) defSkillReduction += 0.05;
             if (startersHaveSkill(starters, 'steelGuardian')) defSkillReduction += 0.20;
             if (startersHaveSkill(starters, 'lastManStanding')) defSkillReduction += 0.15;
-            defSkillReduction = Math.min(0.30, defSkillReduction); // 守備スキル上限
+            defSkillReduction = Math.min(0.20, defSkillReduction); // 守備スキル上限
             oppScoreBase = Math.max(0.05, oppScoreBase - defSkillReduction);
 
             // スキル: 勝負師（共通）: ホーム試合時、得点期待値 +0.1、失点期待値 +0.1
@@ -13362,14 +13362,14 @@
                 if (oppHasSkill('fantasista')) oppSkillBonus += 0.10;
                 if (oppHasSkill('acrobatic')) oppSkillBonus += 0.05;
                 if (oppHasSkill('counterKing') && adjYourOff > adjOppOff) oppSkillBonus += 0.10;
-                oppSkillBonus = Math.min(0.25, oppSkillBonus);
+                oppSkillBonus = Math.min(0.25, oppSkillBonus) * 0.5; // 相手スキルは0.5倍スケール
                 oppScoreBase += oppSkillBonus;
                 let oppDefReduction = 0;
                 if (oppHasSkill('bigHands')) oppDefReduction += 0.10;
                 if (oppHasSkill('ironWall')) oppDefReduction += 0.12;
                 if (oppHasSkill('headClear')) oppDefReduction += 0.05;
                 if (oppHasSkill('steelGuardian')) oppDefReduction += 0.20;
-                oppDefReduction = Math.min(0.30, oppDefReduction);
+                oppDefReduction = Math.min(0.20, oppDefReduction) * 0.5; // 相手守備スキルも0.5倍スケール
                 myScoreBase = Math.max(0.05, myScoreBase - oppDefReduction);
             }
 
@@ -14195,7 +14195,7 @@
             if (startersHaveSkill(starters, 'headClear')) defSkillReduction2 += 0.05;
             if (startersHaveSkill(starters, 'steelGuardian')) defSkillReduction2 += 0.20;
             if (startersHaveSkill(starters, 'lastManStanding')) defSkillReduction2 += 0.15;
-            defSkillReduction2 = Math.min(0.30, defSkillReduction2);
+            defSkillReduction2 = Math.min(0.20, defSkillReduction2);
             oppScoreBase2 = Math.max(0.05, oppScoreBase2 - defSkillReduction2);
 
             const isHome = isCupMatch ? savedPendingMatch.isHome : (currentMatch.home === true || currentMatch.location === 'home' || !currentMatch.away);
@@ -14213,14 +14213,14 @@
                 if (oppHasSkill2('fantasista')) oppSkillBonus2 += 0.10;
                 if (oppHasSkill2('acrobatic')) oppSkillBonus2 += 0.05;
                 if (oppHasSkill2('counterKing') && adjYourOff2 > adjOppOff2) oppSkillBonus2 += 0.10;
-                oppSkillBonus2 = Math.min(0.25, oppSkillBonus2);
+                oppSkillBonus2 = Math.min(0.25, oppSkillBonus2) * 0.5; // 相手スキルは0.5倍スケール
                 oppScoreBase2 += oppSkillBonus2;
                 let oppDefReduction2 = 0;
                 if (oppHasSkill2('bigHands')) oppDefReduction2 += 0.10;
                 if (oppHasSkill2('ironWall')) oppDefReduction2 += 0.12;
                 if (oppHasSkill2('headClear')) oppDefReduction2 += 0.05;
                 if (oppHasSkill2('steelGuardian')) oppDefReduction2 += 0.20;
-                oppDefReduction2 = Math.min(0.30, oppDefReduction2);
+                oppDefReduction2 = Math.min(0.20, oppDefReduction2) * 0.5; // 相手守備スキルも0.5倍スケール
                 myScoreBase2 = Math.max(0.05, myScoreBase2 - oppDefReduction2);
             }
 
