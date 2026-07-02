@@ -9095,13 +9095,15 @@
         const SKILL_RANK_MAP = {
             // Sランク
             sniper:'S', ironWall:'S', divineSave:'S', comeback:'S', cleanSheet:'S',
+            hatTricker:'S', gameLeader:'S', superSave:'S', growthBoost:'S',
             midDominator:'S', fantasista:'S', maestro:'S',
             steelGuardian:'S', stopper:'S', libero:'S', superSub:'B',
             // Aランク
             playmaker:'A', pressMaster:'A', aerial:'A', coaching:'A', bigHands:'A', reflexes:'A',
             goalHunter:'A', lineControl:'A', penaltyKing:'A', goalGetter:'A', clutchPlayer:'A',
             firstTouch:'A', boxToBox:'A', gameController:'A', setpieceMaster:'A', sweeper:'A',
-            manMarker:'A', positioning:'A', commander:'A', lastLine:'A', ironMan:'A',
+            coverShadow:'A', manMarker:'A', headClear:'A',
+            positioning:'A', commander:'A', lastLine:'A', ironMan:'A', veteranWisdom:'A',
             captaincy:'A', counterKing:'A', targetMan:'A', boxPenalty:'A', counterPress:'A',
             pressureBlock:'A', dominantHeader:'A', penaltyStopper:'A', sweepingGK:'A',
             falseNine:'A', fieldGeneral:'A', lastManStanding:'A', clutchSave:'A',
@@ -12097,8 +12099,8 @@
                       p.skills.map(id => {
                           const sk = SKILLS[id];
                           if (!sk) return '';
-                          const isSSkill = ['sniper','ironWall','divineSave','comeback','cleanSheet'].includes(id);
-                          const isASkill = ['playmaker','pressMaster','aerial','coaching','bigHands','reflexes','goalHunter','lineControl'].includes(id);
+                          const isSSkill = ['sniper','ironWall','divineSave','comeback','cleanSheet','hatTricker','gameLeader','superSave','growthBoost','midDominator','fantasista','maestro','steelGuardian','stopper','libero','falseNine','fieldGeneral','lastManStanding','clutchSave'].includes(id);
+                          const isASkill = ['playmaker','pressMaster','aerial','coaching','bigHands','reflexes','goalHunter','lineControl','penaltyKing','goalGetter','clutchPlayer','firstTouch','boxToBox','gameController','setpieceMaster','coverShadow','sweeper','manMarker','headClear','positioning','commander','lastLine','veteranWisdom','ironMan','captaincy','counterKing','targetMan','boxPenalty','counterPress','pressureBlock','dominantHeader','penaltyStopper','sweepingGK'].includes(id);
                           const bg = isSSkill ? 'linear-gradient(135deg,#6b1a1a,#9e2d2d)' : isASkill ? 'linear-gradient(135deg,#1a3a6b,#2d5e9e)' : 'linear-gradient(135deg,#1a472a,#2d6a4f)';
                           const border = isSSkill ? '#EF5350' : isASkill ? '#64B5F6' : '#4CAF50';
                           return `<div style="background:${bg}; border:1px solid ${border}; border-radius:6px; padding:2px 7px; font-size:10px; color:#f0e68c; font-weight:700;">★ ${sk.name}</div>`;
