@@ -11943,7 +11943,7 @@
         function updateSpecialRecruitButtons() {
             const useCount = gameData.specialRecruitUseCount || 0;
             const extra = useCount * 10;
-            const costs = [80 + extra, 160 + extra, 300 + extra];
+            const costs = [60 + extra, 140 + extra, 300 + extra];
             const tiers = [
                 { label: 'Bスキル確定「3候補', bg: 'linear-gradient(135deg,#1a6b3c,#2d9e5f)' },
                 { label: 'Aスキル確定「3候補', bg: 'linear-gradient(135deg,#1a3a6b,#2d5e9e)' },
@@ -12051,7 +12051,7 @@
                 if (fameCost >= 300) {
                     pickSp(sSkills); // Sスキル確定
                     pickSp(aSkills); // Aスキルも追加
-                } else if (fameCost >= 160) {
+                } else if (fameCost >= 140) {
                     pickSp(aSkills); // Aスキル確定
                     if (Math.random() < 0.5) pickSp(bSkills);
                 } else {
@@ -12064,8 +12064,8 @@
 
             // パネル表示
             const tierLabel = fameCost >= 300 ? '⭐300消費 「Sスキル確定」特別補強交渉' :
-                              fameCost >= 160 ? '⭐160消費 「Aスキル確定」特別補強交渉' :
-                                               '⭐80消費 「Bスキル確定」特別補強交渉';
+                              fameCost >= 140 ? '⭐' + fameCost + '消費 「Aスキル確定」特別補強交渉' :
+                                               '⭐' + fameCost + '消費 「Bスキル確定」特別補強交渉';
             const container = document.getElementById('recruitCandidates');
             document.getElementById('recruitPanelTitle').textContent = tierLabel;
             document.getElementById('recruitPanel').style.display = 'block';
