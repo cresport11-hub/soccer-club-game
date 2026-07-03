@@ -9857,15 +9857,8 @@
             `).join('');
 
             const starters = gameData.players.filter(p => p.starter && p.injury !== 'heavy');
-            // 作戦補正を反映した戦力値
-            const _lineupTP = {
-                ultra_attack: { offMult: 1.12, defMult: 0.82 },
-                attack:       { offMult: 1.06, defMult: 0.91 },
-                balance:      { offMult: 1.00, defMult: 1.00 },
-                defend:       { offMult: 0.91, defMult: 1.06 },
-                ultra_defend: { offMult: 0.82, defMult: 1.12 },
-            };
-            const _lineupTp = _lineupTP[gameData.tactics] || _lineupTP['balance'];
+            // 作戦補正はgetFormationAdjustedOffenseに含まれないため、
+            // スタメン画面では作戦補正を除いたスキル乗算・監督スキルのみ反映する
             // ===== 試合計算と同じスキル乗算方式でプレビュー戦力値を計算 =====
             const _hasSkill = (id) => starters.some(p => p.skills && p.skills.includes(id));
             // 攻撃スキル乗算（試合計算と同じロジック）
@@ -9918,8 +9911,8 @@
             // 最終的な自クラブOF/DF（作戦補正込み）
             const _baseOff = getFormationAdjustedOffense(starters);
             const _baseDef = getFormationAdjustedDefense(starters);
-            const offenseVal = Math.round(_baseOff * _previewOffMult * _lineupTp.offMult * _previewMgrOff + (_previewOuting.of || 0));
-            const defenseVal = Math.round(_baseDef * _previewDefMult * _lineupTp.defMult * _previewMgrDef + (_previewOuting.df || 0));
+            const offenseVal = Math.round(_baseOff * _previewOffMult * _previewMgrOff + (_previewOuting.of || 0));
+            const defenseVal = Math.round(_baseDef * _previewDefMult * _previewMgrDef + (_previewOuting.df || 0));
             // スタメン総合値 = スタメン全員の個人値平均（体調・疲労・負傷補正済み）
             const yourStrength = calculateTeamStrength(starters);
 
