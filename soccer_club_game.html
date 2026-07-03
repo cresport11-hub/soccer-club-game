@@ -15016,12 +15016,12 @@
             });
             // モーダル表示後にハイライト逐次表示開始
             showHighlightLines('matchHighlightContent', _pendingHighlights, function() {
-                // 監督XP付与（ハイライト完了後に通知を表示）
-                if (_pendingManagerXP > 0) addManagerXP(_pendingManagerXP);
                 const det = document.getElementById('matchResultDetails');
                 if (det) { det.style.display = ''; }
                 const okBtn = document.getElementById('matchResultOkBtn');
                 if (okBtn) { okBtn.style.display = ''; }
+                // 監督XP付与（試合詳細・OKボタン表示後に少し遅延してから通知）
+                if (_pendingManagerXP > 0) setTimeout(() => addManagerXP(_pendingManagerXP), 800);
                 // 採点ボタン表示
                 const ratingBtnDiv = document.getElementById('playerRatingBtnDiv');
                 if (ratingBtnDiv && _lastMatchRatings) ratingBtnDiv.style.display = '';
