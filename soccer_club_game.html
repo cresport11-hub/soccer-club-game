@@ -14794,11 +14794,17 @@
                 const myPoss = Math.min(75, Math.max(25, rawPoss + Math.floor(Math.random() * 11) - 5 + (_msePoss.possessionBonus || 0)));
                 const oppPoss = 100 - myPoss;
 
-                // シュート数: 得点 × 4〜6 + ランダム（OF比率補正）
+                // シュート数: 保持率ベースで計算（得点に依存しすぎない自然なスタッツ）
+                // 総シュート数: 22〜32本程度（現実的なレンジ）
                 const myGoals = myScore;
                 const oppGoals = oppScore;
-                const myShots = Math.max(myGoals, Math.round(myGoals * (4 + Math.random() * 2) + (myPoss / 100) * 4 + Math.random() * 3));
-                const oppShots = Math.max(oppGoals, Math.round(oppGoals * (4 + Math.random() * 2) + (oppPoss / 100) * 4 + Math.random() * 3));
+                const totalShots = 22 + Math.floor(Math.random() * 11); // 22〜32本
+                // 保持率に応じてシュート数を配分（±2本のランダム揺れ）
+                const rawMyShots = Math.round(totalShots * myPoss / 100 + (Math.random() * 4 - 2));
+                const rawOppShots = totalShots - rawMyShots;
+                // 得点数は必ず含む（最低保証）
+                const myShots = Math.max(myGoals, Math.max(3, rawMyShots));
+                const oppShots = Math.max(oppGoals, Math.max(3, rawOppShots));
 
                 // 枠内シュート: シュートの40〜60%（得点は必ず含む）
                 const myOnTarget = Math.max(myGoals, Math.round(myShots * (0.40 + Math.random() * 0.20)));
