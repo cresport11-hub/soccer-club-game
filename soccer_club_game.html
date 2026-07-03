@@ -3332,15 +3332,16 @@
 
     <!-- 選手詳細モーダル -->
     <div id="playerDetailModal" class="modal">
+        <!-- 固定矢印ナビゲーション（スクロールに追従しない） -->
+        <button id="playerNavPrev" onclick="navigatePlayerDetail(-1)" style="position:fixed;left:8px;bottom:calc(80vh / 2 + 16px);z-index:1100;background:rgba(0,0,0,0.55);border:none;border-radius:50%;width:40px;height:40px;font-size:26px;color:rgba(255,255,255,0.85);cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1;" title="前の選手">&#8249;</button>
+        <button id="playerNavNext" onclick="navigatePlayerDetail(1)" style="position:fixed;right:8px;bottom:calc(80vh / 2 + 16px);z-index:1100;background:rgba(0,0,0,0.55);border:none;border-radius:50%;width:40px;height:40px;font-size:26px;color:rgba(255,255,255,0.85);cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1;" title="次の選手">&#8250;</button>
         <div class="modal-content">
-            <div class="modal-header" style="position:relative;">
-                <button id="playerNavPrev" onclick="navigatePlayerDetail(-1)" style="background:none;border:none;font-size:22px;color:rgba(255,255,255,0.7);cursor:pointer;padding:4px 8px;line-height:1;flex-shrink:0;" title="前の選手">&#8249;</button>
-                <div style="flex:1;text-align:center;min-width:0;">
-                    <h2 id="playerDetailName" style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">選手名</h2>
+            <div class="modal-header">
+                <div style="flex:1;min-width:0;">
+                    <h2 id="playerDetailName" style="font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">選手名</h2>
                     <div id="playerNavIndex" style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;"></div>
                 </div>
-                <button id="playerNavNext" onclick="navigatePlayerDetail(1)" style="background:none;border:none;font-size:22px;color:rgba(255,255,255,0.7);cursor:pointer;padding:4px 8px;line-height:1;flex-shrink:0;" title="次の選手">&#8250;</button>
-                <button class="close-btn" onclick="closePlayerDetail()" style="position:absolute;top:-4px;right:-4px;font-size:20px;">✕</button>
+                <button class="close-btn" onclick="closePlayerDetail()">✕</button>
             </div>
             <div class="ability-detail">
                 <div class="ability-row">
@@ -16725,8 +16726,16 @@
             if (_navIndex) _navIndex.textContent = (_curIdx + 1) + ' / ' + _allPlayers.length;
             const _prevBtn = document.getElementById('playerNavPrev');
             const _nextBtn = document.getElementById('playerNavNext');
-            if (_prevBtn) _prevBtn.style.color = _curIdx > 0 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.2)';
-            if (_nextBtn) _nextBtn.style.color = _curIdx < _allPlayers.length - 1 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.2)';
+            if (_prevBtn) {
+                _prevBtn.style.display = 'flex';
+                _prevBtn.style.opacity = _curIdx > 0 ? '1' : '0.25';
+                _prevBtn.style.pointerEvents = _curIdx > 0 ? 'auto' : 'none';
+            }
+            if (_nextBtn) {
+                _nextBtn.style.display = 'flex';
+                _nextBtn.style.opacity = _curIdx < _allPlayers.length - 1 ? '1' : '0.25';
+                _nextBtn.style.pointerEvents = _curIdx < _allPlayers.length - 1 ? 'auto' : 'none';
+            }
             document.getElementById('playerDetailName').textContent = player.name;
             document.getElementById('detailPosition').textContent = player.position;
             document.getElementById('detailAge').textContent = (player.age !== undefined ? player.age : 18) + '歳';
@@ -17259,6 +17268,10 @@
         }
         function closePlayerDetail() {
             document.getElementById('playerDetailModal').classList.remove('active');
+            const _pb = document.getElementById('playerNavPrev');
+            const _nb = document.getElementById('playerNavNext');
+            if (_pb) _pb.style.display = 'none';
+            if (_nb) _nb.style.display = 'none';
         }
         function fameBoostCondition(level) {
             if (!gameData.gameStarted) { showNotification('ゲームを開始してください。'); return; }
