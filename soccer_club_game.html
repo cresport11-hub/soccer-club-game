@@ -7588,30 +7588,30 @@
                 // ===== 試合計算と同じスキル乗算をプレビューに反映 =====
                 const _pvHas = (id) => starters.some(p => p.skills && p.skills.includes(id));
                 let _pvOffMult = 1.0;
-                if (_pvHas('playmaker')) _pvOffMult *= 1.04;
-                if (_pvHas('boxToBox')) _pvOffMult *= 1.05;
-                if (_pvHas('longPass') && starters.filter(p => p.position === 'FW').length >= 2) _pvOffMult *= 1.04;
+                if (_pvHas('playmaker')) _pvOffMult *= 1.03;
+                if (_pvHas('boxToBox')) _pvOffMult *= 1.03;
+                if (_pvHas('longPass') && starters.filter(p => p.position === 'FW').length >= 2) _pvOffMult *= 1.03;
                 if (_pvHas('technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) _pvOffMult *= 1.03;
-                if (_pvHas('aggressive')) _pvOffMult *= 1.05;
+                if (_pvHas('aggressive')) _pvOffMult *= 1.03;
                 if (_pvHas('postPlayer')) { const _a = starters.filter(p=>p.position==='MF').reduce((s,p)=>s+(p.passing||0),0)/Math.max(starters.filter(p=>p.position==='MF').length,1); _pvOffMult *= (1+_a*0.001); }
                 if (_pvHas('buildUp')) { const _b = starters.filter(p=>p.position==='MF').reduce((s,p)=>s+(p.passing||0),0)/Math.max(starters.filter(p=>p.position==='MF').length,1); _pvOffMult *= (1+_b*0.0005); }
-                if (_pvHas('midDominator')) _pvOffMult *= 1.08;
-                if (_pvHas('maestro')) { const _mc = starters.filter(p=>p.position==='MF').length; if (_mc>0) _pvOffMult *= Math.pow(1.05, _mc/4); }
-                if (_pvHas('libero')) _pvOffMult *= 1.05;
-                if (_pvHas('falseNine')) _pvOffMult *= 1.06;
-                if (_pvHas('targetMan') && (_pvHas('buildUp') || _pvHas('longPass'))) _pvOffMult *= 1.05;
+                if (_pvHas('midDominator')) _pvOffMult *= 1.05;
+                if (_pvHas('maestro')) { const _mc = starters.filter(p=>p.position==='MF').length; if (_mc>0) _pvOffMult *= Math.pow(1.03, _mc/4); }
+                if (_pvHas('libero')) _pvOffMult *= 1.03;
+                if (_pvHas('falseNine')) _pvOffMult *= 1.04;
+                if (_pvHas('targetMan') && (_pvHas('buildUp') || _pvHas('longPass'))) _pvOffMult *= 1.03;
                 if (_pvHas('fieldGeneral')) _pvOffMult *= 1.03;
                 _pvOffMult = Math.min(_pvOffMult, 1.30);
                 let _pvDefMult = 1.0;
-                if (_pvHas('aerial')) _pvDefMult *= 1.05;
+                if (_pvHas('aerial')) _pvDefMult *= 1.03;
                 if (_pvHas('coaching')) _pvDefMult *= 1.03;
-                if (_pvHas('boxToBox')) _pvDefMult *= 1.05;
+                if (_pvHas('boxToBox')) _pvDefMult *= 1.03;
                 if (_pvHas('deepLine')) _pvDefMult *= 1.03;
                 if (_pvHas('commander')) { const _dc = starters.filter(p=>p.position==='DF').reduce((s,p)=>s+(p.cover||0),0)/Math.max(starters.filter(p=>p.position==='DF').length,1); _pvDefMult *= (1+_dc*0.001); }
-                if (_pvHas('midDominator')) _pvDefMult *= 1.08;
-                if (_pvHas('falseNine')) _pvDefMult *= 1.06;
+                if (_pvHas('midDominator')) _pvDefMult *= 1.05;
+                if (_pvHas('falseNine')) _pvDefMult *= 1.04;
                 if (_pvHas('fieldGeneral')) _pvDefMult *= 1.03;
-                if (_pvHas('dominantHeader') && _pvHas('aerial')) _pvDefMult *= 1.05;
+                if (_pvHas('dominantHeader') && _pvHas('aerial')) _pvDefMult *= 1.03;
                 if (_pvHas('highPress')) _pvDefMult *= 0.98;
                 _pvDefMult = Math.min(_pvDefMult, 1.30);
                 // 監督スキル効果
@@ -9870,11 +9870,11 @@
             const _hasSkill = (id) => starters.some(p => p.skills && p.skills.includes(id));
             // 攻撃スキル乗算（試合計算と同じロジック）
             let _previewOffMult = 1.0;
-            if (_hasSkill('playmaker')) _previewOffMult *= 1.04;
-            if (_hasSkill('boxToBox')) _previewOffMult *= 1.05;
-            if (_hasSkill('longPass') && starters.filter(p => p.position === 'FW').length >= 2) _previewOffMult *= 1.04;
+            if (_hasSkill('playmaker')) _previewOffMult *= 1.03;
+            if (_hasSkill('boxToBox')) _previewOffMult *= 1.03;
+            if (_hasSkill('longPass') && starters.filter(p => p.position === 'FW').length >= 2) _previewOffMult *= 1.03;
             if (_hasSkill('technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) _previewOffMult *= 1.03;
-            if (_hasSkill('aggressive')) _previewOffMult *= 1.05;
+            if (_hasSkill('aggressive')) _previewOffMult *= 1.03;
             if (_hasSkill('postPlayer')) {
                 const _mfPassAvg = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
                 _previewOffMult *= (1 + _mfPassAvg * 0.001);
@@ -9883,30 +9883,30 @@
                 const _mfPassAvg2 = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
                 _previewOffMult *= (1 + _mfPassAvg2 * 0.0005);
             }
-            if (_hasSkill('midDominator')) _previewOffMult *= 1.08;
+            if (_hasSkill('midDominator')) _previewOffMult *= 1.05;
             if (_hasSkill('maestro')) {
                 const _mfCount = starters.filter(p => p.position === 'MF').length;
-                if (_mfCount > 0) _previewOffMult *= Math.pow(1.05, _mfCount / 4);
+                if (_mfCount > 0) _previewOffMult *= Math.pow(1.03, _mfCount / 4);
             }
-            if (_hasSkill('libero')) _previewOffMult *= 1.05;
-            if (_hasSkill('falseNine')) _previewOffMult *= 1.06;
-            if (_hasSkill('targetMan') && (_hasSkill('buildUp') || _hasSkill('longPass'))) _previewOffMult *= 1.05;
+            if (_hasSkill('libero')) _previewOffMult *= 1.03;
+            if (_hasSkill('falseNine')) _previewOffMult *= 1.04;
+            if (_hasSkill('targetMan') && (_hasSkill('buildUp') || _hasSkill('longPass'))) _previewOffMult *= 1.03;
             if (_hasSkill('fieldGeneral')) _previewOffMult *= 1.03;
             _previewOffMult = Math.min(_previewOffMult, 1.30); // 上限クランプ
             // 守備スキル乗算（試合計算と同じロジック）
             let _previewDefMult = 1.0;
-            if (_hasSkill('aerial')) _previewDefMult *= 1.05;
+            if (_hasSkill('aerial')) _previewDefMult *= 1.03;
             if (_hasSkill('coaching')) _previewDefMult *= 1.03;
-            if (_hasSkill('boxToBox')) _previewDefMult *= 1.05;
+            if (_hasSkill('boxToBox')) _previewDefMult *= 1.03;
             if (_hasSkill('deepLine')) _previewDefMult *= 1.03;
             if (_hasSkill('commander')) {
                 const _dfCoverAvg = starters.filter(p => p.position === 'DF').reduce((s, p) => s + (p.cover || 0), 0) / Math.max(starters.filter(p => p.position === 'DF').length, 1);
                 _previewDefMult *= (1 + _dfCoverAvg * 0.001);
             }
-            if (_hasSkill('midDominator')) _previewDefMult *= 1.08;
-            if (_hasSkill('falseNine')) _previewDefMult *= 1.06;
+            if (_hasSkill('midDominator')) _previewDefMult *= 1.05;
+            if (_hasSkill('falseNine')) _previewDefMult *= 1.04;
             if (_hasSkill('fieldGeneral')) _previewDefMult *= 1.03;
-            if (_hasSkill('dominantHeader') && _hasSkill('aerial')) _previewDefMult *= 1.05;
+            if (_hasSkill('dominantHeader') && _hasSkill('aerial')) _previewDefMult *= 1.03;
             if (_hasSkill('highPress')) _previewDefMult *= 0.98; // ハイプレスのDF低下
             _previewDefMult = Math.min(_previewDefMult, 1.30); // 上限クランプ
             // 監督スキル効果を反映
@@ -13183,11 +13183,12 @@
         function tryLearnSkill(player) {
             if (player.level !== 4 && player.level !== 8 && player.level !== 12 &&
                 player.level !== 13 && player.level !== 14 && player.level !== 15) return null;
-            const bSkills = ['dribbler','shooter','speedster','chanceMaker','passer','tackleMaster','resilience','steelBody',
-                             'homeStar','postPlayer','longShooter','wingAttacker','headingKing','goalRush',
-                             'deepLine','vision','highPress','technician','longPass','engine','turnover',
-                             'buildUp','blocker','covering','longBallKiller','offsideTrap',
-                             'distribution','mentalStrength','cleanPlayer','aggressive','recoveryRun','adaptability','superSub'];
+            // Lv4習得可能スキル: 効果の小さいBランクのみ（aggressive/deepLineは除外→特訓・Lv8以降で取得）
+            const bSkills = ['dribbler','shooter','chanceMaker','passer','tackleMaster','resilience','steelBody',
+                             'homeStar','longShooter','headingKing','goalRush',
+                             'vision','highPress','technician','longPass','engine','turnover',
+                             'blocker','covering','longBallKiller','offsideTrap',
+                             'distribution','mentalStrength','cleanPlayer','recoveryRun','adaptability','superSub'];
             const aSkills = ['playmaker','pressMaster','aerial','coaching','bigHands','reflexes','goalHunter','lineControl',
                              'penaltyKing','goalGetter','clutchPlayer','firstTouch',
                              'boxToBox','gameController','setpieceMaster','coverShadow',
@@ -13276,38 +13277,38 @@
             // ===== スキル効果: OF/DF補正 =====
             // 司令塔（MF）: チームOF力 +6%
             let skillOffMult = 1.0;
-            if (startersHaveSkill(starters, 'playmaker')) skillOffMult *= 1.04;
-            // ボックストゥボックス（MF）: OF +5%
-            if (startersHaveSkill(starters, 'boxToBox')) skillOffMult *= 1.05;
+            if (startersHaveSkill(starters, 'playmaker')) skillOffMult *= 1.03;
+            // ボックストゥボックス（MF）: OF +3%
+            if (startersHaveSkill(starters, 'boxToBox')) skillOffMult *= 1.03;
             // ロングパス（MF）: FW2名以上時 OF +4%
-            if (startersHaveSkill(starters, 'longPass') && starters.filter(p => p.position === 'FW').length >= 2) skillOffMult *= 1.04;
+            if (startersHaveSkill(starters, 'longPass') && starters.filter(p => p.position === 'FW').length >= 2) skillOffMult *= 1.03;
             // テクニシャン（MF）: ドリブ70超のFWがいる場合 OF +3%
-            if (startersHaveSkill(starters, 'technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) skillOffMult *= 1.03;
-            // アグレッシブ（FW/MF/DF）: OF +5%
-            if (startersHaveSkill(starters, 'aggressive')) skillOffMult *= 1.05;
+            if (startersHaveSkill(starters, 'technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) skillOffMult *= 1.02;
+            // アグレッシブ（FW/MF/DF）: OF +3%
+            if (startersHaveSkill(starters, 'aggressive')) skillOffMult *= 1.03;
             // ポストプレイヤー（FW）: MFのパス精度をOF計算に+10%加算
             if (startersHaveSkill(starters, 'postPlayer')) {
                 const mfPassAvg = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
-                skillOffMult *= (1 + mfPassAvg * 0.001);
+                skillOffMult *= (1 + mfPassAvg * 0.0007);
             }
-            // 空中戦の強さ（DF）: DF力 +5%
+            // 空中戦の強さ（DF）: DF力 +3%
             let skillDefMult = 1.0;
-            if (startersHaveSkill(starters, 'aerial')) skillDefMult *= 1.05;
-            // コーチング（GK）: チームDF力 +3%
-            if (startersHaveSkill(starters, 'coaching')) skillDefMult *= 1.03;
-            // ボックストゥボックス（MF）: DF +5%
-            if (startersHaveSkill(starters, 'boxToBox')) skillDefMult *= 1.05;
-            // ディープライン（MF）: DF +3%
-            if (startersHaveSkill(starters, 'deepLine')) skillDefMult *= 1.03;
+            if (startersHaveSkill(starters, 'aerial')) skillDefMult *= 1.03;
+            // コーチング（GK）: チームDF力 +2%
+            if (startersHaveSkill(starters, 'coaching')) skillDefMult *= 1.02;
+            // ボックストゥボックス（MF）: DF +3%
+            if (startersHaveSkill(starters, 'boxToBox')) skillDefMult *= 1.03;
+            // ディープライン（MF）: DF +2%
+            if (startersHaveSkill(starters, 'deepLine')) skillDefMult *= 1.02;
             // コマンダー（GK）: DFのカバー値をDF計算に+10%加算
             if (startersHaveSkill(starters, 'commander')) {
                 const dfCoverAvg = starters.filter(p => p.position === 'DF').reduce((s, p) => s + (p.cover || 0), 0) / Math.max(starters.filter(p => p.position === 'DF').length, 1);
-                skillDefMult *= (1 + dfCoverAvg * 0.001);
+                skillDefMult *= (1 + dfCoverAvg * 0.0007);
             }
             // ビルドアップ（DF）: MFのパス精度をOF計算に+5%加算
             if (startersHaveSkill(starters, 'buildUp')) {
                 const mfPassAvg2 = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
-                skillOffMult *= (1 + mfPassAvg2 * 0.0005);
+                skillOffMult *= (1 + mfPassAvg2 * 0.0003);
             }
             // プレスマスター（MF）: 相手OF力 -4%
             let oppOffMult = 1.0;
@@ -13319,11 +13320,11 @@
             // ハイプレス（MF）: 相手OF力 -3%、自チームDF力 -2%
             if (startersHaveSkill(starters, 'highPress')) { oppOffMult *= 0.97; skillDefMult *= 0.98; }
             // カバーシャドウ（MF）: 相手最高能力選手の影響 -5%
-            if (startersHaveSkill(starters, 'coverShadow')) oppOffMult *= 0.95;
+            if (startersHaveSkill(starters, 'coverShadow')) oppOffMult *= 0.96;
             // ポジショニング（GK）: 相手OF力 -4%
             if (startersHaveSkill(starters, 'positioning')) oppOffMult *= 0.96;
             // マンマーカー（DF）: 相手エースの影響 -8%
-            if (startersHaveSkill(starters, 'manMarker')) oppOffMult *= 0.92;
+            if (startersHaveSkill(starters, 'manMarker')) oppOffMult *= 0.94;
             // ロングボールキラー（DF）: 相手FWの攻撃力 -5%
             if (startersHaveSkill(starters, 'longBallKiller')) oppOffMult *= 0.95;
             // 分析室: Lv×0.5%だけ相手のOF・DF両方を低下
@@ -13336,36 +13337,36 @@
             // ウィングアタッカー（FW）: スピードスターと共存時 相手DF力 -3%追加
             if (startersHaveSkill(starters, 'wingAttacker') && startersHaveSkill(starters, 'speedster')) oppDefMult *= 0.97;
             // 中盤の支配者（MF S）: チームOF +8%、DF +8%
-            if (startersHaveSkill(starters, 'midDominator')) { skillOffMult *= 1.08; skillDefMult *= 1.08; }
+            if (startersHaveSkill(starters, 'midDominator')) { skillOffMult *= 1.05; skillDefMult *= 1.05; }
             // ファンタジスタ（MF S）: 得点期待値 +0.2（後段で引き分け時の勝ち越し確率は後段処理）
             // マエストロ（MF S）: スタメン全MFの能力値を+5%上乗せ
             if (startersHaveSkill(starters, 'maestro')) {
                 const mfCount = starters.filter(p => p.position === 'MF').length;
-                if (mfCount > 0) skillOffMult *= Math.pow(1.05, mfCount / 4);
+                if (mfCount > 0) skillOffMult *= Math.pow(1.03, mfCount / 4);
             }
             // 鋼の守護者（DF S）: 失点期待値 -0.4、大量失点防止 +20%（後段処理）
             // ストッパー（DF S）: 相手エースの影響 -15%
-            if (startersHaveSkill(starters, 'stopper')) oppOffMult *= 0.85;
-            // リベロ（DF S）: OF計算にも +5%貢献
-            if (startersHaveSkill(starters, 'libero')) skillOffMult *= 1.05;
+            if (startersHaveSkill(starters, 'stopper')) oppOffMult *= 0.88;
+            // リベロ（DF S）: OF計算にも +3%貢献
+            if (startersHaveSkill(starters, 'libero')) skillOffMult *= 1.03;
 
             // ===== 追加スキル20個の効果（前半） =====
             // FW: フォールスナイン: OF +6%, DF +6%
-            if (startersHaveSkill(starters, 'falseNine')) { skillOffMult *= 1.06; skillDefMult *= 1.06; }
+            if (startersHaveSkill(starters, 'falseNine')) { skillOffMult *= 1.04; skillDefMult *= 1.04; }
             // FW: ターゲットマン: buildUpまたはlongPassと共存時 OF +5%
-            if (startersHaveSkill(starters, 'targetMan') && (startersHaveSkill(starters, 'buildUp') || startersHaveSkill(starters, 'longPass'))) skillOffMult *= 1.05;
+            if (startersHaveSkill(starters, 'targetMan') && (startersHaveSkill(starters, 'buildUp') || startersHaveSkill(starters, 'longPass'))) skillOffMult *= 1.03;
             // MF: インターセプター: 相手OF -3%
             if (startersHaveSkill(starters, 'interceptor')) oppOffMult *= 0.97;
             // MF: フィールドジェネラル: チームOF/DF +3%
-            if (startersHaveSkill(starters, 'fieldGeneral')) { skillOffMult *= 1.03; skillDefMult *= 1.03; }
+            if (startersHaveSkill(starters, 'fieldGeneral')) { skillOffMult *= 1.02; skillDefMult *= 1.02; }
             // DF: 守備の壁: 相手OF -3%
             if (startersHaveSkill(starters, 'defensiveWall')) oppOffMult *= 0.97;
             // DF: プレッシャーブロック: 相手スピードスター持ちFWの効果を無効化（oppDefMultの0.97分を戻す）
             if (startersHaveSkill(starters, 'pressureBlock') && opponent.squad && (opponent.squad.length > 11 ? selectRivalStarters(opponent.squad, opponent.formation) : opponent.squad).some(p => p.position === 'FW' && p.skills && p.skills.includes('speedster'))) oppDefMult = Math.min(1.0, oppDefMult / 0.97);
             // DF: 制空権: aerialと共存時 DF +5%
-            if (startersHaveSkill(starters, 'dominantHeader') && startersHaveSkill(starters, 'aerial')) skillDefMult *= 1.05;
+            if (startersHaveSkill(starters, 'dominantHeader') && startersHaveSkill(starters, 'aerial')) skillDefMult *= 1.03;
             // GK: ラッシュGK: 相手ドリブラー持ちFWがいる場合 oppOF -10%
-            if (startersHaveSkill(starters, 'rushGK') && opponent.squad && (opponent.squad.length > 11 ? selectRivalStarters(opponent.squad, opponent.formation) : opponent.squad).some(p => p.position === 'FW' && p.skills && p.skills.includes('dribbler'))) oppOffMult *= 0.90;
+            if (startersHaveSkill(starters, 'rushGK') && opponent.squad && (opponent.squad.length > 11 ? selectRivalStarters(opponent.squad, opponent.formation) : opponent.squad).some(p => p.position === 'FW' && p.skills && p.skills.includes('dribbler'))) oppOffMult *= 0.92;
             // ===== 追加スキルここまで =====
             // ===== スキル乗算の上限・下限クランプ =====
             // 複数スキルが重なっても過度に強くならないよう上限を設定
@@ -14190,36 +14191,36 @@
 
             // スキル効果再計算（後半スタメンで再評価）
             let skillOffMult2 = 1.0;
-            if (startersHaveSkill(starters, 'playmaker')) skillOffMult2 *= 1.04;
-            if (startersHaveSkill(starters, 'boxToBox')) skillOffMult2 *= 1.05;
-            if (startersHaveSkill(starters, 'longPass') && starters.filter(p => p.position === 'FW').length >= 2) skillOffMult2 *= 1.04;
-            if (startersHaveSkill(starters, 'technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) skillOffMult2 *= 1.03;
-            if (startersHaveSkill(starters, 'aggressive')) skillOffMult2 *= 1.05;
+            if (startersHaveSkill(starters, 'playmaker')) skillOffMult2 *= 1.03;
+            if (startersHaveSkill(starters, 'boxToBox')) skillOffMult2 *= 1.03;
+            if (startersHaveSkill(starters, 'longPass') && starters.filter(p => p.position === 'FW').length >= 2) skillOffMult2 *= 1.03;
+            if (startersHaveSkill(starters, 'technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) skillOffMult2 *= 1.02;
+            if (startersHaveSkill(starters, 'aggressive')) skillOffMult2 *= 1.03;
             if (startersHaveSkill(starters, 'postPlayer')) {
                 const mfPassAvg = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
-                skillOffMult2 *= (1 + mfPassAvg * 0.001);
+                skillOffMult2 *= (1 + mfPassAvg * 0.0007);
             }
             let skillDefMult2 = 1.0;
-            if (startersHaveSkill(starters, 'aerial')) skillDefMult2 *= 1.05;
-            if (startersHaveSkill(starters, 'coaching')) skillDefMult2 *= 1.03;
-            if (startersHaveSkill(starters, 'boxToBox')) skillDefMult2 *= 1.05;
-            if (startersHaveSkill(starters, 'deepLine')) skillDefMult2 *= 1.03;
+            if (startersHaveSkill(starters, 'aerial')) skillDefMult2 *= 1.03;
+            if (startersHaveSkill(starters, 'coaching')) skillDefMult2 *= 1.02;
+            if (startersHaveSkill(starters, 'boxToBox')) skillDefMult2 *= 1.03;
+            if (startersHaveSkill(starters, 'deepLine')) skillDefMult2 *= 1.02;
             if (startersHaveSkill(starters, 'commander')) {
                 const dfCoverAvg = starters.filter(p => p.position === 'DF').reduce((s, p) => s + (p.cover || 0), 0) / Math.max(starters.filter(p => p.position === 'DF').length, 1);
-                skillDefMult2 *= (1 + dfCoverAvg * 0.001);
+                skillDefMult2 *= (1 + dfCoverAvg * 0.0007);
             }
             if (startersHaveSkill(starters, 'buildUp')) {
                 const mfPassAvg2 = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
-                skillOffMult2 *= (1 + mfPassAvg2 * 0.0005);
+                skillOffMult2 *= (1 + mfPassAvg2 * 0.0003);
             }
             let oppOffMult2 = 1.0;
             if (startersHaveSkill(starters, 'pressMaster')) oppOffMult2 *= 0.96;
             if (startersHaveSkill(starters, 'reflexes')) oppOffMult2 *= 0.97;
             if (startersHaveSkill(starters, 'deepLine')) oppOffMult2 *= 0.97;
             if (startersHaveSkill(starters, 'highPress')) { oppOffMult2 *= 0.97; skillDefMult2 *= 0.98; }
-            if (startersHaveSkill(starters, 'coverShadow')) oppOffMult2 *= 0.95;
+            if (startersHaveSkill(starters, 'coverShadow')) oppOffMult2 *= 0.96;
             if (startersHaveSkill(starters, 'positioning')) oppOffMult2 *= 0.96;
-            if (startersHaveSkill(starters, 'manMarker')) oppOffMult2 *= 0.92;
+            if (startersHaveSkill(starters, 'manMarker')) oppOffMult2 *= 0.94;
             if (startersHaveSkill(starters, 'longBallKiller')) oppOffMult2 *= 0.95;
             // 分析室効果（後半）— executeSecondHalfは別スコープなので再宣言
             const analysisMult2 = 1 - ((gameData.facilities.analysis || 1) * 0.005);
@@ -14227,23 +14228,23 @@
             let oppDefMult2 = analysisMult2;
             if (startersHaveSkill(starters, 'speedster')) oppDefMult2 *= 0.97;
             if (startersHaveSkill(starters, 'wingAttacker') && startersHaveSkill(starters, 'speedster')) oppDefMult2 *= 0.97;
-            if (startersHaveSkill(starters, 'midDominator')) { skillOffMult2 *= 1.08; skillDefMult2 *= 1.08; }
+            if (startersHaveSkill(starters, 'midDominator')) { skillOffMult2 *= 1.05; skillDefMult2 *= 1.05; }
             if (startersHaveSkill(starters, 'maestro')) {
                 const mfCount = starters.filter(p => p.position === 'MF').length;
-                if (mfCount > 0) skillOffMult2 *= Math.pow(1.05, mfCount / 4);
+                if (mfCount > 0) skillOffMult2 *= Math.pow(1.03, mfCount / 4);
             }
-            if (startersHaveSkill(starters, 'stopper')) oppOffMult2 *= 0.85;
-            if (startersHaveSkill(starters, 'libero')) skillOffMult2 *= 1.05;
+            if (startersHaveSkill(starters, 'stopper')) oppOffMult2 *= 0.88;
+            if (startersHaveSkill(starters, 'libero')) skillOffMult2 *= 1.03;
 
             // ===== 追加スキル20個の効果（後半） =====
-            if (startersHaveSkill(starters, 'falseNine')) { skillOffMult2 *= 1.06; skillDefMult2 *= 1.06; }
-            if (startersHaveSkill(starters, 'targetMan') && (startersHaveSkill(starters, 'buildUp') || startersHaveSkill(starters, 'longPass'))) skillOffMult2 *= 1.05;
+            if (startersHaveSkill(starters, 'falseNine')) { skillOffMult2 *= 1.04; skillDefMult2 *= 1.04; }
+            if (startersHaveSkill(starters, 'targetMan') && (startersHaveSkill(starters, 'buildUp') || startersHaveSkill(starters, 'longPass'))) skillOffMult2 *= 1.03;
             if (startersHaveSkill(starters, 'interceptor')) oppOffMult2 *= 0.97;
-            if (startersHaveSkill(starters, 'fieldGeneral')) { skillOffMult2 *= 1.03; skillDefMult2 *= 1.03; }
+            if (startersHaveSkill(starters, 'fieldGeneral')) { skillOffMult2 *= 1.02; skillDefMult2 *= 1.02; }
             if (startersHaveSkill(starters, 'defensiveWall')) oppOffMult2 *= 0.97;
             if (startersHaveSkill(starters, 'pressureBlock') && opponent.squad && (opponent.squad.length > 11 ? selectRivalStarters(opponent.squad, opponent.formation) : opponent.squad).some(p => p.position === 'FW' && p.skills && p.skills.includes('speedster'))) oppDefMult2 = Math.min(1.0, oppDefMult2 / 0.97);
-            if (startersHaveSkill(starters, 'dominantHeader') && startersHaveSkill(starters, 'aerial')) skillDefMult2 *= 1.05;
-            if (startersHaveSkill(starters, 'rushGK') && opponent.squad && (opponent.squad.length > 11 ? selectRivalStarters(opponent.squad, opponent.formation) : opponent.squad).some(p => p.position === 'FW' && p.skills && p.skills.includes('dribbler'))) oppOffMult2 *= 0.90;
+            if (startersHaveSkill(starters, 'dominantHeader') && startersHaveSkill(starters, 'aerial')) skillDefMult2 *= 1.03;
+            if (startersHaveSkill(starters, 'rushGK') && opponent.squad && (opponent.squad.length > 11 ? selectRivalStarters(opponent.squad, opponent.formation) : opponent.squad).some(p => p.position === 'FW' && p.skills && p.skills.includes('dribbler'))) oppOffMult2 *= 0.92;
             // ===== 追加スキルここまで =====
             // ===== スキル乗算の上限・下限クランプ（後半） =====
             skillOffMult2 = Math.min(skillOffMult2, 1.30); // 攻撃スキル乗算上限 +30%
