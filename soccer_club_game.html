@@ -7601,7 +7601,7 @@
                 if (_pvHas('falseNine')) _pvOffMult *= 1.06;
                 if (_pvHas('targetMan') && (_pvHas('buildUp') || _pvHas('longPass'))) _pvOffMult *= 1.05;
                 if (_pvHas('fieldGeneral')) _pvOffMult *= 1.03;
-                _pvOffMult = Math.min(_pvOffMult, 1.20);
+                _pvOffMult = Math.min(_pvOffMult, 1.30);
                 let _pvDefMult = 1.0;
                 if (_pvHas('aerial')) _pvDefMult *= 1.05;
                 if (_pvHas('coaching')) _pvDefMult *= 1.03;
@@ -7613,7 +7613,7 @@
                 if (_pvHas('fieldGeneral')) _pvDefMult *= 1.03;
                 if (_pvHas('dominantHeader') && _pvHas('aerial')) _pvDefMult *= 1.05;
                 if (_pvHas('highPress')) _pvDefMult *= 0.98;
-                _pvDefMult = Math.min(_pvDefMult, 1.20);
+                _pvDefMult = Math.min(_pvDefMult, 1.30);
                 // 監督スキル効果
                 const _pvMse = getManagerSkillEffects();
                 const _pvMgrOff = _pvMse.offMult || 1.0;
@@ -9892,7 +9892,7 @@
             if (_hasSkill('falseNine')) _previewOffMult *= 1.06;
             if (_hasSkill('targetMan') && (_hasSkill('buildUp') || _hasSkill('longPass'))) _previewOffMult *= 1.05;
             if (_hasSkill('fieldGeneral')) _previewOffMult *= 1.03;
-            _previewOffMult = Math.min(_previewOffMult, 1.20); // 上限クランプ
+            _previewOffMult = Math.min(_previewOffMult, 1.30); // 上限クランプ
             // 守備スキル乗算（試合計算と同じロジック）
             let _previewDefMult = 1.0;
             if (_hasSkill('aerial')) _previewDefMult *= 1.05;
@@ -9908,7 +9908,7 @@
             if (_hasSkill('fieldGeneral')) _previewDefMult *= 1.03;
             if (_hasSkill('dominantHeader') && _hasSkill('aerial')) _previewDefMult *= 1.05;
             if (_hasSkill('highPress')) _previewDefMult *= 0.98; // ハイプレスのDF低下
-            _previewDefMult = Math.min(_previewDefMult, 1.20); // 上限クランプ
+            _previewDefMult = Math.min(_previewDefMult, 1.30); // 上限クランプ
             // 監督スキル効果を反映
             const _previewMse = getManagerSkillEffects();
             const _previewMgrOff = _previewMse.offMult || 1.0;
@@ -13369,8 +13369,8 @@
             // ===== 追加スキルここまで =====
             // ===== スキル乗算の上限・下限クランプ =====
             // 複数スキルが重なっても過度に強くならないよう上限を設定
-            skillOffMult = Math.min(skillOffMult, 1.20); // 攻撃スキル乗算上限 +20%
-            skillDefMult = Math.min(skillDefMult, 1.20); // 守備スキル乗算上限 +20%
+            skillOffMult = Math.min(skillOffMult, 1.30); // 攻撃スキル乗算上限 +30%
+            skillDefMult = Math.min(skillDefMult, 1.30); // 守備スキル乗算上限 +30%
             oppOffMult   = Math.max(oppOffMult,   0.72); // 相手攻撃力低下の下限 -28%
 
             // ===== 作戦補正 =====
@@ -14246,8 +14246,8 @@
             if (startersHaveSkill(starters, 'rushGK') && opponent.squad && (opponent.squad.length > 11 ? selectRivalStarters(opponent.squad, opponent.formation) : opponent.squad).some(p => p.position === 'FW' && p.skills && p.skills.includes('dribbler'))) oppOffMult2 *= 0.90;
             // ===== 追加スキルここまで =====
             // ===== スキル乗算の上限・下限クランプ（後半） =====
-            skillOffMult2 = Math.min(skillOffMult2, 1.20); // 攻撃スキル乗算上限 +20%
-            skillDefMult2 = Math.min(skillDefMult2, 1.20); // 守備スキル乗算上限 +20%
+            skillOffMult2 = Math.min(skillOffMult2, 1.30); // 攻撃スキル乗算上限 +30%
+            skillDefMult2 = Math.min(skillDefMult2, 1.30); // 守備スキル乗算上限 +30%
             oppOffMult2   = Math.max(oppOffMult2,   0.72); // 相手攻撃力低下の下限 -28%
 
             // 後半の作戦補正
