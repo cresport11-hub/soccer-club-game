@@ -2552,7 +2552,7 @@
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
                                 <td style="padding:8px 6px; color:#FFD700; font-weight:bold;">EXP（経験値）</td>
-                                <td style="padding:8px 6px; color:rgba(255,255,255,0.85);">1試合に<strong>スタメン+5、ハーフタイム交代選手+3</strong>（スキル・監督スキルにより増加あり）。規定値に達するとレベルアップし、各能力値が上昇する。スタメンまたはハーフタイム交代選手のみ獲得。<strong style="color:#FFD700;">Lv4・Lv8・Lv12達成時にスキルをランダムに1つ習得</strong>する。</td>
+                                <td style="padding:8px 6px; color:rgba(255,255,255,0.85);">1試合に<strong>スタメン+5、ハーフタイム交代選手+3</strong>（スキル・監督スキルにより増加あり）。規定値に達するとレベルアップし、各能力値が上昇する。スタメンまたはハーフタイム交代選手のみ獲得。<strong style="color:#FFD700;">Lv4達成時にBスキルを確定習得、Lv8達成時に50%の確率でAスキルを習得</strong>する。Lv12以降はSスキルは特訓・補強でのみ取得可能。</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
                                 <td style="padding:8px 6px; color:#FFD700; font-weight:bold;">コンディション</td>
@@ -13185,8 +13185,7 @@
 
         // Lv4・Lv8・Lv12達成時にスキルをランダムに1つ習得させる
         function tryLearnSkill(player) {
-            if (player.level !== 4 && player.level !== 8 && player.level !== 12 &&
-                player.level !== 13 && player.level !== 14 && player.level !== 15) return null;
+            if (player.level !== 4 && player.level !== 8) return null;
             // Lv4習得可能スキル: 効果の小さいBランクのみ（aggressive/deepLineは除外→特訓・Lv8以降で取得）
             const bSkills = ['dribbler','shooter','chanceMaker','passer','tackleMaster','resilience','steelBody',
                              'homeStar','longShooter','headingKing','goalRush',
@@ -13206,11 +13205,10 @@
                              'midDominator','fantasista','maestro',
                              'steelGuardian','stopper','libero',
                              'falseNine','fieldGeneral','lastManStanding','clutchSave'];
-            // Lv4: Bランク / Lv8: Aランク / Lv12〜15: Sランク
+            // Lv4: Bランク確定 / Lv8: Aランク50%（Lv12以降は特訓・補強でのみ取得）
             let pool;
-            if (player.level === 4)       pool = bSkills;
-            else if (player.level === 8)  pool = aSkills;
-            else if (player.level >= 12)  pool = sSkills;
+            if (player.level === 4)      pool = bSkills;
+            else if (player.level === 8) { if (Math.random() >= 0.5) return null; pool = aSkills; }
             const valid = pool.filter(id => SKILLS[id] && SKILLS[id].pos.includes(player.position) && !(player.skills || []).includes(id));
             if (valid.length === 0) return null;
             const skillId = valid[Math.floor(Math.random() * valid.length)];
@@ -16898,7 +16896,7 @@
             if (skillArea) {
                 const skills = player.skills || [];
                 if (skills.length === 0) {
-                    skillArea.innerHTML = '<div style="color: rgba(255,255,255,0.5); font-size: 12px;">Lv4・Lv8・Lv12でスキルを習得</div>';
+                    skillArea.innerHTML = '<div style="color: rgba(255,255,255,0.5); font-size: 12px;">Lv4でBスキル確定・Lv8でAスキル50%習得</div>';
                 } else {
                     skillArea.innerHTML = skills.map(id => {
                         const sk = SKILLS[id];
