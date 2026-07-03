@@ -9856,7 +9856,9 @@
                 </div>
             `).join('');
 
-            const starters = gameData.players.filter(p => p.starter && p.injury !== 'heavy');
+            // pitchAssignmentに実際に配置されている選手のみをスタメンとして扱う
+            const assignedIds = new Set(Object.values(gameData.pitchAssignment || {}));
+            const starters = gameData.players.filter(p => assignedIds.has(p.id) && p.injury !== 'heavy');
             // 作戦補正はgetFormationAdjustedOffenseに含まれないため、
             // スタメン画面では作戦補正を除いたスキル乗算・監督スキルのみ反映する
             // ===== 試合計算と同じスキル乗算方式でプレビュー戦力値を計算 =====
