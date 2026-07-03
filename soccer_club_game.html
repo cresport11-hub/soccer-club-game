@@ -3333,9 +3333,14 @@
     <!-- 選手詳細モーダル -->
     <div id="playerDetailModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="playerDetailName">選手名</h2>
-                <button class="close-btn" onclick="closePlayerDetail()">✕</button>
+            <div class="modal-header" style="position:relative;">
+                <button id="playerNavPrev" onclick="navigatePlayerDetail(-1)" style="background:none;border:none;font-size:22px;color:rgba(255,255,255,0.7);cursor:pointer;padding:4px 8px;line-height:1;flex-shrink:0;" title="前の選手">&#8249;</button>
+                <div style="flex:1;text-align:center;min-width:0;">
+                    <h2 id="playerDetailName" style="font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">選手名</h2>
+                    <div id="playerNavIndex" style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;"></div>
+                </div>
+                <button id="playerNavNext" onclick="navigatePlayerDetail(1)" style="background:none;border:none;font-size:22px;color:rgba(255,255,255,0.7);cursor:pointer;padding:4px 8px;line-height:1;flex-shrink:0;" title="次の選手">&#8250;</button>
+                <button class="close-btn" onclick="closePlayerDetail()" style="position:absolute;top:-4px;right:-4px;font-size:20px;">✕</button>
             </div>
             <div class="ability-detail">
                 <div class="ability-row">
@@ -16713,6 +16718,15 @@
             if (!player) return;
 
             selectedPlayerDetail = player;
+            // ナビゲーション用インデックス表示
+            const _allPlayers = gameData.players;
+            const _curIdx = _allPlayers.findIndex(p => p.id === playerId);
+            const _navIndex = document.getElementById('playerNavIndex');
+            if (_navIndex) _navIndex.textContent = (_curIdx + 1) + ' / ' + _allPlayers.length;
+            const _prevBtn = document.getElementById('playerNavPrev');
+            const _nextBtn = document.getElementById('playerNavNext');
+            if (_prevBtn) _prevBtn.style.color = _curIdx > 0 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.2)';
+            if (_nextBtn) _nextBtn.style.color = _curIdx < _allPlayers.length - 1 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.2)';
             document.getElementById('playerDetailName').textContent = player.name;
             document.getElementById('detailPosition').textContent = player.position;
             document.getElementById('detailAge').textContent = (player.age !== undefined ? player.age : 18) + '歳';
@@ -17231,6 +17245,17 @@
 
         function closePlayerModal() {
             document.getElementById('playerModal').classList.remove('active');
+        }
+        function navigatePlayerDetail(dir) {
+            if (!selectedPlayerDetail) return;
+            const _allPlayers = gameData.players;
+            const _curIdx = _allPlayers.findIndex(p => p.id === selectedPlayerDetail.id);
+            const _newIdx = _curIdx + dir;
+            if (_newIdx < 0 || _newIdx >= _allPlayers.length) return;
+            // モーダルのスクロール位置をトップに戻す
+            const _mc = document.querySelector('#playerDetailModal .modal-content');
+            if (_mc) _mc.scrollTop = 0;
+            showPlayerDetail(_allPlayers[_newIdx].id);
         }
         function closePlayerDetail() {
             document.getElementById('playerDetailModal').classList.remove('active');
