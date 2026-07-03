@@ -2813,18 +2813,18 @@
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#FF5252; font-weight:700;">Sランク</td>
-                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐20</td>
-                                <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">5%</td>
+                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐30</td>
+                                <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">3%</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#FFB300; font-weight:700;">Aランク</td>
-                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐10</td>
+                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐15</td>
                                 <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">5%</td>
                             </tr>
                             <tr>
                                 <td style="padding:7px 8px; color:#66BB6A; font-weight:700;">Bランク</td>
-                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐5</td>
-                                <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">5%</td>
+                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐8</td>
+                                <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">8%</td>
                             </tr>
                         </table>
                         <div style="font-size:12px; color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.04); border-radius:8px; padding:10px; margin-top:10px; line-height:1.7;">
@@ -9157,9 +9157,9 @@
         }
         // ===== スキル獲得特訓 =====
         const SKILL_TRAINING_RANKS = {
-            S: { fame: 20, chance: 0.05 },
-            A: { fame: 10, chance: 0.05 },
-            B: { fame: 5,  chance: 0.05 }
+            S: { fame: 30, chance: 0.03 },
+            A: { fame: 15, chance: 0.05 },
+            B: { fame: 8,  chance: 0.08 }
         };
         const SKILL_RANK_MAP = {
             // Sランク
@@ -9197,7 +9197,7 @@
 
             const posColors = { FW:'#ef5350', MF:'#42a5f5', DF:'#66bb6a', GK:'#ffa726' };
             inner.innerHTML = '<div style="font-size:16px;font-weight:bold;color:#4CAF50;margin-bottom:14px;">🎓 スキル獲得特訓 — 選手を選択</div>' +
-                '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Bランク⭐5(5%) / Aランク⭐10(5%) / Sランク⭐20(5%)</div>' +
+                '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Bランク⭐8(8%) / Aランク⭐15(5%) / Sランク⭐30(3%)</div>' +
                                 gameData.players.map(p => {
                      const pos = p.position || p.pos || '?';
                      const subPosDisp = getSubPos(p) + (p.subPosition2 ? '/' + p.subPosition2 : '');
@@ -9241,8 +9241,10 @@
             inner.style.cssText = 'background:#1a1a2e;border-radius:16px;padding:20px;max-width:380px;width:92%;max-height:82vh;overflow-y:auto;';
 
             const rankColors = { S:'#FF5252', A:'#FFB300', B:'#66BB6A' };
-            const rankLabels = { S:'Sランク ⭐20 (5%)', A:'Aランク ⭐10 (5%)', B:'Bランク ⭐5 (5%)' };
+            const rankLabels = { S:'Sランク ⭐30 (3%)', A:'Aランク ⭐15 (5%)', B:'Bランク ⭐8 (8%)' };
             const fame = gameData.fame || 0;
+            const _mseCamp = getManagerSkillEffects();
+            const _discountCamp = _mseCamp.skillTrainDiscount || 0;
 
             let html = `<div style="font-size:15px;font-weight:bold;color:#4CAF50;margin-bottom:4px;">🎓 ${p.name} のスキル特訓</div>`;
             html += `<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:14px;">現在の名声: <span style="color:#FFD700;">${fame}⭐</span></div>`;
@@ -9253,13 +9255,14 @@
                 const rank = getSkillRank(id);
                 const rc = rankColors[rank] || '#66BB6A';
                 const cfg = SKILL_TRAINING_RANKS[rank];
-                const canAfford = fame >= cfg.fame;
+                const dispCost = Math.max(1, Math.floor(cfg.fame * (1 - _discountCamp)));
+                const canAfford = fame >= dispCost;
                 if (rank !== lastRank) {
                     html += `<div style="font-size:11px;font-weight:700;color:${rc};margin:10px 0 6px;border-bottom:1px solid ${rc}33;padding-bottom:4px;">${rankLabels[rank]}</div>`;
                     lastRank = rank;
                 }
                 html += `<button onclick="applySkillTraining('${playerId}','${id}')" ${canAfford ? '' : 'disabled'} style="display:block;width:100%;text-align:left;padding:9px 12px;margin-bottom:5px;background:rgba(255,255,255,0.06);border:1px solid ${rc}55;border-radius:8px;color:${canAfford ? '#fff' : 'rgba(255,255,255,0.3)'};cursor:${canAfford ? 'pointer' : 'not-allowed'};">
-                    <span style="color:${rc};font-weight:700;font-size:12px;">[${rank}]</span> <strong>${sk.name}</strong><br>
+                    <span style="color:${rc};font-weight:700;font-size:12px;">[${rank}]</span> <strong>${sk.name}</strong> <span style="color:#FFD700;font-size:10px;">⭐${dispCost}</span><br>
                     <span style="font-size:10px;color:rgba(255,255,255,0.5);">${sk.desc}</span>
                 </button>`;
             });
@@ -9312,7 +9315,7 @@
                     resultEl.style.display = 'block';
                     document.getElementById('campResultIcon').textContent = '🎓';
                     document.getElementById('campResultTitle').textContent = p.name + ' が「' + sk.name + '」を習得！';
-                    document.getElementById('campResultEffect').textContent = '⭐' + actualFameCost + '消費 | ' + Math.round(cfg.chance * 100) + '%の確率で成功！';
+                    document.getElementById('campResultEffect').textContent = '⭐' + actualFameCost + '消費 | 成功確率' + Math.round(cfg.chance * 100) + '%で成功！';
                 }
                 showNotification('🎓 ' + p.name + ' が「' + sk.name + '」を習得しました！');
             } else {
@@ -10922,7 +10925,7 @@
             inner.style.cssText = 'background:#1a1a2e;border-radius:16px;padding:20px;max-width:380px;width:92%;max-height:82vh;overflow-y:auto;';
 
             const rankColors = { S: '#FF5252', A: '#FFB300', B: '#66BB6A' };
-            const rankLabels = { S: 'Sランク ⭐30 (5%)', A: 'Aランク ⭐15 (10%)', B: 'Bランク ⭐8 (15%)' };
+            const rankLabels = { S: 'Sランク ⭐30 (3%)', A: 'Aランク ⭐15 (5%)', B: 'Bランク ⭐8 (8%)' };
             const fame = gameData.fame || 0;
 
                         // 監督スキル割引を反映した実際コストを計算
