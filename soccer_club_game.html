@@ -5166,8 +5166,8 @@
                             team.squad.filter(p => p.position === 'FW').length < fm.fw;
                         if (needRegen) {
                             team.squad = generateRivalSquad(gameData.league, team.formation);
-                            team.offense = calcRivalOffense(team.squad, team.formation);
-                            team.defense = calcRivalDefense(team.squad, team.formation);
+                            team.offense = calcRivalOffense(team.squad, team.formation, gameData.league);
+                            team.defense = calcRivalDefense(team.squad, team.formation, gameData.league);
                         } else {
                             // idが付いていない旧データの選手にidを付与
                             team.squad.forEach((p, idx) => {
@@ -5934,6 +5934,20 @@
             }
             return null;
         }
+        // チームが属するリーグのティアを返すヘルパー（見つからない場合はnull）
+        function findTeamTier(clubName) {
+            if (gameData.leagueStandings && gameData.leagueStandings.find(t => t.name === clubName)) {
+                return gameData.league;
+            }
+            if (gameData.allLeagues) {
+                for (const tierStr of Object.keys(gameData.allLeagues)) {
+                    const ld = gameData.allLeagues[tierStr];
+                    if (!ld || !ld.standings) continue;
+                    if (ld.standings.find(t => t.name === clubName)) return parseInt(tierStr);
+                }
+            }
+            return null;
+        }
         function selectRivalStarters(squad, formationKey) {
             const fm = (formations[formationKey] || formations['4-4-2']);
             const needed = { GK: 1, DF: fm.df, MF: fm.mf, FW: fm.fw };
@@ -5955,7 +5969,7 @@
 
         // 他クラブの選手構成からoffense値を計算（スキル重み反映）
         // squadが16名の場合はフォーメーションに合わせたスタメン11名で計算
-        function calcRivalOffense(squad, formationKey) {
+        function calcRivalOffense(squad, formationKey, leagueLevel) {
             const starters = (squad.length > 11 && formationKey) ? selectRivalStarters(squad, formationKey) : squad;
             const fwMf = starters.filter(p => p.position === 'FW' || p.position === 'MF');
             if (fwMf.length === 0) return 40;
@@ -5980,14 +5994,15 @@
                 return sum + val;
             }, 0) / fwMf.length;
             // 案A: リーグレベル別の他クラブ仮想施設ボーナス（5部:+1, 4部:+2, 3部:+3, 2部:+4, 1部:+5）
+            // leagueLevelが指定されていればそのティアのボーナスを使用（カップ戦・他リーグの正確な戦力値のため）
             const _rivalFacilityBonus = { 5: 1, 4: 2, 3: 3, 2: 4, 1: 5, 0: 5 };
-            const _rfb = _rivalFacilityBonus[gameData.league] || 1;
+            const _rfb = _rivalFacilityBonus[leagueLevel != null ? leagueLevel : gameData.league] || 1;
             return Math.round(avg) + _rfb;
         }
 
         // 他クラブの選手構成からdefense値を計算（スキル重み反映）
         // squadが16名の場合はフォーメーションに合わせたスタート一11名で計算
-        function calcRivalDefense(squad, formationKey) {
+        function calcRivalDefense(squad, formationKey, leagueLevel) {
             const starters = (squad.length > 11 && formationKey) ? selectRivalStarters(squad, formationKey) : squad;
             const dfGk = starters.filter(p => p.position === 'DF' || p.position === 'GK');
             if (dfGk.length === 0) return 40;
@@ -6012,8 +6027,9 @@
                 return sum + val;
             }, 0) / dfGk.length;
             // 案A: リーグレベル別の他クラブ仮想施設ボーナス
+            // leagueLevelが指定されていればそのティアのボーナスを使用（カップ戦・他リーグの正確な戦力値のため）
             const _rivalFacilityBonusDef = { 5: 1, 4: 2, 3: 3, 2: 4, 1: 5, 0: 5 };
-            const _rfbDef = _rivalFacilityBonusDef[gameData.league] || 1;
+            const _rfbDef = _rivalFacilityBonusDef[leagueLevel != null ? leagueLevel : gameData.league] || 1;
             return Math.round(avg) + _rfbDef;
         }
 
@@ -6309,8 +6325,9 @@
                 const transferredPlayer = Object.assign({}, player, { starter: false });
                 destTeam.squad.push(transferredPlayer);
                 // offense/defense再計算（スタメン11名ベース）
-                destTeam.offense = calcRivalOffense(destTeam.squad, destTeam.formation);
-                destTeam.defense = calcRivalDefense(destTeam.squad, destTeam.formation);
+                const _destTier = (() => { const _t = findTeamTier(destTeam.name); return _t != null ? _t : gameData.league; })();
+                destTeam.offense = calcRivalOffense(destTeam.squad, destTeam.formation, _destTier);
+                destTeam.defense = calcRivalDefense(destTeam.squad, destTeam.formation, _destTier);
             }
             saveGame();
             renderGame();
@@ -6412,8 +6429,9 @@
                     repPlayer.id = 'rival_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
                     repPlayer.starter = false;
                     srcTeam.squad.push(repPlayer);
-                    srcTeam.offense = calcRivalOffense(srcTeam.squad, srcTeam.formation);
-                    srcTeam.defense = calcRivalDefense(srcTeam.squad, srcTeam.formation);
+                    const _srcTierA = (() => { const _t = findTeamTier(srcTeam.name); return _t != null ? _t : gameData.league; })();
+                    srcTeam.offense = calcRivalOffense(srcTeam.squad, srcTeam.formation, _srcTierA);
+                    srcTeam.defense = calcRivalDefense(srcTeam.squad, srcTeam.formation, _srcTierA);
                 }
             }
             gameData.transferMarket = gameData.transferMarket.filter(pl => pl.id !== playerId);
@@ -6455,8 +6473,9 @@
                 const srcTeam = findTeamAcrossLeagues(loanOrigClub);
                 if (srcTeam && srcTeam.squad) {
                     srcTeam.squad = srcTeam.squad.filter(pl => pl.id !== loanOrigSquadId);
-                    srcTeam.offense = calcRivalOffense(srcTeam.squad, srcTeam.formation);
-                    srcTeam.defense = calcRivalDefense(srcTeam.squad, srcTeam.formation);
+                    const _loanSrcTier = (() => { const _t = findTeamTier(loanOrigClub); return _t != null ? _t : gameData.league; })();
+                    srcTeam.offense = calcRivalOffense(srcTeam.squad, srcTeam.formation, _loanSrcTier);
+                    srcTeam.defense = calcRivalDefense(srcTeam.squad, srcTeam.formation, _loanSrcTier);
                 }
             }
             if (!gameData.loanPlayers) gameData.loanPlayers = [];
@@ -6493,8 +6512,9 @@
                             returnedPlayer.starter = false;
                             srcTeam.squad.push(returnedPlayer);
                         }
-                        srcTeam.offense = calcRivalOffense(srcTeam.squad, srcTeam.formation);
-                        srcTeam.defense = calcRivalDefense(srcTeam.squad, srcTeam.formation);
+                        const _loanRetTier = (() => { const _t = findTeamTier(srcTeam.name); return _t != null ? _t : gameData.league; })();
+                        srcTeam.offense = calcRivalOffense(srcTeam.squad, srcTeam.formation, _loanRetTier);
+                        srcTeam.defense = calcRivalDefense(srcTeam.squad, srcTeam.formation, _loanRetTier);
                     }
                 }
             });
@@ -7262,8 +7282,8 @@
                     popularity: isYou ? 50 : getRandomAbility(30, 70),
                     matchesPlayed: 0,
                     squad: rivalSquad,
-                    offense: isYou ? null : (rivalSquad ? calcRivalOffense(rivalSquad, rivalFormation) : getRandomAbility(min, max)),
-                    defense: isYou ? null : (rivalSquad ? calcRivalDefense(rivalSquad, rivalFormation) : getRandomAbility(min, max)),
+                    offense: isYou ? null : (rivalSquad ? calcRivalOffense(rivalSquad, rivalFormation, gameData.league) : getRandomAbility(min, max)),
+                    defense: isYou ? null : (rivalSquad ? calcRivalDefense(rivalSquad, rivalFormation, gameData.league) : getRandomAbility(min, max)),
                     formation: rivalFormation,
                     tactics: rivalTactics,
                     managerSkills: isYou ? null : (existingManagerSkills[name] || generateRivalManagerSkills(gameData.league))
@@ -7690,8 +7710,8 @@
                     matchesPlayed: 0,
                     popularity: getRandomAbility(30, 70),
                     squad: rivalSquad,
-                    offense: calcRivalOffense(rivalSquad, rivalFormation),
-                    defense: calcRivalDefense(rivalSquad, rivalFormation),
+                    offense: calcRivalOffense(rivalSquad, rivalFormation, tier),
+                    defense: calcRivalDefense(rivalSquad, rivalFormation, tier),
                     formation: rivalFormation,
                     tactics: rivalTactics
                 };
@@ -8001,8 +8021,8 @@
                     if (!team.squad) return;
                     team.squad = processSquad(team.squad, gameData.league);
                     // offense/defense再計算
-                    team.offense = calcRivalOffense(team.squad, team.formation);
-                    team.defense = calcRivalDefense(team.squad, team.formation);
+                    team.offense = calcRivalOffense(team.squad, team.formation, gameData.league);
+                    team.defense = calcRivalDefense(team.squad, team.formation, gameData.league);
                 });
             }
 
@@ -8015,8 +8035,8 @@
                     league.standings.forEach(team => {
                         if (!team.squad) return;
                         team.squad = processSquad(team.squad, tier);
-                        team.offense = calcRivalOffense(team.squad, team.formation);
-                        team.defense = calcRivalDefense(team.squad, team.formation);
+                        team.offense = calcRivalOffense(team.squad, team.formation, tier);
+                        team.defense = calcRivalDefense(team.squad, team.formation, tier);
                     });
                 });
             }
@@ -11420,8 +11440,8 @@
             const bench = team.squad.filter(function(p, i){ return !starterSet.has(i); });
             const sorted = starters11.slice().sort(function(a,b){ return (posOrder[a.position]||0)-(posOrder[b.position]||0); })
                 .concat(bench.slice().sort(function(a,b){ return (posOrder[a.position]||0)-(posOrder[b.position]||0); }));
-            const off = team.offense != null ? team.offense : calcRivalOffense(team.squad, team.formation);
-            const def2 = team.defense != null ? team.defense : calcRivalDefense(team.squad, team.formation);
+            const off = team.offense != null ? team.offense : calcRivalOffense(team.squad, team.formation, tier);
+            const def2 = team.defense != null ? team.defense : calcRivalDefense(team.squad, team.formation, tier);
             const tierNames2 = ['スーパーリーグ', '1部', '2部', '3部', '4部', '5部'];
             const tacticLabels = { ultra_attack: '超攻撃', attack: '攻撃', balance: 'バランス', defend: '守備', ultra_defend: '超守備' };
             document.getElementById('otherRivalSquadTitle').textContent = teamName + ' (' + tierNames2[tier] + ')';
@@ -11467,8 +11487,8 @@
             const bench = team.squad ? team.squad.filter((p, i) => !starterSet.has(i)) : [];
             const sorted = [...starters11.sort((a, b) => (posOrder[a.position] || 0) - (posOrder[b.position] || 0)),
                             ...bench.sort((a, b) => (posOrder[a.position] || 0) - (posOrder[b.position] || 0))];
-            const off = team.offense != null ? team.offense : (team.squad ? calcRivalOffense(team.squad, team.formation) : '?');
-            const def = team.defense != null ? team.defense : (team.squad ? calcRivalDefense(team.squad, team.formation) : '?');
+            const off = team.offense != null ? team.offense : (team.squad ? calcRivalOffense(team.squad, team.formation, gameData.league) : '?');
+            const def = team.defense != null ? team.defense : (team.squad ? calcRivalDefense(team.squad, team.formation, gameData.league) : '?');
 
             // フォーメーション・作戦の表示名マッピング
             const tacticLabels = {
