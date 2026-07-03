@@ -9803,8 +9803,31 @@
                 ultra_defend: { offMult: 0.82, defMult: 1.12 },
             };
             const _lineupTp = _lineupTP[gameData.tactics] || _lineupTP['balance'];
-            const offenseVal = Math.round(getFormationAdjustedOffense(starters) * _lineupTp.offMult);
-            const defenseVal = Math.round(getFormationAdjustedDefense(starters) * _lineupTp.defMult);
+            const _baseOffense = Math.round(getFormationAdjustedOffense(starters) * _lineupTp.offMult);
+            const _baseDefense = Math.round(getFormationAdjustedDefense(starters) * _lineupTp.defMult);
+            // スキルボーナスを戦力表示に反映
+            const _hasSkill = (id) => starters.some(p => p.skills && p.skills.includes(id));
+            let _offSkillBonus = 0;
+            if (_hasSkill('sniper')) _offSkillBonus += 0.12;
+            if (_hasSkill('penaltyKing')) _offSkillBonus += 0.08;
+            if (_hasSkill('clutchPlayer')) _offSkillBonus += 0.05;
+            if (_hasSkill('setpieceMaster')) _offSkillBonus += 0.05;
+            if (_hasSkill('vision') && _hasSkill('chanceMaker')) _offSkillBonus += 0.05;
+            if (_hasSkill('headingKing') && _hasSkill('aerial')) _offSkillBonus += 0.05;
+            if (_hasSkill('fantasista')) _offSkillBonus += 0.10;
+            if (_hasSkill('acrobatic')) _offSkillBonus += 0.05;
+            if (_hasSkill('boxPenalty') && starters.some(p => p.position === 'FW')) _offSkillBonus += 0.05;
+            _offSkillBonus = Math.min(0.25, _offSkillBonus);
+            let _defSkillBonus = 0;
+            if (_hasSkill('bigHands')) _defSkillBonus += 0.10;
+            if (_hasSkill('ironWall')) _defSkillBonus += 0.12;
+            if (_hasSkill('headClear')) _defSkillBonus += 0.05;
+            if (_hasSkill('steelGuardian')) _defSkillBonus += 0.20;
+            if (_hasSkill('lastManStanding')) _defSkillBonus += 0.15;
+            _defSkillBonus = Math.min(0.20, _defSkillBonus);
+            // スキルボーナスを能力値スケール（×10）に変換して加算
+            const offenseVal = Math.round(_baseOffense + _offSkillBonus * 10);
+            const defenseVal = Math.round(_baseDefense + _defSkillBonus * 10);
             // スタメン総合値 = スタメン全員の個人値平均（体調・疲労・負傷補正済み）
             const yourStrength = calculateTeamStrength(starters);
 
