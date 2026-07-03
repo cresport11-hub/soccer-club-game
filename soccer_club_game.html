@@ -7585,19 +7585,62 @@
             }
             function updatePreviewBars() {
                 const mults = getPreviewMultipliers();
-                const yourOffense = Math.round(yourOffenseBase * mults.offMult);
-                const yourDefense = Math.round(yourDefenseBase * mults.defMult);
+                // ===== 試合計算と同じスキル乗算をプレビューに反映 =====
+                const _pvHas = (id) => starters.some(p => p.skills && p.skills.includes(id));
+                let _pvOffMult = 1.0;
+                if (_pvHas('playmaker')) _pvOffMult *= 1.04;
+                if (_pvHas('boxToBox')) _pvOffMult *= 1.05;
+                if (_pvHas('longPass') && starters.filter(p => p.position === 'FW').length >= 2) _pvOffMult *= 1.04;
+                if (_pvHas('technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) _pvOffMult *= 1.03;
+                if (_pvHas('aggressive')) _pvOffMult *= 1.05;
+                if (_pvHas('postPlayer')) { const _a = starters.filter(p=>p.position==='MF').reduce((s,p)=>s+(p.passing||0),0)/Math.max(starters.filter(p=>p.position==='MF').length,1); _pvOffMult *= (1+_a*0.001); }
+                if (_pvHas('buildUp')) { const _b = starters.filter(p=>p.position==='MF').reduce((s,p)=>s+(p.passing||0),0)/Math.max(starters.filter(p=>p.position==='MF').length,1); _pvOffMult *= (1+_b*0.0005); }
+                if (_pvHas('midDominator')) _pvOffMult *= 1.08;
+                if (_pvHas('maestro')) { const _mc = starters.filter(p=>p.position==='MF').length; if (_mc>0) _pvOffMult *= Math.pow(1.05, _mc/4); }
+                if (_pvHas('libero')) _pvOffMult *= 1.05;
+                if (_pvHas('falseNine')) _pvOffMult *= 1.06;
+                if (_pvHas('targetMan') && (_pvHas('buildUp') || _pvHas('longPass'))) _pvOffMult *= 1.05;
+                if (_pvHas('fieldGeneral')) _pvOffMult *= 1.03;
+                _pvOffMult = Math.min(_pvOffMult, 1.20);
+                let _pvDefMult = 1.0;
+                if (_pvHas('aerial')) _pvDefMult *= 1.05;
+                if (_pvHas('coaching')) _pvDefMult *= 1.03;
+                if (_pvHas('boxToBox')) _pvDefMult *= 1.05;
+                if (_pvHas('deepLine')) _pvDefMult *= 1.03;
+                if (_pvHas('commander')) { const _dc = starters.filter(p=>p.position==='DF').reduce((s,p)=>s+(p.cover||0),0)/Math.max(starters.filter(p=>p.position==='DF').length,1); _pvDefMult *= (1+_dc*0.001); }
+                if (_pvHas('midDominator')) _pvDefMult *= 1.08;
+                if (_pvHas('falseNine')) _pvDefMult *= 1.06;
+                if (_pvHas('fieldGeneral')) _pvDefMult *= 1.03;
+                if (_pvHas('dominantHeader') && _pvHas('aerial')) _pvDefMult *= 1.05;
+                if (_pvHas('highPress')) _pvDefMult *= 0.98;
+                _pvDefMult = Math.min(_pvDefMult, 1.20);
+                // 監督スキル効果
+                const _pvMse = getManagerSkillEffects();
+                const _pvMgrOff = _pvMse.offMult || 1.0;
+                const _pvMgrDef = _pvMse.defMult || 1.0;
+                const _pvMgrOppOff = _pvMse.oppOffMult || 1.0;
+                const _pvMgrOppDef = _pvMse.oppDefMult || 1.0;
+                // 分析室効果（相手OF/DF低下）
+                const _pvAnalysisLv = gameData.facilities.analysis || 1;
+                const _pvAnalysisMult = 1 - (_pvAnalysisLv * 0.005);
+                // 遠征ボーナス
+                const _pvOuting = gameData.outingNextMatchBonus || {};
+                // 最終値
+                const yourOffense = Math.round(yourOffenseBase * _pvOffMult * mults.offMult * _pvMgrOff + (_pvOuting.of || 0));
+                const yourDefense = Math.round(yourDefenseBase * _pvDefMult * mults.defMult * _pvMgrDef + (_pvOuting.df || 0));
+                const adjOppOffense = Math.round(oppOffense * _pvAnalysisMult * _pvMgrOppOff);
+                const adjOppDefense = Math.round(oppDefense * _pvAnalysisMult * _pvMgrOppDef);
                 document.getElementById('previewYourOffense').textContent = yourOffense;
-                document.getElementById('previewOppOffense').textContent = oppOffense;
+                document.getElementById('previewOppOffense').textContent = adjOppOffense;
                 document.getElementById('previewYourDefense').textContent = yourDefense;
-                document.getElementById('previewOppDefense').textContent = oppDefense;
+                document.getElementById('previewOppDefense').textContent = adjOppDefense;
                 document.getElementById('previewOppLabel').innerHTML = getTeamWithEmblem(opponentName, 18);
-                const maxOff = Math.max(yourOffense, oppOffense, 1);
-                const maxDef = Math.max(yourDefense, oppDefense, 1);
+                const maxOff = Math.max(yourOffense, adjOppOffense, 1);
+                const maxDef = Math.max(yourDefense, adjOppDefense, 1);
                 document.getElementById('previewYourOffenseBar').style.width = (yourOffense / maxOff) * 100 + '%';
-                document.getElementById('previewOppOffenseBar').style.width = (oppOffense / maxOff) * 100 + '%';
+                document.getElementById('previewOppOffenseBar').style.width = (adjOppOffense / maxOff) * 100 + '%';
                 document.getElementById('previewYourDefenseBar').style.width = (yourDefense / maxDef) * 100 + '%';
-                document.getElementById('previewOppDefenseBar').style.width = (oppDefense / maxDef) * 100 + '%';
+                document.getElementById('previewOppDefenseBar').style.width = (adjOppDefense / maxDef) * 100 + '%';
             }
             const _previewOppEl1 = document.getElementById('previewOpponentName');
             _previewOppEl1.innerHTML = getTeamWithEmblem(opponentName, 22);
@@ -9823,31 +9866,60 @@
                 ultra_defend: { offMult: 0.82, defMult: 1.12 },
             };
             const _lineupTp = _lineupTP[gameData.tactics] || _lineupTP['balance'];
-            const _baseOffense = Math.round(getFormationAdjustedOffense(starters) * _lineupTp.offMult);
-            const _baseDefense = Math.round(getFormationAdjustedDefense(starters) * _lineupTp.defMult);
-            // スキルボーナスを戦力表示に反映
+            // ===== 試合計算と同じスキル乗算方式でプレビュー戦力値を計算 =====
             const _hasSkill = (id) => starters.some(p => p.skills && p.skills.includes(id));
-            let _offSkillBonus = 0;
-            if (_hasSkill('sniper')) _offSkillBonus += 0.12;
-            if (_hasSkill('penaltyKing')) _offSkillBonus += 0.08;
-            if (_hasSkill('clutchPlayer')) _offSkillBonus += 0.05;
-            if (_hasSkill('setpieceMaster')) _offSkillBonus += 0.05;
-            if (_hasSkill('vision') && _hasSkill('chanceMaker')) _offSkillBonus += 0.05;
-            if (_hasSkill('headingKing') && _hasSkill('aerial')) _offSkillBonus += 0.05;
-            if (_hasSkill('fantasista')) _offSkillBonus += 0.10;
-            if (_hasSkill('acrobatic')) _offSkillBonus += 0.05;
-            if (_hasSkill('boxPenalty') && starters.some(p => p.position === 'FW')) _offSkillBonus += 0.05;
-            _offSkillBonus = Math.min(0.25, _offSkillBonus);
-            let _defSkillBonus = 0;
-            if (_hasSkill('bigHands')) _defSkillBonus += 0.10;
-            if (_hasSkill('ironWall')) _defSkillBonus += 0.12;
-            if (_hasSkill('headClear')) _defSkillBonus += 0.05;
-            if (_hasSkill('steelGuardian')) _defSkillBonus += 0.20;
-            if (_hasSkill('lastManStanding')) _defSkillBonus += 0.15;
-            _defSkillBonus = Math.min(0.20, _defSkillBonus);
-            // スキルボーナスを能力値スケール（×10）に変換して加算
-            const offenseVal = Math.round(_baseOffense + _offSkillBonus * 10);
-            const defenseVal = Math.round(_baseDefense + _defSkillBonus * 10);
+            // 攻撃スキル乗算（試合計算と同じロジック）
+            let _previewOffMult = 1.0;
+            if (_hasSkill('playmaker')) _previewOffMult *= 1.04;
+            if (_hasSkill('boxToBox')) _previewOffMult *= 1.05;
+            if (_hasSkill('longPass') && starters.filter(p => p.position === 'FW').length >= 2) _previewOffMult *= 1.04;
+            if (_hasSkill('technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) _previewOffMult *= 1.03;
+            if (_hasSkill('aggressive')) _previewOffMult *= 1.05;
+            if (_hasSkill('postPlayer')) {
+                const _mfPassAvg = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
+                _previewOffMult *= (1 + _mfPassAvg * 0.001);
+            }
+            if (_hasSkill('buildUp')) {
+                const _mfPassAvg2 = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
+                _previewOffMult *= (1 + _mfPassAvg2 * 0.0005);
+            }
+            if (_hasSkill('midDominator')) _previewOffMult *= 1.08;
+            if (_hasSkill('maestro')) {
+                const _mfCount = starters.filter(p => p.position === 'MF').length;
+                if (_mfCount > 0) _previewOffMult *= Math.pow(1.05, _mfCount / 4);
+            }
+            if (_hasSkill('libero')) _previewOffMult *= 1.05;
+            if (_hasSkill('falseNine')) _previewOffMult *= 1.06;
+            if (_hasSkill('targetMan') && (_hasSkill('buildUp') || _hasSkill('longPass'))) _previewOffMult *= 1.05;
+            if (_hasSkill('fieldGeneral')) _previewOffMult *= 1.03;
+            _previewOffMult = Math.min(_previewOffMult, 1.20); // 上限クランプ
+            // 守備スキル乗算（試合計算と同じロジック）
+            let _previewDefMult = 1.0;
+            if (_hasSkill('aerial')) _previewDefMult *= 1.05;
+            if (_hasSkill('coaching')) _previewDefMult *= 1.03;
+            if (_hasSkill('boxToBox')) _previewDefMult *= 1.05;
+            if (_hasSkill('deepLine')) _previewDefMult *= 1.03;
+            if (_hasSkill('commander')) {
+                const _dfCoverAvg = starters.filter(p => p.position === 'DF').reduce((s, p) => s + (p.cover || 0), 0) / Math.max(starters.filter(p => p.position === 'DF').length, 1);
+                _previewDefMult *= (1 + _dfCoverAvg * 0.001);
+            }
+            if (_hasSkill('midDominator')) _previewDefMult *= 1.08;
+            if (_hasSkill('falseNine')) _previewDefMult *= 1.06;
+            if (_hasSkill('fieldGeneral')) _previewDefMult *= 1.03;
+            if (_hasSkill('dominantHeader') && _hasSkill('aerial')) _previewDefMult *= 1.05;
+            if (_hasSkill('highPress')) _previewDefMult *= 0.98; // ハイプレスのDF低下
+            _previewDefMult = Math.min(_previewDefMult, 1.20); // 上限クランプ
+            // 監督スキル効果を反映
+            const _previewMse = getManagerSkillEffects();
+            const _previewMgrOff = _previewMse.offMult || 1.0;
+            const _previewMgrDef = _previewMse.defMult || 1.0;
+            // 遠征ボーナスを反映
+            const _previewOuting = gameData.outingNextMatchBonus || {};
+            // 最終的な自クラブOF/DF（作戦補正込み）
+            const _baseOff = getFormationAdjustedOffense(starters);
+            const _baseDef = getFormationAdjustedDefense(starters);
+            const offenseVal = Math.round(_baseOff * _previewOffMult * _lineupTp.offMult * _previewMgrOff + (_previewOuting.of || 0));
+            const defenseVal = Math.round(_baseDef * _previewDefMult * _lineupTp.defMult * _previewMgrDef + (_previewOuting.df || 0));
             // スタメン総合値 = スタメン全員の個人値平均（体調・疲労・負傷補正済み）
             const yourStrength = calculateTeamStrength(starters);
 
