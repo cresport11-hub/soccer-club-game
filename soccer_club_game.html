@@ -11939,12 +11939,11 @@
                 // 40%の確率でB级スキルを1つ
                 if (Math.random() < 0.40) pickSkillForPos(bSkills);
             } else if (category === 'veteran') {
-                // 60%の確率でB级スキルを1つ
-                if (Math.random() < 0.60) pickSkillForPos(bSkills);
-                // さらに20%の確率でA级スキルを1つ
-                if (Math.random() < 0.20) pickSkillForPos(aSkills);
-                // さらに5%の確率でS级スキルを1つ
-                if (Math.random() < 0.05) pickSkillForPos(sSkills);
+                // スキルは最大1個のみ：60%でB、さらに20%でA（Bとは排他）、さらに5%でS（B/Aとは排他）
+                const roll = Math.random();
+                if (roll < 0.05) pickSkillForPos(sSkills);
+                else if (roll < 0.20) pickSkillForPos(aSkills);
+                else if (roll < 0.60) pickSkillForPos(bSkills);
             }
 
             p.salary = calculatePlayerSalary(p);
