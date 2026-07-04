@@ -14897,10 +14897,10 @@
                 const oppPoss = 100 - myPoss;
 
                 // シュート数: 保持率ベースで計算（得点に依存しすぎない自然なスタッツ）
-                // 総シュート数: 22〜32本程度（現実的なレンジ）
+                // 総シュート数: 20〜28本程度（現実的なレンジ）
                 const myGoals = myScore;
                 const oppGoals = oppScore;
-                const totalShots = 22 + Math.floor(Math.random() * 11); // 22〜32本
+                const totalShots = 20 + Math.floor(Math.random() * 9); // 20〜28本
                 // 保持率に応じてシュート数を配分（±2本のランダム揺れ）
                 const rawMyShots = Math.round(totalShots * myPoss / 100 + (Math.random() * 4 - 2));
                 const rawOppShots = totalShots - rawMyShots;
