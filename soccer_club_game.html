@@ -17210,12 +17210,22 @@
                 // pitchAssignment の空きスロットに自動配置
                 if (!gameData.pitchAssignment) gameData.pitchAssignment = {};
                 const _slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
-                const _assignedIds = new Set(Object.values(gameData.pitchAssignment).filter(Boolean));
-                // 選手のメインポジションに一致する空きスロットを探す
-                const _emptySlot = _slots.find(s => {
+                // 選手が配置可能なポジションセット（メイン＋副ポジションをSUB_TO_MAINで変換）
+                const _validPositions = new Set();
+                _validPositions.add(player.position);
+                if (player.subPosition && SUB_TO_MAIN[player.subPosition]) _validPositions.add(SUB_TO_MAIN[player.subPosition]);
+                if (player.subPosition2 && SUB_TO_MAIN[player.subPosition2]) _validPositions.add(SUB_TO_MAIN[player.subPosition2]);
+                // メインポジション一致の空きスロットを優先し、なければ副ポジション一致のスロットも探す
+                let _emptySlot = _slots.find(s => {
                     const slotKey = s.pos + '_' + s.idx;
                     return s.pos === player.position && !gameData.pitchAssignment[slotKey];
                 });
+                if (!_emptySlot) {
+                    _emptySlot = _slots.find(s => {
+                        const slotKey = s.pos + '_' + s.idx;
+                        return _validPositions.has(s.pos) && !gameData.pitchAssignment[slotKey];
+                    });
+                }
                 if (_emptySlot) {
                     gameData.pitchAssignment[_emptySlot.pos + '_' + _emptySlot.idx] = player.id;
                 }
