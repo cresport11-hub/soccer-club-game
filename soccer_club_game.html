@@ -7554,16 +7554,31 @@
                 showNotification('スタメンが11名である必要があります（重症の選手は出場できません）');
                 return;
             }
-            // フォーメーションのポジション数チェック
-            const _fmCup = formations[gameData.formation];
-            if (_fmCup) {
-                const _fwC = starters.filter(p => p.position === 'FW').length;
-                const _mfC = starters.filter(p => p.position === 'MF').length;
-                const _dfC = starters.filter(p => p.position === 'DF').length;
-                const _gkC = starters.filter(p => p.position === 'GK').length;
-                if (_fwC !== _fmCup.fw || _mfC !== _fmCup.mf || _dfC !== _fmCup.df || _gkC !== 1) {
-                    showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
-                    return;
+            // フォーメーションチェック（pitchAssignmentのスロット位置で判定）
+            {
+                const _fmCup = formations[gameData.formation];
+                if (_fmCup) {
+                    const _paCup = gameData.pitchAssignment || {};
+                    const _slotsCup = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
+                    const _slotPosCountCup = { FW: 0, MF: 0, DF: 0, GK: 0 };
+                    const _assignedIdsCup = new Set();
+                    for (const slot of _slotsCup) {
+                        const key = slot.pos + '_' + slot.idx;
+                        const pid = _paCup[key];
+                        if (pid) {
+                            _slotPosCountCup[slot.pos] = (_slotPosCountCup[slot.pos] || 0) + 1;
+                            _assignedIdsCup.add(pid);
+                        }
+                    }
+                    for (const p of starters) {
+                        if (!_assignedIdsCup.has(p.id)) {
+                            _slotPosCountCup[p.position] = (_slotPosCountCup[p.position] || 0) + 1;
+                        }
+                    }
+                    if (_slotPosCountCup.FW !== _fmCup.fw || _slotPosCountCup.MF !== _fmCup.mf || _slotPosCountCup.DF !== _fmCup.df || _slotPosCountCup.GK !== 1) {
+                        showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
+                        return;
+                    }
                 }
             }
             const yourOffenseBase = getFormationAdjustedOffense(starters, gameData.pitchAssignment);
@@ -12557,16 +12572,33 @@
                 return;
             }
 
-            // フォーメーションのポジション数チェック
-            const _fm = formations[gameData.formation];
-            if (_fm) {
-                const _fw = starters.filter(p => p.position === 'FW').length;
-                const _mf = starters.filter(p => p.position === 'MF').length;
-                const _df = starters.filter(p => p.position === 'DF').length;
-                const _gk = starters.filter(p => p.position === 'GK').length;
-                if (_fw !== _fm.fw || _mf !== _fm.mf || _df !== _fm.df || _gk !== 1) {
-                    showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
-                    return;
+            // フォーメーションチェック（pitchAssignmentのスロット位置で判定し、未配置は選手のmemain positionで判定）
+            {
+                const _fm = formations[gameData.formation];
+                if (_fm) {
+                    const _pa = gameData.pitchAssignment || {};
+                    const _slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
+                    // スロット配置済みの選手はスロットのposでカウント
+                    const _slotPosCount = { FW: 0, MF: 0, DF: 0, GK: 0 };
+                    const _assignedIds = new Set();
+                    for (const slot of _slots) {
+                        const key = slot.pos + '_' + slot.idx;
+                        const pid = _pa[key];
+                        if (pid) {
+                            _slotPosCount[slot.pos] = (_slotPosCount[slot.pos] || 0) + 1;
+                            _assignedIds.add(pid);
+                        }
+                    }
+                    // 未配置のスタメンは選手のpositionでカウント
+                    for (const p of starters) {
+                        if (!_assignedIds.has(p.id)) {
+                            _slotPosCount[p.position] = (_slotPosCount[p.position] || 0) + 1;
+                        }
+                    }
+                    if (_slotPosCount.FW !== _fm.fw || _slotPosCount.MF !== _fm.mf || _slotPosCount.DF !== _fm.df || _slotPosCount.GK !== 1) {
+                        showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
+                        return;
+                    }
                 }
             }
             const yourStrength = calculateTeamStrength(starters);
@@ -13238,11 +13270,24 @@
             }
             const _checkFormation = formations[gameData.formation];
             if (_checkFormation) {
-                const _fw = _checkStarters.filter(p => p.position === 'FW').length;
-                const _mf = _checkStarters.filter(p => p.position === 'MF').length;
-                const _df = _checkStarters.filter(p => p.position === 'DF').length;
-                const _gk = _checkStarters.filter(p => p.position === 'GK').length;
-                if (_fw !== _checkFormation.fw || _mf !== _checkFormation.mf || _df !== _checkFormation.df || _gk !== 1) {
+                const _paEx = gameData.pitchAssignment || {};
+                const _slotsEx = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
+                const _slotPosCountEx = { FW: 0, MF: 0, DF: 0, GK: 0 };
+                const _assignedIdsEx = new Set();
+                for (const slot of _slotsEx) {
+                    const key = slot.pos + '_' + slot.idx;
+                    const pid = _paEx[key];
+                    if (pid) {
+                        _slotPosCountEx[slot.pos] = (_slotPosCountEx[slot.pos] || 0) + 1;
+                        _assignedIdsEx.add(pid);
+                    }
+                }
+                for (const p of _checkStarters) {
+                    if (!_assignedIdsEx.has(p.id)) {
+                        _slotPosCountEx[p.position] = (_slotPosCountEx[p.position] || 0) + 1;
+                    }
+                }
+                if (_slotPosCountEx.FW !== _checkFormation.fw || _slotPosCountEx.MF !== _checkFormation.mf || _slotPosCountEx.DF !== _checkFormation.df || _slotPosCountEx.GK !== 1) {
                     showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
                     return;
                 }
@@ -17186,16 +17231,31 @@
                 showNotification('スタメンは11名である必要があります');
                 return;
             }
-            // フォーメーションのポジション数チェック
-            const _fmSave = formations[gameData.formation];
-            if (_fmSave) {
-                const _fwS = starters.filter(p => p.position === 'FW').length;
-                const _mfS = starters.filter(p => p.position === 'MF').length;
-                const _dfS = starters.filter(p => p.position === 'DF').length;
-                const _gkS = starters.filter(p => p.position === 'GK').length;
-                if (_fwS !== _fmSave.fw || _mfS !== _fmSave.mf || _dfS !== _fmSave.df || _gkS !== 1) {
-                    showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
-                    return;
+            // フォーメーションチェック（pitchAssignmentのスロット位置で判定）
+            {
+                const _fmSave = formations[gameData.formation];
+                if (_fmSave) {
+                    const _paSave = gameData.pitchAssignment || {};
+                    const _slotsSave = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
+                    const _slotPosCountSave = { FW: 0, MF: 0, DF: 0, GK: 0 };
+                    const _assignedIdsSave = new Set();
+                    for (const slot of _slotsSave) {
+                        const key = slot.pos + '_' + slot.idx;
+                        const pid = _paSave[key];
+                        if (pid) {
+                            _slotPosCountSave[slot.pos] = (_slotPosCountSave[slot.pos] || 0) + 1;
+                            _assignedIdsSave.add(pid);
+                        }
+                    }
+                    for (const p of starters) {
+                        if (!_assignedIdsSave.has(p.id)) {
+                            _slotPosCountSave[p.position] = (_slotPosCountSave[p.position] || 0) + 1;
+                        }
+                    }
+                    if (_slotPosCountSave.FW !== _fmSave.fw || _slotPosCountSave.MF !== _fmSave.mf || _slotPosCountSave.DF !== _fmSave.df || _slotPosCountSave.GK !== 1) {
+                        showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
+                        return;
+                    }
                 }
             }
             saveGame();
