@@ -13183,7 +13183,7 @@
             checkSeasonEnd();
         }
 
-        // Lv4・Lv8・Lv12達成時にスキルをランダムに1つ習得させる
+        // Lv4達成時にBスキルを確定習得、Lv8達成時に50%の確率でAスキルを習得（Lv12以降は自動習得なし）
         function tryLearnSkill(player) {
             if (player.level !== 4 && player.level !== 8) return null;
             // Lv4習得可能スキル: 効果の小さいBランクのみ（aggressive/deepLineは除外→特訓・Lv8以降で取得）
@@ -17008,7 +17008,7 @@
             }
 
             player.salary = calculatePlayerSalary(player);
-            // スキル習得チェック（Lv4・Lv8・Lv12でランダム習得）
+            // スキル習得チェック（Lv4確定B・Lv8は50%でA習得）
             const manualLearnedSkill = tryLearnSkill(player);
             selectedPlayerDetail = player; // 参照を更新
 
