@@ -17141,12 +17141,33 @@
 
             if (player.starter) {
                 player.starter = false;
+                // pitchAssignment からも除去
+                if (gameData.pitchAssignment) {
+                    for (const k of Object.keys(gameData.pitchAssignment)) {
+                        if (gameData.pitchAssignment[k] === player.id) {
+                            delete gameData.pitchAssignment[k];
+                            break;
+                        }
+                    }
+                }
             } else {
                 if (starters.length >= 11) {
                     showNotification('スタメンは11名までです');
                     return;
                 }
                 player.starter = true;
+                // pitchAssignment の空きスロットに自動配置
+                if (!gameData.pitchAssignment) gameData.pitchAssignment = {};
+                const _slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
+                const _assignedIds = new Set(Object.values(gameData.pitchAssignment).filter(Boolean));
+                // 選手のメインポジションに一致する空きスロットを探す
+                const _emptySlot = _slots.find(s => {
+                    const slotKey = s.pos + '_' + s.idx;
+                    return s.pos === player.position && !gameData.pitchAssignment[slotKey];
+                });
+                if (_emptySlot) {
+                    gameData.pitchAssignment[_emptySlot.pos + '_' + _emptySlot.idx] = player.id;
+                }
             }
 
             saveGame();
