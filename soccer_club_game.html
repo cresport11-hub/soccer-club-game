@@ -13268,30 +13268,6 @@
                 showNotification('スタメンが11名である必要があります（重症の選手は出場できません）');
                 return;
             }
-            const _checkFormation = formations[gameData.formation];
-            if (_checkFormation) {
-                const _paEx = gameData.pitchAssignment || {};
-                const _slotsEx = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
-                const _slotPosCountEx = { FW: 0, MF: 0, DF: 0, GK: 0 };
-                const _assignedIdsEx = new Set();
-                for (const slot of _slotsEx) {
-                    const key = slot.pos + '_' + slot.idx;
-                    const pid = _paEx[key];
-                    if (pid) {
-                        _slotPosCountEx[slot.pos] = (_slotPosCountEx[slot.pos] || 0) + 1;
-                        _assignedIdsEx.add(pid);
-                    }
-                }
-                for (const p of _checkStarters) {
-                    if (!_assignedIdsEx.has(p.id)) {
-                        _slotPosCountEx[p.position] = (_slotPosCountEx[p.position] || 0) + 1;
-                    }
-                }
-                if (_slotPosCountEx.FW !== _checkFormation.fw || _slotPosCountEx.MF !== _checkFormation.mf || _slotPosCountEx.DF !== _checkFormation.df || _slotPosCountEx.GK !== 1) {
-                    showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
-                    return;
-                }
-            }
             matchExecuting = true;
             playBGM('match'); // 試合BGM開始
             // pendingMatchをローカル変数に保存し、即座にnullにして二重実行を防止
