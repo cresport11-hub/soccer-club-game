@@ -7554,14 +7554,17 @@
                 showNotification('スタメンが11名である必要があります（重症の選手は出場できません）');
                 return;
             }
-            // pitchAssignmentベースでスロット充足チェック（割り当て済み選手11人＋GK1人）
-            const pa = gameData.pitchAssignment || {};
-            const slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
-            const assignedIds = new Set(Object.values(pa).filter(Boolean));
-            const gkSlotFilled = slots.filter(s => s.pos === 'GK').every(s => pa[s.pos + '_' + s.idx]);
-            if (assignedIds.size !== slots.length || !gkSlotFilled) {
-                showNotification('フォーメーションの全スロットに選手をセットしてください');
-                return;
+            // フォーメーションのポジション数チェック
+            const _fmCup = formations[gameData.formation];
+            if (_fmCup) {
+                const _fwC = starters.filter(p => p.position === 'FW').length;
+                const _mfC = starters.filter(p => p.position === 'MF').length;
+                const _dfC = starters.filter(p => p.position === 'DF').length;
+                const _gkC = starters.filter(p => p.position === 'GK').length;
+                if (_fwC !== _fmCup.fw || _mfC !== _fmCup.mf || _dfC !== _fmCup.df || _gkC !== 1) {
+                    showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
+                    return;
+                }
             }
             const yourOffenseBase = getFormationAdjustedOffense(starters, gameData.pitchAssignment);
             const yourDefenseBase = getFormationAdjustedDefense(starters, gameData.pitchAssignment);
@@ -12554,14 +12557,17 @@
                 return;
             }
 
-                        // pitchAssignmentベースでスロット充足チェック（割り当て済み選手11人＋GK1人）
-            const pa = gameData.pitchAssignment || {};
-            const slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
-            const assignedIds = new Set(Object.values(pa).filter(Boolean));
-            const gkSlotFilled = slots.filter(s => s.pos === 'GK').every(s => pa[s.pos + '_' + s.idx]);
-            if (assignedIds.size !== slots.length || !gkSlotFilled) {
-                showNotification('フォーメーションの全スロットに選手をセットしてください');
-                return;
+            // フォーメーションのポジション数チェック
+            const _fm = formations[gameData.formation];
+            if (_fm) {
+                const _fw = starters.filter(p => p.position === 'FW').length;
+                const _mf = starters.filter(p => p.position === 'MF').length;
+                const _df = starters.filter(p => p.position === 'DF').length;
+                const _gk = starters.filter(p => p.position === 'GK').length;
+                if (_fw !== _fm.fw || _mf !== _fm.mf || _df !== _fm.df || _gk !== 1) {
+                    showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
+                    return;
+                }
             }
             const yourStrength = calculateTeamStrength(starters);
             const opponentName = currentMatch.opponent;
@@ -17180,14 +17186,17 @@
                 showNotification('スタメンは11名である必要があります');
                 return;
             }
-                        // pitchAssignmentベースでスロット充足チェック（割り当て済み選手11人＋GK1人）
-            const pa = gameData.pitchAssignment || {};
-            const slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
-            const assignedIds = new Set(Object.values(pa).filter(Boolean));
-            const gkSlotFilled = slots.filter(s => s.pos === 'GK').every(s => pa[s.pos + '_' + s.idx]);
-            if (assignedIds.size !== slots.length || !gkSlotFilled) {
-                showNotification('フォーメーションの全スロットに選手をセットしてください');
-                return;
+            // フォーメーションのポジション数チェック
+            const _fmSave = formations[gameData.formation];
+            if (_fmSave) {
+                const _fwS = starters.filter(p => p.position === 'FW').length;
+                const _mfS = starters.filter(p => p.position === 'MF').length;
+                const _dfS = starters.filter(p => p.position === 'DF').length;
+                const _gkS = starters.filter(p => p.position === 'GK').length;
+                if (_fwS !== _fmSave.fw || _mfS !== _fmSave.mf || _dfS !== _fmSave.df || _gkS !== 1) {
+                    showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
+                    return;
+                }
             }
             saveGame();
             showNotification('スタメンを確定しました');
