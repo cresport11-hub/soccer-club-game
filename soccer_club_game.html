@@ -9750,6 +9750,13 @@
             // 現在のスタメン選手IDセット
             const starterIds = new Set(gameData.players.filter(p => p.starter).map(p => p.id));
 
+            // personality未設定の選手に補完（旧セーブデータ対応）
+            gameData.players.forEach(p => {
+                if (!p.personality) {
+                    p.personality = PERSONALITIES[Math.floor(Math.random() * PERSONALITIES.length)].id;
+                }
+            });
+
             // pitchAssignmentの整合性チェック（スタメンでなくなった選手を除去）
             for (const key of Object.keys(gameData.pitchAssignment)) {
                 if (!starterIds.has(gameData.pitchAssignment[key])) {
