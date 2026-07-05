@@ -9818,11 +9818,13 @@
                     // 性格相性アイコン（案B: 能力値の隣）
                     const _pitchStarters = Object.values(gameData.pitchAssignment || {}).map(id => gameData.players.find(p => p.id === id)).filter(Boolean);
                     const compatIcon = getCompatIconHtml(player, _pitchStarters);
+                    const compatHtml = compatIcon ? '<div style="font-size:8px;margin-top:1px;line-height:1;">' + compatIcon + '</div>' : '';
                     el.innerHTML =
                         '<div class="slot-pos" style="color:' + slotPosColor + '">' + slotSubLabel + '</div>' +
                         '<div class="slot-name">' + player.name + '</div>' +
                         playerSubPosHtml +
-                        '<div class="slot-stat">' + statStr + (compatIcon ? ' ' + compatIcon : '') + '</div>' +
+                        '<div class="slot-stat">' + statStr + '</div>' +
+                        compatHtml +
                         '<div style="font-size:7px;color:' + fatigueColor + ';margin-top:1px;">疲' + fatigue + '</div>' +
                         slotCondHtml +
                         slotInjuryHtml +
@@ -14210,11 +14212,13 @@
                     // 性格相性アイコン（案B: 能力値の隣）
                     const _htPitchStarters = Object.values(pa).map(id => gameData.players.find(p => p.id === id)).filter(Boolean);
                     const htCompatIcon = getCompatIconHtml(player, _htPitchStarters);
+                    const htCompatHtml = htCompatIcon ? '<div style="font-size:8px;margin-top:1px;line-height:1;">' + htCompatIcon + '</div>' : '';
                     el.innerHTML =
                         '<div class="slot-pos" style="color:' + slotPosColor + '">' + slotSubLabel + '</div>' +
                         '<div class="slot-name">' + player.name + '</div>' +
                         htPlayerSubPosHtml +
-                        '<div class="slot-stat">' + statStr + (htCompatIcon ? ' ' + htCompatIcon : '') + '</div>' +
+                        '<div class="slot-stat">' + statStr + '</div>' +
+                        htCompatHtml +
                         '<div style="font-size:7px;color:' + fatigueColor + ';margin-top:1px;">疲' + fat + '</div>' +
                         injHtml + injMatchHtml + subbedOutHtml;
                     // 交代済みは選択不可
