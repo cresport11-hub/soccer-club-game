@@ -4714,21 +4714,21 @@
             return { mult, goodPairs, badPairs, details };
         }
 
-        // 個別選手の相性アイコンHTML（案B: 能力値の隣に表示）
+        // 個別選手の相性アイコンHTML（ペア数分だけアイコンを表示）
         // players: スタメン全員、target: 対象選手
         function getCompatIconHtml(target, players) {
             if (!target.personality) return '';
-            let hasGood = false, hasBad = false;
+            let goodCount = 0, badCount = 0;
             for (const other of players) {
                 if (other.id === target.id || !other.personality) continue;
                 const c = getPersonalityCompat(target.personality, other.personality);
-                if (c === 'good') hasGood = true;
-                if (c === 'bad') hasBad = true;
+                if (c === 'good') goodCount++;
+                if (c === 'bad') badCount++;
             }
-            if (!hasGood && !hasBad) return '';
-            if (hasGood && hasBad) return '<span style="font-size:8px;">💚💢</span>';
-            if (hasGood) return '<span style="font-size:8px;">💚</span>';
-            return '<span style="font-size:8px;">💢</span>';
+            if (goodCount === 0 && badCount === 0) return '';
+            const goodIcons = '❤️'.repeat(goodCount);
+            const badIcons = '💢'.repeat(badCount);
+            return '<span style="font-size:8px;">' + goodIcons + badIcons + '</span>';
         }
 
         /* ===== ポジション細分化B 定数・ヘルパー ===== */
