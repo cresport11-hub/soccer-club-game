@@ -15668,8 +15668,22 @@
                     else if (cond >= 3) lines.push(`  👍 <b>${scorerPlayer.name}</b> は好調を維持している。`);
                     // アシスト演出（MFのpassing値に応じた詳細テキスト）
                     // 得点者と同じ選手がアシストにならないよう除外する
+                    // PK・FK・セットプレー系のテンプレートにはアシストテキストを付けない
+                    // goalTypeがセットプレー系やPK系のテンプレートに該当する場合はアシストなし
+                    // 通常ゴールイベントはアシストあり（コーナーキック・PK・セットプレー系は除外）
+                    const _noAssistTemplates = [
+                        'PKを冷静に決める',
+                        'フリーキックを直接決める',
+                        'フリーキックのリバウンド',
+                        'セットプレーのこぼれ球',
+                        'コーナーキックのボールを直接ゴール',
+                        'コーナーキックのボールに高いジャンプ',
+                        'コーナーキックのこぼれ球',
+                    ];
+                    const _goalLineText = lines[lines.length - 1] || '';
+                    const _isNoAssistGoal = _noAssistTemplates.some(t => _goalLineText.includes(t));
                     const assistCandidates = mf.filter(p => p !== scorerPlayer);
-                    if (Math.random() < 0.45 && assistCandidates.length > 0) {
+                    if (!_isNoAssistGoal && Math.random() < 0.45 && assistCandidates.length > 0) {
                         // passing値が高いMFほどアシストしやすい
                         const mfTotalPass = assistCandidates.reduce((s, p) => s + (p.passing || 40), 0);
                         let mfRand = Math.random() * mfTotalPass;
