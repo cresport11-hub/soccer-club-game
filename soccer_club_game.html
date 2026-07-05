@@ -10823,20 +10823,20 @@
             gameData.fameActionsUsed.push(type);
             let icon = '⭐', title = '', effect = '';
             if (type === 'coach') {
-                gameData.players.forEach(p => { p.exp = (p.exp || 0) + 50; });
+                gameData.players.forEach(p => { p.exp = (p.exp || 0) + 100; });
                 icon = '🧑‍🏫'; title = '有名コーチを招聘！';
-                effect = '全選手に経験値+50（即時）';
+                effect = '全選手に経験値+100（即時）';
             } else if (type === 'camp_special') {
                 gameData.players.forEach(p => {
                     p.fatigue = Math.max(0, (p.fatigue || 0) - 30);
-                    p.exp = (p.exp || 0) + 40;
+                    p.exp = (p.exp || 0) + 80;
                 });
                 icon = '🏏'; title = '特別トレーニングキャンプ実施！';
-                effect = '全選手の疲労-30＋経験値+40';
+                effect = '全選手の疲労-30＋経験値+80';
             } else if (type === 'overseas') {
-                gameData.players.forEach(p => { p.exp = (p.exp || 0) + 100; });
+                gameData.players.forEach(p => { p.exp = (p.exp || 0) + 200; });
                 icon = '✈️'; title = '短期海外遠征完了！';
-                effect = '全選手に経験値+100';
+                effect = '全選手に経験値+200';
             } else if (type === 'sponsor_s') {
                 gameData.money += 200000;
                 icon = '💴'; title = '小口スポンサー獲得！';
