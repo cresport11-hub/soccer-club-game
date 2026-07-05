@@ -2993,7 +2993,7 @@
                     <!-- ベテランの注意点 -->
                     <div id="help-veteran" class="card" style="margin-top:16px;">
                         <div class="card-title">⚠️ ベテラン選手の注意点</div>
-                        <p style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:12px;">ベテラン選手（31歳以上）は毎シーズン終了時に<strong style="color:#FF8A65;">加齢による能力値低下</strong>と<strong style="color:#FF8A65;">引退の可能性</strong>が生じます。35歳で確定引退となるため、長期的な戦力計画に注意が必要です。</p>
+                        <p style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:12px;">ベテラン選手（29〜32歳）は31歳以上になると毎シーズン終了時に<strong style="color:#FF8A65;">加齢による能力値低下</strong>と<strong style="color:#FF8A65;">引退の可能性</strong>が生じます。獲得直後から加齢リスクが迫る場合があるため、35歳で確定引退となることも踏まえ、長期的な戦力計画に注意が必要です。</p>
                         <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
                             <tr style="background:rgba(255,255,255,0.08);">
                                 <td style="padding:7px 6px; font-weight:bold; color:#FFD700;">年齢</td>
@@ -3280,9 +3280,9 @@
                         <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 16px;">獲得カテゴリを選ぶとランダム3名の候補選手が表示されます。</div>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
                             <button class="btn btn-primary" onclick="openPlayerModal()" style="background:linear-gradient(135deg,#2E7D32,#1B5E20);">🏫 ユース昇格<br><span style="font-size:10px; opacity:0.8;">16～17歳 / 30,000円</span></button>
-                            <button class="btn btn-primary" onclick="openRecruitPanel('rookie')">🌱 若手獲得<br><span style="font-size:10px; opacity:0.8;">18～20歳 / 100,000円</span></button>
-                            <button class="btn btn-primary" onclick="openRecruitPanel('mid')" style="background:linear-gradient(135deg,#1565C0,#0D47A1);">💪 中堅獲得<br><span style="font-size:10px; opacity:0.8;">23～26歳 / 200,000円</span></button>
-                            <button class="btn btn-primary" onclick="openRecruitPanel('veteran')" style="background:linear-gradient(135deg,#6A1B9A,#4A148C);">⭐ ベテラン獲得<br><span style="font-size:10px; opacity:0.8;">27～30歳 / 150,000円</span></button>
+                            <button class="btn btn-primary" onclick="openRecruitPanel('rookie')">🌱 若手獲得<br><span style="font-size:10px; opacity:0.8;">18～22歳 / 100,000円</span></button>
+                            <button class="btn btn-primary" onclick="openRecruitPanel('mid')" style="background:linear-gradient(135deg,#1565C0,#0D47A1);">💪 中堅獲得<br><span style="font-size:10px; opacity:0.8;">23～28歳 / 200,000円</span></button>
+                            <button class="btn btn-primary" onclick="openRecruitPanel('veteran')" style="background:linear-gradient(135deg,#6A1B9A,#4A148C);">⭐ ベテラン獲得<br><span style="font-size:10px; opacity:0.8;">29～32歳 / 100,000円</span></button>
                         </div>
                         <!-- 名声消費：特別補強交渉 -->
                         <div style="margin-top:16px; background:rgba(255,215,0,0.07); border:1px solid rgba(255,215,0,0.3); border-radius:10px; padding:14px;">
@@ -11870,13 +11870,13 @@
                 const rookieMaxByLeague = { 5: 10, 4: 11, 3: 12, 2: 13, 1: 14, 0: 15 };
                 maxLevelRange = [5, rookieMaxByLeague[gameData.league] || 10]; // 若手: 5〜10(〜15)
             } else if (category === 'mid') {
-                age = Math.floor(Math.random() * 4) + 23; // 23-26
-                abilityBonus = getRandomAbility(-5, 10);   // やや高め
+                age = Math.floor(Math.random() * 6) + 23; // 23-28
+                abilityBonus = getRandomAbility(0, 12);    // 中堅: 最も高い能力値
                 const midMaxByLeague = { 5: 9, 4: 10, 3: 11, 2: 12, 1: 13, 0: 14 };
                 maxLevelRange = [4, midMaxByLeague[gameData.league] || 9]; // 中堅: 4〜9(〜14)
             } else { // veteran
-                age = Math.floor(Math.random() * 4) + 27; // 27-30
-                abilityBonus = getRandomAbility(-3, 10);   // 中堅に近い能力値
+                age = Math.floor(Math.random() * 4) + 29; // 29-32
+                abilityBonus = getRandomAbility(-5, 8);    // ベテラン: 中堅より低め
                 const vetMaxByLeague = { 5: 7, 4: 8, 3: 9, 2: 10, 1: 11, 0: 12 };
                 maxLevelRange = [3, vetMaxByLeague[gameData.league] || 7]; // ベテラン: 3〜7(〜12)
             }
@@ -11955,14 +11955,14 @@
                 if (Math.random() < bChance) pickSkillForPos(bSkills);
                 if (Math.random() < aChance) pickSkillForPos(aSkills);
             } else if (category === 'mid') {
-                // 40%の確率でB级スキルを1つ
-                if (Math.random() < 0.40) pickSkillForPos(bSkills);
+                // 50%の確率でBスキルを1つ（年齢が上がるほどスキル持ちの可能性が高い）
+                if (Math.random() < 0.50) pickSkillForPos(bSkills);
             } else if (category === 'veteran') {
-                // スキルは最大1個のみ：60%でB、さらに20%でA（Bとは排他）、さらに5%でS（B/Aとは排他）
+                // スキルは最大1個のみ：5%でS / 25%でA / 40%でB（排他）
                 const roll = Math.random();
                 if (roll < 0.05) pickSkillForPos(sSkills);
-                else if (roll < 0.20) pickSkillForPos(aSkills);
-                else if (roll < 0.60) pickSkillForPos(bSkills);
+                else if (roll < 0.30) pickSkillForPos(aSkills);
+                else if (roll < 0.70) pickSkillForPos(bSkills);
             }
 
             p.salary = calculatePlayerSalary(p);
@@ -11977,8 +11977,8 @@
                 showNotification('選手数が上限（32名）に達しています');
                 return;
             }
-            const costs = { rookie: 100000, mid: 200000, veteran: 150000 };
-            const labels = { rookie: '🌱 若手選手獲得（18〜20歳 / 100,000円）', mid: '💪 中堅選手獲得（23〜26歳 / 200,000円）', veteran: '⭐ ベテラン選手獲得（27〜30歳 / 150,000円）' };
+            const costs = { rookie: 100000, mid: 200000, veteran: 100000 };
+            const labels = { rookie: '🌱 若手選手獲得（18〜22歳 / 100,000円）', mid: '💪 中堅選手獲得（23〜28歳 / 200,000円）', veteran: '⭐ ベテラン選手獲得（29〜32歳 / 100,000円）' };
 
             if (gameData.money < costs[category]) {
                 showNotification('資金が不足しています（必要: ' + formatNumber(costs[category]) + '円）');
@@ -12047,7 +12047,7 @@
                 showNotification('選手数が上限（32名）に達しています');
                 return;
             }
-            const costs = { rookie: 100000, mid: 200000, veteran: 150000 };
+            const costs = { rookie: 100000, mid: 200000, veteran: 100000 };
             const cost = costs[currentRecruitCategory];
             if (gameData.money < cost) {
                 showNotification('資金が不足しています');
