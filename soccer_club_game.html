@@ -4689,13 +4689,42 @@
             return null;
         }
 
-        // スタメン全員の相性ボーナス合計を計算（+5%/-5%×ペア数）
+        // ピッチ上の2スロットが隣接しているか判定（座標距離ベース）
+        // PITCH_SLOTSの座標を使い、距離30以内を隣接とみなす
+        const COMPAT_ADJACENT_THRESHOLD = 30;
+        function getSlotCoord(formKey, slotKey) {
+            const slots = PITCH_SLOTS && PITCH_SLOTS[formKey];
+            if (!slots) return null;
+            const [pos, idx] = slotKey.split('_');
+            const slot = slots.find(s => s.pos === pos && s.idx === Number(idx));
+            return slot ? { x: slot.x, y: slot.y } : null;
+        }
+        function isAdjacentSlot(formKey, slotKeyA, slotKeyB) {
+            const a = getSlotCoord(formKey, slotKeyA);
+            const b = getSlotCoord(formKey, slotKeyB);
+            if (!a || !b) return false;
+            const dx = a.x - b.x, dy = a.y - b.y;
+            return Math.sqrt(dx * dx + dy * dy) <= COMPAT_ADJACENT_THRESHOLD;
+        }
+
+        // スタメン全員の相性ボーナス合計を計算（隣接ペアのみ対象）
         // 戻り値: { mult: 乗数, goodPairs: ペア数, badPairs: ペア数, details: [{a,b,type}] }
         function calcCompatBonus(players) {
+            const formKey = (gameData && gameData.formation) || '4-4-2';
+            // playerId → slotKey のマップを作成
+            const idToSlot = {};
+            if (gameData && gameData.pitchAssignment) {
+                for (const [sk, pid] of Object.entries(gameData.pitchAssignment)) {
+                    idToSlot[pid] = sk;
+                }
+            }
             let goodPairs = 0, badPairs = 0;
             const details = [];
             for (let i = 0; i < players.length; i++) {
                 for (let j = i + 1; j < players.length; j++) {
+                    const skA = idToSlot[players[i].id];
+                    const skB = idToSlot[players[j].id];
+                    if (!skA || !skB || !isAdjacentSlot(formKey, skA, skB)) continue;
                     const pA = players[i].personality;
                     const pB = players[j].personality;
                     const c = getPersonalityCompat(pA, pB);
@@ -4714,13 +4743,24 @@
             return { mult, goodPairs, badPairs, details };
         }
 
-        // 個別選手の相性アイコンHTML（ペア数分だけアイコンを表示）
-        // players: スタメン全員、target: 対象選手
-        function getCompatIconHtml(target, players) {
+        // 個別選手の相性アイコンHTML（隣接スロットのペア数分だけアイコンを表示）
+        // players: スタメン全員、target: 対象選手、slotKey: 対象選手のスロットキー
+        function getCompatIconHtml(target, players, slotKey) {
             if (!target.personality) return '';
+            const formKey = (gameData && gameData.formation) || '4-4-2';
+            // playerId → slotKey のマップ
+            const idToSlot = {};
+            if (gameData && gameData.pitchAssignment) {
+                for (const [sk, pid] of Object.entries(gameData.pitchAssignment)) {
+                    idToSlot[pid] = sk;
+                }
+            }
+            const mySlot = slotKey || idToSlot[target.id];
             let goodCount = 0, badCount = 0;
             for (const other of players) {
                 if (other.id === target.id || !other.personality) continue;
+                const otherSlot = idToSlot[other.id];
+                if (!mySlot || !otherSlot || !isAdjacentSlot(formKey, mySlot, otherSlot)) continue;
                 const c = getPersonalityCompat(target.personality, other.personality);
                 if (c === 'good') goodCount++;
                 if (c === 'bad') badCount++;
@@ -9822,9 +9862,9 @@
                     const playerSubPosColor = SUB_POS_COLOR[playerSubPos] || '#fff';
                     const playerSubPosHtml = '<div style="font-size:7px;font-weight:700;color:' + playerSubPosColor + ';margin-top:1px;">' +
                         playerSubPos + (playerSubPos2 ? '<span style="opacity:0.65;">/'+playerSubPos2+'</span>' : '') + '</div>';
-                    // 性格相性アイコン（案B: 能力値の隣）
+                    // 性格相性アイコン（隣接スロットのみ対象）
                     const _pitchStarters = Object.values(gameData.pitchAssignment || {}).map(id => gameData.players.find(p => p.id === id)).filter(Boolean);
-                    const compatIcon = getCompatIconHtml(player, _pitchStarters);
+                    const compatIcon = getCompatIconHtml(player, _pitchStarters, slotKey);
                     const compatHtml = compatIcon ? '<div style="font-size:8px;margin-top:1px;line-height:1;">' + compatIcon + '</div>' : '';
                     el.innerHTML =
                         '<div class="slot-pos" style="color:' + slotPosColor + '">' + slotSubLabel + '</div>' +
@@ -14216,9 +14256,9 @@
                     const htPlayerSubPosColor = SUB_POS_COLOR[htPlayerSubPos] || '#fff';
                     const htPlayerSubPosHtml = '<div style="font-size:7px;font-weight:700;color:' + htPlayerSubPosColor + ';margin-top:1px;">' +
                         htPlayerSubPos + (htPlayerSubPos2 ? '<span style="opacity:0.65;">/'+htPlayerSubPos2+'</span>' : '') + '</div>';
-                    // 性格相性アイコン（案B: 能力値の隣）
+                    // 性格相性アイコン（隣接スロットのみ対象）
                     const _htPitchStarters = Object.values(pa).map(id => gameData.players.find(p => p.id === id)).filter(Boolean);
-                    const htCompatIcon = getCompatIconHtml(player, _htPitchStarters);
+                    const htCompatIcon = getCompatIconHtml(player, _htPitchStarters, slotKey);
                     const htCompatHtml = htCompatIcon ? '<div style="font-size:8px;margin-top:1px;line-height:1;">' + htCompatIcon + '</div>' : '';
                     el.innerHTML =
                         '<div class="slot-pos" style="color:' + slotPosColor + '">' + slotSubLabel + '</div>' +
