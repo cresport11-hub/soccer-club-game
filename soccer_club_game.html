@@ -16943,7 +16943,7 @@
             if (skillArea) {
                 const skills = player.skills || [];
                 if (skills.length === 0) {
-                    skillArea.innerHTML = '<div style="color: rgba(255,255,255,0.5); font-size: 12px;">Lv4でBスキル確定・Lv8でAスキル50%習得</div>';
+                    skillArea.innerHTML = '<div style="color: rgba(255,255,255,0.5); font-size: 12px;">Lv4で60%の確率でBスキル習得・Lv8で50%の確率でAスキル習得</div>';
                 } else {
                     skillArea.innerHTML = skills.map(id => {
                         const sk = SKILLS[id];
