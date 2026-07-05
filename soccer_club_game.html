@@ -9060,18 +9060,18 @@
             if (type === 'physical') {
                 gameData.players.forEach(p => {
                     p.fatigue = Math.max(0, (p.fatigue || 0) - 20);
-                    p.exp = (p.exp || 0) + 20;
+                    p.exp = (p.exp || 0) + 10;
                     checkAndLevelUp(p).forEach(m => campLvUpMsgs.push(m));
                 });
                 icon = '🏃'; title = '全体フィジカル練習完了！';
-                effect = '全選手の疲労-20、経験値+20';
+                effect = '全選手の疲労-20、経験値+10';
             } else if (type === 'tactics') {
                 gameData.players.forEach(p => {
-                    p.exp = (p.exp || 0) + 40;
+                    p.exp = (p.exp || 0) + 20;
                     checkAndLevelUp(p).forEach(m => campLvUpMsgs.push(m));
                 });
                 icon = '⚽'; title = '全体戦術練習完了！';
-                effect = '全選手に経験値+40';
+                effect = '全選手に経験値+20';
             } else if (type === 'mf') {
                 const mfs = gameData.players.filter(p => p.position === 'MF');
                 if (mfs.length === 0) { showNotification('MFの選手がいません。'); return; }
@@ -10559,7 +10559,7 @@
             { id:'o61', rarity:1, icon:'🏋️', title:'いつものトレーニング',
               desc:'ジムで黙々とトレーニングをこなした。地道な努力が実を結ぶ。',
               type:'instant',
-              effect: () => { const p = gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.exp=(p.exp||0)+15; return p.name+'の経験値+15'; } return '変化なし'; } },
+              effect: () => { const p = gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.exp=(p.exp||0)+8; return p.name+'の経験値+8'; } return '変化なし'; } },
             { id:'o62', rarity:1, icon:'😓', title:'オーバートレーニング',
               desc:'張り切りすぎてしまい、選手が疲弊した。翌節に響きそうだ。',
               type:'instant',
@@ -10579,7 +10579,7 @@
               choices: [
                 { label:'全力でこなす', effect: () => {
                     const p=gameData.players[Math.floor(Math.random()*gameData.players.length)];
-                    if(p){ p.exp=(p.exp||0)+25; p.fatigue=Math.min(100,(p.fatigue||0)+10); return p.name+'の経験値+25・疲労+10'; }
+                    if(p){ p.exp=(p.exp||0)+12; p.fatigue=Math.min(100,(p.fatigue||0)+10); return p.name+'の経験値+12・疲労+10'; }
                     return '変化なし';
                   } },
                 { label:'軽めにする', effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-5); }); return '全選手の疲労-5'; } }
@@ -10596,7 +10596,7 @@
             { id:'o66', rarity:3, icon:'🏆', title:'元オリンピック選手と合同トレーニング',
               desc:'元オリンピック選手がジムに来ており、特別に合同トレーニングを行えた。',
               type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+30; }); return '全選手の経験値+30'; } },
+              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+15; }); return '全選手の経験値+15'; } },
             { id:'o67', rarity:2, icon:'🤸', title:'有名トレーナーに出会った',
               desc:'ジムで著名なフィジカルトレーナーと知り合いになった。',
               type:'choice',
@@ -10604,8 +10604,8 @@
                 { label:'指導を仰ぐ（5万円）', effect: () => {
                     if(gameData.money < 50000){ return '資金不足で断念した'; }
                     gameData.money -= 50000;
-                    gameData.players.forEach(p=>{ p.exp=(p.exp||0)+20; });
-                    return '資金-50,000円・全選手の経験値+20';
+                    gameData.players.forEach(p=>{ p.exp=(p.exp||0)+10; });
+                    return '資金-50,000円・全選手の経験値+10';
                   } },
                 { label:'名刺交換だけ', effect: () => { gameData.fame=Math.min(999,gameData.fame+3); return '名声+3'; } }
               ] },
@@ -10669,8 +10669,8 @@
               type:'choice',
               choices: [
                 { label:'夜遅くまで盛り上がる', effect: () => {
-                    gameData.players.forEach(p=>{ p.exp=(p.exp||0)+10; p.fatigue=Math.min(100,(p.fatigue||0)+8); });
-                    return '全選手の経験値+10・疲労+8（寝不足）';
+                    gameData.players.forEach(p=>{ p.exp=(p.exp||0)+5; p.fatigue=Math.min(100,(p.fatigue||0)+8); });
+                    return '全選手の経験値+5・疲労+8（寝不足）';
                   } },
                 { label:'早めに就寝する', effect: () => {
                     gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-5); });
@@ -10690,7 +10690,7 @@
             { id:'o79', rarity:2, icon:'🎤', title:'カラオケ大会で盛り上がった',
               desc:'選手たちとカラオケで大盛り上がり。チームの結束力が高まった。',
               type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+12; p.fatigue=Math.max(0,(p.fatigue||0)-6); }); return '全選手の経験値+12・疲労-6'; } },
+              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+6; p.fatigue=Math.max(0,(p.fatigue||0)-6); }); return '全選手の経験値+6・疲労-6'; } },
             { id:'o80', rarity:2, icon:'🌃', title:'有名人と偶然出会った',
               desc:'夜の街で著名人と偶然出会い、一緒に写真を撮った。SNSで話題に。',
               type:'instant',
@@ -10699,7 +10699,7 @@
               desc:'ゲームセンターで選手たちが白熱した対戦を繰り広げた。',
               type:'choice',
               choices: [
-                { label:'真剣勝負', effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){p.exp=(p.exp||0)+25;} return (p?p.name:'選手')+'の経験値+25（集中力アップ）'; } },
+                { label:'真剣勝負', effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){p.exp=(p.exp||0)+12;} return (p?p.name:'選手')+'の経験値+12（集中力アップ）'; } },
                 { label:'みんなで楽しむ', effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-6); }); return '全選手の疲労-6'; } }
               ] },
             { id:'o82', rarity:3, icon:'🥂', title:'スポンサーのパーティーに招待された',
@@ -10823,20 +10823,20 @@
             gameData.fameActionsUsed.push(type);
             let icon = '⭐', title = '', effect = '';
             if (type === 'coach') {
-                gameData.players.forEach(p => { p.exp = (p.exp || 0) + 100; });
+                gameData.players.forEach(p => { p.exp = (p.exp || 0) + 50; });
                 icon = '🧑‍🏫'; title = '有名コーチを招聘！';
-                effect = '全選手に経験値+100（即時）';
+                effect = '全選手に経験値+50（即時）';
             } else if (type === 'camp_special') {
                 gameData.players.forEach(p => {
                     p.fatigue = Math.max(0, (p.fatigue || 0) - 30);
-                    p.exp = (p.exp || 0) + 80;
+                    p.exp = (p.exp || 0) + 40;
                 });
                 icon = '🏏'; title = '特別トレーニングキャンプ実施！';
-                effect = '全選手の疲労-30＋経験値+80';
+                effect = '全選手の疲労-30＋経験値+40';
             } else if (type === 'overseas') {
-                gameData.players.forEach(p => { p.exp = (p.exp || 0) + 200; });
+                gameData.players.forEach(p => { p.exp = (p.exp || 0) + 100; });
                 icon = '✈️'; title = '短期海外遠征完了！';
-                effect = '全選手に経験値+200';
+                effect = '全選手に経験値+100';
             } else if (type === 'sponsor_s') {
                 gameData.money += 200000;
                 icon = '💴'; title = '小口スポンサー獲得！';
@@ -12851,9 +12851,9 @@
                 icon: '🏥',
                 name: '怪我見舞いで団結！',
                 desc: '怪我人が発生したが、全員で病院に見舞いに行った。\nチームの団結が高まり、全員の気持ちが一つになった！',
-                effectText: '全選手に経験値 +50',
+                effectText: '全選手に経験値 +25',
                 apply(gd) {
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 50; });
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 25; });
                 }
             },
             {
@@ -12861,9 +12861,9 @@
                 icon: '⛺',
                 name: '特別合宿で成長！',
                 desc: 'クラブが特別合宿を実施。ハードなトレーニングで\n全員の技術が磨かれた！',
-                effectText: '全選手に経験値 +80',
+                effectText: '全選手に経験値 +40',
                 apply(gd) {
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 80; });
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 40; });
                 }
             },
             {
@@ -12871,12 +12871,12 @@
                 icon: '⭐',
                 name: '若手の覚醒！',
                 desc: 'チームで最も若い選手が突然覚醒。\nその成長が周囲に良い影響を与えた！',
-                effectText: '最年少選手に経験値 +150、全員に経験値 +30',
+                effectText: '最年少選手に経験値 +75、全員に経験値 +15',
                 apply(gd) {
                     if (gd.players.length === 0) return;
                     const youngest = gd.players.reduce((a, b) => a.age < b.age ? a : b);
-                    youngest.exp = (youngest.exp||0) + 150;
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 30; });
+                    youngest.exp = (youngest.exp||0) + 75;
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 15; });
                 }
             },
             {
@@ -12884,10 +12884,10 @@
                 icon: '🎓',
                 name: 'ベテランの特別講義',
                 desc: 'クラブのベテラン選手が若手に向けて\n特別講義を開いた。若手陣の成長が加速する！',
-                effectText: '25歳以下の選手全員に経験値 +100',
+                effectText: '25歳以下の選手全員に経験値 +50',
                 condition(gd) { return gd.players.some(p => p.age >= 30); },
                 apply(gd) {
-                    gd.players.filter(p => p.age <= 25).forEach(p => { p.exp = (p.exp||0) + 100; });
+                    gd.players.filter(p => p.age <= 25).forEach(p => { p.exp = (p.exp||0) + 50; });
                 }
             },
             {
@@ -12895,9 +12895,9 @@
                 icon: '🎥',
                 name: '徹底的なビデオ分析！',
                 desc: 'コーチ陣が試合映像を徹底的に分析。\n全員が自分の課題を発見し、技術向上につながった！',
-                effectText: '全選手に経験値 +60',
+                effectText: '全選手に経験値 +30',
                 apply(gd) {
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 60; });
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 30; });
                 }
             },
             {
@@ -12905,9 +12905,9 @@
                 icon: '👥',
                 name: 'サポーターからの激励',
                 desc: 'サポーターからの激励メッセージが届いた。\n選手たちのモチベーションが一気に上がった！',
-                effectText: '全選手に経験値 +40、名声 +5',
+                effectText: '全選手に経験値 +20、名声 +5',
                 apply(gd) {
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 40; });
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 20; });
                     gd.fame = (gd.fame||0) + 5;
                 }
             },
@@ -13017,9 +13017,9 @@
                 icon: '🔭',
                 name: 'ライバルチームを研究！',
                 desc: 'コーチ陣がライバルチームの試合を徹底研究。\n戦術理解が深まり、全員の技術が向上した！',
-                effectText: '全選手に経験値 +70',
+                effectText: '全選手に経験値 +35',
                 apply(gd) {
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 70; });
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 35; });
                 }
             },
             {
@@ -13027,9 +13027,9 @@
                 icon: '✈️',
                 name: '海外コーチが特別指導！',
                 desc: '海外から招いた名コーチが特別トレーニングを実施。\n選手たちの意識が大きく変わった！',
-                effectText: '全選手に経験値 +100',
+                effectText: '全選手に経験値 +50',
                 apply(gd) {
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 100; });
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 50; });
                 }
             },
             {
@@ -13037,9 +13037,9 @@
                 icon: '⚡',
                 name: 'FWが覚醒！',
                 desc: 'フォワード陣が突然の覚醒を見せた。\n得点感覚が研ぎ澄まされ、シュート精度が上がった！',
-                effectText: 'FW全員に経験値 +120',
+                effectText: 'FW全員に経験値 +60',
                 apply(gd) {
-                    gd.players.filter(p => p.position === 'FW').forEach(p => { p.exp = (p.exp||0) + 120; });
+                    gd.players.filter(p => p.position === 'FW').forEach(p => { p.exp = (p.exp||0) + 60; });
                 }
             },
             {
@@ -13047,9 +13047,9 @@
                 icon: '🧤',
                 name: 'GK専門トレーニング！',
                 desc: 'GK専門コーチによる集中トレーニングが実施された。\nゴールキーパーの反応速度が格段に上がった！',
-                effectText: 'GK全員に経験値 +150',
+                effectText: 'GK全員に経験値 +75',
                 apply(gd) {
-                    gd.players.filter(p => p.position === 'GK').forEach(p => { p.exp = (p.exp||0) + 150; });
+                    gd.players.filter(p => p.position === 'GK').forEach(p => { p.exp = (p.exp||0) + 75; });
                 }
             },
             {
@@ -13057,10 +13057,10 @@
                 icon: '🍽️',
                 name: 'チームディナーで絆が深まる！',
                 desc: '監督が全員を食事に招待。\n楽しい時間を共にして、チームの絆が一層強まった！',
-                effectText: '全選手に経験値 +45、疲労 -10',
+                effectText: '全選手に経験値 +22、疲労 -10',
                 apply(gd) {
                     gd.players.forEach(p => {
-                        p.exp = (p.exp||0) + 45;
+                        p.exp = (p.exp||0) + 22;
                         p.fatigue = Math.max(0, (p.fatigue||0) - 10);
                     });
                 }
@@ -13132,11 +13132,11 @@
                 icon: '🧘',
                 name: 'ヨガセッションで回復！',
                 desc: 'クラブがヨガ専門家を招いてセッションを実施。\n心身のバランスが整い、疲労が和らいだ！',
-                effectText: '全選手の疲労 -12、経験値 +20',
+                effectText: '全選手の疲労 -12、経験値 +10',
                 apply(gd) {
                     gd.players.forEach(p => {
                         p.fatigue = Math.max(0, (p.fatigue||0) - 12);
-                        p.exp = (p.exp||0) + 20;
+                        p.exp = (p.exp||0) + 10;
                     });
                 }
             },
@@ -13179,7 +13179,7 @@
                         target.injured = false;
                         target.injuryWeeks = 0;
                     }
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 30; });
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 15; });
                 }
             },
             {
@@ -13226,12 +13226,14 @@
         // Lv4達成時にBスキルを確定習得、Lv8達成時に50%の確率でAスキルを習得（Lv12以降は自動習得なし）
         function tryLearnSkill(player) {
             if (player.level !== 4 && player.level !== 8) return null;
-            // Lv4習得可能スキル: 効果の小さいBランクのみ（aggressive/deepLineは除外→特訓・Lv8以降で取得）
-            const bSkills = ['dribbler','shooter','chanceMaker','passer','tackleMaster','resilience','steelBody',
-                             'homeStar','longShooter','headingKing','goalRush',
-                             'vision','highPress','technician','longPass','engine','turnover',
-                             'blocker','covering','longBallKiller','offsideTrap',
-                             'distribution','mentalStrength','cleanPlayer','recoveryRun','adaptability','superSub'];
+            // Lv4習得可能スキル: 全Bランク（aggressive/deepLine含む）
+            const bSkills = ['dribbler','shooter','speedster','chanceMaker','passer','tackleMaster','resilience','steelBody',
+                             'homeStar','longShooter','wingAttacker','headingKing','goalRush',
+                             'deepLine','vision','highPress','technician','longPass','engine','turnover',
+                             'buildUp','blocker','covering','longBallKiller','offsideTrap',
+                             'distribution','mentalStrength','cleanPlayer','aggressive','acrobatic',
+                             'pressureResist','tireless','interceptor','defensiveWall','recoveryRun',
+                             'rushGK','adaptability','superSub','postPlayer'];
             const aSkills = ['playmaker','pressMaster','aerial','coaching','bigHands','reflexes','goalHunter','lineControl',
                              'penaltyKing','goalGetter','clutchPlayer','firstTouch',
                              'boxToBox','gameController','setpieceMaster','coverShadow',
@@ -13245,9 +13247,9 @@
                              'midDominator','fantasista','maestro',
                              'steelGuardian','stopper','libero',
                              'falseNine','fieldGeneral','lastManStanding','clutchSave'];
-            // Lv4: Bランク確定 / Lv8: Aランク50%（Lv12以降は特訓・補強でのみ取得）
+            // Lv4: Bランク60%で習得 / Lv8: Aランク50%（Lv12以降は特訓・補強でのみ取得）
             let pool;
-            if (player.level === 4)      pool = bSkills;
+            if (player.level === 4)      { if (Math.random() >= 0.6) return null; pool = bSkills; }
             else if (player.level === 8) { if (Math.random() >= 0.5) return null; pool = aSkills; }
             const valid = pool.filter(id => SKILLS[id] && SKILLS[id].pos.includes(player.position) && !(player.skills || []).includes(id));
             if (valid.length === 0) return null;
