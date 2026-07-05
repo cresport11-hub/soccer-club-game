@@ -3472,9 +3472,9 @@
             <!-- オフェンス力・ディフェンス力 比較テーブル -->
             <div style="margin: 12px 0 16px;">
                 <div style="font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 600; margin-bottom: 8px; text-align: center; letter-spacing: 0.05em;">能力比較</div>
-                <!-- オフェンス力 -->
+                <!-- 自OF vs 相手DF -->
                 <div style="margin-bottom: 10px;">
-                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; margin-bottom: 4px;">⚔️ オフェンス力</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; margin-bottom: 4px;">⚔️ 自オフェンス vs 相手ディフェンス</div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 13px; font-weight: 900; color: #ff8a65; min-width: 28px; text-align: right;" id="previewYourOffense">-</span>
                         <div style="flex: 1; position: relative; height: 14px; background: rgba(0,0,0,0.3); border-radius: 7px; overflow: hidden;">
@@ -3482,14 +3482,14 @@
                         </div>
                         <div style="width: 2px; height: 14px; background: rgba(255,255,255,0.3); border-radius: 1px; flex-shrink: 0;"></div>
                         <div style="flex: 1; position: relative; height: 14px; background: rgba(0,0,0,0.3); border-radius: 7px; overflow: hidden;">
-                            <div id="previewOppOffenseBar" style="position: absolute; right: 0; top: 0; height: 100%; background: linear-gradient(270deg, #ff5722, #ff8a65); border-radius: 7px; transition: width 0.3s; width: 0%;"></div>
+                            <div id="previewOppDefenseBar" style="position: absolute; right: 0; top: 0; height: 100%; background: linear-gradient(270deg, #1565c0, #64b5f6); border-radius: 7px; transition: width 0.3s; width: 0%;"></div>
                         </div>
-                        <span style="font-size: 13px; font-weight: 900; color: #ff8a65; min-width: 28px; text-align: left;" id="previewOppOffense">-</span>
+                        <span style="font-size: 13px; font-weight: 900; color: #64b5f6; min-width: 28px; text-align: left;" id="previewOppDefense">-</span>
                     </div>
                 </div>
-                <!-- ディフェンス力 -->
+                <!-- 自DF vs 相手OF -->
                 <div>
-                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; margin-bottom: 4px;">🛡️ ディフェンス力</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; margin-bottom: 4px;">🛡️ 自ディフェンス vs 相手オフェンス</div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 13px; font-weight: 900; color: #64b5f6; min-width: 28px; text-align: right;" id="previewYourDefense">-</span>
                         <div style="flex: 1; position: relative; height: 14px; background: rgba(0,0,0,0.3); border-radius: 7px; overflow: hidden;">
@@ -3497,9 +3497,9 @@
                         </div>
                         <div style="width: 2px; height: 14px; background: rgba(255,255,255,0.3); border-radius: 1px; flex-shrink: 0;"></div>
                         <div style="flex: 1; position: relative; height: 14px; background: rgba(0,0,0,0.3); border-radius: 7px; overflow: hidden;">
-                            <div id="previewOppDefenseBar" style="position: absolute; right: 0; top: 0; height: 100%; background: linear-gradient(270deg, #1565c0, #64b5f6); border-radius: 7px; transition: width 0.3s; width: 0%;"></div>
+                            <div id="previewOppOffenseBar" style="position: absolute; right: 0; top: 0; height: 100%; background: linear-gradient(270deg, #ff5722, #ff8a65); border-radius: 7px; transition: width 0.3s; width: 0%;"></div>
                         </div>
-                        <span style="font-size: 13px; font-weight: 900; color: #64b5f6; min-width: 28px; text-align: left;" id="previewOppDefense">-</span>
+                        <span style="font-size: 13px; font-weight: 900; color: #ff8a65; min-width: 28px; text-align: left;" id="previewOppOffense">-</span>
                     </div>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 8px; padding: 0 36px;">
@@ -3692,9 +3692,9 @@
             <!-- 能力比較 -->
             <div id="halftimePowerCompare" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; margin-bottom:12px;">
                 <div style="font-size:11px; color:rgba(255,255,255,0.5); font-weight:bold; margin-bottom:8px; text-align:center; letter-spacing:0.05em;">⚖️ 能力比較</div>
-                <!-- オフェンス力 -->
+                <!-- 自OF vs 相手DF -->
                 <div style="margin-bottom:10px;">
-                    <div style="font-size:11px; color:rgba(255,255,255,0.6); font-weight:600; margin-bottom:4px;">⚔️ オフェンス力</div>
+                    <div style="font-size:11px; color:rgba(255,255,255,0.6); font-weight:600; margin-bottom:4px;">⚔️ 自オフェンス vs 相手ディフェンス</div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span style="font-size:13px; font-weight:900; color:#ff8a65; min-width:32px; text-align:right;" id="htYourOffense">-</span>
                         <div style="flex:1; position:relative; height:14px; background:rgba(0,0,0,0.3); border-radius:7px; overflow:hidden;">
@@ -3702,14 +3702,14 @@
                         </div>
                         <div style="width:2px; height:14px; background:rgba(255,255,255,0.3); border-radius:1px; flex-shrink:0;"></div>
                         <div style="flex:1; position:relative; height:14px; background:rgba(0,0,0,0.3); border-radius:7px; overflow:hidden;">
-                            <div id="htOppOffenseBar" style="position:absolute; right:0; top:0; height:100%; background:linear-gradient(270deg,#ff5722,#ff8a65); border-radius:7px; transition:width 0.4s; width:0%;"></div>
+                            <div id="htOppDefenseBar" style="position:absolute; right:0; top:0; height:100%; background:linear-gradient(270deg,#1565c0,#64b5f6); border-radius:7px; transition:width 0.4s; width:0%;"></div>
                         </div>
-                        <span style="font-size:13px; font-weight:900; color:#ff8a65; min-width:32px; text-align:left;" id="htOppOffense">-</span>
+                        <span style="font-size:13px; font-weight:900; color:#64b5f6; min-width:32px; text-align:left;" id="htOppDefense">-</span>
                     </div>
                 </div>
-                <!-- ディフェンス力 -->
+                <!-- 自DF vs 相手OF -->
                 <div>
-                    <div style="font-size:11px; color:rgba(255,255,255,0.6); font-weight:600; margin-bottom:4px;">🛡️ ディフェンス力</div>
+                    <div style="font-size:11px; color:rgba(255,255,255,0.6); font-weight:600; margin-bottom:4px;">🛡️ 自ディフェンス vs 相手オフェンス</div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span style="font-size:13px; font-weight:900; color:#64b5f6; min-width:32px; text-align:right;" id="htYourDefense">-</span>
                         <div style="flex:1; position:relative; height:14px; background:rgba(0,0,0,0.3); border-radius:7px; overflow:hidden;">
@@ -3717,9 +3717,9 @@
                         </div>
                         <div style="width:2px; height:14px; background:rgba(255,255,255,0.3); border-radius:1px; flex-shrink:0;"></div>
                         <div style="flex:1; position:relative; height:14px; background:rgba(0,0,0,0.3); border-radius:7px; overflow:hidden;">
-                            <div id="htOppDefenseBar" style="position:absolute; right:0; top:0; height:100%; background:linear-gradient(270deg,#1565c0,#64b5f6); border-radius:7px; transition:width 0.4s; width:0%;"></div>
+                            <div id="htOppOffenseBar" style="position:absolute; right:0; top:0; height:100%; background:linear-gradient(270deg,#ff5722,#ff8a65); border-radius:7px; transition:width 0.4s; width:0%;"></div>
                         </div>
-                        <span style="font-size:13px; font-weight:900; color:#64b5f6; min-width:32px; text-align:left;" id="htOppDefense">-</span>
+                        <span style="font-size:13px; font-weight:900; color:#ff8a65; min-width:32px; text-align:left;" id="htOppOffense">-</span>
                     </div>
                 </div>
                 <div style="display:flex; justify-content:space-between; font-size:10px; color:rgba(255,255,255,0.35); margin-top:8px; padding:0 40px;">
@@ -12638,12 +12638,14 @@
                 document.getElementById('previewYourDefense').textContent = yourDefense;
                 document.getElementById('previewOppDefense').textContent = oppDefense;
                 document.getElementById('previewOppLabel').innerHTML = getTeamWithEmblem(opponentName, 18);
-                const maxOff = Math.max(yourOffense, oppOffense, 1);
-                const maxDef = Math.max(yourDefense, oppDefense, 1);
-                document.getElementById('previewYourOffenseBar').style.width = (yourOffense / maxOff) * 100 + '%';
-                document.getElementById('previewOppOffenseBar').style.width = (oppOffense / maxOff) * 100 + '%';
-                document.getElementById('previewYourDefenseBar').style.width = (yourDefense / maxDef) * 100 + '%';
-                document.getElementById('previewOppDefenseBar').style.width = (oppDefense / maxDef) * 100 + '%';
+                // 自OF vs 相手DFの対決バー
+                const maxOffVsDef = Math.max(yourOffense, oppDefense, 1);
+                document.getElementById('previewYourOffenseBar').style.width = (yourOffense / maxOffVsDef) * 100 + '%';
+                document.getElementById('previewOppDefenseBar').style.width = (oppDefense / maxOffVsDef) * 100 + '%';
+                // 自DF vs 相手OFの対決バー
+                const maxDefVsOff = Math.max(yourDefense, oppOffense, 1);
+                document.getElementById('previewYourDefenseBar').style.width = (yourDefense / maxDefVsOff) * 100 + '%';
+                document.getElementById('previewOppOffenseBar').style.width = (oppOffense / maxDefVsOff) * 100 + '%';
             }
 
             // 初回表示（ホーム/アウェイ表示を追加）
@@ -13950,18 +13952,20 @@
                 const adjHtYourDef = Math.round(htYourDef * skDef * tp.defMult);
                 const adjHtOppOff  = Math.round((ht.adjOppOff || 0) * opOff);
                 const adjHtOppDef  = Math.round((ht.adjOppDef || 0) * opDef);
-                const maxOff = Math.max(adjHtYourOff, adjHtOppOff, 1);
-                const maxDef = Math.max(adjHtYourDef, adjHtOppDef, 1);
                 const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
                 const setW  = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = pct + '%'; };
                 setEl('htYourOffense', adjHtYourOff);
                 setEl('htOppOffense',  adjHtOppOff);
                 setEl('htYourDefense', adjHtYourDef);
                 setEl('htOppDefense',  adjHtOppDef);
-                setW('htYourOffenseBar', (adjHtYourOff / maxOff) * 100);
-                setW('htOppOffenseBar',  (adjHtOppOff  / maxOff) * 100);
-                setW('htYourDefenseBar', (adjHtYourDef / maxDef) * 100);
-                setW('htOppDefenseBar',  (adjHtOppDef  / maxDef) * 100);
+                // 自OF vs 相手DFの対決バー
+                const maxOffVsDef = Math.max(adjHtYourOff, adjHtOppDef, 1);
+                setW('htYourOffenseBar', (adjHtYourOff / maxOffVsDef) * 100);
+                setW('htOppDefenseBar',  (adjHtOppDef  / maxOffVsDef) * 100);
+                // 自DF vs 相手OFの対決バー
+                const maxDefVsOff = Math.max(adjHtYourDef, adjHtOppOff, 1);
+                setW('htYourDefenseBar', (adjHtYourDef / maxDefVsOff) * 100);
+                setW('htOppOffenseBar',  (adjHtOppOff  / maxDefVsOff) * 100);
                 const oppLabel = document.getElementById('htOppLabel');
                 if (oppLabel) oppLabel.textContent = ht.opponent || '相手';
             }
