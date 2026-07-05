@@ -2326,7 +2326,9 @@
                             <a href="#help-seasongoal" style="color:#FFD700; text-decoration:none;">🎯 シーズン目標</a><br>
                             <a href="#help-manager" style="color:#FFD700; text-decoration:none;">🧑‍💼 監督スキル</a><br>
                             <a href="#help-prize" style="color:#FFD700; text-decoration:none;">🏅 シーズン終了時の賞金</a><br>
-                            <a href="#help-veteran" style="color:#FFD700; text-decoration:none;">⚠️ ベテラン選手の注意点</a>
+                            <a href="#help-veteran" style="color:#FFD700; text-decoration:none;">⚠️ ベテラン選手の注意点</a><br>
+                            <a href="#help-personality" style="color:#FFD700; text-decoration:none;">👥 性格相性システム</a><br>
+                            <a href="#help-awakening" style="color:#FFD700; text-decoration:none;">✨ 選手覚醒イベント</a>
                         </div>
                     </div>
 
@@ -3031,6 +3033,73 @@
 
 
 
+                    <!-- 性格相性・覚醒イベント -->
+                    <div id="help-personality" class="card" style="margin-top:16px;">
+                        <div class="card-title">👥 性格相性システム</div>
+                        <p style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:12px;">各選手には「性格」が設定されており、相性の良いペアが同じスタメンに入るとチーム全体の攻撃力・守備力が上昇します。逆に相性の悪いペアがいると能力が低下します。</p>
+                        <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+                            <tr style="background:rgba(255,255,255,0.08);">
+                                <td style="padding:7px 6px; font-weight:bold; color:#FFD700;">性格</td>
+                                <td style="padding:7px 6px; font-weight:bold; color:#81C784;">良い相性</td>
+                                <td style="padding:7px 6px; font-weight:bold; color:#EF9A9A;">悪い相性</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">&#x1f525; 莱山型</td>
+                                <td style="padding:7px 6px; color:#81C784;">冷静型・豊富型</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">完璧主義型</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">&#x2744;&#xfe0f; 冷静型</td>
+                                <td style="padding:7px 6px; color:#81C784;">莱山型・完璧主義型</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">豊富型</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">&#x1f4aa; 完璧主義型</td>
+                                <td style="padding:7px 6px; color:#81C784;">冷静型・リーダー型</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">莱山型</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">&#x1f31f; リーダー型</td>
+                                <td style="padding:7px 6px; color:#81C784;">完璧主義型・豊富型</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">冷静型</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">&#x1f4b0; 豊富型</td>
+                                <td style="padding:7px 6px; color:#81C784;">莱山型・リーダー型</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">冷静型</td>
+                            </tr>
+                        </table>
+                        <p style="font-size:12px; color:rgba(255,255,255,0.65); line-height:1.7;">💡 スタメンカードの能力値の隣に <strong style="color:#22c55e;">💚</strong>（良い相性あり）または <strong style="color:#ef4444;">💢</strong>（悪い相性あり）のアイコンが表示されます。良い相性ペアが多いほどチーム全体の攻守が強化されます（+2%/ペア）。</p>
+                    </div>
+
+                    <div id="help-awakening" class="card" style="margin-top:16px;">
+                        <div class="card-title">✨ 選手覚醒イベント</div>
+                        <p style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:12px;">試合後、一定の確率でスタメン選手に<strong style="color:#FFD700;">「覚醒」</strong>が発生することがあります。覚醒は各選手に一度しか発生しません。</p>
+                        <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+                            <tr style="background:rgba(255,255,255,0.08);">
+                                <td style="padding:7px 6px; font-weight:bold; color:#FFD700;">発生条件</td>
+                                <td style="padding:7px 6px; font-weight:bold; color:rgba(255,255,255,0.8);"></td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">Lv3以上の選手</td>
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.65);">Lv3未満は対象外</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">基本確率</td>
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.65);">3%/試合</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">勝利時追加</td>
+                                <td style="padding:7px 6px; color:#81C784;">+2%</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">3点差以上の大勝利</td>
+                                <td style="padding:7px 6px; color:#81C784;">+3%追加</td>
+                            </tr>
+                        </table>
+                        <p style="font-size:12px; color:rgba(255,255,255,0.65); line-height:1.7;">💡 覚醒の効果はランダムで「<strong style="color:#FFD700;">全能力値+5</strong>」または「<strong style="color:#FFD700;">性格変化</strong>」のどちらかです。試合結果画面の「✨」欄に表示されます。</p>
+                    </div>
+
                     <!-- クレジット -->
                     <div class="card" style="margin-top:24px; text-align:center; border:1px solid rgba(255,215,0,0.25); background:rgba(255,215,0,0.05);">
                         <p style="font-size:13px; color:rgba(255,255,255,0.5); margin:0 0 6px;">Developed by こじま&amp;Manus — 2026</p>
@@ -3393,6 +3462,10 @@
                     <span class="ability-label">平均評価点</span>
                     <span class="ability-value" id="detailAvgRating">-</span>
                 </div>
+                <div class="ability-row" id="personalityDetailRow">
+                    <span class="ability-label">性格</span>
+                    <span class="ability-value" id="detailPersonality">-</span>
+                </div>
             </div>
 
             <div class="card" style="margin-bottom: 12px;">
@@ -3638,6 +3711,10 @@
                     </div>
                     <div id="expLevelUpDiv" style="font-size: 12px; color: #81C784; margin-top: 10px; background: rgba(129,199,132,0.1); border: 1px solid rgba(129,199,132,0.4); border-radius: 6px; padding: 8px; display: none;">
                         ⬆️ <span id="expLevelUpResult">-</span>
+                    </div>
+                    <!-- 覚醒イベント -->
+                    <div id="awakeningResultDiv" style="font-size: 12px; color: #FFD700; margin-top: 10px; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.5); border-radius: 6px; padding: 10px; display: none;">
+                        ✨ <span id="awakeningResult">-</span>
                     </div>
                     <div id="cardResultDiv" style="font-size: 12px; color: #FFD700; margin-top: 10px; background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.35); border-radius: 6px; padding: 8px; display: none;">
                         <span id="cardResult">-</span>
@@ -4562,6 +4639,98 @@
         };
 
 
+        /* ===== 性格システム定数・ヘルパー ===== */
+        // 8種類の性格タイプ
+        const PERSONALITIES = [
+            { id: 'leader',    name: 'リーダー',   icon: '👑', desc: '仲間を引っ張る統率力がある' },
+            { id: 'hotblood',  name: '熱血漢',     icon: '🔥', desc: '情熱的で諦めない闘志を持つ' },
+            { id: 'calm',      name: '冷静',       icon: '🧊', desc: '感情に流されず冷静に判断する' },
+            { id: 'cheerful',  name: '陽気',       icon: '😄', desc: '場を明るくする天性の明るさ' },
+            { id: 'serious',   name: '真面目',     icon: '📚', desc: '努力を惜しまない誠実な性格' },
+            { id: 'lone',      name: '一匹狼',     icon: '🐺', desc: '独立心が強く単独で輝く' },
+            { id: 'gentle',    name: '温和',       icon: '🌸', desc: '穏やかで周囲と協調できる' },
+            { id: 'wild',      name: '野性的',     icon: '⚡', desc: '本能的なプレーで局面を打開する' }
+        ];
+
+        // 相性テーブル: [A, B] → 'good'（+5%）/ 'bad'（-5%）/ null（中立）
+        // 良い相性: 互いの強みが引き出される組み合わせ
+        // 悪い相性: 衝突・摩擦が生じる組み合わせ
+        const PERSONALITY_COMPAT = [
+            // 良い相性
+            ['leader',   'hotblood',  'good'],   // リーダー×熱血漢: 情熱を束ねる
+            ['leader',   'serious',   'good'],   // リーダー×真面目: 模範と実直
+            ['leader',   'gentle',    'good'],   // リーダー×温和: 統率と協調
+            ['hotblood', 'cheerful',  'good'],   // 熱血漢×陽気: 勢いと活気
+            ['hotblood', 'wild',      'good'],   // 熱血漢×野性的: 爆発的エネルギー
+            ['calm',     'serious',   'good'],   // 冷静×真面目: 分析と努力
+            ['calm',     'gentle',    'good'],   // 冷静×温和: 穏やかな安定感
+            ['cheerful', 'gentle',    'good'],   // 陽気×温和: 明るく和やか
+            ['serious',  'gentle',    'good'],   // 真面目×温和: 誠実な協力
+            ['lone',     'wild',      'good'],   // 一匹狼×野性的: 本能の共鳴
+            // 悪い相性
+            ['leader',   'lone',      'bad'],    // リーダー×一匹狼: 支配と反発
+            ['hotblood', 'calm',      'bad'],    // 熱血漢×冷静: 情熱と冷淡
+            ['hotblood', 'serious',   'bad'],    // 熱血漢×真面目: 衝動と規律
+            ['calm',     'wild',      'bad'],    // 冷静×野性的: 論理と本能
+            ['cheerful', 'serious',   'bad'],    // 陽気×真面目: 軽さと重さ
+            ['cheerful', 'lone',      'bad'],    // 陽気×一匹狼: 社交と孤独
+            ['lone',     'gentle',    'bad'],    // 一匹狼×温和: 孤高と協調
+            ['wild',     'serious',   'bad'],    // 野性的×真面目: 本能と規律
+        ];
+
+        // 2選手間の相性を返す: 'good' / 'bad' / null
+        function getPersonalityCompat(pA, pB) {
+            if (!pA || !pB || pA === pB) return null;
+            for (const row of PERSONALITY_COMPAT) {
+                if ((row[0] === pA && row[1] === pB) || (row[0] === pB && row[1] === pA)) {
+                    return row[2];
+                }
+            }
+            return null;
+        }
+
+        // スタメン全員の相性ボーナス合計を計算（+5%/-5%×ペア数）
+        // 戻り値: { mult: 乗数, goodPairs: ペア数, badPairs: ペア数, details: [{a,b,type}] }
+        function calcCompatBonus(players) {
+            let goodPairs = 0, badPairs = 0;
+            const details = [];
+            for (let i = 0; i < players.length; i++) {
+                for (let j = i + 1; j < players.length; j++) {
+                    const pA = players[i].personality;
+                    const pB = players[j].personality;
+                    const c = getPersonalityCompat(pA, pB);
+                    if (c === 'good') {
+                        goodPairs++;
+                        details.push({ a: players[i], b: players[j], type: 'good' });
+                    } else if (c === 'bad') {
+                        badPairs++;
+                        details.push({ a: players[i], b: players[j], type: 'bad' });
+                    }
+                }
+            }
+            // 1ペアにつき ±2%、上限 ±20%
+            const net = Math.min(10, goodPairs * 2) - Math.min(10, badPairs * 2);
+            const mult = 1.0 + net / 100;
+            return { mult, goodPairs, badPairs, details };
+        }
+
+        // 個別選手の相性アイコンHTML（案B: 能力値の隣に表示）
+        // players: スタメン全員、target: 対象選手
+        function getCompatIconHtml(target, players) {
+            if (!target.personality) return '';
+            let hasGood = false, hasBad = false;
+            for (const other of players) {
+                if (other.id === target.id || !other.personality) continue;
+                const c = getPersonalityCompat(target.personality, other.personality);
+                if (c === 'good') hasGood = true;
+                if (c === 'bad') hasBad = true;
+            }
+            if (!hasGood && !hasBad) return '';
+            if (hasGood && hasBad) return '<span style="font-size:8px;">💚💢</span>';
+            if (hasGood) return '<span style="font-size:8px;">💚</span>';
+            return '<span style="font-size:8px;">💢</span>';
+        }
+
         /* ===== ポジション細分化B 定数・ヘルパー ===== */
         // 細分化ポジション一覧
         const SUB_POSITIONS = ['CF','WG','CH','SH','DH','CB','SB'];
@@ -4736,6 +4905,10 @@
                     p.subPosition2 = (combos.length > 0 && Math.random() < 0.50)
                         ? combos[Math.floor(Math.random() * combos.length)][1]
                         : null;
+                }
+                // 性格が未設定の場合はランダムに付与（セーブデータ互換）
+                if (!p.personality) {
+                    p.personality = PERSONALITIES[Math.floor(Math.random() * PERSONALITIES.length)].id;
                 }
             });
         }
@@ -5647,6 +5820,9 @@
             const baseDribble = _blend('dribble') || 35;
             const baseTackle  = _blend('tackle')  || 35;
 
+            // 性格をランダムに割り当て
+            const _pIdx = Math.floor(Math.random() * PERSONALITIES.length);
+            const _personality = PERSONALITIES[_pIdx].id;
             const player = {
                 id: 'player_' + Date.now() + Math.random(),
                 name: name,
@@ -5656,11 +5832,12 @@
                 exp: 0,          // 試合出場経験値（100でレベルアップ）
                 starter: starter,
                 injury: null,
-                injuryRecovery: 0, // ④ 重症回復カウンター（残り節数）
+                injuryRecovery: 0, // ⑤ 重症回復カウンター（残り節数）
                 age: playerAge,
                 condition: 2,
                 fatigue: 0,  // 疲労度 0～100（0=疲労なし》100=限界）
-                joinedSeason: (gameData && gameData.seasonCount) ? gameData.seasonCount : 1
+                joinedSeason: (gameData && gameData.seasonCount) ? gameData.seasonCount : 1,
+                personality: _personality  // 性格タイプ
             };
 
             if (position === 'GK') {
@@ -7649,9 +7826,11 @@
                 const _pvAnalysisMult = 1 - (_pvAnalysisLv * 0.005);
                 // 遠征ボーナス
                 const _pvOuting = gameData.outingNextMatchBonus || {};
+                // 性格相性ボーナス
+                const _pvCompatMult = calcCompatBonus(starters).mult;
                 // 最終値
-                const yourOffense = Math.round(yourOffenseBase * _pvOffMult * mults.offMult * _pvMgrOff + (_pvOuting.of || 0));
-                const yourDefense = Math.round(yourDefenseBase * _pvDefMult * mults.defMult * _pvMgrDef + (_pvOuting.df || 0));
+                const yourOffense = Math.round(yourOffenseBase * _pvOffMult * mults.offMult * _pvMgrOff * _pvCompatMult + (_pvOuting.of || 0));
+                const yourDefense = Math.round(yourDefenseBase * _pvDefMult * mults.defMult * _pvMgrDef * _pvCompatMult + (_pvOuting.df || 0));
                 const adjOppOffense = Math.round(oppOffense * _pvAnalysisMult * _pvMgrOppOff);
                 const adjOppDefense = Math.round(oppDefense * _pvAnalysisMult * _pvMgrOppDef);
                 document.getElementById('previewYourOffense').textContent = yourOffense;
@@ -9517,7 +9696,7 @@
             '3-4-3': [
                 {pos:'FW', idx:0, x:20, y:14}, {pos:'FW', idx:1, x:50, y:12}, {pos:'FW', idx:2, x:80, y:14},
                 {pos:'MF', idx:0, x:50, y:27},
-                {pos:'MF', idx:1, x:28, y:36}, {pos:'MF', idx:2, x:72, y:36},
+                {pos:'MF', idx:1, x:16, y:36}, {pos:'MF', idx:2, x:84, y:36},
                 {pos:'MF', idx:3, x:50, y:44},
                 {pos:'DF', idx:0, x:25, y:62}, {pos:'DF', idx:1, x:50, y:62}, {pos:'DF', idx:2, x:75, y:62},
                 {pos:'GK', idx:0, x:50, y:80}
@@ -9636,11 +9815,14 @@
                     const playerSubPosColor = SUB_POS_COLOR[playerSubPos] || '#fff';
                     const playerSubPosHtml = '<div style="font-size:7px;font-weight:700;color:' + playerSubPosColor + ';margin-top:1px;">' +
                         playerSubPos + (playerSubPos2 ? '<span style="opacity:0.65;">/'+playerSubPos2+'</span>' : '') + '</div>';
+                    // 性格相性アイコン（案B: 能力値の隣）
+                    const _pitchStarters = Object.values(gameData.pitchAssignment || {}).map(id => gameData.players.find(p => p.id === id)).filter(Boolean);
+                    const compatIcon = getCompatIconHtml(player, _pitchStarters);
                     el.innerHTML =
                         '<div class="slot-pos" style="color:' + slotPosColor + '">' + slotSubLabel + '</div>' +
                         '<div class="slot-name">' + player.name + '</div>' +
                         playerSubPosHtml +
-                        '<div class="slot-stat">' + statStr + '</div>' +
+                        '<div class="slot-stat">' + statStr + (compatIcon ? ' ' + compatIcon : '') + '</div>' +
                         '<div style="font-size:7px;color:' + fatigueColor + ';margin-top:1px;">疲' + fatigue + '</div>' +
                         slotCondHtml +
                         slotInjuryHtml +
@@ -12631,8 +12813,10 @@
 
             function updatePreviewBars() {
                 const mults = getPreviewMultipliers();
-                const yourOffense = Math.round(yourOffenseBase * mults.offMult);
-                const yourDefense = Math.round(yourDefenseBase * mults.defMult);
+                // 性格相性ボーナス
+                const _pvCompatMult2 = calcCompatBonus(starters).mult;
+                const yourOffense = Math.round(yourOffenseBase * mults.offMult * _pvCompatMult2);
+                const yourDefense = Math.round(yourDefenseBase * mults.defMult * _pvCompatMult2);
                 document.getElementById('previewYourOffense').textContent = yourOffense;
                 document.getElementById('previewOppOffense').textContent = oppOffense;
                 document.getElementById('previewYourDefense').textContent = yourDefense;
@@ -13424,8 +13608,11 @@
             const mgrDefMult  = _mse.defMult  || 1.0;
             const mgrOppOffMult = _mse.oppOffMult || 1.0;
             const mgrOppDefMult = _mse.oppDefMult || 1.0;
-            const adjYourOff = yourOff * skillOffMult * tp.offMult * mgrOffMult + (_outingBonus.of || 0);
-            const adjYourDef = yourDef * skillDefMult * tp.defMult * mgrDefMult + (_outingBonus.df || 0);
+            // 性格相性ボーナス（スタメン全員の相性を考慮）
+            const _compatResult = calcCompatBonus(starters);
+            const compatMult = _compatResult.mult; // 1.0基準、良い相性+2%/ペア、悪い相性-2%/ペア
+            const adjYourOff = yourOff * skillOffMult * tp.offMult * mgrOffMult * compatMult + (_outingBonus.of || 0);
+            const adjYourDef = yourDef * skillDefMult * tp.defMult * mgrDefMult * compatMult + (_outingBonus.df || 0);
             const adjOppOff  = oppOff  * oppOffMult * mgrOppOffMult;
             const adjOppDef  = oppDef  * oppDefMult * mgrOppDefMult;
 
@@ -14020,11 +14207,14 @@
                     const htPlayerSubPosColor = SUB_POS_COLOR[htPlayerSubPos] || '#fff';
                     const htPlayerSubPosHtml = '<div style="font-size:7px;font-weight:700;color:' + htPlayerSubPosColor + ';margin-top:1px;">' +
                         htPlayerSubPos + (htPlayerSubPos2 ? '<span style="opacity:0.65;">/'+htPlayerSubPos2+'</span>' : '') + '</div>';
+                    // 性格相性アイコン（案B: 能力値の隣）
+                    const _htPitchStarters = Object.values(pa).map(id => gameData.players.find(p => p.id === id)).filter(Boolean);
+                    const htCompatIcon = getCompatIconHtml(player, _htPitchStarters);
                     el.innerHTML =
                         '<div class="slot-pos" style="color:' + slotPosColor + '">' + slotSubLabel + '</div>' +
                         '<div class="slot-name">' + player.name + '</div>' +
                         htPlayerSubPosHtml +
-                        '<div class="slot-stat">' + statStr + '</div>' +
+                        '<div class="slot-stat">' + statStr + (htCompatIcon ? ' ' + htCompatIcon : '') + '</div>' +
                         '<div style="font-size:7px;color:' + fatigueColor + ';margin-top:1px;">疲' + fat + '</div>' +
                         injHtml + injMatchHtml + subbedOutHtml;
                     // 交代済みは選択不可
@@ -14803,6 +14993,59 @@
                 }
             });
 
+            // ===== 覚醒イベント判定 =====
+            // 条件: 試合出場した選手のうち、小数点の確率で覚醒が発生
+            // 覚醒効果: 全能力値+5、性格変化のどちらか（ランダム）
+            // 発生条件: Lv3以上、まだ覚醒していない選手のみ対象
+            const awakeningMessages = [];
+            const awakeningCandidates = starters.filter(p => {
+                if ((p.level || 1) < 3) return false;   // Lv3未満は対象外
+                if (p.awakened) return false;            // 覚醒済みは対象外
+                return true;
+            });
+            awakeningCandidates.forEach(player => {
+                // 発生確率: 基本3%、勝利時+2%、大勝利（3点差以上）時+3%追加
+                let awakeProb = 0.03;
+                if (myScore > oppScore) awakeProb += 0.02;
+                if (myScore - oppScore >= 3) awakeProb += 0.03;
+                if (Math.random() >= awakeProb) return; // 発生しない
+
+                // 覚醒内容をランダムに決定
+                const awakeType = Math.random() < 0.5 ? 'stats' : 'personality';
+                let awakeMsg = '';
+
+                if (awakeType === 'stats') {
+                    // 全能力値+5
+                    if (player.position === 'GK') {
+                        player.keeper = Math.min((player.keeper || 50) + 5, 120);
+                        awakeMsg = player.name + ' が覚醒！（GK能力 +5）';
+                    } else {
+                        player.offense = Math.min((player.offense || 40) + 5, 120);
+                        player.defense = Math.min((player.defense || 40) + 5, 120);
+                        player.passing = Math.min((player.passing || 40) + 5, 120);
+                        player.shoot   = Math.min((player.shoot   || 30) + 5, 120);
+                        player.block   = Math.min((player.block   || 30) + 5, 120);
+                        player.cover   = Math.min((player.cover   || 30) + 5, 120);
+                        if (player.dribble !== undefined) player.dribble = Math.min(player.dribble + 5, 120);
+                        if (player.tackle  !== undefined) player.tackle  = Math.min(player.tackle  + 5, 120);
+                        awakeMsg = player.name + ' が覚醒！（全能力値 +5）';
+                    }
+                    player.salary = calculatePlayerSalary(player);
+                } else {
+                    // 性格変化（現在と異なるランダムな性格に変わる）
+                    const oldPersonality = player.personality;
+                    const oldPData = PERSONALITIES.find(p => p.id === oldPersonality);
+                    const otherPersonalities = PERSONALITIES.filter(p => p.id !== oldPersonality);
+                    const newPData = otherPersonalities[Math.floor(Math.random() * otherPersonalities.length)];
+                    player.personality = newPData.id;
+                    const oldName = oldPData ? oldPData.icon + oldPData.name : '未設定';
+                    awakeMsg = player.name + ' が覚醒！（性格: ' + oldName + ' → ' + newPData.icon + newPData.name + '）';
+                }
+
+                player.awakened = true; // 覚醒済みフラグ
+                awakeningMessages.push(awakeMsg);
+            });
+
             // スポンサー収入
             let periodicSponsorIncome = 0;
             if (gameData.sponsors && gameData.sponsors.length > 0) {
@@ -14890,6 +15133,17 @@
                 document.getElementById('expLevelUpResult').textContent = expLevelUpMessages.join(' / ');
             } else {
                 expDiv.style.display = 'none';
+            }
+
+            // 覚醒イベント表示
+            const awakeDiv = document.getElementById('awakeningResultDiv');
+            if (awakeDiv) {
+                if (awakeningMessages.length > 0) {
+                    awakeDiv.style.display = 'block';
+                    document.getElementById('awakeningResult').innerHTML = awakeningMessages.join('<br>');
+                } else {
+                    awakeDiv.style.display = 'none';
+                }
             }
 
             // ===== 試合スタッツ生成（擬似） =====
@@ -16862,6 +17116,21 @@
                     ratingDetailRow.style.display = 'flex';
                 }
             }
+            // 性格表示
+            const personalityEl = document.getElementById('detailPersonality');
+            const personalityRowEl = document.getElementById('personalityDetailRow');
+            if (personalityEl && personalityRowEl) {
+                const pData = PERSONALITIES.find(p => p.id === player.personality);
+                if (pData) {
+                    personalityEl.textContent = pData.icon + ' ' + pData.name + '（' + pData.desc + '）';
+                    personalityEl.style.color = 'rgba(255,255,255,0.85)';
+                } else {
+                    personalityEl.textContent = '未設定';
+                    personalityEl.style.color = 'rgba(255,255,255,0.4)';
+                }
+                personalityRowEl.style.display = 'flex';
+            }
+
             const container = document.getElementById('abilityContainer');
             let html = '';
 
