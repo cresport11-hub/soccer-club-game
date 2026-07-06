@@ -2201,8 +2201,8 @@
                             選手をタップして選択 → スロットをタップして配置
                         </div>
                         <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 10px; line-height:1.6; background:rgba(255,255,255,0.05); border-radius:6px; padding:7px 10px;">
-                            ❤️ 隣接ポジションに良い相性のペアがいると攻守<strong style="color:#22c55e;">+0.3%/ペア</strong>、
-                            💢 悪い相性のペアがいると<strong style="color:#ef4444;">-0.3%/ペア</strong>。
+                            ❤️ 隣接ポジションに良い相性のペアがいると攻守<strong style="color:#22c55e;">+3%/ペア</strong>、
+                            💢 悪い相性のペアがいると<strong style="color:#ef4444;">-3%/ペア</strong>。
                             カードの攻守の下にアイコンが表示されます。
                         </div>
                         <!-- ピッチ図 -->
@@ -3089,7 +3089,7 @@
                                 <td style="padding:7px 6px; color:#EF9A9A;">真面目</td>
                             </tr>
                         </table>
-                        <p style="font-size:12px; color:rgba(255,255,255,0.65); line-height:1.7;">💡 スタメンカードの攻守の下に ❤️（良い相性あり）または 💢（悪い相性あり）のアイコンが、ペア数分だけ表示されます。相性は<strong style="color:#FFD700;">隣接するポジションの選手同士のみ</strong>が対象です。良い相性ペア1組につき攻守+0.3%、悪い相性ペア1組につき攻守-0.3%の効果があります。</p>
+                        <p style="font-size:12px; color:rgba(255,255,255,0.65); line-height:1.7;">💡 スタメンカードの攻守の下に ❤️（良い相性あり）または 💢（悪い相性あり）のアイコンが、ペア数分だけ表示されます。相性は<strong style="color:#FFD700;">隣接するポジションの選手同士のみ</strong>が対象です。良い相性ペア1組につき攻守+3%、悪い相性ペア1組につき攻守-3%の効果があります（上限±10%）。</p>
                     </div>
 
                     <div id="help-awakening" class="card" style="margin-top:16px;">
@@ -4765,8 +4765,8 @@
                     }
                 }
             }
-            // 1ペアにつき ±0.3%、上限 ±3%
-            const net = Math.min(10, goodPairs * 0.3) - Math.min(10, badPairs * 0.3);
+            // 1ペアにつき ±3%、上限 ±10%
+            const net = Math.min(10, goodPairs * 3) - Math.min(10, badPairs * 3);
             const mult = 1.0 + net / 100;
             return { mult, goodPairs, badPairs, details };
         }
