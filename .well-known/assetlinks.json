@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.soccerkingdom.app",
+    "sha256_cert_fingerprints": [
+      "C3:58:95:0C:91:F6:CA:44:8E:D6:3A:28:86:F9:45:3C:3B:3C:40:40:BD:BF:4D:F8:70:AC:D2:66:32:23:B5:FE"
+    ]
+  }
+}]
