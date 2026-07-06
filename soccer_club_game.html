@@ -3036,40 +3036,55 @@
                     <!-- 性格相性・覚醒イベント -->
                     <div id="help-personality" class="card" style="margin-top:16px;">
                         <div class="card-title">👥 性格相性システム</div>
-                        <p style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:12px;">各選手には「性格」が設定されており、相性の良いペアが同じスタメンに入るとチーム全体の攻撃力・守備力が上昇します。逆に相性の悪いペアがいると能力が低下します。</p>
+                        <p style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:12px;">各選手には「性格」が設定されており、<strong style="color:#81C784;">隣接するポジションの選手同士</strong>に相性の良いペアがいるとチーム全体の攻撃力・守備力が上昇します。逆に相性の悪いペアがいると能力が低下します。各性格の良い相性は1つだけです。</p>
                         <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
                             <tr style="background:rgba(255,255,255,0.08);">
                                 <td style="padding:7px 6px; font-weight:bold; color:#FFD700;">性格</td>
-                                <td style="padding:7px 6px; font-weight:bold; color:#81C784;">良い相性</td>
+                                <td style="padding:7px 6px; font-weight:bold; color:#81C784;">良い相性（1つ）</td>
                                 <td style="padding:7px 6px; font-weight:bold; color:#EF9A9A;">悪い相性</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
-                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">&#x1f525; 莱山型</td>
-                                <td style="padding:7px 6px; color:#81C784;">冷静型・豊富型</td>
-                                <td style="padding:7px 6px; color:#EF9A9A;">完璧主義型</td>
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">👑 リーダー</td>
+                                <td style="padding:7px 6px; color:#81C784;">真面目</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">一匹狼</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
-                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">&#x2744;&#xfe0f; 冷静型</td>
-                                <td style="padding:7px 6px; color:#81C784;">莱山型・完璧主義型</td>
-                                <td style="padding:7px 6px; color:#EF9A9A;">豊富型</td>
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">🔥 熱血漢</td>
+                                <td style="padding:7px 6px; color:#81C784;">野性的</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">冷静・真面目</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
-                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">&#x1f4aa; 完璧主義型</td>
-                                <td style="padding:7px 6px; color:#81C784;">冷静型・リーダー型</td>
-                                <td style="padding:7px 6px; color:#EF9A9A;">莱山型</td>
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">🧊 冷静</td>
+                                <td style="padding:7px 6px; color:#81C784;">温和</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">熱血漢・野性的</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
-                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">&#x1f31f; リーダー型</td>
-                                <td style="padding:7px 6px; color:#81C784;">完璧主義型・豊富型</td>
-                                <td style="padding:7px 6px; color:#EF9A9A;">冷静型</td>
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">😄 陽気</td>
+                                <td style="padding:7px 6px; color:#81C784;">温和</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">真面目・一匹狼</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">📚 真面目</td>
+                                <td style="padding:7px 6px; color:#81C784;">リーダー</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">熱血漢・陽気・野性的</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">🐺 一匹狼</td>
+                                <td style="padding:7px 6px; color:#81C784;">野性的</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">リーダー・陽気・温和</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">🌸 温和</td>
+                                <td style="padding:7px 6px; color:#81C784;">冷静・陽気</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">一匹狼</td>
                             </tr>
                             <tr>
-                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">&#x1f4b0; 豊富型</td>
-                                <td style="padding:7px 6px; color:#81C784;">莱山型・リーダー型</td>
-                                <td style="padding:7px 6px; color:#EF9A9A;">冷静型</td>
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">⚡ 野性的</td>
+                                <td style="padding:7px 6px; color:#81C784;">熱血漢・一匹狼</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">冷静・真面目</td>
                             </tr>
                         </table>
-                        <p style="font-size:12px; color:rgba(255,255,255,0.65); line-height:1.7;">💡 スタメンカードの能力値の隣に <strong style="color:#22c55e;">💚</strong>（良い相性あり）または <strong style="color:#ef4444;">💢</strong>（悪い相性あり）のアイコンが表示されます。良い相性ペアが多いほどチーム全体の攻守が強化されます（+2%/ペア）。</p>
+                        <p style="font-size:12px; color:rgba(255,255,255,0.65); line-height:1.7;">💡 スタメンカードの攻守の下に ❤️（良い相性あり）または 💢（悪い相性あり）のアイコンが、ペア数分だけ表示されます。相性は<strong style="color:#FFD700;">隣接するポジションの選手同士のみ</strong>が対象です。良い相性ペア1組につき攻守+2%、悪い相性ペア1組につき攻守-2%の効果があります。</p>
                     </div>
 
                     <div id="help-awakening" class="card" style="margin-top:16px;">
@@ -4652,20 +4667,15 @@
             { id: 'wild',      name: '野性的',     icon: '⚡', desc: '本能的なプレーで局面を打開する' }
         ];
 
-        // 相性テーブル: [A, B] → 'good'（+5%）/ 'bad'（-5%）/ null（中立）
-        // 良い相性: 互いの強みが引き出される組み合わせ
+        // 相性テーブル: [A, B] → 'good'（+2%）/ 'bad'（-2%）/ null（中立）
+        // 良い相性: 各性格につき1つのみ（互いの強みが引き出される組み合わせ）
         // 悪い相性: 衝突・摩擦が生じる組み合わせ
         const PERSONALITY_COMPAT = [
-            // 良い相性
-            ['leader',   'hotblood',  'good'],   // リーダー×熱血漢: 情熱を束ねる
+            // 良い相性（各性格につき1つ）
             ['leader',   'serious',   'good'],   // リーダー×真面目: 模範と実直
-            ['leader',   'gentle',    'good'],   // リーダー×温和: 統率と協調
-            ['hotblood', 'cheerful',  'good'],   // 熱血漢×陽気: 勢いと活気
             ['hotblood', 'wild',      'good'],   // 熱血漢×野性的: 爆発的エネルギー
-            ['calm',     'serious',   'good'],   // 冷静×真面目: 分析と努力
             ['calm',     'gentle',    'good'],   // 冷静×温和: 穏やかな安定感
-            ['cheerful', 'gentle',    'good'],   // 陽気×温和: 明るく和やか
-            ['serious',  'gentle',    'good'],   // 真面目×温和: 誠実な協力
+            ['cheerful', 'gentle',    'good'],   // 陽気×温和: 明るく和やか ※calmとgentleが被るためcheerfulを追加
             ['lone',     'wild',      'good'],   // 一匹狼×野性的: 本能の共鳴
             // 悪い相性
             ['leader',   'lone',      'bad'],    // リーダー×一匹狼: 支配と反発
