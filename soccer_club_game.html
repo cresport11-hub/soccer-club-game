@@ -2201,7 +2201,7 @@
                             選手をタップして選択 → スロットをタップして配置
                         </div>
                         <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 10px; line-height:1.6; background:rgba(255,255,255,0.05); border-radius:6px; padding:7px 10px;">
-                            ❤️ 隣接ポジションに良い相性のペアがいると攻守<strong style="color:#22c55e;">+3%/ペア</strong>、
+                            🎵 隣接ポジションに良い相性のペアがいると攻守<strong style="color:#22c55e;">+3%/ペア</strong>、
                             💢 悪い相性のペアがいると<strong style="color:#ef4444;">-3%/ペア</strong>。
                             カードの攻守の下にアイコンが表示されます。
                         </div>
@@ -3089,7 +3089,7 @@
                                 <td style="padding:7px 6px; color:#EF9A9A;">真面目</td>
                             </tr>
                         </table>
-                        <p style="font-size:12px; color:rgba(255,255,255,0.65); line-height:1.7;">💡 スタメンカードの攻守の下に ❤️（良い相性あり）または 💢（悪い相性あり）のアイコンが、ペア数分だけ表示されます。相性は<strong style="color:#FFD700;">隣接するポジションの選手同士のみ</strong>が対象です。良い相性ペア1組につき攻守+3%、悪い相性ペア1組につき攻守-3%の効果があります（上限±10%）。</p>
+                        <p style="font-size:12px; color:rgba(255,255,255,0.65); line-height:1.7;">💡 スタメンカードの攻守の下に 🎵（良い相性あり）または 💢（悪い相性あり）のアイコンが、ペア数分だけ表示されます。相性は<strong style="color:#FFD700;">隣接するポジションの選手同士のみ</strong>が対象です。良い相性ペア1組につき攻守+3%、悪い相性ペア1組につき攻守-3%の効果があります（上限±10%）。</p>
                     </div>
 
                     <div id="help-awakening" class="card" style="margin-top:16px;">
@@ -4144,7 +4144,7 @@
             {
                 id: 'local_pride',
                 name: '地元の誇り',
-                icon: '❤️',
+                icon: '🎵',
                 desc: '人気が100になる',
                 check: (gd) => gd.popularity >= 100
             },
@@ -4794,7 +4794,7 @@
                 if (c === 'bad') badCount++;
             }
             if (goodCount === 0 && badCount === 0) return '';
-            const goodIcons = '❤️'.repeat(goodCount);
+            const goodIcons = '🎵'.repeat(goodCount);
             const badIcons = '💢'.repeat(badCount);
             return '<span style="font-size:8px;">' + goodIcons + badIcons + '</span>';
         }
@@ -13329,7 +13329,7 @@
             // ――― 追加イベント：所持金ボーナス系 ―――
             {
                 id: 'charity_match',
-                icon: '❤️',
+                icon: '🎵',
                 name: 'チャリティマッチ開催！',
                 desc: 'クラブが慈善試合を開催。\n観客が集まり、収益がクラブに還元された！',
                 effectText: '所持金 +120,000円、名声 +15',
