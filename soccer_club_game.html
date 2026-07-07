@@ -54,6 +54,14 @@
             width: 100%;
             height: auto;
             display: block;
+            max-height: 40vh;
+            object-fit: cover;
+            object-position: center top;
+        }
+        @media (min-width: 600px) {
+            .game-title-bar img {
+                max-height: 30vh;
+            }
         }
 
         .container {
