@@ -5543,7 +5543,7 @@
                         if (!p.salary) p.salary = calculatePlayerSalary(p);
                         // transferFeeは常に最新の計算式で再計算する（自クラブ選手は自リーグtierで計算）
                         p.transferFee = calcTransferFee(p, gameData.league || 5);
-                        p.loanFame = Math.max(10, Math.floor(p.transferFee / 100000) * 14);
+                        p.loanFame = Math.max(10, Math.floor(p.transferFee / 100000) * 13);
                     });
                 }
                 // 統計データの補完（旧セーブデータ対応）
@@ -6406,7 +6406,7 @@
                            : t === 3 ? 2.0   // 3部
                            : t === 4 ? 1.5   // 4部
                            : 1.0;            // 5部
-            const fee = Math.floor(salary * 4.5 * ageFactor * tierMult) + skillBonus;
+            const fee = Math.floor(salary * 4.0 * ageFactor * tierMult) + skillBonus;
             // ラウンドアップ（1万単位）
             return Math.ceil(fee / 10000) * 10000;
         }
@@ -6474,7 +6474,7 @@
                 marketEntry.fromClub = teamName;
                 marketEntry.fromLeague = leagueName || '';
                 marketEntry.transferFee = calcTransferFee(player, marketEntry._tier);
-                marketEntry.loanFame = Math.max(10, Math.floor(marketEntry.transferFee / 100000) * 14);
+                marketEntry.loanFame = Math.max(10, Math.floor(marketEntry.transferFee / 100000) * 13);
                 gameData.transferMarket.push(marketEntry);
                 listedIds.add(player.id);
                 added++;
@@ -6494,7 +6494,7 @@
                     ? gameData.leagueStandings.filter(t => t.name !== gameData.clubName)[Math.floor(Math.random() * Math.max(1, gameData.leagueStandings.length - 1))].name
                     : '不明クラブ';
                 p.transferFee = calcTransferFee(p);
-                p.loanFame = Math.max(10, Math.floor(p.transferFee / 100000) * 14);
+                p.loanFame = Math.max(10, Math.floor(p.transferFee / 100000) * 13);
                 gameData.transferMarket.push(p);
             }
         }
