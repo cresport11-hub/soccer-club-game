@@ -54,6 +54,14 @@
             width: 100%;
             height: auto;
             display: block;
+            max-height: 35vh;
+            object-fit: cover;
+            object-position: center top;
+        }
+        @media (min-width: 600px) {
+            .game-title-bar img {
+                max-height: 20vh;
+            }
         }
 
         .container {
@@ -2197,8 +2205,13 @@
                                 <button class="btn btn-primary" onclick="saveLineup()" style="font-size:12px; padding:6px 14px; white-space:nowrap;">✓ スタメンを確定</button>
                             </div>
                         </div>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.55); margin-bottom: 10px;">
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.55); margin-bottom: 6px;">
                             選手をタップして選択 → スロットをタップして配置
+                        </div>
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 10px; line-height:1.6; background:rgba(255,255,255,0.05); border-radius:6px; padding:7px 10px;">
+                            ❤️ 隣接ポジションに良い相性のペアがいると攻守<strong style="color:#22c55e;">+3%/ペア</strong>、
+                            💢 悪い相性のペアがいると<strong style="color:#ef4444;">-3%/ペア</strong>。
+                            カードの攻守の下にアイコンが表示されます。
                         </div>
                         <!-- ピッチ図 -->
                         <div class="pitch-container">
@@ -2326,7 +2339,9 @@
                             <a href="#help-seasongoal" style="color:#FFD700; text-decoration:none;">🎯 シーズン目標</a><br>
                             <a href="#help-manager" style="color:#FFD700; text-decoration:none;">🧑‍💼 監督スキル</a><br>
                             <a href="#help-prize" style="color:#FFD700; text-decoration:none;">🏅 シーズン終了時の賞金</a><br>
-                            <a href="#help-veteran" style="color:#FFD700; text-decoration:none;">⚠️ ベテラン選手の注意点</a>
+                            <a href="#help-veteran" style="color:#FFD700; text-decoration:none;">⚠️ ベテラン選手の注意点</a><br>
+                            <a href="#help-personality" style="color:#FFD700; text-decoration:none;">👥 性格相性システム</a><br>
+                            <a href="#help-awakening" style="color:#FFD700; text-decoration:none;">✨ 選手覚醒イベント</a>
                         </div>
                     </div>
 
@@ -2552,11 +2567,11 @@
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
                                 <td style="padding:8px 6px; color:#FFD700; font-weight:bold;">EXP（経験値）</td>
-                                <td style="padding:8px 6px; color:rgba(255,255,255,0.85);">1試合に<strong>スタメン+5、ハーフタイム交代選手+3</strong>（スキル・監督スキルにより増加あり）。規定値に達するとレベルアップし、各能力値が上昇する。スタメンまたはハーフタイム交代選手のみ獲得。<strong style="color:#FFD700;">Lv4・Lv8・Lv12達成時にスキルをランダムに1つ習得</strong>する。</td>
+                                <td style="padding:8px 6px; color:rgba(255,255,255,0.85);">1試合に<strong>スタメン+5、ハーフタイム交代選手+3</strong>（スキル・監督スキルにより増加あり）。規定値に達するとレベルアップし、各能力値が上昇する。スタメンまたはハーフタイム交代選手のみ獲得。<strong style="color:#FFD700;">Lv4達成時にBスキルを確定習得、Lv8達成時に50%の確率でAスキルを習得</strong>する。Lv12以降はSスキルは特訓・補強でのみ取得可能。</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
                                 <td style="padding:8px 6px; color:#FFD700; font-weight:bold;">コンディション</td>
-                                <td style="padding:8px 6px; color:rgba(255,255,255,0.85);">絶不調・不調・普通・好調・絶好調の5段階。好調・絶好調の選手は能力値が上昇し、不調・絶不調は下降する。</td>
+                                <td style="padding:8px 6px; color:rgba(255,255,255,0.85);">絶不調・不調・普通・好調・絶好調の5段階。絶好調<strong style="color:#3b82f6;">+10%</strong>・好調<strong style="color:#22c55e;">+5%</strong>・普通±0%・不調<strong style="color:#f97316;">-5%</strong>・絶不調<strong style="color:#ef4444;">-10%</strong>の能力値補正。</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
                                 <td style="padding:8px 6px; color:#FFD700; font-weight:bold;">疲労度</td>
@@ -2612,11 +2627,11 @@
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#64B5F6;">💪 中堅獲得</td>
-                                <td style="padding:7px 8px; color:rgba(255,255,255,0.85);">23～26歳 / <strong>200,000円</strong>。即戦力に最も近いカテゴリ。Lv上限は4～9。入団時に40%の確率でB級スキルを保持。</td>
+                                <td style="padding:7px 8px; color:rgba(255,255,255,0.85);">23～28歳 / <strong>200,000円</strong>。即戦力に最も近いカテゴリ。Lv上限は4～9。入団時に50%の確率でBスキルを1つ保持。</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#CE93D8;">⭐ ベテラン獲得</td>
-                                <td style="padding:7px 8px; color:rgba(255,255,255,0.85);">27～30歳 / <strong>150,000円</strong>。即戦力高。Lv上限は3～7。入団時に60%の確率でB級、さらに20%でA級スキルを保持。</td>
+                                <td style="padding:7px 8px; color:rgba(255,255,255,0.85);">29～32歳 / <strong>150,000円</strong>。即戦力高め。Lv上限は3～7。入団時にスキルを最大1つ保持（B:40% / A:25% / S:5%）。31歳以上は加齢による能力低下に注意。</td>
                             </tr>
                             <tr>
                                 <td style="padding:7px 8px; color:#FFD700;">🏫 ユース昇格</td>
@@ -2636,11 +2651,11 @@
                                 <td style="padding:7px 8px; color:rgba(255,255,255,0.85);">Bランクスキル確定の候補3名表示。獲得時に名声を消費する。</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
-                                <td style="padding:7px 8px; color:#64B5F6;">⭐<strong>160</strong>消費</td>
+                                <td style="padding:7px 8px; color:#64B5F6;">⭐<strong>200</strong>消費</td>
                                 <td style="padding:7px 8px; color:rgba(255,255,255,0.85);">Aランクスキル確定の候補3名表示。獲得時に名声を消費する。</td>
                             </tr>
                             <tr>
-                                <td style="padding:7px 8px; color:#CE93D8;">⭐<strong>300</strong>消費</td>
+                                <td style="padding:7px 8px; color:#CE93D8;">⭐<strong>400</strong>消費</td>
                                 <td style="padding:7px 8px; color:rgba(255,255,255,0.85);">Sランクスキル確定の候補1名表示。獲得時に名声を消費する。</td>
                             </tr>
                         </table>
@@ -2736,11 +2751,11 @@
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#EF9A9A;">💪 特別補強交渉（Aスキル確定）</td>
-                                <td style="padding:7px 8px; color:rgba(255,255,255,0.85);"><strong style="color:#FFD700;">⭐160</strong>消費　候補3名表示、獲得時に名声消費。Aスキル確定＋50%でBスキルも付与</td>
+                                <td style="padding:7px 8px; color:rgba(255,255,255,0.85);"><strong style="color:#FFD700;">⭐200</strong>消費　候補3名表示、獲得時に名声消費。Aスキル確定＋50%でBスキルも付与</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#EF9A9A;">💪 特別補強交渉（Sスキル確定）</td>
-                                <td style="padding:7px 8px; color:rgba(255,255,255,0.85);"><strong style="color:#FFD700;">⭐300</strong>消費　候補1名表示、獲得時に名声消費。Sスキル＋Aスキル確定</td>
+                                <td style="padding:7px 8px; color:rgba(255,255,255,0.85);"><strong style="color:#FFD700;">⭐400</strong>消費　候補1名表示、獲得時に名声消費。Sスキル＋Aスキル確定</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#64B5F6;">📊 体調を「好調」に引き上げ</td>
@@ -2756,7 +2771,7 @@
                             </tr>
                         </table>
                         <div style="font-size:12px; color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.04); border-radius:8px; padding:10px; margin-top:10px; line-height:1.7;">
-                            💡 特別補強交渉は「候補表示」のみでは名声を消費しません。候補から選手を獲得する際に初めて名声が消費されます。利用回数が増えると追加コスト（回数×20⭐）が発生します。
+                            💡 特別補強交渉は「候補表示」のみでは名声を消費しません。候補から選手を獲得する際に初めて名声が消費されます。利用回数が増えると追加コスト（回数×20⭐）が発生します。繰り返し利用するほどコストが上昇します。
                         </div>
                     </div>
 
@@ -2813,18 +2828,18 @@
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#FF5252; font-weight:700;">Sランク</td>
-                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐20</td>
-                                <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">5%</td>
+                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐30</td>
+                                <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">3%</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#FFB300; font-weight:700;">Aランク</td>
-                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐10</td>
+                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐15</td>
                                 <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">5%</td>
                             </tr>
                             <tr>
                                 <td style="padding:7px 8px; color:#66BB6A; font-weight:700;">Bランク</td>
-                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐5</td>
-                                <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">5%</td>
+                                <td style="padding:7px 8px; text-align:center; color:#FFD700;">⭐8</td>
+                                <td style="padding:7px 8px; text-align:center; color:rgba(255,255,255,0.85);">8%</td>
                             </tr>
                         </table>
                         <div style="font-size:12px; color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.04); border-radius:8px; padding:10px; margin-top:10px; line-height:1.7;">
@@ -2993,7 +3008,7 @@
                     <!-- ベテランの注意点 -->
                     <div id="help-veteran" class="card" style="margin-top:16px;">
                         <div class="card-title">⚠️ ベテラン選手の注意点</div>
-                        <p style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:12px;">ベテラン選手（31歳以上）は毎シーズン終了時に<strong style="color:#FF8A65;">加齢による能力値低下</strong>と<strong style="color:#FF8A65;">引退の可能性</strong>が生じます。35歳で確定引退となるため、長期的な戦力計画に注意が必要です。</p>
+                        <p style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:12px;">ベテラン選手（29〜32歳）は31歳以上になると毎シーズン終了時に<strong style="color:#FF8A65;">加齢による能力値低下</strong>と<strong style="color:#FF8A65;">引退の可能性</strong>が生じます。獲得直後から加齢リスクが迫る場合があるため、35歳で確定引退となることも踏まえ、長期的な戦力計画に注意が必要です。</p>
                         <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
                             <tr style="background:rgba(255,255,255,0.08);">
                                 <td style="padding:7px 6px; font-weight:bold; color:#FFD700;">年齢</td>
@@ -3030,6 +3045,88 @@
                     </div>
 
 
+
+                    <!-- 性格相性・覚醒イベント -->
+                    <div id="help-personality" class="card" style="margin-top:16px;">
+                        <div class="card-title">👥 性格相性システム</div>
+                        <p style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:12px;">各選手には「性格」が設定されており、<strong style="color:#81C784;">隣接するポジションの選手同士</strong>に相性の良いペアがいるとチーム全体の攻撃力・守備力が上昇します。逆に相性の悪いペアがいると能力が低下します。良い相性・悪い相性はどちらも各性格1つです。</p>
+                        <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+                            <tr style="background:rgba(255,255,255,0.08);">
+                                <td style="padding:7px 6px; font-weight:bold; color:#FFD700;">性格</td>
+                                <td style="padding:7px 6px; font-weight:bold; color:#81C784;">良い相性（1つ）</td>
+                                <td style="padding:7px 6px; font-weight:bold; color:#EF9A9A;">悪い相性（1つ）</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">👑 リーダー</td>
+                                <td style="padding:7px 6px; color:#81C784;">真面目</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">一匹狼</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">🔥 熱血漢</td>
+                                <td style="padding:7px 6px; color:#81C784;">野性的</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">冷静</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">🧊 冷静</td>
+                                <td style="padding:7px 6px; color:#81C784;">温和</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">野性的</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">😄 陽気</td>
+                                <td style="padding:7px 6px; color:#81C784;">リーダー</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">真面目</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">📚 真面目</td>
+                                <td style="padding:7px 6px; color:#81C784;">リーダー</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">陽気</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">🐺 一匹狼</td>
+                                <td style="padding:7px 6px; color:#81C784;">野性的</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">温和</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">🌸 温和</td>
+                                <td style="padding:7px 6px; color:#81C784;">冷静</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">一匹狼</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">⚡ 野性的</td>
+                                <td style="padding:7px 6px; color:#81C784;">熱血漢</td>
+                                <td style="padding:7px 6px; color:#EF9A9A;">真面目</td>
+                            </tr>
+                        </table>
+                        <p style="font-size:12px; color:rgba(255,255,255,0.65); line-height:1.7;">💡 スタメンカードの攻守の下に ❤️（良い相性あり）または 💢（悪い相性あり）のアイコンが、ペア数分だけ表示されます。相性は<strong style="color:#FFD700;">隣接するポジションの選手同士のみ</strong>が対象です。良い相性ペア1組につき攻守+3%、悪い相性ペア1組につき攻守-3%の効果があります（上限±10%）。</p>
+                    </div>
+
+                    <div id="help-awakening" class="card" style="margin-top:16px;">
+                        <div class="card-title">✨ 選手覚醒イベント</div>
+                        <p style="font-size:13px; color:rgba(255,255,255,0.85); line-height:1.8; margin-bottom:12px;">試合後、一定の確率でスタメン選手に<strong style="color:#FFD700;">「覚醒」</strong>が発生することがあります。覚醒は各選手に一度しか発生しません。</p>
+                        <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:12px;">
+                            <tr style="background:rgba(255,255,255,0.08);">
+                                <td style="padding:7px 6px; font-weight:bold; color:#FFD700;">発生条件</td>
+                                <td style="padding:7px 6px; font-weight:bold; color:rgba(255,255,255,0.8);"></td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">Lv3以上の選手</td>
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.65);">Lv3未満は対象外</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">基本確率</td>
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.65);">3%/試合</td>
+                            </tr>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">勝利時追加</td>
+                                <td style="padding:7px 6px; color:#81C784;">+2%</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:7px 6px; color:rgba(255,255,255,0.85);">3点差以上の大勝利</td>
+                                <td style="padding:7px 6px; color:#81C784;">+3%追加</td>
+                            </tr>
+                        </table>
+                        <p style="font-size:12px; color:rgba(255,255,255,0.65); line-height:1.7;">💡 覚醒の効果はランダムで「<strong style="color:#FFD700;">全能力値+5</strong>」または「<strong style="color:#FFD700;">性格変化</strong>」のどちらかです。試合結果画面の「✨」欄に表示されます。</p>
+                    </div>
 
                     <!-- クレジット -->
                     <div class="card" style="margin-top:24px; text-align:center; border:1px solid rgba(255,215,0,0.25); background:rgba(255,215,0,0.05);">
@@ -3166,9 +3263,9 @@
                         <p style="font-size:13px; color:rgba(255,255,255,0.75); margin-bottom:12px; line-height:1.7;">選手を選んで習得可能なスキルに挑戦できます。名声を消費して確率判定。失敗しても名声は消費されます。</p>
                         <div style="font-size:13px; color:#FFD700; margin-bottom:14px;">現在の名声: <span id="skillTrainingFame" style="font-weight:bold;"></span> ⭐</div>
                         <div style="font-size:12px; color:rgba(255,255,255,0.5); margin-bottom:16px; background:rgba(255,255,255,0.05); border-radius:8px; padding:10px;">
-                            <div style="margin-bottom:4px;"><span style="color:#FF5252; font-weight:700;">[Sランク]</span> 名声⭐20 → 確率 5%</div>
-                            <div style="margin-bottom:4px;"><span style="color:#FFB300; font-weight:700;">[Aランク]</span> 名声⭐10 → 確率 5%</div>
-                            <div><span style="color:#66BB6A; font-weight:700;">[Bランク]</span> 名声⭐5 → 確率 5%</div>
+                            <div style="margin-bottom:4px;"><span style="color:#FF5252; font-weight:700;">[Sランク]</span> 名声⭐30 → 確率 3%</div>
+                            <div style="margin-bottom:4px;"><span style="color:#FFB300; font-weight:700;">[Aランク]</span> 名声⭐15 → 確率 5%</div>
+                            <div><span style="color:#66BB6A; font-weight:700;">[Bランク]</span> 名声⭐8 → 確率 8%</div>
                         </div>
                         <div id="skillTrainingPlayerList"></div>
                     </div>
@@ -3280,18 +3377,18 @@
                         <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 16px;">獲得カテゴリを選ぶとランダム3名の候補選手が表示されます。</div>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
                             <button class="btn btn-primary" onclick="openPlayerModal()" style="background:linear-gradient(135deg,#2E7D32,#1B5E20);">🏫 ユース昇格<br><span style="font-size:10px; opacity:0.8;">16～17歳 / 30,000円</span></button>
-                            <button class="btn btn-primary" onclick="openRecruitPanel('rookie')">🌱 若手獲得<br><span style="font-size:10px; opacity:0.8;">18～20歳 / 100,000円</span></button>
-                            <button class="btn btn-primary" onclick="openRecruitPanel('mid')" style="background:linear-gradient(135deg,#1565C0,#0D47A1);">💪 中堅獲得<br><span style="font-size:10px; opacity:0.8;">23～26歳 / 200,000円</span></button>
-                            <button class="btn btn-primary" onclick="openRecruitPanel('veteran')" style="background:linear-gradient(135deg,#6A1B9A,#4A148C);">⭐ ベテラン獲得<br><span style="font-size:10px; opacity:0.8;">27～30歳 / 150,000円</span></button>
+                            <button class="btn btn-primary" onclick="openRecruitPanel('rookie')">🌱 若手獲得<br><span style="font-size:10px; opacity:0.8;">18～22歳 / 100,000円</span></button>
+                            <button class="btn btn-primary" onclick="openRecruitPanel('mid')" style="background:linear-gradient(135deg,#1565C0,#0D47A1);">💪 中堅獲得<br><span style="font-size:10px; opacity:0.8;">23～28歳 / 200,000円</span></button>
+                            <button class="btn btn-primary" onclick="openRecruitPanel('veteran')" style="background:linear-gradient(135deg,#6A1B9A,#4A148C);">⭐ ベテラン獲得<br><span style="font-size:10px; opacity:0.8;">29～32歳 / 150,000円</span></button>
                         </div>
                         <!-- 名声消費：特別補強交渉 -->
                         <div style="margin-top:16px; background:rgba(255,215,0,0.07); border:1px solid rgba(255,215,0,0.3); border-radius:10px; padding:14px;">
                             <div style="font-size:13px; font-weight:bold; color:#FFD700; margin-bottom:6px;">⭐ 特別補強交渉</div>
                             <div style="font-size:11px; color:rgba(255,255,255,0.6); margin-bottom:10px;">名声を消費して通常より強力な候補選手を呼び込む。</div>
                             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-                                <button class="btn btn-primary" data-special-recruit="0" onclick="openSpecialRecruit(60)" style="background:linear-gradient(135deg,#1a6b3c,#2d9e5f); font-size:11px; padding:8px 4px;">⭐60消費<br><span style="font-size:10px; opacity:0.85;">Bスキル確定「3候補</span></button>
-                                <button class="btn btn-primary" data-special-recruit="1" onclick="openSpecialRecruit(140)" style="background:linear-gradient(135deg,#1a3a6b,#2d5e9e); font-size:11px; padding:8px 4px;">⭐140消費<br><span style="font-size:10px; opacity:0.85;">Aスキル確定「3候補</span></button>
-                                <button class="btn btn-primary" data-special-recruit="2" onclick="openSpecialRecruit(260)" style="background:linear-gradient(135deg,#6b1a6b,#9e2d9e); font-size:11px; padding:8px 4px;">⭐260消費<br><span style="font-size:10px; opacity:0.85;">Sスキル確定「1候補</span></button>
+                                <button class="btn btn-primary" data-special-recruit="0" onclick="openSpecialRecruit(80)" style="background:linear-gradient(135deg,#1a6b3c,#2d9e5f); font-size:11px; padding:8px 4px;">⭐80消費<br><span style="font-size:10px; opacity:0.85;">Bスキル確定「3候補</span></button>
+                                <button class="btn btn-primary" data-special-recruit="1" onclick="openSpecialRecruit(200)" style="background:linear-gradient(135deg,#1a3a6b,#2d5e9e); font-size:11px; padding:8px 4px;">⭐200消費<br><span style="font-size:10px; opacity:0.85;">Aスキル確定「3候補</span></button>
+                                <button class="btn btn-primary" data-special-recruit="2" onclick="openSpecialRecruit(400)" style="background:linear-gradient(135deg,#6b1a6b,#9e2d9e); font-size:11px; padding:8px 4px;">⭐400消費<br><span style="font-size:10px; opacity:0.85;">Sスキル確定「1候補</span></button>
                             </div>
                         </div>
 
@@ -3332,9 +3429,15 @@
 
     <!-- 選手詳細モーダル -->
     <div id="playerDetailModal" class="modal">
+        <!-- 固定矢印ナビゲーション（スクロールに追従しない） -->
+        <button id="playerNavPrev" onclick="navigatePlayerDetail(-1)" style="position:fixed;left:8px;bottom:calc(80vh / 2 + 16px);z-index:1100;background:rgba(0,0,0,0.55);border:none;border-radius:50%;width:40px;height:40px;font-size:26px;color:rgba(255,255,255,0.85);cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1;" title="前の選手">&#8249;</button>
+        <button id="playerNavNext" onclick="navigatePlayerDetail(1)" style="position:fixed;right:8px;bottom:calc(80vh / 2 + 16px);z-index:1100;background:rgba(0,0,0,0.55);border:none;border-radius:50%;width:40px;height:40px;font-size:26px;color:rgba(255,255,255,0.85);cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1;" title="次の選手">&#8250;</button>
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="playerDetailName">選手名</h2>
+                <div style="flex:1;min-width:0;">
+                    <h2 id="playerDetailName" style="font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">選手名</h2>
+                    <div id="playerNavIndex" style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;"></div>
+                </div>
                 <button class="close-btn" onclick="closePlayerDetail()">✕</button>
             </div>
             <div class="ability-detail">
@@ -3386,6 +3489,10 @@
                 <div class="ability-row" id="ratingDetailRow">
                     <span class="ability-label">平均評価点</span>
                     <span class="ability-value" id="detailAvgRating">-</span>
+                </div>
+                <div class="ability-row" id="personalityDetailRow">
+                    <span class="ability-label">性格</span>
+                    <span class="ability-value" id="detailPersonality">-</span>
                 </div>
             </div>
 
@@ -3466,9 +3573,9 @@
             <!-- オフェンス力・ディフェンス力 比較テーブル -->
             <div style="margin: 12px 0 16px;">
                 <div style="font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 600; margin-bottom: 8px; text-align: center; letter-spacing: 0.05em;">能力比較</div>
-                <!-- オフェンス力 -->
+                <!-- 自OF vs 相手DF -->
                 <div style="margin-bottom: 10px;">
-                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; margin-bottom: 4px;">⚔️ オフェンス力</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; margin-bottom: 4px;">⚔️ 自オフェンス vs 相手ディフェンス</div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 13px; font-weight: 900; color: #ff8a65; min-width: 28px; text-align: right;" id="previewYourOffense">-</span>
                         <div style="flex: 1; position: relative; height: 14px; background: rgba(0,0,0,0.3); border-radius: 7px; overflow: hidden;">
@@ -3476,14 +3583,14 @@
                         </div>
                         <div style="width: 2px; height: 14px; background: rgba(255,255,255,0.3); border-radius: 1px; flex-shrink: 0;"></div>
                         <div style="flex: 1; position: relative; height: 14px; background: rgba(0,0,0,0.3); border-radius: 7px; overflow: hidden;">
-                            <div id="previewOppOffenseBar" style="position: absolute; right: 0; top: 0; height: 100%; background: linear-gradient(270deg, #ff5722, #ff8a65); border-radius: 7px; transition: width 0.3s; width: 0%;"></div>
+                            <div id="previewOppDefenseBar" style="position: absolute; right: 0; top: 0; height: 100%; background: linear-gradient(270deg, #1565c0, #64b5f6); border-radius: 7px; transition: width 0.3s; width: 0%;"></div>
                         </div>
-                        <span style="font-size: 13px; font-weight: 900; color: #ff8a65; min-width: 28px; text-align: left;" id="previewOppOffense">-</span>
+                        <span style="font-size: 13px; font-weight: 900; color: #64b5f6; min-width: 28px; text-align: left;" id="previewOppDefense">-</span>
                     </div>
                 </div>
-                <!-- ディフェンス力 -->
+                <!-- 自DF vs 相手OF -->
                 <div>
-                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; margin-bottom: 4px;">🛡️ ディフェンス力</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; margin-bottom: 4px;">🛡️ 自ディフェンス vs 相手オフェンス</div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 13px; font-weight: 900; color: #64b5f6; min-width: 28px; text-align: right;" id="previewYourDefense">-</span>
                         <div style="flex: 1; position: relative; height: 14px; background: rgba(0,0,0,0.3); border-radius: 7px; overflow: hidden;">
@@ -3491,9 +3598,9 @@
                         </div>
                         <div style="width: 2px; height: 14px; background: rgba(255,255,255,0.3); border-radius: 1px; flex-shrink: 0;"></div>
                         <div style="flex: 1; position: relative; height: 14px; background: rgba(0,0,0,0.3); border-radius: 7px; overflow: hidden;">
-                            <div id="previewOppDefenseBar" style="position: absolute; right: 0; top: 0; height: 100%; background: linear-gradient(270deg, #1565c0, #64b5f6); border-radius: 7px; transition: width 0.3s; width: 0%;"></div>
+                            <div id="previewOppOffenseBar" style="position: absolute; right: 0; top: 0; height: 100%; background: linear-gradient(270deg, #ff5722, #ff8a65); border-radius: 7px; transition: width 0.3s; width: 0%;"></div>
                         </div>
-                        <span style="font-size: 13px; font-weight: 900; color: #64b5f6; min-width: 28px; text-align: left;" id="previewOppDefense">-</span>
+                        <span style="font-size: 13px; font-weight: 900; color: #ff8a65; min-width: 28px; text-align: left;" id="previewOppOffense">-</span>
                     </div>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 8px; padding: 0 36px;">
@@ -3633,6 +3740,10 @@
                     <div id="expLevelUpDiv" style="font-size: 12px; color: #81C784; margin-top: 10px; background: rgba(129,199,132,0.1); border: 1px solid rgba(129,199,132,0.4); border-radius: 6px; padding: 8px; display: none;">
                         ⬆️ <span id="expLevelUpResult">-</span>
                     </div>
+                    <!-- 覚醒イベント -->
+                    <div id="awakeningResultDiv" style="font-size: 12px; color: #FFD700; margin-top: 10px; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.5); border-radius: 6px; padding: 10px; display: none;">
+                        ✨ <span id="awakeningResult">-</span>
+                    </div>
                     <div id="cardResultDiv" style="font-size: 12px; color: #FFD700; margin-top: 10px; background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.35); border-radius: 6px; padding: 8px; display: none;">
                         <span id="cardResult">-</span>
                     </div>
@@ -3686,9 +3797,9 @@
             <!-- 能力比較 -->
             <div id="halftimePowerCompare" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px; margin-bottom:12px;">
                 <div style="font-size:11px; color:rgba(255,255,255,0.5); font-weight:bold; margin-bottom:8px; text-align:center; letter-spacing:0.05em;">⚖️ 能力比較</div>
-                <!-- オフェンス力 -->
+                <!-- 自OF vs 相手DF -->
                 <div style="margin-bottom:10px;">
-                    <div style="font-size:11px; color:rgba(255,255,255,0.6); font-weight:600; margin-bottom:4px;">⚔️ オフェンス力</div>
+                    <div style="font-size:11px; color:rgba(255,255,255,0.6); font-weight:600; margin-bottom:4px;">⚔️ 自オフェンス vs 相手ディフェンス</div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span style="font-size:13px; font-weight:900; color:#ff8a65; min-width:32px; text-align:right;" id="htYourOffense">-</span>
                         <div style="flex:1; position:relative; height:14px; background:rgba(0,0,0,0.3); border-radius:7px; overflow:hidden;">
@@ -3696,14 +3807,14 @@
                         </div>
                         <div style="width:2px; height:14px; background:rgba(255,255,255,0.3); border-radius:1px; flex-shrink:0;"></div>
                         <div style="flex:1; position:relative; height:14px; background:rgba(0,0,0,0.3); border-radius:7px; overflow:hidden;">
-                            <div id="htOppOffenseBar" style="position:absolute; right:0; top:0; height:100%; background:linear-gradient(270deg,#ff5722,#ff8a65); border-radius:7px; transition:width 0.4s; width:0%;"></div>
+                            <div id="htOppDefenseBar" style="position:absolute; right:0; top:0; height:100%; background:linear-gradient(270deg,#1565c0,#64b5f6); border-radius:7px; transition:width 0.4s; width:0%;"></div>
                         </div>
-                        <span style="font-size:13px; font-weight:900; color:#ff8a65; min-width:32px; text-align:left;" id="htOppOffense">-</span>
+                        <span style="font-size:13px; font-weight:900; color:#64b5f6; min-width:32px; text-align:left;" id="htOppDefense">-</span>
                     </div>
                 </div>
-                <!-- ディフェンス力 -->
+                <!-- 自DF vs 相手OF -->
                 <div>
-                    <div style="font-size:11px; color:rgba(255,255,255,0.6); font-weight:600; margin-bottom:4px;">🛡️ ディフェンス力</div>
+                    <div style="font-size:11px; color:rgba(255,255,255,0.6); font-weight:600; margin-bottom:4px;">🛡️ 自ディフェンス vs 相手オフェンス</div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span style="font-size:13px; font-weight:900; color:#64b5f6; min-width:32px; text-align:right;" id="htYourDefense">-</span>
                         <div style="flex:1; position:relative; height:14px; background:rgba(0,0,0,0.3); border-radius:7px; overflow:hidden;">
@@ -3711,9 +3822,9 @@
                         </div>
                         <div style="width:2px; height:14px; background:rgba(255,255,255,0.3); border-radius:1px; flex-shrink:0;"></div>
                         <div style="flex:1; position:relative; height:14px; background:rgba(0,0,0,0.3); border-radius:7px; overflow:hidden;">
-                            <div id="htOppDefenseBar" style="position:absolute; right:0; top:0; height:100%; background:linear-gradient(270deg,#1565c0,#64b5f6); border-radius:7px; transition:width 0.4s; width:0%;"></div>
+                            <div id="htOppOffenseBar" style="position:absolute; right:0; top:0; height:100%; background:linear-gradient(270deg,#ff5722,#ff8a65); border-radius:7px; transition:width 0.4s; width:0%;"></div>
                         </div>
-                        <span style="font-size:13px; font-weight:900; color:#64b5f6; min-width:32px; text-align:left;" id="htOppDefense">-</span>
+                        <span style="font-size:13px; font-weight:900; color:#ff8a65; min-width:32px; text-align:left;" id="htOppOffense">-</span>
                     </div>
                 </div>
                 <div style="display:flex; justify-content:space-between; font-size:10px; color:rgba(255,255,255,0.35); margin-top:8px; padding:0 40px;">
@@ -4041,7 +4152,7 @@
             {
                 id: 'local_pride',
                 name: '地元の誇り',
-                icon: '❤️',
+                icon: '🎵',
                 desc: '人気が100になる',
                 check: (gd) => gd.popularity >= 100
             },
@@ -4556,6 +4667,146 @@
         };
 
 
+        /* ===== 性格システム定数・ヘルパー ===== */
+        // 8種類の性格タイプ
+        const PERSONALITIES = [
+            { id: 'leader',    name: 'リーダー',   icon: '👑', desc: '仲間を引っ張る統率力がある' },
+            { id: 'hotblood',  name: '熱血漢',     icon: '🔥', desc: '情熱的で諦めない闘志を持つ' },
+            { id: 'calm',      name: '冷静',       icon: '🧊', desc: '感情に流されず冷静に判断する' },
+            { id: 'cheerful',  name: '陽気',       icon: '😄', desc: '場を明るくする天性の明るさ' },
+            { id: 'serious',   name: '真面目',     icon: '📚', desc: '努力を惜しまない誠実な性格' },
+            { id: 'lone',      name: '一匹狼',     icon: '🐺', desc: '独立心が強く単独で輝く' },
+            { id: 'gentle',    name: '温和',       icon: '🌸', desc: '穏やかで周囲と協調できる' },
+            { id: 'wild',      name: '野性的',     icon: '⚡', desc: '本能的なプレーで局面を打開する' }
+        ];
+
+        // 相性テーブル: [A, B] → 'good'（+2%）/ 'bad'（-2%）/ null（中立）
+        // 良い相性・悪い相性: 各性格につきそれぞれ1つのみ（双方向検索のため重複不要）
+        //
+        // 良い相性マッピング:
+        //   リーダー ↔ 真面目  (リーダー・真面目の良い相性)
+        //   熱血漢 ↔ 野性的  (熱血漢・野性的の良い相性)
+        //   冷静   ↔ 温和    (冷静・温和の良い相性)
+        //   陽気   ↔ リーダー  (陽気・リーダーの良い相性)
+        //   一匹狼 ↔ 野性的  (一匹狼・野性的の良い相性)
+        // 悪い相性マッピング:
+        //   リーダー ↔ 一匹狼  (リーダー・一匹狼の悪い相性)
+        //   熱血漢 ↔ 冷静    (熱血漢・冷静の悪い相性)
+        //   冷静   ↔ 野性的  (冷静・野性的の悪い相性)
+        //   陽気   ↔ 真面目    (陽気・真面目の悪い相性)
+        //   真面目  ↔ 陽気    (上記と同一）
+        //   一匹狼 ↔ 温和    (一匹狼・温和の悪い相性)
+        //   温和   ↔ 一匹狼  (上記と同一）
+        //   野性的  ↔ 真面目    (野性的・真面目の悪い相性)
+        const PERSONALITY_COMPAT = [
+            // 良い相性（各性格につき1つ）
+            ['leader',   'serious',   'good'],   // リーダー↔真面目: 模範と実直
+            ['hotblood', 'wild',      'good'],   // 熱血漢↔野性的: 爆発的エネルギー
+            ['calm',     'gentle',    'good'],   // 冷静↔温和: 穏やかな安定感
+            ['cheerful', 'leader',    'good'],   // 陽気↔リーダー: 明るい雰囲気と統率
+            ['lone',     'wild',      'good'],   // 一匹狼↔野性的: 本能の共鳴
+            // 悪い相性（各性格につき1つ）
+            ['leader',   'lone',      'bad'],    // リーダー↔一匹狼: 支配と反発
+            ['hotblood', 'calm',      'bad'],    // 熱血漢↔冷静: 情熱と冷淡
+            ['calm',     'wild',      'bad'],    // 冷静↔野性的: 論理と本能
+            ['cheerful', 'serious',   'bad'],    // 陽気↔真面目: 軽さと重さ
+            ['lone',     'gentle',    'bad'],    // 一匹狼↔温和: 孤高と協調
+            ['wild',     'serious',   'bad'],    // 野性的↔真面目: 本能と規律
+        ];
+
+        // 2選手間の相性を返す: 'good' / 'bad' / null
+        function getPersonalityCompat(pA, pB) {
+            if (!pA || !pB || pA === pB) return null;
+            for (const row of PERSONALITY_COMPAT) {
+                if ((row[0] === pA && row[1] === pB) || (row[0] === pB && row[1] === pA)) {
+                    return row[2];
+                }
+            }
+            return null;
+        }
+
+        // ピッチ上の2スロットが隣接しているか判定（座標距離ベース）
+        // PITCH_SLOTSの座標を使い、距離30以内を隣接とみなす
+        const COMPAT_ADJACENT_THRESHOLD = 30;
+        function getSlotCoord(formKey, slotKey) {
+            const slots = PITCH_SLOTS && PITCH_SLOTS[formKey];
+            if (!slots) return null;
+            const [pos, idx] = slotKey.split('_');
+            const slot = slots.find(s => s.pos === pos && s.idx === Number(idx));
+            return slot ? { x: slot.x, y: slot.y } : null;
+        }
+        function isAdjacentSlot(formKey, slotKeyA, slotKeyB) {
+            const a = getSlotCoord(formKey, slotKeyA);
+            const b = getSlotCoord(formKey, slotKeyB);
+            if (!a || !b) return false;
+            const dx = a.x - b.x, dy = a.y - b.y;
+            return Math.sqrt(dx * dx + dy * dy) <= COMPAT_ADJACENT_THRESHOLD;
+        }
+
+        // スタメン全員の相性ボーナス合計を計算（隣接ペアのみ対象）
+        // 戻り値: { mult: 乗数, goodPairs: ペア数, badPairs: ペア数, details: [{a,b,type}] }
+        function calcCompatBonus(players) {
+            const formKey = (gameData && gameData.formation) || '4-4-2';
+            // playerId → slotKey のマップを作成
+            const idToSlot = {};
+            if (gameData && gameData.pitchAssignment) {
+                for (const [sk, pid] of Object.entries(gameData.pitchAssignment)) {
+                    idToSlot[pid] = sk;
+                }
+            }
+            let goodPairs = 0, badPairs = 0;
+            const details = [];
+            for (let i = 0; i < players.length; i++) {
+                for (let j = i + 1; j < players.length; j++) {
+                    const skA = idToSlot[players[i].id];
+                    const skB = idToSlot[players[j].id];
+                    if (!skA || !skB || !isAdjacentSlot(formKey, skA, skB)) continue;
+                    const pA = players[i].personality;
+                    const pB = players[j].personality;
+                    const c = getPersonalityCompat(pA, pB);
+                    if (c === 'good') {
+                        goodPairs++;
+                        details.push({ a: players[i], b: players[j], type: 'good' });
+                    } else if (c === 'bad') {
+                        badPairs++;
+                        details.push({ a: players[i], b: players[j], type: 'bad' });
+                    }
+                }
+            }
+            // 1ペアにつき ±3%、上限 ±10%
+            const net = Math.min(10, goodPairs * 3) - Math.min(10, badPairs * 3);
+            const mult = 1.0 + net / 100;
+            return { mult, goodPairs, badPairs, details };
+        }
+
+        // 個別選手の相性アイコンHTML（隣接スロットのペア数分だけアイコンを表示）
+        // players: スタメン全員、target: 対象選手、slotKey: 対象選手のスロットキー
+        function getCompatIconHtml(target, players, slotKey) {
+            if (!target.personality) return '';
+            const formKey = (gameData && gameData.formation) || '4-4-2';
+            // playerId → slotKey のマップ
+            const idToSlot = {};
+            if (gameData && gameData.pitchAssignment) {
+                for (const [sk, pid] of Object.entries(gameData.pitchAssignment)) {
+                    idToSlot[pid] = sk;
+                }
+            }
+            const mySlot = slotKey || idToSlot[target.id];
+            let goodCount = 0, badCount = 0;
+            for (const other of players) {
+                if (other.id === target.id || !other.personality) continue;
+                const otherSlot = idToSlot[other.id];
+                if (!mySlot || !otherSlot || !isAdjacentSlot(formKey, mySlot, otherSlot)) continue;
+                const c = getPersonalityCompat(target.personality, other.personality);
+                if (c === 'good') goodCount++;
+                if (c === 'bad') badCount++;
+            }
+            if (goodCount === 0 && badCount === 0) return '';
+            const goodIcons = '❤️'.repeat(goodCount);
+            const badIcons = '💢'.repeat(badCount);
+            return '<span style="font-size:8px;">' + goodIcons + badIcons + '</span>';
+        }
+
         /* ===== ポジション細分化B 定数・ヘルパー ===== */
         // 細分化ポジション一覧
         const SUB_POSITIONS = ['CF','WG','CH','SH','DH','CB','SB'];
@@ -4730,6 +4981,10 @@
                     p.subPosition2 = (combos.length > 0 && Math.random() < 0.50)
                         ? combos[Math.floor(Math.random() * combos.length)][1]
                         : null;
+                }
+                // 性格が未設定の場合はランダムに付与（セーブデータ互換）
+                if (!p.personality) {
+                    p.personality = PERSONALITIES[Math.floor(Math.random() * PERSONALITIES.length)].id;
                 }
             });
         }
@@ -5076,7 +5331,7 @@
             gameData.cup = null;
             const settings = {
                 beginner: { money: 3000000, fame: 300 },
-                normal:   { money: 1000000, fame: 60  },
+                normal:   { money: 1000000, fame: 100 },
                 expert:   { money:  500000, fame: 0   }
             };
             const s = settings[level] || settings.normal;
@@ -5166,8 +5421,8 @@
                             team.squad.filter(p => p.position === 'FW').length < fm.fw;
                         if (needRegen) {
                             team.squad = generateRivalSquad(gameData.league, team.formation);
-                            team.offense = calcRivalOffense(team.squad, team.formation);
-                            team.defense = calcRivalDefense(team.squad, team.formation);
+                            team.offense = calcRivalOffense(team.squad, team.formation, gameData.league);
+                            team.defense = calcRivalDefense(team.squad, team.formation, gameData.league);
                         } else {
                             // idが付いていない旧データの選手にidを付与
                             team.squad.forEach((p, idx) => {
@@ -5641,6 +5896,9 @@
             const baseDribble = _blend('dribble') || 35;
             const baseTackle  = _blend('tackle')  || 35;
 
+            // 性格をランダムに割り当て
+            const _pIdx = Math.floor(Math.random() * PERSONALITIES.length);
+            const _personality = PERSONALITIES[_pIdx].id;
             const player = {
                 id: 'player_' + Date.now() + Math.random(),
                 name: name,
@@ -5650,11 +5908,12 @@
                 exp: 0,          // 試合出場経験値（100でレベルアップ）
                 starter: starter,
                 injury: null,
-                injuryRecovery: 0, // ④ 重症回復カウンター（残り節数）
+                injuryRecovery: 0, // ⑤ 重症回復カウンター（残り節数）
                 age: playerAge,
                 condition: 2,
                 fatigue: 0,  // 疲労度 0～100（0=疲労なし》100=限界）
-                joinedSeason: (gameData && gameData.seasonCount) ? gameData.seasonCount : 1
+                joinedSeason: (gameData && gameData.seasonCount) ? gameData.seasonCount : 1,
+                personality: _personality  // 性格タイプ
             };
 
             if (position === 'GK') {
@@ -5934,6 +6193,20 @@
             }
             return null;
         }
+        // チームが属するリーグのティアを返すヘルパー（見つからない場合はnull）
+        function findTeamTier(clubName) {
+            if (gameData.leagueStandings && gameData.leagueStandings.find(t => t.name === clubName)) {
+                return gameData.league;
+            }
+            if (gameData.allLeagues) {
+                for (const tierStr of Object.keys(gameData.allLeagues)) {
+                    const ld = gameData.allLeagues[tierStr];
+                    if (!ld || !ld.standings) continue;
+                    if (ld.standings.find(t => t.name === clubName)) return parseInt(tierStr);
+                }
+            }
+            return null;
+        }
         function selectRivalStarters(squad, formationKey) {
             const fm = (formations[formationKey] || formations['4-4-2']);
             const needed = { GK: 1, DF: fm.df, MF: fm.mf, FW: fm.fw };
@@ -5955,7 +6228,7 @@
 
         // 他クラブの選手構成からoffense値を計算（スキル重み反映）
         // squadが16名の場合はフォーメーションに合わせたスタメン11名で計算
-        function calcRivalOffense(squad, formationKey) {
+        function calcRivalOffense(squad, formationKey, leagueLevel) {
             const starters = (squad.length > 11 && formationKey) ? selectRivalStarters(squad, formationKey) : squad;
             const fwMf = starters.filter(p => p.position === 'FW' || p.position === 'MF');
             if (fwMf.length === 0) return 40;
@@ -5980,14 +6253,15 @@
                 return sum + val;
             }, 0) / fwMf.length;
             // 案A: リーグレベル別の他クラブ仮想施設ボーナス（5部:+1, 4部:+2, 3部:+3, 2部:+4, 1部:+5）
+            // leagueLevelが指定されていればそのティアのボーナスを使用（カップ戦・他リーグの正確な戦力値のため）
             const _rivalFacilityBonus = { 5: 1, 4: 2, 3: 3, 2: 4, 1: 5, 0: 5 };
-            const _rfb = _rivalFacilityBonus[gameData.league] || 1;
+            const _rfb = _rivalFacilityBonus[leagueLevel != null ? leagueLevel : gameData.league] || 1;
             return Math.round(avg) + _rfb;
         }
 
         // 他クラブの選手構成からdefense値を計算（スキル重み反映）
         // squadが16名の場合はフォーメーションに合わせたスタート一11名で計算
-        function calcRivalDefense(squad, formationKey) {
+        function calcRivalDefense(squad, formationKey, leagueLevel) {
             const starters = (squad.length > 11 && formationKey) ? selectRivalStarters(squad, formationKey) : squad;
             const dfGk = starters.filter(p => p.position === 'DF' || p.position === 'GK');
             if (dfGk.length === 0) return 40;
@@ -6012,8 +6286,9 @@
                 return sum + val;
             }, 0) / dfGk.length;
             // 案A: リーグレベル別の他クラブ仮想施設ボーナス
+            // leagueLevelが指定されていればそのティアのボーナスを使用（カップ戦・他リーグの正確な戦力値のため）
             const _rivalFacilityBonusDef = { 5: 1, 4: 2, 3: 3, 2: 4, 1: 5, 0: 5 };
-            const _rfbDef = _rivalFacilityBonusDef[gameData.league] || 1;
+            const _rfbDef = _rivalFacilityBonusDef[leagueLevel != null ? leagueLevel : gameData.league] || 1;
             return Math.round(avg) + _rfbDef;
         }
 
@@ -6309,8 +6584,9 @@
                 const transferredPlayer = Object.assign({}, player, { starter: false });
                 destTeam.squad.push(transferredPlayer);
                 // offense/defense再計算（スタメン11名ベース）
-                destTeam.offense = calcRivalOffense(destTeam.squad, destTeam.formation);
-                destTeam.defense = calcRivalDefense(destTeam.squad, destTeam.formation);
+                const _destTier = (() => { const _t = findTeamTier(destTeam.name); return _t != null ? _t : gameData.league; })();
+                destTeam.offense = calcRivalOffense(destTeam.squad, destTeam.formation, _destTier);
+                destTeam.defense = calcRivalDefense(destTeam.squad, destTeam.formation, _destTier);
             }
             saveGame();
             renderGame();
@@ -6412,8 +6688,9 @@
                     repPlayer.id = 'rival_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
                     repPlayer.starter = false;
                     srcTeam.squad.push(repPlayer);
-                    srcTeam.offense = calcRivalOffense(srcTeam.squad, srcTeam.formation);
-                    srcTeam.defense = calcRivalDefense(srcTeam.squad, srcTeam.formation);
+                    const _srcTierA = (() => { const _t = findTeamTier(srcTeam.name); return _t != null ? _t : gameData.league; })();
+                    srcTeam.offense = calcRivalOffense(srcTeam.squad, srcTeam.formation, _srcTierA);
+                    srcTeam.defense = calcRivalDefense(srcTeam.squad, srcTeam.formation, _srcTierA);
                 }
             }
             gameData.transferMarket = gameData.transferMarket.filter(pl => pl.id !== playerId);
@@ -6455,8 +6732,9 @@
                 const srcTeam = findTeamAcrossLeagues(loanOrigClub);
                 if (srcTeam && srcTeam.squad) {
                     srcTeam.squad = srcTeam.squad.filter(pl => pl.id !== loanOrigSquadId);
-                    srcTeam.offense = calcRivalOffense(srcTeam.squad, srcTeam.formation);
-                    srcTeam.defense = calcRivalDefense(srcTeam.squad, srcTeam.formation);
+                    const _loanSrcTier = (() => { const _t = findTeamTier(loanOrigClub); return _t != null ? _t : gameData.league; })();
+                    srcTeam.offense = calcRivalOffense(srcTeam.squad, srcTeam.formation, _loanSrcTier);
+                    srcTeam.defense = calcRivalDefense(srcTeam.squad, srcTeam.formation, _loanSrcTier);
                 }
             }
             if (!gameData.loanPlayers) gameData.loanPlayers = [];
@@ -6493,8 +6771,9 @@
                             returnedPlayer.starter = false;
                             srcTeam.squad.push(returnedPlayer);
                         }
-                        srcTeam.offense = calcRivalOffense(srcTeam.squad, srcTeam.formation);
-                        srcTeam.defense = calcRivalDefense(srcTeam.squad, srcTeam.formation);
+                        const _loanRetTier = (() => { const _t = findTeamTier(srcTeam.name); return _t != null ? _t : gameData.league; })();
+                        srcTeam.offense = calcRivalOffense(srcTeam.squad, srcTeam.formation, _loanRetTier);
+                        srcTeam.defense = calcRivalDefense(srcTeam.squad, srcTeam.formation, _loanRetTier);
                     }
                 }
             });
@@ -7262,8 +7541,8 @@
                     popularity: isYou ? 50 : getRandomAbility(30, 70),
                     matchesPlayed: 0,
                     squad: rivalSquad,
-                    offense: isYou ? null : (rivalSquad ? calcRivalOffense(rivalSquad, rivalFormation) : getRandomAbility(min, max)),
-                    defense: isYou ? null : (rivalSquad ? calcRivalDefense(rivalSquad, rivalFormation) : getRandomAbility(min, max)),
+                    offense: isYou ? null : (rivalSquad ? calcRivalOffense(rivalSquad, rivalFormation, gameData.league) : getRandomAbility(min, max)),
+                    defense: isYou ? null : (rivalSquad ? calcRivalDefense(rivalSquad, rivalFormation, gameData.league) : getRandomAbility(min, max)),
                     formation: rivalFormation,
                     tactics: rivalTactics,
                     managerSkills: isYou ? null : (existingManagerSkills[name] || generateRivalManagerSkills(gameData.league))
@@ -7528,14 +7807,32 @@
                 showNotification('スタメンが11名である必要があります（重症の選手は出場できません）');
                 return;
             }
-            // pitchAssignmentベースでスロット充足チェック（割り当て済み選手11人＋GK1人）
-            const pa = gameData.pitchAssignment || {};
-            const slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
-            const assignedIds = new Set(Object.values(pa).filter(Boolean));
-            const gkSlotFilled = slots.filter(s => s.pos === 'GK').every(s => pa[s.pos + '_' + s.idx]);
-            if (assignedIds.size !== slots.length || !gkSlotFilled) {
-                showNotification('フォーメーションの全スロットに選手をセットしてください');
-                return;
+            // フォーメーションチェック（pitchAssignmentのスロット位置で判定）
+            {
+                const _fmCup = formations[gameData.formation];
+                if (_fmCup) {
+                    const _paCup = gameData.pitchAssignment || {};
+                    const _slotsCup = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
+                    const _slotPosCountCup = { FW: 0, MF: 0, DF: 0, GK: 0 };
+                    const _assignedIdsCup = new Set();
+                    for (const slot of _slotsCup) {
+                        const key = slot.pos + '_' + slot.idx;
+                        const pid = _paCup[key];
+                        if (pid) {
+                            _slotPosCountCup[slot.pos] = (_slotPosCountCup[slot.pos] || 0) + 1;
+                            _assignedIdsCup.add(pid);
+                        }
+                    }
+                    for (const p of starters) {
+                        if (!_assignedIdsCup.has(p.id)) {
+                            _slotPosCountCup[p.position] = (_slotPosCountCup[p.position] || 0) + 1;
+                        }
+                    }
+                    if (_slotPosCountCup.FW !== _fmCup.fw || _slotPosCountCup.MF !== _fmCup.mf || _slotPosCountCup.DF !== _fmCup.df || _slotPosCountCup.GK !== 1) {
+                        showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
+                        return;
+                    }
+                }
             }
             const yourOffenseBase = getFormationAdjustedOffense(starters, gameData.pitchAssignment);
             const yourDefenseBase = getFormationAdjustedDefense(starters, gameData.pitchAssignment);
@@ -7565,19 +7862,64 @@
             }
             function updatePreviewBars() {
                 const mults = getPreviewMultipliers();
-                const yourOffense = Math.round(yourOffenseBase * mults.offMult);
-                const yourDefense = Math.round(yourDefenseBase * mults.defMult);
+                // ===== 試合計算と同じスキル乗算をプレビューに反映 =====
+                const _pvHas = (id) => starters.some(p => p.skills && p.skills.includes(id));
+                let _pvOffMult = 1.0;
+                if (_pvHas('playmaker')) _pvOffMult *= 1.03;
+                if (_pvHas('boxToBox')) _pvOffMult *= 1.03;
+                if (_pvHas('longPass') && starters.filter(p => p.position === 'FW').length >= 2) _pvOffMult *= 1.03;
+                if (_pvHas('technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) _pvOffMult *= 1.03;
+                if (_pvHas('aggressive')) _pvOffMult *= 1.03;
+                if (_pvHas('postPlayer')) { const _a = starters.filter(p=>p.position==='MF').reduce((s,p)=>s+(p.passing||0),0)/Math.max(starters.filter(p=>p.position==='MF').length,1); _pvOffMult *= (1+_a*0.001); }
+                if (_pvHas('buildUp')) { const _b = starters.filter(p=>p.position==='MF').reduce((s,p)=>s+(p.passing||0),0)/Math.max(starters.filter(p=>p.position==='MF').length,1); _pvOffMult *= (1+_b*0.0005); }
+                if (_pvHas('midDominator')) _pvOffMult *= 1.05;
+                if (_pvHas('maestro')) { const _mc = starters.filter(p=>p.position==='MF').length; if (_mc>0) _pvOffMult *= Math.pow(1.03, _mc/4); }
+                if (_pvHas('libero')) _pvOffMult *= 1.03;
+                if (_pvHas('falseNine')) _pvOffMult *= 1.04;
+                if (_pvHas('targetMan') && (_pvHas('buildUp') || _pvHas('longPass'))) _pvOffMult *= 1.03;
+                if (_pvHas('fieldGeneral')) _pvOffMult *= 1.03;
+                _pvOffMult = Math.min(_pvOffMult, 1.30);
+                let _pvDefMult = 1.0;
+                if (_pvHas('aerial')) _pvDefMult *= 1.03;
+                if (_pvHas('coaching')) _pvDefMult *= 1.03;
+                if (_pvHas('boxToBox')) _pvDefMult *= 1.03;
+                if (_pvHas('deepLine')) _pvDefMult *= 1.03;
+                if (_pvHas('commander')) { const _dc = starters.filter(p=>p.position==='DF').reduce((s,p)=>s+(p.cover||0),0)/Math.max(starters.filter(p=>p.position==='DF').length,1); _pvDefMult *= (1+_dc*0.001); }
+                if (_pvHas('midDominator')) _pvDefMult *= 1.05;
+                if (_pvHas('falseNine')) _pvDefMult *= 1.04;
+                if (_pvHas('fieldGeneral')) _pvDefMult *= 1.03;
+                if (_pvHas('dominantHeader') && _pvHas('aerial')) _pvDefMult *= 1.03;
+                if (_pvHas('highPress')) _pvDefMult *= 0.98;
+                _pvDefMult = Math.min(_pvDefMult, 1.30);
+                // 監督スキル効果
+                const _pvMse = getManagerSkillEffects();
+                const _pvMgrOff = _pvMse.offMult || 1.0;
+                const _pvMgrDef = _pvMse.defMult || 1.0;
+                const _pvMgrOppOff = _pvMse.oppOffMult || 1.0;
+                const _pvMgrOppDef = _pvMse.oppDefMult || 1.0;
+                // 分析室効果（相手OF/DF低下）
+                const _pvAnalysisLv = gameData.facilities.analysis || 1;
+                const _pvAnalysisMult = 1 - (_pvAnalysisLv * 0.005);
+                // 遠征ボーナス
+                const _pvOuting = gameData.outingNextMatchBonus || {};
+                // 性格相性ボーナス
+                const _pvCompatMult = calcCompatBonus(starters).mult;
+                // 最終値
+                const yourOffense = Math.round(yourOffenseBase * _pvOffMult * mults.offMult * _pvMgrOff * _pvCompatMult + (_pvOuting.of || 0));
+                const yourDefense = Math.round(yourDefenseBase * _pvDefMult * mults.defMult * _pvMgrDef * _pvCompatMult + (_pvOuting.df || 0));
+                const adjOppOffense = Math.round(oppOffense * _pvAnalysisMult * _pvMgrOppOff);
+                const adjOppDefense = Math.round(oppDefense * _pvAnalysisMult * _pvMgrOppDef);
                 document.getElementById('previewYourOffense').textContent = yourOffense;
-                document.getElementById('previewOppOffense').textContent = oppOffense;
+                document.getElementById('previewOppOffense').textContent = adjOppOffense;
                 document.getElementById('previewYourDefense').textContent = yourDefense;
-                document.getElementById('previewOppDefense').textContent = oppDefense;
+                document.getElementById('previewOppDefense').textContent = adjOppDefense;
                 document.getElementById('previewOppLabel').innerHTML = getTeamWithEmblem(opponentName, 18);
-                const maxOff = Math.max(yourOffense, oppOffense, 1);
-                const maxDef = Math.max(yourDefense, oppDefense, 1);
+                const maxOff = Math.max(yourOffense, adjOppOffense, 1);
+                const maxDef = Math.max(yourDefense, adjOppDefense, 1);
                 document.getElementById('previewYourOffenseBar').style.width = (yourOffense / maxOff) * 100 + '%';
-                document.getElementById('previewOppOffenseBar').style.width = (oppOffense / maxOff) * 100 + '%';
+                document.getElementById('previewOppOffenseBar').style.width = (adjOppOffense / maxOff) * 100 + '%';
                 document.getElementById('previewYourDefenseBar').style.width = (yourDefense / maxDef) * 100 + '%';
-                document.getElementById('previewOppDefenseBar').style.width = (oppDefense / maxDef) * 100 + '%';
+                document.getElementById('previewOppDefenseBar').style.width = (adjOppDefense / maxDef) * 100 + '%';
             }
             const _previewOppEl1 = document.getElementById('previewOpponentName');
             _previewOppEl1.innerHTML = getTeamWithEmblem(opponentName, 22);
@@ -7690,8 +8032,8 @@
                     matchesPlayed: 0,
                     popularity: getRandomAbility(30, 70),
                     squad: rivalSquad,
-                    offense: calcRivalOffense(rivalSquad, rivalFormation),
-                    defense: calcRivalDefense(rivalSquad, rivalFormation),
+                    offense: calcRivalOffense(rivalSquad, rivalFormation, tier),
+                    defense: calcRivalDefense(rivalSquad, rivalFormation, tier),
                     formation: rivalFormation,
                     tactics: rivalTactics
                 };
@@ -8001,8 +8343,8 @@
                     if (!team.squad) return;
                     team.squad = processSquad(team.squad, gameData.league);
                     // offense/defense再計算
-                    team.offense = calcRivalOffense(team.squad, team.formation);
-                    team.defense = calcRivalDefense(team.squad, team.formation);
+                    team.offense = calcRivalOffense(team.squad, team.formation, gameData.league);
+                    team.defense = calcRivalDefense(team.squad, team.formation, gameData.league);
                 });
             }
 
@@ -8015,8 +8357,8 @@
                     league.standings.forEach(team => {
                         if (!team.squad) return;
                         team.squad = processSquad(team.squad, tier);
-                        team.offense = calcRivalOffense(team.squad, team.formation);
-                        team.defense = calcRivalDefense(team.squad, team.formation);
+                        team.offense = calcRivalOffense(team.squad, team.formation, tier);
+                        team.defense = calcRivalDefense(team.squad, team.formation, tier);
                     });
                 });
             }
@@ -8973,18 +9315,18 @@
             if (type === 'physical') {
                 gameData.players.forEach(p => {
                     p.fatigue = Math.max(0, (p.fatigue || 0) - 20);
-                    p.exp = (p.exp || 0) + 20;
+                    p.exp = (p.exp || 0) + 10;
                     checkAndLevelUp(p).forEach(m => campLvUpMsgs.push(m));
                 });
                 icon = '🏃'; title = '全体フィジカル練習完了！';
-                effect = '全選手の疲労-20、経験値+20';
+                effect = '全選手の疲労-20、経験値+10';
             } else if (type === 'tactics') {
                 gameData.players.forEach(p => {
-                    p.exp = (p.exp || 0) + 40;
+                    p.exp = (p.exp || 0) + 20;
                     checkAndLevelUp(p).forEach(m => campLvUpMsgs.push(m));
                 });
                 icon = '⚽'; title = '全体戦術練習完了！';
-                effect = '全選手に経験値+40';
+                effect = '全選手に経験値+20';
             } else if (type === 'mf') {
                 const mfs = gameData.players.filter(p => p.position === 'MF');
                 if (mfs.length === 0) { showNotification('MFの選手がいません。'); return; }
@@ -9088,9 +9430,9 @@
         }
         // ===== スキル獲得特訓 =====
         const SKILL_TRAINING_RANKS = {
-            S: { fame: 20, chance: 0.05 },
-            A: { fame: 10, chance: 0.05 },
-            B: { fame: 5,  chance: 0.05 }
+            S: { fame: 30, chance: 0.03 },
+            A: { fame: 15, chance: 0.05 },
+            B: { fame: 8,  chance: 0.08 }
         };
         const SKILL_RANK_MAP = {
             // Sランク
@@ -9128,7 +9470,7 @@
 
             const posColors = { FW:'#ef5350', MF:'#42a5f5', DF:'#66bb6a', GK:'#ffa726' };
             inner.innerHTML = '<div style="font-size:16px;font-weight:bold;color:#4CAF50;margin-bottom:14px;">🎓 スキル獲得特訓 — 選手を選択</div>' +
-                '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Bランク⭐5(5%) / Aランク⭐10(5%) / Sランク⭐20(5%)</div>' +
+                '<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Bランク⭐8(8%) / Aランク⭐15(5%) / Sランク⭐30(3%)</div>' +
                                 gameData.players.map(p => {
                      const pos = p.position || p.pos || '?';
                      const subPosDisp = getSubPos(p) + (p.subPosition2 ? '/' + p.subPosition2 : '');
@@ -9172,8 +9514,10 @@
             inner.style.cssText = 'background:#1a1a2e;border-radius:16px;padding:20px;max-width:380px;width:92%;max-height:82vh;overflow-y:auto;';
 
             const rankColors = { S:'#FF5252', A:'#FFB300', B:'#66BB6A' };
-            const rankLabels = { S:'Sランク ⭐20 (5%)', A:'Aランク ⭐10 (5%)', B:'Bランク ⭐5 (5%)' };
+            const rankLabels = { S:'Sランク ⭐30 (3%)', A:'Aランク ⭐15 (5%)', B:'Bランク ⭐8 (8%)' };
             const fame = gameData.fame || 0;
+            const _mseCamp = getManagerSkillEffects();
+            const _discountCamp = _mseCamp.skillTrainDiscount || 0;
 
             let html = `<div style="font-size:15px;font-weight:bold;color:#4CAF50;margin-bottom:4px;">🎓 ${p.name} のスキル特訓</div>`;
             html += `<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:14px;">現在の名声: <span style="color:#FFD700;">${fame}⭐</span></div>`;
@@ -9184,13 +9528,14 @@
                 const rank = getSkillRank(id);
                 const rc = rankColors[rank] || '#66BB6A';
                 const cfg = SKILL_TRAINING_RANKS[rank];
-                const canAfford = fame >= cfg.fame;
+                const dispCost = Math.max(1, Math.floor(cfg.fame * (1 - _discountCamp)));
+                const canAfford = fame >= dispCost;
                 if (rank !== lastRank) {
                     html += `<div style="font-size:11px;font-weight:700;color:${rc};margin:10px 0 6px;border-bottom:1px solid ${rc}33;padding-bottom:4px;">${rankLabels[rank]}</div>`;
                     lastRank = rank;
                 }
                 html += `<button onclick="applySkillTraining('${playerId}','${id}')" ${canAfford ? '' : 'disabled'} style="display:block;width:100%;text-align:left;padding:9px 12px;margin-bottom:5px;background:rgba(255,255,255,0.06);border:1px solid ${rc}55;border-radius:8px;color:${canAfford ? '#fff' : 'rgba(255,255,255,0.3)'};cursor:${canAfford ? 'pointer' : 'not-allowed'};">
-                    <span style="color:${rc};font-weight:700;font-size:12px;">[${rank}]</span> <strong>${sk.name}</strong><br>
+                    <span style="color:${rc};font-weight:700;font-size:12px;">[${rank}]</span> <strong>${sk.name}</strong> <span style="color:#FFD700;font-size:10px;">⭐${dispCost}</span><br>
                     <span style="font-size:10px;color:rgba(255,255,255,0.5);">${sk.desc}</span>
                 </button>`;
             });
@@ -9243,7 +9588,7 @@
                     resultEl.style.display = 'block';
                     document.getElementById('campResultIcon').textContent = '🎓';
                     document.getElementById('campResultTitle').textContent = p.name + ' が「' + sk.name + '」を習得！';
-                    document.getElementById('campResultEffect').textContent = '⭐' + actualFameCost + '消費 | ' + Math.round(cfg.chance * 100) + '%の確率で成功！';
+                    document.getElementById('campResultEffect').textContent = '⭐' + actualFameCost + '消費 | 成功確率' + Math.round(cfg.chance * 100) + '%で成功！';
                 }
                 showNotification('🎓 ' + p.name + ' が「' + sk.name + '」を習得しました！');
             } else {
@@ -9427,17 +9772,17 @@
             '3-4-3': [
                 {pos:'FW', idx:0, x:20, y:14}, {pos:'FW', idx:1, x:50, y:12}, {pos:'FW', idx:2, x:80, y:14},
                 {pos:'MF', idx:0, x:50, y:27},
-                {pos:'MF', idx:1, x:28, y:36}, {pos:'MF', idx:2, x:72, y:36},
+                {pos:'MF', idx:1, x:16, y:36}, {pos:'MF', idx:2, x:84, y:36},
                 {pos:'MF', idx:3, x:50, y:44},
                 {pos:'DF', idx:0, x:25, y:62}, {pos:'DF', idx:1, x:50, y:62}, {pos:'DF', idx:2, x:75, y:62},
                 {pos:'GK', idx:0, x:50, y:80}
             ],
             '3-6-1': [
-                {pos:'FW', idx:0, x:50, y:13},
-                {pos:'MF', idx:0, x:38, y:24}, {pos:'MF', idx:1, x:62, y:24},
-                {pos:'MF', idx:2, x:18, y:33}, {pos:'MF', idx:3, x:82, y:33},
-                {pos:'MF', idx:4, x:38, y:42}, {pos:'MF', idx:5, x:62, y:42},
-                {pos:'DF', idx:0, x:25, y:62}, {pos:'DF', idx:1, x:50, y:62}, {pos:'DF', idx:2, x:75, y:62},
+                {pos:'FW', idx:0, x:50, y:11},
+                {pos:'MF', idx:0, x:32, y:24}, {pos:'MF', idx:1, x:68, y:24},
+                {pos:'MF', idx:2, x:14, y:35}, {pos:'MF', idx:3, x:86, y:35},
+                {pos:'MF', idx:4, x:32, y:46}, {pos:'MF', idx:5, x:68, y:46},
+                {pos:'DF', idx:0, x:25, y:64}, {pos:'DF', idx:1, x:50, y:64}, {pos:'DF', idx:2, x:75, y:64},
                 {pos:'GK', idx:0, x:50, y:80}
             ],
             '5-3-2': [
@@ -9447,11 +9792,11 @@
                 {pos:'GK', idx:0, x:50, y:80}
             ],
             '4-5-1': [
-                {pos:'FW', idx:0, x:50, y:8},
-                {pos:'MF', idx:0, x:50, y:33},
-                {pos:'MF', idx:1, x:18, y:40}, {pos:'MF', idx:2, x:82, y:40},
-                {pos:'MF', idx:3, x:36, y:49}, {pos:'MF', idx:4, x:64, y:49},
-                {pos:'DF', idx:0, x:15, y:59}, {pos:'DF', idx:1, x:37, y:64}, {pos:'DF', idx:2, x:63, y:64}, {pos:'DF', idx:3, x:85, y:59},
+                {pos:'FW', idx:0, x:50, y:14},
+                {pos:'MF', idx:0, x:50, y:27},
+                {pos:'MF', idx:1, x:16, y:35}, {pos:'MF', idx:2, x:84, y:35},
+                {pos:'MF', idx:3, x:34, y:44}, {pos:'MF', idx:4, x:66, y:44},
+                {pos:'DF', idx:0, x:15, y:57}, {pos:'DF', idx:1, x:37, y:62}, {pos:'DF', idx:2, x:63, y:62}, {pos:'DF', idx:3, x:85, y:57},
                 {pos:'GK', idx:0, x:50, y:80}
             ],
             '5-4-1': [
@@ -9480,6 +9825,13 @@
 
             // 現在のスタメン選手IDセット
             const starterIds = new Set(gameData.players.filter(p => p.starter).map(p => p.id));
+
+            // personality未設定の選手に補完（旧セーブデータ対応）
+            gameData.players.forEach(p => {
+                if (!p.personality) {
+                    p.personality = PERSONALITIES[Math.floor(Math.random() * PERSONALITIES.length)].id;
+                }
+            });
 
             // pitchAssignmentの整合性チェック（スタメンでなくなった選手を除去）
             for (const key of Object.keys(gameData.pitchAssignment)) {
@@ -9546,11 +9898,16 @@
                     const playerSubPosColor = SUB_POS_COLOR[playerSubPos] || '#fff';
                     const playerSubPosHtml = '<div style="font-size:7px;font-weight:700;color:' + playerSubPosColor + ';margin-top:1px;">' +
                         playerSubPos + (playerSubPos2 ? '<span style="opacity:0.65;">/'+playerSubPos2+'</span>' : '') + '</div>';
+                    // 性格相性アイコン（隣接スロットのみ対象）
+                    const _pitchStarters = Object.values(gameData.pitchAssignment || {}).map(id => gameData.players.find(p => p.id === id)).filter(Boolean);
+                    const compatIcon = getCompatIconHtml(player, _pitchStarters, slotKey);
+                    const compatHtml = compatIcon ? '<div style="font-size:8px;margin-top:1px;line-height:1;">' + compatIcon + '</div>' : '';
                     el.innerHTML =
                         '<div class="slot-pos" style="color:' + slotPosColor + '">' + slotSubLabel + '</div>' +
                         '<div class="slot-name">' + player.name + '</div>' +
                         playerSubPosHtml +
                         '<div class="slot-stat">' + statStr + '</div>' +
+                        compatHtml +
                         '<div style="font-size:7px;color:' + fatigueColor + ';margin-top:1px;">疲' + fatigue + '</div>' +
                         slotCondHtml +
                         slotInjuryHtml +
@@ -9793,18 +10150,65 @@
                 </div>
             `).join('');
 
-            const starters = gameData.players.filter(p => p.starter && p.injury !== 'heavy');
-            // 作戦補正を反映した戦力値
-            const _lineupTP = {
-                ultra_attack: { offMult: 1.12, defMult: 0.82 },
-                attack:       { offMult: 1.06, defMult: 0.91 },
-                balance:      { offMult: 1.00, defMult: 1.00 },
-                defend:       { offMult: 0.91, defMult: 1.06 },
-                ultra_defend: { offMult: 0.82, defMult: 1.12 },
-            };
-            const _lineupTp = _lineupTP[gameData.tactics] || _lineupTP['balance'];
-            const offenseVal = Math.round(getFormationAdjustedOffense(starters) * _lineupTp.offMult);
-            const defenseVal = Math.round(getFormationAdjustedDefense(starters) * _lineupTp.defMult);
+            // pitchAssignmentに実際に配置されている選手のみをスタメンとして扱う
+            const assignedIds = new Set(Object.values(gameData.pitchAssignment || {}));
+            const starters = gameData.players.filter(p => assignedIds.has(p.id) && p.injury !== 'heavy');
+            // 作戦補正はgetFormationAdjustedOffenseに含まれないため、
+            // スタメン画面では作戦補正を除いたスキル乗算・監督スキルのみ反映する
+            // ===== 試合計算と同じスキル乗算方式でプレビュー戦力値を計算 =====
+            const _hasSkill = (id) => starters.some(p => p.skills && p.skills.includes(id));
+            // 攻撃スキル乗算（試合計算と同じロジック）
+            let _previewOffMult = 1.0;
+            if (_hasSkill('playmaker')) _previewOffMult *= 1.03;
+            if (_hasSkill('boxToBox')) _previewOffMult *= 1.03;
+            if (_hasSkill('longPass') && starters.filter(p => p.position === 'FW').length >= 2) _previewOffMult *= 1.03;
+            if (_hasSkill('technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) _previewOffMult *= 1.03;
+            if (_hasSkill('aggressive')) _previewOffMult *= 1.03;
+            if (_hasSkill('postPlayer')) {
+                const _mfPassAvg = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
+                _previewOffMult *= (1 + _mfPassAvg * 0.001);
+            }
+            if (_hasSkill('buildUp')) {
+                const _mfPassAvg2 = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
+                _previewOffMult *= (1 + _mfPassAvg2 * 0.0005);
+            }
+            if (_hasSkill('midDominator')) _previewOffMult *= 1.05;
+            if (_hasSkill('maestro')) {
+                const _mfCount = starters.filter(p => p.position === 'MF').length;
+                if (_mfCount > 0) _previewOffMult *= Math.pow(1.03, _mfCount / 4);
+            }
+            if (_hasSkill('libero')) _previewOffMult *= 1.03;
+            if (_hasSkill('falseNine')) _previewOffMult *= 1.04;
+            if (_hasSkill('targetMan') && (_hasSkill('buildUp') || _hasSkill('longPass'))) _previewOffMult *= 1.03;
+            if (_hasSkill('fieldGeneral')) _previewOffMult *= 1.03;
+            _previewOffMult = Math.min(_previewOffMult, 1.30); // 上限クランプ
+            // 守備スキル乗算（試合計算と同じロジック）
+            let _previewDefMult = 1.0;
+            if (_hasSkill('aerial')) _previewDefMult *= 1.03;
+            if (_hasSkill('coaching')) _previewDefMult *= 1.03;
+            if (_hasSkill('boxToBox')) _previewDefMult *= 1.03;
+            if (_hasSkill('deepLine')) _previewDefMult *= 1.03;
+            if (_hasSkill('commander')) {
+                const _dfCoverAvg = starters.filter(p => p.position === 'DF').reduce((s, p) => s + (p.cover || 0), 0) / Math.max(starters.filter(p => p.position === 'DF').length, 1);
+                _previewDefMult *= (1 + _dfCoverAvg * 0.001);
+            }
+            if (_hasSkill('midDominator')) _previewDefMult *= 1.05;
+            if (_hasSkill('falseNine')) _previewDefMult *= 1.04;
+            if (_hasSkill('fieldGeneral')) _previewDefMult *= 1.03;
+            if (_hasSkill('dominantHeader') && _hasSkill('aerial')) _previewDefMult *= 1.03;
+            if (_hasSkill('highPress')) _previewDefMult *= 0.98; // ハイプレスのDF低下
+            _previewDefMult = Math.min(_previewDefMult, 1.30); // 上限クランプ
+            // 監督スキル効果を反映
+            const _previewMse = getManagerSkillEffects();
+            const _previewMgrOff = _previewMse.offMult || 1.0;
+            const _previewMgrDef = _previewMse.defMult || 1.0;
+            // 遠征ボーナスを反映
+            const _previewOuting = gameData.outingNextMatchBonus || {};
+            // 最終的な自クラブOF/DF（作戦補正込み）
+            const _baseOff = getFormationAdjustedOffense(starters);
+            const _baseDef = getFormationAdjustedDefense(starters);
+            const offenseVal = Math.round(_baseOff * _previewOffMult * _previewMgrOff + (_previewOuting.of || 0));
+            const defenseVal = Math.round(_baseDef * _previewDefMult * _previewMgrDef + (_previewOuting.df || 0));
             // スタメン総合値 = スタメン全員の個人値平均（体調・疲労・負傷補正済み）
             const yourStrength = calculateTeamStrength(starters);
 
@@ -10422,7 +10826,7 @@
             { id:'o61', rarity:1, icon:'🏋️', title:'いつものトレーニング',
               desc:'ジムで黙々とトレーニングをこなした。地道な努力が実を結ぶ。',
               type:'instant',
-              effect: () => { const p = gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.exp=(p.exp||0)+15; return p.name+'の経験値+15'; } return '変化なし'; } },
+              effect: () => { const p = gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.exp=(p.exp||0)+8; return p.name+'の経験値+8'; } return '変化なし'; } },
             { id:'o62', rarity:1, icon:'😓', title:'オーバートレーニング',
               desc:'張り切りすぎてしまい、選手が疲弊した。翌節に響きそうだ。',
               type:'instant',
@@ -10442,7 +10846,7 @@
               choices: [
                 { label:'全力でこなす', effect: () => {
                     const p=gameData.players[Math.floor(Math.random()*gameData.players.length)];
-                    if(p){ p.exp=(p.exp||0)+25; p.fatigue=Math.min(100,(p.fatigue||0)+10); return p.name+'の経験値+25・疲労+10'; }
+                    if(p){ p.exp=(p.exp||0)+12; p.fatigue=Math.min(100,(p.fatigue||0)+10); return p.name+'の経験値+12・疲労+10'; }
                     return '変化なし';
                   } },
                 { label:'軽めにする', effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-5); }); return '全選手の疲労-5'; } }
@@ -10459,7 +10863,7 @@
             { id:'o66', rarity:3, icon:'🏆', title:'元オリンピック選手と合同トレーニング',
               desc:'元オリンピック選手がジムに来ており、特別に合同トレーニングを行えた。',
               type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+30; }); return '全選手の経験値+30'; } },
+              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+15; }); return '全選手の経験値+15'; } },
             { id:'o67', rarity:2, icon:'🤸', title:'有名トレーナーに出会った',
               desc:'ジムで著名なフィジカルトレーナーと知り合いになった。',
               type:'choice',
@@ -10467,8 +10871,8 @@
                 { label:'指導を仰ぐ（5万円）', effect: () => {
                     if(gameData.money < 50000){ return '資金不足で断念した'; }
                     gameData.money -= 50000;
-                    gameData.players.forEach(p=>{ p.exp=(p.exp||0)+20; });
-                    return '資金-50,000円・全選手の経験値+20';
+                    gameData.players.forEach(p=>{ p.exp=(p.exp||0)+10; });
+                    return '資金-50,000円・全選手の経験値+10';
                   } },
                 { label:'名刺交換だけ', effect: () => { gameData.fame=Math.min(999,gameData.fame+3); return '名声+3'; } }
               ] },
@@ -10532,8 +10936,8 @@
               type:'choice',
               choices: [
                 { label:'夜遅くまで盛り上がる', effect: () => {
-                    gameData.players.forEach(p=>{ p.exp=(p.exp||0)+10; p.fatigue=Math.min(100,(p.fatigue||0)+8); });
-                    return '全選手の経験値+10・疲労+8（寝不足）';
+                    gameData.players.forEach(p=>{ p.exp=(p.exp||0)+5; p.fatigue=Math.min(100,(p.fatigue||0)+8); });
+                    return '全選手の経験値+5・疲労+8（寝不足）';
                   } },
                 { label:'早めに就寝する', effect: () => {
                     gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-5); });
@@ -10553,7 +10957,7 @@
             { id:'o79', rarity:2, icon:'🎤', title:'カラオケ大会で盛り上がった',
               desc:'選手たちとカラオケで大盛り上がり。チームの結束力が高まった。',
               type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+12; p.fatigue=Math.max(0,(p.fatigue||0)-6); }); return '全選手の経験値+12・疲労-6'; } },
+              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+6; p.fatigue=Math.max(0,(p.fatigue||0)-6); }); return '全選手の経験値+6・疲労-6'; } },
             { id:'o80', rarity:2, icon:'🌃', title:'有名人と偶然出会った',
               desc:'夜の街で著名人と偶然出会い、一緒に写真を撮った。SNSで話題に。',
               type:'instant',
@@ -10562,7 +10966,7 @@
               desc:'ゲームセンターで選手たちが白熱した対戦を繰り広げた。',
               type:'choice',
               choices: [
-                { label:'真剣勝負', effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){p.exp=(p.exp||0)+25;} return (p?p.name:'選手')+'の経験値+25（集中力アップ）'; } },
+                { label:'真剣勝負', effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){p.exp=(p.exp||0)+12;} return (p?p.name:'選手')+'の経験値+12（集中力アップ）'; } },
                 { label:'みんなで楽しむ', effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-6); }); return '全選手の疲労-6'; } }
               ] },
             { id:'o82', rarity:3, icon:'🥂', title:'スポンサーのパーティーに招待された',
@@ -10806,7 +11210,7 @@
             inner.style.cssText = 'background:#1a1a2e;border-radius:16px;padding:20px;max-width:380px;width:92%;max-height:82vh;overflow-y:auto;';
 
             const rankColors = { S: '#FF5252', A: '#FFB300', B: '#66BB6A' };
-            const rankLabels = { S: 'Sランク ⭐30 (5%)', A: 'Aランク ⭐15 (10%)', B: 'Bランク ⭐8 (15%)' };
+            const rankLabels = { S: 'Sランク ⭐30 (3%)', A: 'Aランク ⭐15 (5%)', B: 'Bランク ⭐8 (8%)' };
             const fame = gameData.fame || 0;
 
                         // 監督スキル割引を反映した実際コストを計算
@@ -11091,6 +11495,7 @@
             }
             saveGame();
             renderDashboard();
+            renderGame(); // 怒け我・体調変化をスタメン画面に即反映
         }
 
         function showOutingResult(resultText) {
@@ -11397,8 +11802,8 @@
             const bench = team.squad.filter(function(p, i){ return !starterSet.has(i); });
             const sorted = starters11.slice().sort(function(a,b){ return (posOrder[a.position]||0)-(posOrder[b.position]||0); })
                 .concat(bench.slice().sort(function(a,b){ return (posOrder[a.position]||0)-(posOrder[b.position]||0); }));
-            const off = team.offense != null ? team.offense : calcRivalOffense(team.squad, team.formation);
-            const def2 = team.defense != null ? team.defense : calcRivalDefense(team.squad, team.formation);
+            const off = team.offense != null ? team.offense : calcRivalOffense(team.squad, team.formation, tier);
+            const def2 = team.defense != null ? team.defense : calcRivalDefense(team.squad, team.formation, tier);
             const tierNames2 = ['スーパーリーグ', '1部', '2部', '3部', '4部', '5部'];
             const tacticLabels = { ultra_attack: '超攻撃', attack: '攻撃', balance: 'バランス', defend: '守備', ultra_defend: '超守備' };
             document.getElementById('otherRivalSquadTitle').textContent = teamName + ' (' + tierNames2[tier] + ')';
@@ -11444,8 +11849,8 @@
             const bench = team.squad ? team.squad.filter((p, i) => !starterSet.has(i)) : [];
             const sorted = [...starters11.sort((a, b) => (posOrder[a.position] || 0) - (posOrder[b.position] || 0)),
                             ...bench.sort((a, b) => (posOrder[a.position] || 0) - (posOrder[b.position] || 0))];
-            const off = team.offense != null ? team.offense : (team.squad ? calcRivalOffense(team.squad, team.formation) : '?');
-            const def = team.defense != null ? team.defense : (team.squad ? calcRivalDefense(team.squad, team.formation) : '?');
+            const off = team.offense != null ? team.offense : (team.squad ? calcRivalOffense(team.squad, team.formation, gameData.league) : '?');
+            const def = team.defense != null ? team.defense : (team.squad ? calcRivalDefense(team.squad, team.formation, gameData.league) : '?');
 
             // フォーメーション・作戦の表示名マッピング
             const tacticLabels = {
@@ -11732,13 +12137,13 @@
                 const rookieMaxByLeague = { 5: 10, 4: 11, 3: 12, 2: 13, 1: 14, 0: 15 };
                 maxLevelRange = [5, rookieMaxByLeague[gameData.league] || 10]; // 若手: 5〜10(〜15)
             } else if (category === 'mid') {
-                age = Math.floor(Math.random() * 4) + 23; // 23-26
-                abilityBonus = getRandomAbility(-5, 10);   // やや高め
+                age = Math.floor(Math.random() * 6) + 23; // 23-28
+                abilityBonus = getRandomAbility(0, 12);    // 中堅: 最も高い能力値
                 const midMaxByLeague = { 5: 9, 4: 10, 3: 11, 2: 12, 1: 13, 0: 14 };
                 maxLevelRange = [4, midMaxByLeague[gameData.league] || 9]; // 中堅: 4〜9(〜14)
             } else { // veteran
-                age = Math.floor(Math.random() * 4) + 27; // 27-30
-                abilityBonus = getRandomAbility(-3, 10);   // 中堅に近い能力値
+                age = Math.floor(Math.random() * 4) + 29; // 29-32
+                abilityBonus = getRandomAbility(-5, 8);    // ベテラン: 中堅より低め
                 const vetMaxByLeague = { 5: 7, 4: 8, 3: 9, 2: 10, 1: 11, 0: 12 };
                 maxLevelRange = [3, vetMaxByLeague[gameData.league] || 7]; // ベテラン: 3〜7(〜12)
             }
@@ -11817,15 +12222,14 @@
                 if (Math.random() < bChance) pickSkillForPos(bSkills);
                 if (Math.random() < aChance) pickSkillForPos(aSkills);
             } else if (category === 'mid') {
-                // 40%の確率でB级スキルを1つ
-                if (Math.random() < 0.40) pickSkillForPos(bSkills);
+                // 50%の確率でBスキルを1つ（年齢が上がるほどスキル持ちの可能性が高い）
+                if (Math.random() < 0.50) pickSkillForPos(bSkills);
             } else if (category === 'veteran') {
-                // 60%の確率でB级スキルを1つ
-                if (Math.random() < 0.60) pickSkillForPos(bSkills);
-                // さらに20%の確率でA级スキルを1つ
-                if (Math.random() < 0.20) pickSkillForPos(aSkills);
-                // さらに5%の確率でS级スキルを1つ
-                if (Math.random() < 0.05) pickSkillForPos(sSkills);
+                // スキルは最大1個のみ：5%でS / 25%でA / 40%でB（排他）
+                const roll = Math.random();
+                if (roll < 0.05) pickSkillForPos(sSkills);
+                else if (roll < 0.30) pickSkillForPos(aSkills);
+                else if (roll < 0.70) pickSkillForPos(bSkills);
             }
 
             p.salary = calculatePlayerSalary(p);
@@ -11841,7 +12245,7 @@
                 return;
             }
             const costs = { rookie: 100000, mid: 200000, veteran: 150000 };
-            const labels = { rookie: '🌱 若手選手獲得（18〜20歳 / 100,000円）', mid: '💪 中堅選手獲得（23〜26歳 / 200,000円）', veteran: '⭐ ベテラン選手獲得（27〜30歳 / 150,000円）' };
+            const labels = { rookie: '🌱 若手選手獲得（18〜22歳 / 100,000円）', mid: '💪 中堅選手獲得（23〜28歳 / 200,000円）', veteran: '⭐ ベテラン選手獲得（29〜32歳 / 150,000円）' };
 
             if (gameData.money < costs[category]) {
                 showNotification('資金が不足しています（必要: ' + formatNumber(costs[category]) + '円）');
@@ -11942,8 +12346,8 @@
         // 特別補強交渉のボタンラベルを現在のコストで更新する
         function updateSpecialRecruitButtons() {
             const useCount = gameData.specialRecruitUseCount || 0;
-            const extra = useCount * 10;
-            const costs = [60 + extra, 140 + extra, 300 + extra];
+            const extra = useCount * 20;
+            const costs = [80 + extra, 200 + extra, 400 + extra];
             const tiers = [
                 { label: 'Bスキル確定「3候補', bg: 'linear-gradient(135deg,#1a6b3c,#2d9e5f)' },
                 { label: 'Aスキル確定「3候補', bg: 'linear-gradient(135deg,#1a3a6b,#2d5e9e)' },
@@ -11969,7 +12373,7 @@
             }
             if (!confirm('特別補強交渉を開始しますか？\n候補から選手を獲得する際に名声★' + fameCost + 'を消費します。\n（候補表示のみでは消費しません）')) return;
             // 候補数とスキル設定
-            const candidateCount = fameCost >= 300 ? 1 : 3;
+            const candidateCount = fameCost >= 400 ? 1 : 3;
             const positions = ['FW','MF','DF','GK'];
             specialRecruitCandidates = [];
 
@@ -12048,10 +12452,10 @@
                     const valid = pool.filter(id => SKILLS[id] && SKILLS[id].pos.includes(p.position) && !p.skills.includes(id));
                     if (valid.length > 0) p.skills.push(valid[Math.floor(Math.random() * valid.length)]);
                 }
-                if (fameCost >= 300) {
+                if (fameCost >= 400) {
                     pickSp(sSkills); // Sスキル確定
                     pickSp(aSkills); // Aスキルも追加
-                } else if (fameCost >= 140) {
+                } else if (fameCost >= 200) {
                     pickSp(aSkills); // Aスキル確定
                     if (Math.random() < 0.5) pickSp(bSkills);
                 } else {
@@ -12063,8 +12467,8 @@
             specialRecruitFameCost = fameCost;
 
             // パネル表示
-            const tierLabel = fameCost >= 300 ? '⭐300消費 「Sスキル確定」特別補強交渉' :
-                              fameCost >= 140 ? '⭐' + fameCost + '消費 「Aスキル確定」特別補強交渉' :
+            const tierLabel = fameCost >= 400 ? '⭐' + fameCost + '消費 「Sスキル確定」特別補強交渉' :
+                              fameCost >= 200 ? '⭐' + fameCost + '消費 「Aスキル確定」特別補強交渉' :
                                                '⭐' + fameCost + '消費 「Bスキル確定」特別補強交渉';
             const container = document.getElementById('recruitCandidates');
             document.getElementById('recruitPanelTitle').textContent = tierLabel;
@@ -12286,7 +12690,7 @@
             renderGame();
             updateHeader();
             updateSpecialRecruitButtons();
-            showNotification('⭐' + specialRecruitFameCost + '消費：' + player.name + ' を特別補強しました！（次回のコスト+10）');
+            showNotification('⭐' + specialRecruitFameCost + '消費：' + player.name + ' を特別補強しました！（次回のコスト+20）');
             document.getElementById('recruitPanel').style.display = 'none';
             specialRecruitCandidates = [];
             specialRecruitFameCost = 0;
@@ -12435,14 +12839,34 @@
                 return;
             }
 
-                        // pitchAssignmentベースでスロット充足チェック（割り当て済み選手11人＋GK1人）
-            const pa = gameData.pitchAssignment || {};
-            const slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
-            const assignedIds = new Set(Object.values(pa).filter(Boolean));
-            const gkSlotFilled = slots.filter(s => s.pos === 'GK').every(s => pa[s.pos + '_' + s.idx]);
-            if (assignedIds.size !== slots.length || !gkSlotFilled) {
-                showNotification('フォーメーションの全スロットに選手をセットしてください');
-                return;
+            // フォーメーションチェック（pitchAssignmentのスロット位置で判定し、未配置は選手のmemain positionで判定）
+            {
+                const _fm = formations[gameData.formation];
+                if (_fm) {
+                    const _pa = gameData.pitchAssignment || {};
+                    const _slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
+                    // スロット配置済みの選手はスロットのposでカウント
+                    const _slotPosCount = { FW: 0, MF: 0, DF: 0, GK: 0 };
+                    const _assignedIds = new Set();
+                    for (const slot of _slots) {
+                        const key = slot.pos + '_' + slot.idx;
+                        const pid = _pa[key];
+                        if (pid) {
+                            _slotPosCount[slot.pos] = (_slotPosCount[slot.pos] || 0) + 1;
+                            _assignedIds.add(pid);
+                        }
+                    }
+                    // 未配置のスタメンは選手のpositionでカウント
+                    for (const p of starters) {
+                        if (!_assignedIds.has(p.id)) {
+                            _slotPosCount[p.position] = (_slotPosCount[p.position] || 0) + 1;
+                        }
+                    }
+                    if (_slotPosCount.FW !== _fm.fw || _slotPosCount.MF !== _fm.mf || _slotPosCount.DF !== _fm.df || _slotPosCount.GK !== 1) {
+                        showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
+                        return;
+                    }
+                }
             }
             const yourStrength = calculateTeamStrength(starters);
             const opponentName = currentMatch.opponent;
@@ -12474,19 +12898,23 @@
 
             function updatePreviewBars() {
                 const mults = getPreviewMultipliers();
-                const yourOffense = Math.round(yourOffenseBase * mults.offMult);
-                const yourDefense = Math.round(yourDefenseBase * mults.defMult);
+                // 性格相性ボーナス
+                const _pvCompatMult2 = calcCompatBonus(starters).mult;
+                const yourOffense = Math.round(yourOffenseBase * mults.offMult * _pvCompatMult2);
+                const yourDefense = Math.round(yourDefenseBase * mults.defMult * _pvCompatMult2);
                 document.getElementById('previewYourOffense').textContent = yourOffense;
                 document.getElementById('previewOppOffense').textContent = oppOffense;
                 document.getElementById('previewYourDefense').textContent = yourDefense;
                 document.getElementById('previewOppDefense').textContent = oppDefense;
                 document.getElementById('previewOppLabel').innerHTML = getTeamWithEmblem(opponentName, 18);
-                const maxOff = Math.max(yourOffense, oppOffense, 1);
-                const maxDef = Math.max(yourDefense, oppDefense, 1);
-                document.getElementById('previewYourOffenseBar').style.width = (yourOffense / maxOff) * 100 + '%';
-                document.getElementById('previewOppOffenseBar').style.width = (oppOffense / maxOff) * 100 + '%';
-                document.getElementById('previewYourDefenseBar').style.width = (yourDefense / maxDef) * 100 + '%';
-                document.getElementById('previewOppDefenseBar').style.width = (oppDefense / maxDef) * 100 + '%';
+                // 自OF vs 相手DFの対決バー
+                const maxOffVsDef = Math.max(yourOffense, oppDefense, 1);
+                document.getElementById('previewYourOffenseBar').style.width = (yourOffense / maxOffVsDef) * 100 + '%';
+                document.getElementById('previewOppDefenseBar').style.width = (oppDefense / maxOffVsDef) * 100 + '%';
+                // 自DF vs 相手OFの対決バー
+                const maxDefVsOff = Math.max(yourDefense, oppOffense, 1);
+                document.getElementById('previewYourDefenseBar').style.width = (yourDefense / maxDefVsOff) * 100 + '%';
+                document.getElementById('previewOppOffenseBar').style.width = (oppOffense / maxDefVsOff) * 100 + '%';
             }
 
             // 初回表示（ホーム/アウェイ表示を追加）
@@ -12692,9 +13120,9 @@
                 icon: '🏥',
                 name: '怪我見舞いで団結！',
                 desc: '怪我人が発生したが、全員で病院に見舞いに行った。\nチームの団結が高まり、全員の気持ちが一つになった！',
-                effectText: '全選手に経験値 +50',
+                effectText: '全選手に経験値 +25',
                 apply(gd) {
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 50; });
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 25; });
                 }
             },
             {
@@ -12702,9 +13130,9 @@
                 icon: '⛺',
                 name: '特別合宿で成長！',
                 desc: 'クラブが特別合宿を実施。ハードなトレーニングで\n全員の技術が磨かれた！',
-                effectText: '全選手に経験値 +80',
+                effectText: '全選手に経験値 +40',
                 apply(gd) {
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 80; });
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 40; });
                 }
             },
             {
@@ -12712,12 +13140,12 @@
                 icon: '⭐',
                 name: '若手の覚醒！',
                 desc: 'チームで最も若い選手が突然覚醒。\nその成長が周囲に良い影響を与えた！',
-                effectText: '最年少選手に経験値 +150、全員に経験値 +30',
+                effectText: '最年少選手に経験値 +75、全員に経験値 +15',
                 apply(gd) {
                     if (gd.players.length === 0) return;
                     const youngest = gd.players.reduce((a, b) => a.age < b.age ? a : b);
-                    youngest.exp = (youngest.exp||0) + 150;
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 30; });
+                    youngest.exp = (youngest.exp||0) + 75;
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 15; });
                 }
             },
             {
@@ -12725,10 +13153,10 @@
                 icon: '🎓',
                 name: 'ベテランの特別講義',
                 desc: 'クラブのベテラン選手が若手に向けて\n特別講義を開いた。若手陣の成長が加速する！',
-                effectText: '25歳以下の選手全員に経験値 +100',
+                effectText: '25歳以下の選手全員に経験値 +50',
                 condition(gd) { return gd.players.some(p => p.age >= 30); },
                 apply(gd) {
-                    gd.players.filter(p => p.age <= 25).forEach(p => { p.exp = (p.exp||0) + 100; });
+                    gd.players.filter(p => p.age <= 25).forEach(p => { p.exp = (p.exp||0) + 50; });
                 }
             },
             {
@@ -12736,9 +13164,9 @@
                 icon: '🎥',
                 name: '徹底的なビデオ分析！',
                 desc: 'コーチ陣が試合映像を徹底的に分析。\n全員が自分の課題を発見し、技術向上につながった！',
-                effectText: '全選手に経験値 +60',
+                effectText: '全選手に経験値 +30',
                 apply(gd) {
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 60; });
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 30; });
                 }
             },
             {
@@ -12746,9 +13174,9 @@
                 icon: '👥',
                 name: 'サポーターからの激励',
                 desc: 'サポーターからの激励メッセージが届いた。\n選手たちのモチベーションが一気に上がった！',
-                effectText: '全選手に経験値 +40、名声 +5',
+                effectText: '全選手に経験値 +20、名声 +5',
                 apply(gd) {
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 40; });
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 20; });
                     gd.fame = (gd.fame||0) + 5;
                 }
             },
@@ -12858,9 +13286,9 @@
                 icon: '🔭',
                 name: 'ライバルチームを研究！',
                 desc: 'コーチ陣がライバルチームの試合を徹底研究。\n戦術理解が深まり、全員の技術が向上した！',
-                effectText: '全選手に経験値 +70',
+                effectText: '全選手に経験値 +35',
                 apply(gd) {
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 70; });
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 35; });
                 }
             },
             {
@@ -12868,9 +13296,9 @@
                 icon: '✈️',
                 name: '海外コーチが特別指導！',
                 desc: '海外から招いた名コーチが特別トレーニングを実施。\n選手たちの意識が大きく変わった！',
-                effectText: '全選手に経験値 +100',
+                effectText: '全選手に経験値 +50',
                 apply(gd) {
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 100; });
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 50; });
                 }
             },
             {
@@ -12878,9 +13306,9 @@
                 icon: '⚡',
                 name: 'FWが覚醒！',
                 desc: 'フォワード陣が突然の覚醒を見せた。\n得点感覚が研ぎ澄まされ、シュート精度が上がった！',
-                effectText: 'FW全員に経験値 +120',
+                effectText: 'FW全員に経験値 +60',
                 apply(gd) {
-                    gd.players.filter(p => p.position === 'FW').forEach(p => { p.exp = (p.exp||0) + 120; });
+                    gd.players.filter(p => p.position === 'FW').forEach(p => { p.exp = (p.exp||0) + 60; });
                 }
             },
             {
@@ -12888,9 +13316,9 @@
                 icon: '🧤',
                 name: 'GK専門トレーニング！',
                 desc: 'GK専門コーチによる集中トレーニングが実施された。\nゴールキーパーの反応速度が格段に上がった！',
-                effectText: 'GK全員に経験値 +150',
+                effectText: 'GK全員に経験値 +75',
                 apply(gd) {
-                    gd.players.filter(p => p.position === 'GK').forEach(p => { p.exp = (p.exp||0) + 150; });
+                    gd.players.filter(p => p.position === 'GK').forEach(p => { p.exp = (p.exp||0) + 75; });
                 }
             },
             {
@@ -12898,10 +13326,10 @@
                 icon: '🍽️',
                 name: 'チームディナーで絆が深まる！',
                 desc: '監督が全員を食事に招待。\n楽しい時間を共にして、チームの絆が一層強まった！',
-                effectText: '全選手に経験値 +45、疲労 -10',
+                effectText: '全選手に経験値 +22、疲労 -10',
                 apply(gd) {
                     gd.players.forEach(p => {
-                        p.exp = (p.exp||0) + 45;
+                        p.exp = (p.exp||0) + 22;
                         p.fatigue = Math.max(0, (p.fatigue||0) - 10);
                     });
                 }
@@ -12909,7 +13337,7 @@
             // ――― 追加イベント：所持金ボーナス系 ―――
             {
                 id: 'charity_match',
-                icon: '❤️',
+                icon: '🎵',
                 name: 'チャリティマッチ開催！',
                 desc: 'クラブが慈善試合を開催。\n観客が集まり、収益がクラブに還元された！',
                 effectText: '所持金 +120,000円、名声 +15',
@@ -12973,11 +13401,11 @@
                 icon: '🧘',
                 name: 'ヨガセッションで回復！',
                 desc: 'クラブがヨガ専門家を招いてセッションを実施。\n心身のバランスが整い、疲労が和らいだ！',
-                effectText: '全選手の疲労 -12、経験値 +20',
+                effectText: '全選手の疲労 -12、経験値 +10',
                 apply(gd) {
                     gd.players.forEach(p => {
                         p.fatigue = Math.max(0, (p.fatigue||0) - 12);
-                        p.exp = (p.exp||0) + 20;
+                        p.exp = (p.exp||0) + 10;
                     });
                 }
             },
@@ -13020,7 +13448,7 @@
                         target.injured = false;
                         target.injuryWeeks = 0;
                     }
-                    gd.players.forEach(p => { p.exp = (p.exp||0) + 30; });
+                    gd.players.forEach(p => { p.exp = (p.exp||0) + 15; });
                 }
             },
             {
@@ -13064,15 +13492,17 @@
             checkSeasonEnd();
         }
 
-        // Lv4・Lv8・Lv12達成時にスキルをランダムに1つ習得させる
+        // Lv4達成時にBスキルを確定習得、Lv8達成時に50%の確率でAスキルを習得（Lv12以降は自動習得なし）
         function tryLearnSkill(player) {
-            if (player.level !== 4 && player.level !== 8 && player.level !== 12 &&
-                player.level !== 13 && player.level !== 14 && player.level !== 15) return null;
+            if (player.level !== 4 && player.level !== 8) return null;
+            // Lv4習得可能スキル: 全Bランク（aggressive/deepLine含む）
             const bSkills = ['dribbler','shooter','speedster','chanceMaker','passer','tackleMaster','resilience','steelBody',
-                             'homeStar','postPlayer','longShooter','wingAttacker','headingKing','goalRush',
+                             'homeStar','longShooter','wingAttacker','headingKing','goalRush',
                              'deepLine','vision','highPress','technician','longPass','engine','turnover',
                              'buildUp','blocker','covering','longBallKiller','offsideTrap',
-                             'distribution','mentalStrength','cleanPlayer','aggressive','recoveryRun','adaptability','superSub'];
+                             'distribution','mentalStrength','cleanPlayer','aggressive','acrobatic',
+                             'pressureResist','tireless','interceptor','defensiveWall','recoveryRun',
+                             'rushGK','adaptability','superSub','postPlayer'];
             const aSkills = ['playmaker','pressMaster','aerial','coaching','bigHands','reflexes','goalHunter','lineControl',
                              'penaltyKing','goalGetter','clutchPlayer','firstTouch',
                              'boxToBox','gameController','setpieceMaster','coverShadow',
@@ -13086,11 +13516,10 @@
                              'midDominator','fantasista','maestro',
                              'steelGuardian','stopper','libero',
                              'falseNine','fieldGeneral','lastManStanding','clutchSave'];
-            // Lv4: Bランク / Lv8: Aランク / Lv12〜15: Sランク
+            // Lv4: Bランク60%で習得 / Lv8: Aランク50%（Lv12以降は特訓・補強でのみ取得）
             let pool;
-            if (player.level === 4)       pool = bSkills;
-            else if (player.level === 8)  pool = aSkills;
-            else if (player.level >= 12)  pool = sSkills;
+            if (player.level === 4)      { if (Math.random() >= 0.6) return null; pool = bSkills; }
+            else if (player.level === 8) { if (Math.random() >= 0.5) return null; pool = aSkills; }
             const valid = pool.filter(id => SKILLS[id] && SKILLS[id].pos.includes(player.position) && !(player.skills || []).includes(id));
             if (valid.length === 0) return null;
             const skillId = valid[Math.floor(Math.random() * valid.length)];
@@ -13111,17 +13540,6 @@
             if (_checkStarters.length !== 11) {
                 showNotification('スタメンが11名である必要があります（重症の選手は出場できません）');
                 return;
-            }
-            const _checkFormation = formations[gameData.formation];
-            if (_checkFormation) {
-                const _fw = _checkStarters.filter(p => p.position === 'FW').length;
-                const _mf = _checkStarters.filter(p => p.position === 'MF').length;
-                const _df = _checkStarters.filter(p => p.position === 'DF').length;
-                const _gk = _checkStarters.filter(p => p.position === 'GK').length;
-                if (_fw !== _checkFormation.fw || _mf !== _checkFormation.mf || _df !== _checkFormation.df || _gk !== 1) {
-                    showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
-                    return;
-                }
             }
             matchExecuting = true;
             playBGM('match'); // 試合BGM開始
@@ -13161,38 +13579,38 @@
             // ===== スキル効果: OF/DF補正 =====
             // 司令塔（MF）: チームOF力 +6%
             let skillOffMult = 1.0;
-            if (startersHaveSkill(starters, 'playmaker')) skillOffMult *= 1.04;
-            // ボックストゥボックス（MF）: OF +5%
-            if (startersHaveSkill(starters, 'boxToBox')) skillOffMult *= 1.05;
+            if (startersHaveSkill(starters, 'playmaker')) skillOffMult *= 1.03;
+            // ボックストゥボックス（MF）: OF +3%
+            if (startersHaveSkill(starters, 'boxToBox')) skillOffMult *= 1.03;
             // ロングパス（MF）: FW2名以上時 OF +4%
-            if (startersHaveSkill(starters, 'longPass') && starters.filter(p => p.position === 'FW').length >= 2) skillOffMult *= 1.04;
+            if (startersHaveSkill(starters, 'longPass') && starters.filter(p => p.position === 'FW').length >= 2) skillOffMult *= 1.03;
             // テクニシャン（MF）: ドリブ70超のFWがいる場合 OF +3%
-            if (startersHaveSkill(starters, 'technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) skillOffMult *= 1.03;
-            // アグレッシブ（FW/MF/DF）: OF +5%
-            if (startersHaveSkill(starters, 'aggressive')) skillOffMult *= 1.05;
+            if (startersHaveSkill(starters, 'technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) skillOffMult *= 1.02;
+            // アグレッシブ（FW/MF/DF）: OF +3%
+            if (startersHaveSkill(starters, 'aggressive')) skillOffMult *= 1.03;
             // ポストプレイヤー（FW）: MFのパス精度をOF計算に+10%加算
             if (startersHaveSkill(starters, 'postPlayer')) {
                 const mfPassAvg = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
-                skillOffMult *= (1 + mfPassAvg * 0.001);
+                skillOffMult *= (1 + mfPassAvg * 0.0007);
             }
-            // 空中戦の強さ（DF）: DF力 +5%
+            // 空中戦の強さ（DF）: DF力 +3%
             let skillDefMult = 1.0;
-            if (startersHaveSkill(starters, 'aerial')) skillDefMult *= 1.05;
-            // コーチング（GK）: チームDF力 +3%
-            if (startersHaveSkill(starters, 'coaching')) skillDefMult *= 1.03;
-            // ボックストゥボックス（MF）: DF +5%
-            if (startersHaveSkill(starters, 'boxToBox')) skillDefMult *= 1.05;
-            // ディープライン（MF）: DF +3%
-            if (startersHaveSkill(starters, 'deepLine')) skillDefMult *= 1.03;
+            if (startersHaveSkill(starters, 'aerial')) skillDefMult *= 1.03;
+            // コーチング（GK）: チームDF力 +2%
+            if (startersHaveSkill(starters, 'coaching')) skillDefMult *= 1.02;
+            // ボックストゥボックス（MF）: DF +3%
+            if (startersHaveSkill(starters, 'boxToBox')) skillDefMult *= 1.03;
+            // ディープライン（MF）: DF +2%
+            if (startersHaveSkill(starters, 'deepLine')) skillDefMult *= 1.02;
             // コマンダー（GK）: DFのカバー値をDF計算に+10%加算
             if (startersHaveSkill(starters, 'commander')) {
                 const dfCoverAvg = starters.filter(p => p.position === 'DF').reduce((s, p) => s + (p.cover || 0), 0) / Math.max(starters.filter(p => p.position === 'DF').length, 1);
-                skillDefMult *= (1 + dfCoverAvg * 0.001);
+                skillDefMult *= (1 + dfCoverAvg * 0.0007);
             }
             // ビルドアップ（DF）: MFのパス精度をOF計算に+5%加算
             if (startersHaveSkill(starters, 'buildUp')) {
                 const mfPassAvg2 = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
-                skillOffMult *= (1 + mfPassAvg2 * 0.0005);
+                skillOffMult *= (1 + mfPassAvg2 * 0.0003);
             }
             // プレスマスター（MF）: 相手OF力 -4%
             let oppOffMult = 1.0;
@@ -13204,11 +13622,11 @@
             // ハイプレス（MF）: 相手OF力 -3%、自チームDF力 -2%
             if (startersHaveSkill(starters, 'highPress')) { oppOffMult *= 0.97; skillDefMult *= 0.98; }
             // カバーシャドウ（MF）: 相手最高能力選手の影響 -5%
-            if (startersHaveSkill(starters, 'coverShadow')) oppOffMult *= 0.95;
+            if (startersHaveSkill(starters, 'coverShadow')) oppOffMult *= 0.96;
             // ポジショニング（GK）: 相手OF力 -4%
             if (startersHaveSkill(starters, 'positioning')) oppOffMult *= 0.96;
             // マンマーカー（DF）: 相手エースの影響 -8%
-            if (startersHaveSkill(starters, 'manMarker')) oppOffMult *= 0.92;
+            if (startersHaveSkill(starters, 'manMarker')) oppOffMult *= 0.94;
             // ロングボールキラー（DF）: 相手FWの攻撃力 -5%
             if (startersHaveSkill(starters, 'longBallKiller')) oppOffMult *= 0.95;
             // 分析室: Lv×0.5%だけ相手のOF・DF両方を低下
@@ -13221,37 +13639,42 @@
             // ウィングアタッカー（FW）: スピードスターと共存時 相手DF力 -3%追加
             if (startersHaveSkill(starters, 'wingAttacker') && startersHaveSkill(starters, 'speedster')) oppDefMult *= 0.97;
             // 中盤の支配者（MF S）: チームOF +8%、DF +8%
-            if (startersHaveSkill(starters, 'midDominator')) { skillOffMult *= 1.08; skillDefMult *= 1.08; }
+            if (startersHaveSkill(starters, 'midDominator')) { skillOffMult *= 1.05; skillDefMult *= 1.05; }
             // ファンタジスタ（MF S）: 得点期待値 +0.2（後段で引き分け時の勝ち越し確率は後段処理）
             // マエストロ（MF S）: スタメン全MFの能力値を+5%上乗せ
             if (startersHaveSkill(starters, 'maestro')) {
                 const mfCount = starters.filter(p => p.position === 'MF').length;
-                if (mfCount > 0) skillOffMult *= Math.pow(1.05, mfCount / 4);
+                if (mfCount > 0) skillOffMult *= Math.pow(1.03, mfCount / 4);
             }
             // 鋼の守護者（DF S）: 失点期待値 -0.4、大量失点防止 +20%（後段処理）
             // ストッパー（DF S）: 相手エースの影響 -15%
-            if (startersHaveSkill(starters, 'stopper')) oppOffMult *= 0.85;
-            // リベロ（DF S）: OF計算にも +5%貢献
-            if (startersHaveSkill(starters, 'libero')) skillOffMult *= 1.05;
+            if (startersHaveSkill(starters, 'stopper')) oppOffMult *= 0.88;
+            // リベロ（DF S）: OF計算にも +3%貢献
+            if (startersHaveSkill(starters, 'libero')) skillOffMult *= 1.03;
 
             // ===== 追加スキル20個の効果（前半） =====
             // FW: フォールスナイン: OF +6%, DF +6%
-            if (startersHaveSkill(starters, 'falseNine')) { skillOffMult *= 1.06; skillDefMult *= 1.06; }
+            if (startersHaveSkill(starters, 'falseNine')) { skillOffMult *= 1.04; skillDefMult *= 1.04; }
             // FW: ターゲットマン: buildUpまたはlongPassと共存時 OF +5%
-            if (startersHaveSkill(starters, 'targetMan') && (startersHaveSkill(starters, 'buildUp') || startersHaveSkill(starters, 'longPass'))) skillOffMult *= 1.05;
+            if (startersHaveSkill(starters, 'targetMan') && (startersHaveSkill(starters, 'buildUp') || startersHaveSkill(starters, 'longPass'))) skillOffMult *= 1.03;
             // MF: インターセプター: 相手OF -3%
             if (startersHaveSkill(starters, 'interceptor')) oppOffMult *= 0.97;
             // MF: フィールドジェネラル: チームOF/DF +3%
-            if (startersHaveSkill(starters, 'fieldGeneral')) { skillOffMult *= 1.03; skillDefMult *= 1.03; }
+            if (startersHaveSkill(starters, 'fieldGeneral')) { skillOffMult *= 1.02; skillDefMult *= 1.02; }
             // DF: 守備の壁: 相手OF -3%
             if (startersHaveSkill(starters, 'defensiveWall')) oppOffMult *= 0.97;
             // DF: プレッシャーブロック: 相手スピードスター持ちFWの効果を無効化（oppDefMultの0.97分を戻す）
             if (startersHaveSkill(starters, 'pressureBlock') && opponent.squad && (opponent.squad.length > 11 ? selectRivalStarters(opponent.squad, opponent.formation) : opponent.squad).some(p => p.position === 'FW' && p.skills && p.skills.includes('speedster'))) oppDefMult = Math.min(1.0, oppDefMult / 0.97);
             // DF: 制空権: aerialと共存時 DF +5%
-            if (startersHaveSkill(starters, 'dominantHeader') && startersHaveSkill(starters, 'aerial')) skillDefMult *= 1.05;
+            if (startersHaveSkill(starters, 'dominantHeader') && startersHaveSkill(starters, 'aerial')) skillDefMult *= 1.03;
             // GK: ラッシュGK: 相手ドリブラー持ちFWがいる場合 oppOF -10%
-            if (startersHaveSkill(starters, 'rushGK') && opponent.squad && (opponent.squad.length > 11 ? selectRivalStarters(opponent.squad, opponent.formation) : opponent.squad).some(p => p.position === 'FW' && p.skills && p.skills.includes('dribbler'))) oppOffMult *= 0.90;
+            if (startersHaveSkill(starters, 'rushGK') && opponent.squad && (opponent.squad.length > 11 ? selectRivalStarters(opponent.squad, opponent.formation) : opponent.squad).some(p => p.position === 'FW' && p.skills && p.skills.includes('dribbler'))) oppOffMult *= 0.92;
             // ===== 追加スキルここまで =====
+            // ===== スキル乗算の上限・下限クランプ =====
+            // 複数スキルが重なっても過度に強くならないよう上限を設定
+            skillOffMult = Math.min(skillOffMult, 1.30); // 攻撃スキル乗算上限 +30%
+            skillDefMult = Math.min(skillDefMult, 1.30); // 守備スキル乗算上限 +30%
+            oppOffMult   = Math.max(oppOffMult,   0.72); // 相手攻撃力低下の下限 -28%
 
             // ===== 作戦補正 =====
             const TACTICS_PARAMS = {
@@ -13270,8 +13693,11 @@
             const mgrDefMult  = _mse.defMult  || 1.0;
             const mgrOppOffMult = _mse.oppOffMult || 1.0;
             const mgrOppDefMult = _mse.oppDefMult || 1.0;
-            const adjYourOff = yourOff * skillOffMult * tp.offMult * mgrOffMult + (_outingBonus.of || 0);
-            const adjYourDef = yourDef * skillDefMult * tp.defMult * mgrDefMult + (_outingBonus.df || 0);
+            // 性格相性ボーナス（スタメン全員の相性を考慮）
+            const _compatResult = calcCompatBonus(starters);
+            const compatMult = _compatResult.mult; // 1.0基準、良い相性+2%/ペア、悪い相性-2%/ペア
+            const adjYourOff = yourOff * skillOffMult * tp.offMult * mgrOffMult * compatMult + (_outingBonus.of || 0);
+            const adjYourDef = yourDef * skillDefMult * tp.defMult * mgrDefMult * compatMult + (_outingBonus.df || 0);
             const adjOppOff  = oppOff  * oppOffMult * mgrOppOffMult;
             const adjOppDef  = oppDef  * oppDefMult * mgrOppDefMult;
 
@@ -13319,56 +13745,67 @@
             myScoreBase  = Math.min(2.5, Math.max(0.05, myScoreBase));
             oppScoreBase = Math.min(2.5, Math.max(0.05, oppScoreBase));
 
-            // スキル: スナイパー（FW）: 得点期待値 +0.4
-            if (startersHaveSkill(starters, 'sniper')) myScoreBase += 0.25;
-            // スキル: ペナルティキング（FW）: 得点期待値 +0.15
-            if (startersHaveSkill(starters, 'penaltyKing')) myScoreBase += 0.15;
-            // スキル: クラッチプレイヤー（FW）: 得点期待値 +0.1
-            if (startersHaveSkill(starters, 'clutchPlayer')) myScoreBase += 0.1;
-            // スキル: セットピースマスター（MF）: 得点期待値 +0.1
-            if (startersHaveSkill(starters, 'setpieceMaster')) myScoreBase += 0.1;
-            // スキル: ビッグハンド（GK）: 失点期待値 -0.2
-            if (startersHaveSkill(starters, 'bigHands')) oppScoreBase = Math.max(0, oppScoreBase - 0.2);
-            // スキル: 鱄壁（DF）: 失点期待値 -0.25
-            if (startersHaveSkill(starters, 'ironWall')) oppScoreBase = Math.max(0, oppScoreBase - 0.25);
-            // スキル: ヘッドクリア（DF）: 失点期待値 -0.1
-            if (startersHaveSkill(starters, 'headClear')) oppScoreBase = Math.max(0, oppScoreBase - 0.1);
-            // スキル: ビジョン（MF）: チャンスメイカーと共存時、得点期待値 +0.1
-            if (startersHaveSkill(starters, 'vision') && startersHaveSkill(starters, 'chanceMaker')) myScoreBase += 0.1;
-            // スキル: ヘディングキング（FW）: 空中戦の強さ（DF）と共存時、得点期待値 +0.1
-            if (startersHaveSkill(starters, 'headingKing') && startersHaveSkill(starters, 'aerial')) myScoreBase += 0.1;
-            // スキル: 勝負師（共通）: ホーム試合時、得点期待値 +0.2、失点期待値 +0.2
+            // ===== 自チームスキルボーナス（前半）=====
+            // 攻撃スキルボーナス（上限+0.25）
+            let mySkillBonus = 0;
+            if (startersHaveSkill(starters, 'sniper')) mySkillBonus += 0.12;
+            if (startersHaveSkill(starters, 'penaltyKing')) mySkillBonus += 0.08;
+            if (startersHaveSkill(starters, 'clutchPlayer')) mySkillBonus += 0.05;
+            if (startersHaveSkill(starters, 'setpieceMaster')) mySkillBonus += 0.05;
+            if (startersHaveSkill(starters, 'vision') && startersHaveSkill(starters, 'chanceMaker')) mySkillBonus += 0.05;
+            if (startersHaveSkill(starters, 'headingKing') && startersHaveSkill(starters, 'aerial')) mySkillBonus += 0.05;
+            if (startersHaveSkill(starters, 'fantasista')) mySkillBonus += 0.10;
+            if (startersHaveSkill(starters, 'acrobatic')) mySkillBonus += 0.05;
+            if (startersHaveSkill(starters, 'counterKing') && adjOppOff > adjYourOff) mySkillBonus += 0.10;
+            if (startersHaveSkill(starters, 'pressureResist') && adjOppDef > adjYourOff) mySkillBonus += 0.03;
+            if (startersHaveSkill(starters, 'boxPenalty') && starters.some(p => p.position === 'FW')) mySkillBonus += 0.05;
+            mySkillBonus = Math.min(0.25, mySkillBonus); // 攻撃スキル上限
+            myScoreBase += mySkillBonus;
+
+            // 守備スキルボーナス（上限-0.30）
+            let defSkillReduction = 0;
+            if (startersHaveSkill(starters, 'bigHands')) defSkillReduction += 0.10;
+            if (startersHaveSkill(starters, 'ironWall')) defSkillReduction += 0.12;
+            if (startersHaveSkill(starters, 'headClear')) defSkillReduction += 0.05;
+            if (startersHaveSkill(starters, 'steelGuardian')) defSkillReduction += 0.20;
+            if (startersHaveSkill(starters, 'lastManStanding')) defSkillReduction += 0.15;
+            defSkillReduction = Math.min(0.20, defSkillReduction); // 守備スキル上限
+            oppScoreBase = Math.max(0.05, oppScoreBase - defSkillReduction);
+
+            // スキル: 勝負師（共通）: ホーム試合時、得点期待値 +0.1、失点期待値 +0.1
             const isHome = isCupMatch ? savedPendingMatch.isHome : (currentMatch.home === true || currentMatch.location === 'home' || !currentMatch.away);
-            if (isHome && startersHaveSkill(starters, 'homeStar')) { myScoreBase += 0.2; oppScoreBase += 0.2; }
+            if (isHome && startersHaveSkill(starters, 'homeStar')) { myScoreBase += 0.10; oppScoreBase += 0.10; }
+
+            // ===== 相手チームスキルボーナス（前半）=====
+            const oppTeam = findTeamAcrossLeagues(opponent);
+            if (oppTeam && oppTeam.squad) {
+                const oppStarters = oppTeam.squad.length > 11 ? selectRivalStarters(oppTeam.squad, oppTeam.formation) : oppTeam.squad;
+                const oppHasSkill = (id) => oppStarters.some(p => p.skills && p.skills.includes(id));
+                let oppSkillBonus = 0;
+                if (oppHasSkill('sniper')) oppSkillBonus += 0.12;
+                if (oppHasSkill('penaltyKing')) oppSkillBonus += 0.08;
+                if (oppHasSkill('clutchPlayer')) oppSkillBonus += 0.05;
+                if (oppHasSkill('fantasista')) oppSkillBonus += 0.10;
+                if (oppHasSkill('acrobatic')) oppSkillBonus += 0.05;
+                if (oppHasSkill('counterKing') && adjYourOff > adjOppOff) oppSkillBonus += 0.10;
+                oppSkillBonus = Math.min(0.25, oppSkillBonus) * 0.7; // 相手スキルは0.7倍スケール
+                oppScoreBase += oppSkillBonus;
+                let oppDefReduction = 0;
+                if (oppHasSkill('bigHands')) oppDefReduction += 0.10;
+                if (oppHasSkill('ironWall')) oppDefReduction += 0.12;
+                if (oppHasSkill('headClear')) oppDefReduction += 0.05;
+                if (oppHasSkill('steelGuardian')) oppDefReduction += 0.20;
+                oppDefReduction = Math.min(0.20, oppDefReduction) * 0.7; // 相手守備スキルも0.7倍スケール
+                myScoreBase = Math.max(0.05, myScoreBase - oppDefReduction);
+            }
 
             // 案F: アウェー不利補正（3部以上で強化）
-            // リーグ別のアウェーペナルティ（得点期待値減少）
             const awayPenalty = { 5: 0.05, 4: 0.08, 3: 0.15, 2: 0.22, 1: 0.30, 0: 0.38 };
             if (!isHome) {
                 let pen = awayPenalty[gameData.league] || 0.05;
-                // 適応力: アウェーペナルティ -50%
                 if (startersHaveSkill(starters, 'adaptability')) pen *= 0.5;
                 myScoreBase = Math.max(0, myScoreBase - pen);
-                oppScoreBase += pen * 0.5; // アウェー時は相手の得点期待値も微増
-            }
-
-            // スキル: ファンタジスタ（MF S）: 得点期待値 +0.2
-            if (startersHaveSkill(starters, 'fantasista')) myScoreBase += 0.2;
-            // スキル: 鬼壁（DF S）: 失点期待値 -0.4
-            if (startersHaveSkill(starters, 'steelGuardian')) oppScoreBase = Math.max(0, oppScoreBase - 0.4);
-            // 追加スキル: 得点期待値加算（前半）
-            // FW: アクロバット: 得点期待値 +0.1
-            if (startersHaveSkill(starters, 'acrobatic')) myScoreBase += 0.1;
-            // FW: カウンターキング: 相手OFが自チームより高い場合 +0.2
-            if (startersHaveSkill(starters, 'counterKing') && adjOppOff > adjYourOff) myScoreBase += 0.2;
-            // FW: プレッシャー耐性: 相手DFが自チームOFより高い場合のOF低下を軽減
-            if (startersHaveSkill(starters, 'pressureResist') && adjOppDef > adjYourOff) myScoreBase += 0.05;
-            // MF: ペナルティボックス: FWスタメン時 +0.1
-            if (startersHaveSkill(starters, 'boxPenalty') && starters.some(p => p.position === 'FW')) myScoreBase += 0.1;
-            // DF: 最後の砦: 失点期待値 -0.3、0失点時さらに -0.2
-            if (startersHaveSkill(starters, 'lastManStanding')) {
-                oppScoreBase = Math.max(0, oppScoreBase - 0.3);
-                if (oppScoreBase <= 0.1) oppScoreBase = Math.max(0, oppScoreBase - 0.2);
+                oppScoreBase += pen * 0.5;
             }
             // GK: PKStoppar: PK判定時の失点確率 -30%（pk処理内で考慮するためフラグのみ）
             // GK: スイーピングGK: 相手3点以上時に1点を確率 20%で防ぐ（後段処理）
@@ -13789,18 +14226,20 @@
                 const adjHtYourDef = Math.round(htYourDef * skDef * tp.defMult);
                 const adjHtOppOff  = Math.round((ht.adjOppOff || 0) * opOff);
                 const adjHtOppDef  = Math.round((ht.adjOppDef || 0) * opDef);
-                const maxOff = Math.max(adjHtYourOff, adjHtOppOff, 1);
-                const maxDef = Math.max(adjHtYourDef, adjHtOppDef, 1);
                 const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
                 const setW  = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = pct + '%'; };
                 setEl('htYourOffense', adjHtYourOff);
                 setEl('htOppOffense',  adjHtOppOff);
                 setEl('htYourDefense', adjHtYourDef);
                 setEl('htOppDefense',  adjHtOppDef);
-                setW('htYourOffenseBar', (adjHtYourOff / maxOff) * 100);
-                setW('htOppOffenseBar',  (adjHtOppOff  / maxOff) * 100);
-                setW('htYourDefenseBar', (adjHtYourDef / maxDef) * 100);
-                setW('htOppDefenseBar',  (adjHtOppDef  / maxDef) * 100);
+                // 自OF vs 相手DFの対決バー
+                const maxOffVsDef = Math.max(adjHtYourOff, adjHtOppDef, 1);
+                setW('htYourOffenseBar', (adjHtYourOff / maxOffVsDef) * 100);
+                setW('htOppDefenseBar',  (adjHtOppDef  / maxOffVsDef) * 100);
+                // 自DF vs 相手OFの対決バー
+                const maxDefVsOff = Math.max(adjHtYourDef, adjHtOppOff, 1);
+                setW('htYourDefenseBar', (adjHtYourDef / maxDefVsOff) * 100);
+                setW('htOppOffenseBar',  (adjHtOppOff  / maxDefVsOff) * 100);
                 const oppLabel = document.getElementById('htOppLabel');
                 if (oppLabel) oppLabel.textContent = ht.opponent || '相手';
             }
@@ -13853,11 +14292,16 @@
                     const htPlayerSubPosColor = SUB_POS_COLOR[htPlayerSubPos] || '#fff';
                     const htPlayerSubPosHtml = '<div style="font-size:7px;font-weight:700;color:' + htPlayerSubPosColor + ';margin-top:1px;">' +
                         htPlayerSubPos + (htPlayerSubPos2 ? '<span style="opacity:0.65;">/'+htPlayerSubPos2+'</span>' : '') + '</div>';
+                    // 性格相性アイコン（隣接スロットのみ対象）
+                    const _htPitchStarters = Object.values(pa).map(id => gameData.players.find(p => p.id === id)).filter(Boolean);
+                    const htCompatIcon = getCompatIconHtml(player, _htPitchStarters, slotKey);
+                    const htCompatHtml = htCompatIcon ? '<div style="font-size:8px;margin-top:1px;line-height:1;">' + htCompatIcon + '</div>' : '';
                     el.innerHTML =
                         '<div class="slot-pos" style="color:' + slotPosColor + '">' + slotSubLabel + '</div>' +
                         '<div class="slot-name">' + player.name + '</div>' +
                         htPlayerSubPosHtml +
                         '<div class="slot-stat">' + statStr + '</div>' +
+                        htCompatHtml +
                         '<div style="font-size:7px;color:' + fatigueColor + ';margin-top:1px;">疲' + fat + '</div>' +
                         injHtml + injMatchHtml + subbedOutHtml;
                     // 交代済みは選択不可
@@ -14059,36 +14503,36 @@
 
             // スキル効果再計算（後半スタメンで再評価）
             let skillOffMult2 = 1.0;
-            if (startersHaveSkill(starters, 'playmaker')) skillOffMult2 *= 1.04;
-            if (startersHaveSkill(starters, 'boxToBox')) skillOffMult2 *= 1.05;
-            if (startersHaveSkill(starters, 'longPass') && starters.filter(p => p.position === 'FW').length >= 2) skillOffMult2 *= 1.04;
-            if (startersHaveSkill(starters, 'technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) skillOffMult2 *= 1.03;
-            if (startersHaveSkill(starters, 'aggressive')) skillOffMult2 *= 1.05;
+            if (startersHaveSkill(starters, 'playmaker')) skillOffMult2 *= 1.03;
+            if (startersHaveSkill(starters, 'boxToBox')) skillOffMult2 *= 1.03;
+            if (startersHaveSkill(starters, 'longPass') && starters.filter(p => p.position === 'FW').length >= 2) skillOffMult2 *= 1.03;
+            if (startersHaveSkill(starters, 'technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) skillOffMult2 *= 1.02;
+            if (startersHaveSkill(starters, 'aggressive')) skillOffMult2 *= 1.03;
             if (startersHaveSkill(starters, 'postPlayer')) {
                 const mfPassAvg = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
-                skillOffMult2 *= (1 + mfPassAvg * 0.001);
+                skillOffMult2 *= (1 + mfPassAvg * 0.0007);
             }
             let skillDefMult2 = 1.0;
-            if (startersHaveSkill(starters, 'aerial')) skillDefMult2 *= 1.05;
-            if (startersHaveSkill(starters, 'coaching')) skillDefMult2 *= 1.03;
-            if (startersHaveSkill(starters, 'boxToBox')) skillDefMult2 *= 1.05;
-            if (startersHaveSkill(starters, 'deepLine')) skillDefMult2 *= 1.03;
+            if (startersHaveSkill(starters, 'aerial')) skillDefMult2 *= 1.03;
+            if (startersHaveSkill(starters, 'coaching')) skillDefMult2 *= 1.02;
+            if (startersHaveSkill(starters, 'boxToBox')) skillDefMult2 *= 1.03;
+            if (startersHaveSkill(starters, 'deepLine')) skillDefMult2 *= 1.02;
             if (startersHaveSkill(starters, 'commander')) {
                 const dfCoverAvg = starters.filter(p => p.position === 'DF').reduce((s, p) => s + (p.cover || 0), 0) / Math.max(starters.filter(p => p.position === 'DF').length, 1);
-                skillDefMult2 *= (1 + dfCoverAvg * 0.001);
+                skillDefMult2 *= (1 + dfCoverAvg * 0.0007);
             }
             if (startersHaveSkill(starters, 'buildUp')) {
                 const mfPassAvg2 = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
-                skillOffMult2 *= (1 + mfPassAvg2 * 0.0005);
+                skillOffMult2 *= (1 + mfPassAvg2 * 0.0003);
             }
             let oppOffMult2 = 1.0;
             if (startersHaveSkill(starters, 'pressMaster')) oppOffMult2 *= 0.96;
             if (startersHaveSkill(starters, 'reflexes')) oppOffMult2 *= 0.97;
             if (startersHaveSkill(starters, 'deepLine')) oppOffMult2 *= 0.97;
             if (startersHaveSkill(starters, 'highPress')) { oppOffMult2 *= 0.97; skillDefMult2 *= 0.98; }
-            if (startersHaveSkill(starters, 'coverShadow')) oppOffMult2 *= 0.95;
+            if (startersHaveSkill(starters, 'coverShadow')) oppOffMult2 *= 0.96;
             if (startersHaveSkill(starters, 'positioning')) oppOffMult2 *= 0.96;
-            if (startersHaveSkill(starters, 'manMarker')) oppOffMult2 *= 0.92;
+            if (startersHaveSkill(starters, 'manMarker')) oppOffMult2 *= 0.94;
             if (startersHaveSkill(starters, 'longBallKiller')) oppOffMult2 *= 0.95;
             // 分析室効果（後半）— executeSecondHalfは別スコープなので再宣言
             const analysisMult2 = 1 - ((gameData.facilities.analysis || 1) * 0.005);
@@ -14096,24 +14540,28 @@
             let oppDefMult2 = analysisMult2;
             if (startersHaveSkill(starters, 'speedster')) oppDefMult2 *= 0.97;
             if (startersHaveSkill(starters, 'wingAttacker') && startersHaveSkill(starters, 'speedster')) oppDefMult2 *= 0.97;
-            if (startersHaveSkill(starters, 'midDominator')) { skillOffMult2 *= 1.08; skillDefMult2 *= 1.08; }
+            if (startersHaveSkill(starters, 'midDominator')) { skillOffMult2 *= 1.05; skillDefMult2 *= 1.05; }
             if (startersHaveSkill(starters, 'maestro')) {
                 const mfCount = starters.filter(p => p.position === 'MF').length;
-                if (mfCount > 0) skillOffMult2 *= Math.pow(1.05, mfCount / 4);
+                if (mfCount > 0) skillOffMult2 *= Math.pow(1.03, mfCount / 4);
             }
-            if (startersHaveSkill(starters, 'stopper')) oppOffMult2 *= 0.85;
-            if (startersHaveSkill(starters, 'libero')) skillOffMult2 *= 1.05;
+            if (startersHaveSkill(starters, 'stopper')) oppOffMult2 *= 0.88;
+            if (startersHaveSkill(starters, 'libero')) skillOffMult2 *= 1.03;
 
             // ===== 追加スキル20個の効果（後半） =====
-            if (startersHaveSkill(starters, 'falseNine')) { skillOffMult2 *= 1.06; skillDefMult2 *= 1.06; }
-            if (startersHaveSkill(starters, 'targetMan') && (startersHaveSkill(starters, 'buildUp') || startersHaveSkill(starters, 'longPass'))) skillOffMult2 *= 1.05;
+            if (startersHaveSkill(starters, 'falseNine')) { skillOffMult2 *= 1.04; skillDefMult2 *= 1.04; }
+            if (startersHaveSkill(starters, 'targetMan') && (startersHaveSkill(starters, 'buildUp') || startersHaveSkill(starters, 'longPass'))) skillOffMult2 *= 1.03;
             if (startersHaveSkill(starters, 'interceptor')) oppOffMult2 *= 0.97;
-            if (startersHaveSkill(starters, 'fieldGeneral')) { skillOffMult2 *= 1.03; skillDefMult2 *= 1.03; }
+            if (startersHaveSkill(starters, 'fieldGeneral')) { skillOffMult2 *= 1.02; skillDefMult2 *= 1.02; }
             if (startersHaveSkill(starters, 'defensiveWall')) oppOffMult2 *= 0.97;
             if (startersHaveSkill(starters, 'pressureBlock') && opponent.squad && (opponent.squad.length > 11 ? selectRivalStarters(opponent.squad, opponent.formation) : opponent.squad).some(p => p.position === 'FW' && p.skills && p.skills.includes('speedster'))) oppDefMult2 = Math.min(1.0, oppDefMult2 / 0.97);
-            if (startersHaveSkill(starters, 'dominantHeader') && startersHaveSkill(starters, 'aerial')) skillDefMult2 *= 1.05;
-            if (startersHaveSkill(starters, 'rushGK') && opponent.squad && (opponent.squad.length > 11 ? selectRivalStarters(opponent.squad, opponent.formation) : opponent.squad).some(p => p.position === 'FW' && p.skills && p.skills.includes('dribbler'))) oppOffMult2 *= 0.90;
+            if (startersHaveSkill(starters, 'dominantHeader') && startersHaveSkill(starters, 'aerial')) skillDefMult2 *= 1.03;
+            if (startersHaveSkill(starters, 'rushGK') && opponent.squad && (opponent.squad.length > 11 ? selectRivalStarters(opponent.squad, opponent.formation) : opponent.squad).some(p => p.position === 'FW' && p.skills && p.skills.includes('dribbler'))) oppOffMult2 *= 0.92;
             // ===== 追加スキルここまで =====
+            // ===== スキル乗算の上限・下限クランプ（後半） =====
+            skillOffMult2 = Math.min(skillOffMult2, 1.30); // 攻撃スキル乗算上限 +30%
+            skillDefMult2 = Math.min(skillDefMult2, 1.30); // 守備スキル乗算上限 +30%
+            oppOffMult2   = Math.max(oppOffMult2,   0.72); // 相手攻撃力低下の下限 -28%
 
             // 後半の作戦補正
             const TACTICS_PARAMS = {
@@ -14161,41 +14609,66 @@
             let oppScoreBase2 = Math.min(2.5, Math.max(0.05, 0.80 * Math.exp(oppDiff2 / 60)))
                 - gkSaveReduction2 - tackleReduction2;
 
-            if (startersHaveSkill(starters, 'sniper')) myScoreBase2 += 0.25;
-            if (startersHaveSkill(starters, 'penaltyKing')) myScoreBase2 += 0.15;
-            if (startersHaveSkill(starters, 'clutchPlayer')) myScoreBase2 += 0.1;
-            if (startersHaveSkill(starters, 'setpieceMaster')) myScoreBase2 += 0.1;
-            if (startersHaveSkill(starters, 'bigHands')) oppScoreBase2 = Math.max(0, oppScoreBase2 - 0.2);
-            if (startersHaveSkill(starters, 'ironWall')) oppScoreBase2 = Math.max(0, oppScoreBase2 - 0.25);
-            if (startersHaveSkill(starters, 'headClear')) oppScoreBase2 = Math.max(0, oppScoreBase2 - 0.1);
-            if (startersHaveSkill(starters, 'vision') && startersHaveSkill(starters, 'chanceMaker')) myScoreBase2 += 0.1;
-            if (startersHaveSkill(starters, 'headingKing') && startersHaveSkill(starters, 'aerial')) myScoreBase2 += 0.1;
+            // ===== 自チームスキルボーナス（後半）=====
+            let mySkillBonus2 = 0;
+            if (startersHaveSkill(starters, 'sniper')) mySkillBonus2 += 0.12;
+            if (startersHaveSkill(starters, 'penaltyKing')) mySkillBonus2 += 0.08;
+            if (startersHaveSkill(starters, 'clutchPlayer')) mySkillBonus2 += 0.05;
+            if (startersHaveSkill(starters, 'setpieceMaster')) mySkillBonus2 += 0.05;
+            if (startersHaveSkill(starters, 'vision') && startersHaveSkill(starters, 'chanceMaker')) mySkillBonus2 += 0.05;
+            if (startersHaveSkill(starters, 'headingKing') && startersHaveSkill(starters, 'aerial')) mySkillBonus2 += 0.05;
+            if (startersHaveSkill(starters, 'fantasista')) mySkillBonus2 += 0.10;
+            if (startersHaveSkill(starters, 'acrobatic')) mySkillBonus2 += 0.05;
+            if (startersHaveSkill(starters, 'counterKing') && adjOppOff2 > adjYourOff2) mySkillBonus2 += 0.10;
+            if (startersHaveSkill(starters, 'pressureResist') && adjOppDef2 > adjYourOff2) mySkillBonus2 += 0.03;
+            if (startersHaveSkill(starters, 'boxPenalty') && starters.some(p => p.position === 'FW')) mySkillBonus2 += 0.05;
+            if (startersHaveSkill(starters, 'counterPress') && firstHalfOppScore > 0) mySkillBonus2 += 0.08;
+            mySkillBonus2 = Math.min(0.25, mySkillBonus2);
+            myScoreBase2 += mySkillBonus2;
+
+            let defSkillReduction2 = 0;
+            if (startersHaveSkill(starters, 'bigHands')) defSkillReduction2 += 0.10;
+            if (startersHaveSkill(starters, 'ironWall')) defSkillReduction2 += 0.12;
+            if (startersHaveSkill(starters, 'headClear')) defSkillReduction2 += 0.05;
+            if (startersHaveSkill(starters, 'steelGuardian')) defSkillReduction2 += 0.20;
+            if (startersHaveSkill(starters, 'lastManStanding')) defSkillReduction2 += 0.15;
+            defSkillReduction2 = Math.min(0.20, defSkillReduction2);
+            oppScoreBase2 = Math.max(0.05, oppScoreBase2 - defSkillReduction2);
+
             const isHome = isCupMatch ? savedPendingMatch.isHome : (currentMatch.home === true || currentMatch.location === 'home' || !currentMatch.away);
-            if (isHome && startersHaveSkill(starters, 'homeStar')) { myScoreBase2 += 0.2; oppScoreBase2 += 0.2; }
+            if (isHome && startersHaveSkill(starters, 'homeStar')) { myScoreBase2 += 0.10; oppScoreBase2 += 0.10; }
+
+            // ===== 相手チームスキルボーナス（後半）=====
+            const oppTeam2 = findTeamAcrossLeagues(ht.opponent);
+            if (oppTeam2 && oppTeam2.squad) {
+                const oppStarters2 = oppTeam2.squad.length > 11 ? selectRivalStarters(oppTeam2.squad, oppTeam2.formation) : oppTeam2.squad;
+                const oppHasSkill2 = (id) => oppStarters2.some(p => p.skills && p.skills.includes(id));
+                let oppSkillBonus2 = 0;
+                if (oppHasSkill2('sniper')) oppSkillBonus2 += 0.12;
+                if (oppHasSkill2('penaltyKing')) oppSkillBonus2 += 0.08;
+                if (oppHasSkill2('clutchPlayer')) oppSkillBonus2 += 0.05;
+                if (oppHasSkill2('fantasista')) oppSkillBonus2 += 0.10;
+                if (oppHasSkill2('acrobatic')) oppSkillBonus2 += 0.05;
+                if (oppHasSkill2('counterKing') && adjYourOff2 > adjOppOff2) oppSkillBonus2 += 0.10;
+                oppSkillBonus2 = Math.min(0.25, oppSkillBonus2) * 0.7; // 相手スキルは0.7倍スケール
+                oppScoreBase2 += oppSkillBonus2;
+                let oppDefReduction2 = 0;
+                if (oppHasSkill2('bigHands')) oppDefReduction2 += 0.10;
+                if (oppHasSkill2('ironWall')) oppDefReduction2 += 0.12;
+                if (oppHasSkill2('headClear')) oppDefReduction2 += 0.05;
+                if (oppHasSkill2('steelGuardian')) oppDefReduction2 += 0.20;
+                oppDefReduction2 = Math.min(0.20, oppDefReduction2) * 0.7; // 相手守備スキルも0.7倍スケール
+                myScoreBase2 = Math.max(0.05, myScoreBase2 - oppDefReduction2);
+            }
 
             // 案F: アウェー不利補正（後半も同様に適用）
             if (!isHome) {
                 const awayPenalty2 = { 5: 0.05, 4: 0.08, 3: 0.15, 2: 0.22, 1: 0.30, 0: 0.38 };
                 let pen2 = awayPenalty2[gameData.league] || 0.05;
-                // 適応力: アウェーペナルティ -50%
                 if (startersHaveSkill(starters, 'adaptability')) pen2 *= 0.5;
                 myScoreBase2 = Math.max(0, myScoreBase2 - pen2);
                 oppScoreBase2 += pen2 * 0.5;
             }
-
-            if (startersHaveSkill(starters, 'fantasista')) myScoreBase2 += 0.2;
-            if (startersHaveSkill(starters, 'steelGuardian')) oppScoreBase2 = Math.max(0, oppScoreBase2 - 0.4);
-            // 追加スキル: 得点期待値加算（後半）
-            if (startersHaveSkill(starters, 'acrobatic')) myScoreBase2 += 0.1;
-            if (startersHaveSkill(starters, 'counterKing') && adjOppOff2 > adjYourOff2) myScoreBase2 += 0.2;
-            if (startersHaveSkill(starters, 'pressureResist') && adjOppDef2 > adjYourOff2) myScoreBase2 += 0.05;
-            if (startersHaveSkill(starters, 'boxPenalty') && starters.some(p => p.position === 'FW')) myScoreBase2 += 0.1;
-            if (startersHaveSkill(starters, 'lastManStanding')) {
-                oppScoreBase2 = Math.max(0, oppScoreBase2 - 0.3);
-                if (oppScoreBase2 <= 0.1) oppScoreBase2 = Math.max(0, oppScoreBase2 - 0.2);
-            }
-            // MF: カウンタープレス: 失点直後の次の得点期待値 +0.15
-            if (startersHaveSkill(starters, 'counterPress') && firstHalfOppScore > 0) myScoreBase2 += 0.15;
 
             // 監督スキル: goalChance・setPlayBonus・concedeMult・cleanSheetBonusを後半にも反映
             myScoreBase2 += (_mse.goalChance || 0) * 2.5;
@@ -14607,6 +15080,59 @@
                 }
             });
 
+            // ===== 覚醒イベント判定 =====
+            // 条件: 試合出場した選手のうち、小数点の確率で覚醒が発生
+            // 覚醒効果: 全能力値+5、性格変化のどちらか（ランダム）
+            // 発生条件: Lv3以上、まだ覚醒していない選手のみ対象
+            const awakeningMessages = [];
+            const awakeningCandidates = starters.filter(p => {
+                if ((p.level || 1) < 3) return false;   // Lv3未満は対象外
+                if (p.awakened) return false;            // 覚醒済みは対象外
+                return true;
+            });
+            awakeningCandidates.forEach(player => {
+                // 発生確率: 基本3%、勝利時+2%、大勝利（3点差以上）時+3%追加
+                let awakeProb = 0.03;
+                if (myScore > oppScore) awakeProb += 0.02;
+                if (myScore - oppScore >= 3) awakeProb += 0.03;
+                if (Math.random() >= awakeProb) return; // 発生しない
+
+                // 覚醒内容をランダムに決定
+                const awakeType = Math.random() < 0.5 ? 'stats' : 'personality';
+                let awakeMsg = '';
+
+                if (awakeType === 'stats') {
+                    // 全能力値+5
+                    if (player.position === 'GK') {
+                        player.keeper = Math.min((player.keeper || 50) + 5, 120);
+                        awakeMsg = player.name + ' が覚醒！（GK能力 +5）';
+                    } else {
+                        player.offense = Math.min((player.offense || 40) + 5, 120);
+                        player.defense = Math.min((player.defense || 40) + 5, 120);
+                        player.passing = Math.min((player.passing || 40) + 5, 120);
+                        player.shoot   = Math.min((player.shoot   || 30) + 5, 120);
+                        player.block   = Math.min((player.block   || 30) + 5, 120);
+                        player.cover   = Math.min((player.cover   || 30) + 5, 120);
+                        if (player.dribble !== undefined) player.dribble = Math.min(player.dribble + 5, 120);
+                        if (player.tackle  !== undefined) player.tackle  = Math.min(player.tackle  + 5, 120);
+                        awakeMsg = player.name + ' が覚醒！（全能力値 +5）';
+                    }
+                    player.salary = calculatePlayerSalary(player);
+                } else {
+                    // 性格変化（現在と異なるランダムな性格に変わる）
+                    const oldPersonality = player.personality;
+                    const oldPData = PERSONALITIES.find(p => p.id === oldPersonality);
+                    const otherPersonalities = PERSONALITIES.filter(p => p.id !== oldPersonality);
+                    const newPData = otherPersonalities[Math.floor(Math.random() * otherPersonalities.length)];
+                    player.personality = newPData.id;
+                    const oldName = oldPData ? oldPData.icon + oldPData.name : '未設定';
+                    awakeMsg = player.name + ' が覚醒！（性格: ' + oldName + ' → ' + newPData.icon + newPData.name + '）';
+                }
+
+                player.awakened = true; // 覚醒済みフラグ
+                awakeningMessages.push(awakeMsg);
+            });
+
             // スポンサー収入
             let periodicSponsorIncome = 0;
             if (gameData.sponsors && gameData.sponsors.length > 0) {
@@ -14696,6 +15222,17 @@
                 expDiv.style.display = 'none';
             }
 
+            // 覚醒イベント表示
+            const awakeDiv = document.getElementById('awakeningResultDiv');
+            if (awakeDiv) {
+                if (awakeningMessages.length > 0) {
+                    awakeDiv.style.display = 'block';
+                    document.getElementById('awakeningResult').innerHTML = awakeningMessages.join('<br>');
+                } else {
+                    awakeDiv.style.display = 'none';
+                }
+            }
+
             // ===== 試合スタッツ生成（擬似） =====
             (function() {
                 // 保持率: 自チームOF / (自OF + 相手OF) を基準に ±5% 揺れ
@@ -14706,11 +15243,17 @@
                 const myPoss = Math.min(75, Math.max(25, rawPoss + Math.floor(Math.random() * 11) - 5 + (_msePoss.possessionBonus || 0)));
                 const oppPoss = 100 - myPoss;
 
-                // シュート数: 得点 × 4〜6 + ランダム（OF比率補正）
+                // シュート数: 保持率ベースで計算（得点に依存しすぎない自然なスタッツ）
+                // 総シュート数: 20〜28本程度（現実的なレンジ）
                 const myGoals = myScore;
                 const oppGoals = oppScore;
-                const myShots = Math.max(myGoals, Math.round(myGoals * (4 + Math.random() * 2) + (myPoss / 100) * 4 + Math.random() * 3));
-                const oppShots = Math.max(oppGoals, Math.round(oppGoals * (4 + Math.random() * 2) + (oppPoss / 100) * 4 + Math.random() * 3));
+                const totalShots = 20 + Math.floor(Math.random() * 9); // 20〜28本
+                // 保持率に応じてシュート数を配分（±2本のランダム揺れ）
+                const rawMyShots = Math.round(totalShots * myPoss / 100 + (Math.random() * 4 - 2));
+                const rawOppShots = totalShots - rawMyShots;
+                // 得点数は必ず含む（最低保証）
+                const myShots = Math.max(myGoals, Math.max(3, rawMyShots));
+                const oppShots = Math.max(oppGoals, Math.max(3, rawOppShots));
 
                 // 枠内シュート: シュートの40〜60%（得点は必ず含む）
                 const myOnTarget = Math.max(myGoals, Math.round(myShots * (0.40 + Math.random() * 0.20)));
@@ -14775,9 +15318,6 @@
                         + `<div style="color:rgba(255,255,255,0.45); font-weight:bold; margin-bottom:5px; letter-spacing:0.5px;">⚽ 得点者</div>`;
                     if (myScore > 0) {
                         scorerHtml += `<div style="display:flex; gap:6px; margin-bottom:3px;"><span style="color:#4CAF50; font-weight:bold; min-width:80px;">${gameData.clubName}</span><span style="color:rgba(255,255,255,0.8);">${myScorersText}</span></div>`;
-                    }
-                    if (oppScore > 0) {
-                        scorerHtml += `<div style="display:flex; gap:6px;"><span style="color:rgba(255,255,255,0.55); font-weight:bold; min-width:80px;">${opponent.name}</span><span style="color:rgba(255,255,255,0.6);">（相手得点）</span></div>`;
                     }
                     scorerHtml += `</div>`;
                 }
@@ -14848,12 +15388,12 @@
             });
             // モーダル表示後にハイライト逐次表示開始
             showHighlightLines('matchHighlightContent', _pendingHighlights, function() {
-                // 監督XP付与（ハイライト完了後に通知を表示）
-                if (_pendingManagerXP > 0) addManagerXP(_pendingManagerXP);
                 const det = document.getElementById('matchResultDetails');
                 if (det) { det.style.display = ''; }
                 const okBtn = document.getElementById('matchResultOkBtn');
                 if (okBtn) { okBtn.style.display = ''; }
+                // 監督XP付与（試合詳細・OKボタン表示後に少し遅延してから通知）
+                if (_pendingManagerXP > 0) setTimeout(() => addManagerXP(_pendingManagerXP), 800);
                 // 採点ボタン表示
                 const ratingBtnDiv = document.getElementById('playerRatingBtnDiv');
                 if (ratingBtnDiv && _lastMatchRatings) ratingBtnDiv.style.display = '';
@@ -15472,8 +16012,22 @@
                     else if (cond >= 3) lines.push(`  👍 <b>${scorerPlayer.name}</b> は好調を維持している。`);
                     // アシスト演出（MFのpassing値に応じた詳細テキスト）
                     // 得点者と同じ選手がアシストにならないよう除外する
+                    // PK・FK・セットプレー系のテンプレートにはアシストテキストを付けない
+                    // goalTypeがセットプレー系やPK系のテンプレートに該当する場合はアシストなし
+                    // 通常ゴールイベントはアシストあり（コーナーキック・PK・セットプレー系は除外）
+                    const _noAssistTemplates = [
+                        'PKを冷静に決める',
+                        'フリーキックを直接決める',
+                        'フリーキックのリバウンド',
+                        'セットプレーのこぼれ球',
+                        'コーナーキックのボールを直接ゴール',
+                        'コーナーキックのボールに高いジャンプ',
+                        'コーナーキックのこぼれ球',
+                    ];
+                    const _goalLineText = lines[lines.length - 1] || '';
+                    const _isNoAssistGoal = _noAssistTemplates.some(t => _goalLineText.includes(t));
                     const assistCandidates = mf.filter(p => p !== scorerPlayer);
-                    if (Math.random() < 0.45 && assistCandidates.length > 0) {
+                    if (!_isNoAssistGoal && Math.random() < 0.45 && assistCandidates.length > 0) {
                         // passing値が高いMFほどアシストしやすい
                         const mfTotalPass = assistCandidates.reduce((s, p) => s + (p.passing || 40), 0);
                         let mfRand = Math.random() * mfTotalPass;
@@ -16551,6 +17105,23 @@
             if (!player) return;
 
             selectedPlayerDetail = player;
+            // ナビゲーション用インデックス表示
+            const _allPlayers = gameData.players;
+            const _curIdx = _allPlayers.findIndex(p => p.id === playerId);
+            const _navIndex = document.getElementById('playerNavIndex');
+            if (_navIndex) _navIndex.textContent = (_curIdx + 1) + ' / ' + _allPlayers.length;
+            const _prevBtn = document.getElementById('playerNavPrev');
+            const _nextBtn = document.getElementById('playerNavNext');
+            if (_prevBtn) {
+                _prevBtn.style.display = 'flex';
+                _prevBtn.style.opacity = _curIdx > 0 ? '1' : '0.25';
+                _prevBtn.style.pointerEvents = _curIdx > 0 ? 'auto' : 'none';
+            }
+            if (_nextBtn) {
+                _nextBtn.style.display = 'flex';
+                _nextBtn.style.opacity = _curIdx < _allPlayers.length - 1 ? '1' : '0.25';
+                _nextBtn.style.pointerEvents = _curIdx < _allPlayers.length - 1 ? 'auto' : 'none';
+            }
             document.getElementById('playerDetailName').textContent = player.name;
             document.getElementById('detailPosition').textContent = player.position;
             document.getElementById('detailAge').textContent = (player.age !== undefined ? player.age : 18) + '歳';
@@ -16629,6 +17200,21 @@
                     ratingDetailRow.style.display = 'flex';
                 }
             }
+            // 性格表示
+            const personalityEl = document.getElementById('detailPersonality');
+            const personalityRowEl = document.getElementById('personalityDetailRow');
+            if (personalityEl && personalityRowEl) {
+                const pData = PERSONALITIES.find(p => p.id === player.personality);
+                if (pData) {
+                    personalityEl.textContent = pData.icon + ' ' + pData.name + '（' + pData.desc + '）';
+                    personalityEl.style.color = 'rgba(255,255,255,0.85)';
+                } else {
+                    personalityEl.textContent = '未設定';
+                    personalityEl.style.color = 'rgba(255,255,255,0.4)';
+                }
+                personalityRowEl.style.display = 'flex';
+            }
+
             const container = document.getElementById('abilityContainer');
             let html = '';
 
@@ -16710,7 +17296,7 @@
             if (skillArea) {
                 const skills = player.skills || [];
                 if (skills.length === 0) {
-                    skillArea.innerHTML = '<div style="color: rgba(255,255,255,0.5); font-size: 12px;">Lv4・Lv8・Lv12でスキルを習得</div>';
+                    skillArea.innerHTML = '<div style="color: rgba(255,255,255,0.5); font-size: 12px;">Lv4で60%の確率でBスキル習得・Lv8で50%の確率でAスキル習得</div>';
                 } else {
                     skillArea.innerHTML = skills.map(id => {
                         const sk = SKILLS[id];
@@ -16822,7 +17408,7 @@
             }
 
             player.salary = calculatePlayerSalary(player);
-            // スキル習得チェック（Lv4・Lv8・Lv12でランダム習得）
+            // スキル習得チェック（Lv4確定B・Lv8は50%でA習得）
             const manualLearnedSkill = tryLearnSkill(player);
             selectedPlayerDetail = player; // 参照を更新
 
@@ -16955,12 +17541,43 @@
 
             if (player.starter) {
                 player.starter = false;
+                // pitchAssignment からも除去
+                if (gameData.pitchAssignment) {
+                    for (const k of Object.keys(gameData.pitchAssignment)) {
+                        if (gameData.pitchAssignment[k] === player.id) {
+                            delete gameData.pitchAssignment[k];
+                            break;
+                        }
+                    }
+                }
             } else {
                 if (starters.length >= 11) {
                     showNotification('スタメンは11名までです');
                     return;
                 }
                 player.starter = true;
+                // pitchAssignment の空きスロットに自動配置
+                if (!gameData.pitchAssignment) gameData.pitchAssignment = {};
+                const _slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
+                // 選手が配置可能なポジションセット（メイン＋副ポジションをSUB_TO_MAINで変換）
+                const _validPositions = new Set();
+                _validPositions.add(player.position);
+                if (player.subPosition && SUB_TO_MAIN[player.subPosition]) _validPositions.add(SUB_TO_MAIN[player.subPosition]);
+                if (player.subPosition2 && SUB_TO_MAIN[player.subPosition2]) _validPositions.add(SUB_TO_MAIN[player.subPosition2]);
+                // メインポジション一致の空きスロットを優先し、なければ副ポジション一致のスロットも探す
+                let _emptySlot = _slots.find(s => {
+                    const slotKey = s.pos + '_' + s.idx;
+                    return s.pos === player.position && !gameData.pitchAssignment[slotKey];
+                });
+                if (!_emptySlot) {
+                    _emptySlot = _slots.find(s => {
+                        const slotKey = s.pos + '_' + s.idx;
+                        return _validPositions.has(s.pos) && !gameData.pitchAssignment[slotKey];
+                    });
+                }
+                if (_emptySlot) {
+                    gameData.pitchAssignment[_emptySlot.pos + '_' + _emptySlot.idx] = player.id;
+                }
             }
 
             saveGame();
@@ -16973,14 +17590,32 @@
                 showNotification('スタメンは11名である必要があります');
                 return;
             }
-                        // pitchAssignmentベースでスロット充足チェック（割り当て済み選手11人＋GK1人）
-            const pa = gameData.pitchAssignment || {};
-            const slots = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
-            const assignedIds = new Set(Object.values(pa).filter(Boolean));
-            const gkSlotFilled = slots.filter(s => s.pos === 'GK').every(s => pa[s.pos + '_' + s.idx]);
-            if (assignedIds.size !== slots.length || !gkSlotFilled) {
-                showNotification('フォーメーションの全スロットに選手をセットしてください');
-                return;
+            // フォーメーションチェック（pitchAssignmentのスロット位置で判定）
+            {
+                const _fmSave = formations[gameData.formation];
+                if (_fmSave) {
+                    const _paSave = gameData.pitchAssignment || {};
+                    const _slotsSave = PITCH_SLOTS[gameData.formation] || PITCH_SLOTS['4-4-2'];
+                    const _slotPosCountSave = { FW: 0, MF: 0, DF: 0, GK: 0 };
+                    const _assignedIdsSave = new Set();
+                    for (const slot of _slotsSave) {
+                        const key = slot.pos + '_' + slot.idx;
+                        const pid = _paSave[key];
+                        if (pid) {
+                            _slotPosCountSave[slot.pos] = (_slotPosCountSave[slot.pos] || 0) + 1;
+                            _assignedIdsSave.add(pid);
+                        }
+                    }
+                    for (const p of starters) {
+                        if (!_assignedIdsSave.has(p.id)) {
+                            _slotPosCountSave[p.position] = (_slotPosCountSave[p.position] || 0) + 1;
+                        }
+                    }
+                    if (_slotPosCountSave.FW !== _fmSave.fw || _slotPosCountSave.MF !== _fmSave.mf || _slotPosCountSave.DF !== _fmSave.df || _slotPosCountSave.GK !== 1) {
+                        showNotification('フォーメーション ' + gameData.formation + ' に合わせてスタメンを選出してください');
+                        return;
+                    }
+                }
             }
             saveGame();
             showNotification('スタメンを確定しました');
@@ -17070,8 +17705,23 @@
         function closePlayerModal() {
             document.getElementById('playerModal').classList.remove('active');
         }
+        function navigatePlayerDetail(dir) {
+            if (!selectedPlayerDetail) return;
+            const _allPlayers = gameData.players;
+            const _curIdx = _allPlayers.findIndex(p => p.id === selectedPlayerDetail.id);
+            const _newIdx = _curIdx + dir;
+            if (_newIdx < 0 || _newIdx >= _allPlayers.length) return;
+            // モーダルのスクロール位置をトップに戻す
+            const _mc = document.querySelector('#playerDetailModal .modal-content');
+            if (_mc) _mc.scrollTop = 0;
+            showPlayerDetail(_allPlayers[_newIdx].id);
+        }
         function closePlayerDetail() {
             document.getElementById('playerDetailModal').classList.remove('active');
+            const _pb = document.getElementById('playerNavPrev');
+            const _nb = document.getElementById('playerNavNext');
+            if (_pb) _pb.style.display = 'none';
+            if (_nb) _nb.style.display = 'none';
         }
         function fameBoostCondition(level) {
             if (!gameData.gameStarted) { showNotification('ゲームを開始してください。'); return; }
