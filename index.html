@@ -12117,7 +12117,7 @@
             return s + ' ' + f;
         }
 
-        function createRecruitPlayer(category) {
+        function createRecruitPlayer(category, isAcademy) {
             // 細分化ポジションからランダム選択（GKは低確率）
             const subPositions = ['CF','WG','CH','SH','DH','CB','SB','CF','WG','CH','SH','DH','CB','SB','GK'];
             const subPos = subPositions[Math.floor(Math.random() * subPositions.length)];
@@ -12166,8 +12166,8 @@
                 p.cover   = Math.max(1, Math.min(99, p.cover   + abilityBonus + scoutBonusVal));
             }
 
-            // アカデミーレベルによる新人能力微増（新人のみ）
-            if (category === 'rookie') {
+            // アカデミーレベルによる能力微増（新人入団・ユース昇格のみ、若手獲得は除外）
+            if (isAcademy) {
                 const academyBonus = Math.floor((gameData.facilities.academy - 1) * 1.5); // Lv1はボーナスなし、Lvごとに+1.5
                 if (academyBonus > 0) {
                     if (pos === 'GK') {
@@ -12210,7 +12210,7 @@
                 p.skills.push(valid[Math.floor(Math.random() * valid.length)]);
             }
 
-            if (category === 'rookie') {
+            if (isAcademy) {
                 // アカデミーLvに応じたスキル付与
                 // Lv1−3: なし / Lv4−5: B级20% / Lv6−7: B级40% / Lv8−9: B级60%+A级10% / Lv10: B级80%+A级20%
                 const aLv = gameData.facilities.academy || 1;
@@ -17800,14 +17800,47 @@
                 youthPlayer.block   = Math.max(1, youthPlayer.block   - 15);
                 youthPlayer.cover   = Math.max(1, youthPlayer.cover   - 15);
             }
+                        // アカデミーレベルによる能力微増（ユース昇格はアカデミー効能対象）
+            const _yAcLv = gameData.facilities.academy || 1;
+            const _yAcBonus = Math.floor((_yAcLv - 1) * 1.5);
+            if (_yAcBonus > 0) {
+                if (youthPlayer.position === 'GK') {
+                    youthPlayer.keeper = Math.min(99, youthPlayer.keeper + _yAcBonus);
+                } else {
+                    youthPlayer.offense = Math.min(99, youthPlayer.offense + _yAcBonus);
+                    youthPlayer.defense = Math.min(99, youthPlayer.defense + _yAcBonus);
+                    youthPlayer.passing = Math.min(99, youthPlayer.passing + _yAcBonus);
+                    youthPlayer.shoot   = Math.min(99, youthPlayer.shoot   + _yAcBonus);
+                    youthPlayer.block   = Math.min(99, youthPlayer.block   + _yAcBonus);
+                    youthPlayer.cover   = Math.min(99, youthPlayer.cover   + _yAcBonus);
+                }
+            }
+            // アカデミーLvに応じたスキル付与（ユース昇格）
+            if (!youthPlayer.skills) youthPlayer.skills = [];
+            const _yBSkills = ['dribbler','speedster','chanceMaker','tackleMaster','resilience','youngTalent','steelBody','homeStar',
+                               'postPlayer','longShooter','wingAttacker','headingKing','goalRush',
+                               'deepLine','vision','highPress','technician','longPass','engine','turnover'];
+            const _yASkills = ['playmaker','pressMaster','aerial','coaching','bigHands','reflexes','goalHunter','lineControl',
+                               'penaltyKing','goalGetter','clutchPlayer','firstTouch'];
+            const _yPickS = (pool) => {
+                const valid = pool.filter(id => SKILLS[id] && SKILLS[id].pos.includes(youthPlayer.position) && !youthPlayer.skills.includes(id));
+                if (valid.length > 0) youthPlayer.skills.push(valid[Math.floor(Math.random() * valid.length)]);
+            };
+            let _yBChance = 0, _yAChance = 0;
+            if (_yAcLv >= 10)      { _yBChance = 0.80; _yAChance = 0.20; }
+            else if (_yAcLv >= 8)  { _yBChance = 0.60; _yAChance = 0.10; }
+            else if (_yAcLv >= 6)  { _yBChance = 0.40; }
+            else if (_yAcLv >= 4)  { _yBChance = 0.20; }
+            if (Math.random() < _yBChance) _yPickS(_yBSkills);
+            if (Math.random() < _yAChance) _yPickS(_yASkills);
             youthPlayer.salary = calculatePlayerSalary(youthPlayer);
             gameData.players.push(youthPlayer);
-
             saveGame();
             renderGame();
             closePlayerModal();
             document.getElementById('playerName').value = '';
-            showNotification(name + '（' + youthAge + '歳）がユースから昇格しました！');
+            const _ySkillNote = youthPlayer.skills.length > 0 ? '（スキル: ' + youthPlayer.skills.map(id => SKILLS[id]?.name || id).join('・') + '）' : '';
+            showNotification(name + '（' + youthAge + '歳）がユースから昇格しました！' + _ySkillNote);
         }
 
         function forceEndSeason() {
