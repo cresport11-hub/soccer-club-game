@@ -4312,6 +4312,33 @@
                 desc: '10シーズン以上プレイ',
                 check: (gd) => (gd.seasonCount || 0) >= 10
             },
+            // ―― 追加トロフィー（第2弾） ――
+            // 資金・経営系
+            { id: 'millionaire',      name: '億万長者',         icon: '💎', desc: '所持金が1億円以上',                   check: (gd) => gd.money >= 100000000 },
+            { id: 'salary_master',    name: '高給取りクラブ',   icon: '💸', desc: '総年俸が月500万円以上',                 check: (gd) => gd.players.reduce((s,p)=>s+(p.salary||0),0) >= 5000000 },
+            { id: 'sponsor_king',     name: 'スポンサー王',     icon: '📢', desc: 'スポンサー収入を5回以上獲得',           check: (gd) => (gd.sponsorCount || 0) >= 5 },
+            // 選手育成・スキル系
+            { id: 'all_skills',       name: 'スキル図書館',     icon: '📚', desc: 'チーム全体で異なるスキルを10種類以上保有', check: (gd) => { const s = new Set(); gd.players.forEach(p=>(p.skills||[]).forEach(sk=>s.add(sk))); return s.size >= 10; } },
+            { id: 'max_level',        name: '頂点への到達',     icon: '🌟', desc: 'Lv15の選手を保有',                     check: (gd) => gd.players.some(p => p.level >= 15) },
+            { id: 'veteran_squad',    name: 'ベテラン軍団',     icon: '👴', desc: '30歳以上の選手が5人以上',               check: (gd) => gd.players.filter(p => (p.age||0) >= 30).length >= 5 },
+            { id: 'youth_brigade',    name: 'ユース旋風',       icon: '🌱', desc: '20歳以下の選手が5人以上',               check: (gd) => gd.players.filter(p => (p.age||0) <= 20).length >= 5 },
+            { id: 'full_squad',       name: 'スカッド完成',     icon: '⚽', desc: '選手数が30人以上',                     check: (gd) => gd.players.length >= 30 },
+            // 試合・成績系
+            { id: 'win_streak_5',     name: '5連勝の波',        icon: '🌊', desc: '5連勝達成',                           check: (gd, ctx) => (ctx.winStreak || 0) >= 5 },
+            { id: 'big_win',          name: '大勝利',           icon: '🎉', desc: '7点以上で勝利',                       check: (gd, ctx) => (ctx.myScore || 0) >= 7 && (ctx.oppScore || 0) === 0 },
+            { id: 'clean_10',         name: '鉄壁の守備',       icon: '🧱', desc: '無失点勝利を10試合達成（累計）',       check: (gd) => (gd.totalCleanSheets || 0) >= 10 },
+            { id: 'hundred_wins',     name: '100勝クラブ',      icon: '💯', desc: '通算100勝達成',                       check: (gd) => (gd.totalWins || 0) >= 100 },
+            { id: 'no_loss_season',   name: '無敗シーズン',     icon: '🛡️', desc: '1シーズン負けなし（引き分けOK）',     check: (gd, ctx) => !!(ctx.noLossSeason) },
+            // 施設・名声系
+            { id: 'all_lv10',         name: '全施設マスター',   icon: '🏗️', desc: '全施設をLv10以上にする',               check: (gd) => gd.facilities && Object.values(gd.facilities).every(v => v >= 10) },
+            { id: 'fame_500',         name: '名声の星',         icon: '⭐', desc: '名声が500以上',                       check: (gd) => (gd.fame || 0) >= 500 },
+            { id: 'popularity_200',   name: '超人気クラブ',     icon: '📣', desc: '人気が200以上',                       check: (gd) => (gd.popularity || 0) >= 200 },
+            // 移籍・遠征系
+            { id: 'transfer_5',       name: '移籍の達人',       icon: '🔄', desc: '移籍市場から5人以上獲得',             check: (gd) => (gd.transferCount || 0) >= 5 },
+            { id: 'outing_master',    name: '遠征マスター',     icon: '✈️', desc: '遠征を5回以上実施',                   check: (gd) => (gd.outingCount || 0) >= 5 },
+            // 長期プレイ系
+            { id: 'season_5',         name: '5年目の決意',      icon: '📆', desc: '5シーズン以上プレイ',                 check: (gd) => (gd.seasonCount || 0) >= 5 },
+            { id: 'season_20',        name: '20年の歴史',       icon: '🏛️', desc: '20シーズン以上プレイ',               check: (gd) => (gd.seasonCount || 0) >= 20 },
             // ―― 難易度×各リーグ優勝トロフィー ――
             // 初心者
             { id: 'beg_div5',  name: '🟢小さな一歩',       icon: '🟢', desc: '[初心者]5部優勝',           check: (gd, ctx) => gd.difficulty === 'beginner' && ctx.rank === 1 && ctx.prevLeague === 5 },
@@ -4397,10 +4424,10 @@
                 matchIndex: gameData.currentMatchIndex
             };
 
-            gameData.sponsors.push(sponsor);
+                        gameData.sponsors.push(sponsor);
             gameData.sponsorHistory.push(sponsor);
             gameData.money += amount_rounded;
-
+            gameData.sponsorCount = (gameData.sponsorCount || 0) + 1;
             return sponsor;
         }
 
@@ -6694,6 +6721,7 @@
                 }
             }
             gameData.transferMarket = gameData.transferMarket.filter(pl => pl.id !== playerId);
+            gameData.transferCount = (gameData.transferCount || 0) + 1;
             // 市場を補充
             refreshTransferMarket();
             saveGame();
@@ -11441,6 +11469,7 @@
         function doOuting(spotId) {
             if (gameData.outingUsed || !gameData.gameStarted) return;
             gameData.outingUsed = true;
+            gameData.outingCount = (gameData.outingCount || 0) + 1;
             saveGame();
             renderOutingTab();
 
@@ -14868,8 +14897,10 @@
             const comebackWin = (firstHalfOppScore > firstHalfMyScore) && (myScore > oppScore);
             if (myScore > oppScore) {
                 gameData.winStreak = (gameData.winStreak || 0) + 1;
+                gameData.totalWins = (gameData.totalWins || 0) + 1;
                 if (oppScore === 0) {
                     gameData.cleanStreak = (gameData.cleanStreak || 0) + 1;
+                    gameData.totalCleanSheets = (gameData.totalCleanSheets || 0) + 1;
                 } else {
                     gameData.cleanStreak = 0;
                 }
@@ -16692,7 +16723,8 @@
                 seasonDetails += '\n❌ 目標未達成: ' + goalResult.failed.map(g => g.label).join('、');
             }
             // トロフィーチェック（シーズン終了時）
-            const trophyContext = { promoted, prevLeague, rank: myRank };
+            const noLossSeason = myStanding ? myStanding.losses === 0 : false;
+            const trophyContext = { promoted, prevLeague, rank: myRank, noLossSeason };
             // 選手能力・累計支出系トロフィーもここで確認
             const newTrophies = checkTrophies(trophyContext);
 
