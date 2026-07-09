@@ -3338,15 +3338,15 @@
                         <div id="teamTrainingBtns" style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
                             <button class="btn btn-primary" onclick="doTraining('warmup')" style="text-align:left; padding:14px; background:linear-gradient(135deg,#2E7D32,#1B5E20);">
                                 🏃 <strong>ウォームアップ</strong><br>
-                                <span style="font-size:11px; opacity:0.8;">全選手に経験値+15、疲労+5</span>
+                                <span style="font-size:11px; opacity:0.8;">全選手に経験値+5、疲労+2</span>
                             </button>
                             <button class="btn btn-primary" onclick="doTraining('basic')" style="text-align:left; padding:14px; background:linear-gradient(135deg,#1565C0,#0D47A1);">
                                 ⚽ <strong>基礎練習</strong><br>
-                                <span style="font-size:11px; opacity:0.8;">全選手に経験値+30、疲労+10</span>
+                                <span style="font-size:11px; opacity:0.8;">全選手に経験値+15、疲労+5</span>
                             </button>
                             <button class="btn btn-primary" onclick="doTraining('tactics')" style="text-align:left; padding:14px; background:linear-gradient(135deg,#4A148C,#2a0a5e);">
                                 📊 <strong>戦術練習</strong><br>
-                                <span style="font-size:11px; opacity:0.8;">全選手に経験値+40、疲労+12</span>
+                                <span style="font-size:11px; opacity:0.8;">全選手に経験値+30、疲労+10</span>
                             </button>
                             <button class="btn btn-primary" onclick="doTraining('intensive')" style="text-align:left; padding:14px; background:linear-gradient(135deg,#B71C1C,#7F0000);">
                                 🔥 <strong>猛特訓</strong><br>
@@ -11349,9 +11349,9 @@
             const expBonus = Math.floor(trainingLv * 2); // Lv当たり+2%
 
             const configs = {
-                warmup:    { icon: '🏃', title: 'ウォームアップ完了！', baseExp: 15, fatigue: 5 },
-                basic:     { icon: '⚽', title: '基礎練習完了！', baseExp: 30, fatigue: 10 },
-                tactics:   { icon: '📊', title: '戦術練習完了！', baseExp: 40, fatigue: 12 },
+                warmup:    { icon: '🏃', title: 'ウォームアップ完了！', baseExp: 5, fatigue: 2 },
+                basic:     { icon: '⚽', title: '基礎練習完了！', baseExp: 15, fatigue: 5 },
+                tactics:   { icon: '📊', title: '戦術練習完了！', baseExp: 30, fatigue: 10 },
                 intensive: { icon: '🔥', title: '猛特訓完了！', baseExp: 60, fatigue: 20 }
             };
             const cfg = configs[type];
