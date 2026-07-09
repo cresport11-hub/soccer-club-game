@@ -2623,7 +2623,7 @@
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#81C784;">🌱 若手獲得</td>
-                                <td style="padding:7px 8px; color:rgba(255,255,255,0.85);">18～22歳 / <strong>100,000円</strong>。能力は低めだが成長余地大。Lv上限は5～10。アカデミー施設のレベルに応じて初期能力とスキル付与率が上昇する。</td>
+                                <td style="padding:7px 8px; color:rgba(255,255,255,0.85);">18～22歳 / <strong>100,000円</strong>。能力は低めだが成長余地大。Lv上限は5～10。アカデミー施設の効能は適用されない。</td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#64B5F6;">💪 中堅獲得</td>
@@ -2687,7 +2687,7 @@
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#81C784;">📚 アカデミー</td>
-                                <td style="padding:7px 8px; color:rgba(255,255,255,0.85);">Lvアップで若手獲得時の初期能力微増・Lv上限上昇。Lv4以上で若手にスキル付与確率発生。<strong style="color:#FFD700;">最大Lv10</strong></td>
+                                <td style="padding:7px 8px; color:rgba(255,255,255,0.85);">Lvアップで新人入団・ユース昇格時の初期能力微増・Lv上限上昇。Lv4以上でスキル付与確率発生。若手獲得（18〜22歳）には効能なし。<strong style="color:#FFD700;">最大Lv10</strong></td>
                             </tr>
                             <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
                                 <td style="padding:7px 8px; color:#CE93D8;">🔬 分析室</td>
@@ -4542,7 +4542,7 @@
             { name: 'メディカル', icon: '🏥', key: 'medical', cost: 200000, maxLevel: 20,
               desc: 'Lvアップで怪我率低下・重傷治療期間短縮（Lv5ごとに発生時-1節・毎節+1回復）' },
             { name: 'アカデミー', icon: '📚', key: 'academy', cost: 100000, maxLevel: 10,
-              desc: 'Lvアップで新人のLv上限上昇・初期能力微増・Lv4以上で新人スキル獲得確率上昇' },
+              desc: 'Lvアップで新人入団・ユース昇格のLv上限上昇・初期能力微増・Lv4以上でスキル獲得確率上昇（若手獲得は除外）' },
             { name: '分析室', icon: '🔬', key: 'analysis', cost: 180000, maxLevel: 20,
               desc: 'Lv×0.5%だけ対戦相手のOF・DF両方を低下させる' },
             { name: 'スカウトネットワーク', icon: '🌍', key: 'scout', cost: 120000, maxLevel: 10,
