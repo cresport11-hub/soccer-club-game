@@ -8809,8 +8809,8 @@
         }
 
         function getOpponentStrength(opponentName) {
-            const leagueMin = { 5: 35, 4: 45, 3: 60, 2: 70, 1: 80, 0: 90 }; // 難易度調整
-            const leagueMax = { 5: 65, 4: 75, 3: 85, 2: 92, 1: 99, 0: 120 };
+            const leagueMin = { 5: 42, 4: 54, 3: 66, 2: 74, 1: 82, 0: 92 }; // 難易度調整
+            const leagueMax = { 5: 72, 4: 82, 3: 90, 2: 96, 1: 102, 0: 122 };
             const min = leagueMin[gameData.league] || 30;
             const max = leagueMax[gameData.league] || 55;
             if (opponentName) {
@@ -8830,7 +8830,7 @@
         function generateRivalManagerSkills(league) {
             // リーグレベルが高いほど多くのスキルを持つ
             // league: 5=最下位, 0=最上位
-            const skillCountByLeague = { 5: 0, 4: 1, 3: 2, 2: 3, 1: 4, 0: 6 };
+            const skillCountByLeague = { 5: 1, 4: 2, 3: 3, 2: 4, 1: 5, 0: 6 };
             const count = skillCountByLeague[league] !== undefined ? skillCountByLeague[league] : 0;
             if (count === 0) return { learned: [] };
 
@@ -8914,8 +8914,8 @@
         }
 
         function getOpponentOffense(opponentName) {
-            const leagueMin = { 5: 35, 4: 45, 3: 60, 2: 70, 1: 80, 0: 90 }; // 難易度調整
-            const leagueMax = { 5: 65, 4: 75, 3: 85, 2: 92, 1: 99, 0: 120 };
+            const leagueMin = { 5: 42, 4: 54, 3: 66, 2: 74, 1: 82, 0: 92 }; // 難易度調整
+            const leagueMax = { 5: 72, 4: 82, 3: 90, 2: 96, 1: 102, 0: 122 };
             const min = leagueMin[gameData.league] || 30;
             const max = leagueMax[gameData.league] || 55;
             if (opponentName) {
@@ -8934,8 +8934,8 @@
             return getRandomAbility(min, max);
         }
         function getOpponentDefense(opponentName) {
-            const leagueMin = { 5: 35, 4: 45, 3: 60, 2: 70, 1: 80, 0: 90 }; // 難易度調整
-            const leagueMax = { 5: 65, 4: 75, 3: 85, 2: 92, 1: 99, 0: 120 };
+            const leagueMin = { 5: 42, 4: 54, 3: 66, 2: 74, 1: 82, 0: 92 }; // 難易度調整
+            const leagueMax = { 5: 72, 4: 82, 3: 90, 2: 96, 1: 102, 0: 122 };
             const min = leagueMin[gameData.league] || 30;
             const max = leagueMax[gameData.league] || 55;
             if (opponentName) {
@@ -13903,14 +13903,14 @@
                 if (oppHasSkill('fantasista')) oppSkillBonus += 0.10;
                 if (oppHasSkill('acrobatic')) oppSkillBonus += 0.05;
                 if (oppHasSkill('counterKing') && adjYourOff > adjOppOff) oppSkillBonus += 0.10;
-                oppSkillBonus = Math.min(0.25, oppSkillBonus) * 0.7; // 相手スキルは0.7倍スケール
+                oppSkillBonus = Math.min(0.25, oppSkillBonus) * 0.85; // 相手スキルは0.85倍スケール
                 oppScoreBase += oppSkillBonus;
                 let oppDefReduction = 0;
                 if (oppHasSkill('bigHands')) oppDefReduction += 0.10;
                 if (oppHasSkill('ironWall')) oppDefReduction += 0.12;
                 if (oppHasSkill('headClear')) oppDefReduction += 0.05;
                 if (oppHasSkill('steelGuardian')) oppDefReduction += 0.20;
-                oppDefReduction = Math.min(0.20, oppDefReduction) * 0.7; // 相手守備スキルも0.7倍スケール
+                oppDefReduction = Math.min(0.20, oppDefReduction) * 0.85; // 相手守備スキルも0.85倍スケール
                 myScoreBase = Math.max(0.05, myScoreBase - oppDefReduction);
             }
 
