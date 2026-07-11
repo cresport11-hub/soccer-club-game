@@ -11011,7 +11011,80 @@
               choices: [
                 { label:'思い切り楽しむ', effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-8); }); return '全選手の疲労-8（ストレス発散）'; } },
                 { label:'早めに帰る', effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-3); }); return '全選手の疲労-3'; } }
-              ] }
+              ] },
+            // ―― 神社・寺院イベント (o85〜o92) ――
+            { id:'o85', rarity:1, icon:'⛩️', title:'必勝祈願をした',
+              desc:'試合前に神社で必勝祈願。神のお告げか、次の試合に期待が高まる。',
+              type:'instant',
+              effect: () => { gameData.outingNextMatchBonus = { of: 3, df: 3 }; return '次範のOF/DF +3（神のお告げ）'; } },
+            { id:'o86', rarity:2, icon:'🌄', title:'おみくじを引いた',
+              desc:'神社のおみくじを引いた。結果は…。',
+              type:'choice',
+              choices: [
+                { label:'大吉！', effect: () => { gameData.outingNextMatchBonus = { of: 6, df: 6 }; gameData.fame = Math.min(999, gameData.fame + 5); return '次範のOF/DF +6・名声+5（大吉！）'; } },
+                { label:'吉', effect: () => { gameData.outingNextMatchBonus = { of: 3, df: 3 }; return '次範のOF/DF +3（吉）'; } },
+                { label:'末吉', effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.min(100,(p.fatigue||0)+5); }); return '全選手の疲労+5（末吉…）'; } }
+              ] },
+            { id:'o87', rarity:1, icon:'👨‍🌾', title:'地元の神主に声をかけられた',
+              desc:'神社の神主から地元クラブへの期待を伝えられた。地元の応援が熱くなった。',
+              type:'instant',
+              effect: () => { gameData.popularity = Math.min(300, (gameData.popularity || 50) + 8); gameData.fame = Math.min(999, gameData.fame + 5); return '人気+8・名声+5'; } },
+            { id:'o88', rarity:2, icon:'🧘', title:'寺院で座禅体験',
+              desc:'選手たちが寺院で座禅体験。第一は进まなかったが、精神的に辞めるものがあった。',
+              type:'instant',
+              effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-10); p.condition=Math.min(4,(p.condition||2)+1); }); return '全選手の疲労-10・コンディション+1'; } },
+            { id:'o89', rarity:3, icon:'✨', title:'神社の大祭りに遇遇した',
+              desc:'年に一度の大祭り。神輟に乗った子供たちから応援され、チームに大きな活力が準んだ。',
+              type:'instant',
+              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+15; p.fatigue=Math.max(0,(p.fatigue||0)-8); }); gameData.popularity=Math.min(300,(gameData.popularity||50)+10); return '全選手の経験値+15・疲労-8・人気+10'; } },
+            { id:'o90', rarity:2, icon:'📿', title:'お守りを購入した',
+              desc:'神社でチーム全員の分のお守りを購入した。心の拠りどころがあるかもしれない。',
+              type:'instant',
+              effect: () => { const cost = gameData.players.length * 500; if(gameData.money >= cost){ gameData.money -= cost; gameData.players.forEach(p=>{ p.condition=Math.min(4,(p.condition||2)+1); }); return '全選手のコンディション+1（お守り代「-'+cost+'円）'; } else { return '資金不足で購入できなかった…'; } } },
+            { id:'o91', rarity:1, icon:'🌿', title:'境内の清掃を手伝った',
+              desc:'境内の清掃をお手伝いした。地元の人たちに感謝され、クラブの評判が上がった。',
+              type:'instant',
+              effect: () => { gameData.popularity=Math.min(300,(gameData.popularity||50)+5); gameData.fame=Math.min(999,gameData.fame+3); return '人気+5・名声+3'; } },
+            { id:'o92', rarity:2, icon:'🕏', title:'選手がシーズン前に祈願した',
+              desc:'シーズン開始前に選手自ら神社へ赴き、活躍を誓った。このシーズンへの気合いが高まった。',
+              type:'instant',
+              effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.exp=(p.exp||0)+20; p.condition=Math.min(4,(p.condition||2)+2); return p.name+'の経験値+20・コンディション+2（誓いの力）'; } return '変化なし'; } },
+            // ―― ゲームセンター・娯楽施設イベント (o93〜o100) ――
+            { id:'o93', rarity:1, icon:'🎮', title:'選手たちがゲームで白熱した',
+              desc:'ゲームセンターで選手たちが対戦ゲームに熱中。チームの絆が深まった。',
+              type:'choice',
+              choices: [
+                { label:'真剣勝負', effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+8; }); return '全選手の経験値+8（雘志の火が燃えた）'; } },
+                { label:'みんなで楽しむ', effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-7); }); return '全選手の疲労-7（リフレッシュ）'; } }
+              ] },
+            { id:'o94', rarity:2, icon:'🎰', title:'UFOキャッチャーで景品を獲得！',
+              desc:'UFOキャッチャーで大きな景品を獲得！運気がいい。',
+              type:'instant',
+              effect: () => { gameData.outingNextMatchBonus = { of: 4, df: 4 }; return '次範のOF/DF +4（運気上昇！）'; } },
+            { id:'o95', rarity:1, icon:'🎟️', title:'映画館で気分転換',
+              desc:'ゲームセンター隔の映画館でスポーツ映画を観た。選手たちが熱くなった。',
+              type:'instant',
+              effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-6); p.exp=(p.exp||0)+5; }); return '全選手の疲労-6・経験値+5'; } },
+            { id:'o96', rarity:2, icon:'🕹️', title:'アーケードゲームに熱中になった',
+              desc:'少年時代のゲームに熱中。小子たちに囲まれて大人気に。',
+              type:'instant',
+              effect: () => { gameData.popularity=Math.min(300,(gameData.popularity||50)+6); gameData.fame=Math.min(999,gameData.fame+4); return '人気+6・名声+4（子供たちに囲まれた）'; } },
+            { id:'o97', rarity:3, icon:'🏆', title:'大会で優勝した！',
+              desc:'ゲームセンターの大会に参加した選手が優勝！トロフィーを持ち帰った。',
+              type:'instant',
+              effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.exp=(p.exp||0)+30; gameData.fame=Math.min(999,gameData.fame+10); return p.name+'の経験値+30・名声+10（優勝！）'; } return '変化なし'; } },
+            { id:'o98', rarity:1, icon:'😴', title:'遷刻まで遊んでしまった',
+              desc:'楽しすぎて帰りが遷刻に。翌日の練習に影響が出た。',
+              type:'instant',
+              effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.fatigue=Math.min(100,(p.fatigue||0)+18); return p.name+'が遷刻まで遊んで疲労+18'; } return '変化なし'; } },
+            { id:'o99', rarity:2, icon:'🥇', title:'ゲームのランキング上位に載った！',
+              desc:'ゲームセンターのスコアランキング上位に載った。地元のニュースに取り上げられた。',
+              type:'instant',
+              effect: () => { gameData.popularity=Math.min(300,(gameData.popularity||50)+8); gameData.money+=30000; return '人気+8・資金+30,000円（取材料）'; } },
+            { id:'o100', rarity:2, icon:'👾', title:'ゲームでチームワークを学んだ',
+              desc:'チームワークが必要なゲームで選手たちが協力の大切さを学んだ。',
+              type:'instant',
+              effect: () => { gameData.outingNextMatchBonus = { of: 3, df: 3 }; gameData.players.forEach(p=>{ p.exp=(p.exp||0)+5; }); return '次範のOF/DF +3・全選手の経験値+5'; } }
         ];
         // 行き先スポット定義
         const OUTING_SPOTS = [
@@ -11062,6 +11135,18 @@
                 icon: '🌃',
                 name: '夜の街',
                 eventIds: ['o77','o78','o79','o80','o81','o82','o83','o84']
+            },
+            {
+                id: 'shrine',
+                icon: '⛩️',
+                name: '神社・寺院',
+                eventIds: ['o85','o86','o87','o88','o89','o90','o91','o92']
+            },
+            {
+                id: 'arcade',
+                icon: '🎮',
+                name: 'ゲームセンター・娯楽施設',
+                eventIds: ['o93','o94','o95','o96','o97','o98','o99','o100']
             }
         ];
 
