@@ -10439,7 +10439,7 @@
               desc:'地域の子ども支援団体が街頭で募金活動をしていた。',
               type:'choice',
               choices: [
-                { label:'多めに寄付する', effect: () => { gameData.money = Math.max(0, gameData.money - 30000); gameData.fame = Math.min(999, gameData.fame + 7); return '資金 -30,000円、名声 +7'; } },
+                { label:'多めに寄付する', effect: () => { gameData.money = Math.max(0, gameData.money - 30000); gameData.fame = Math.min(999, gameData.fame + 5); return '資金 -30,000円、名声 +5'; } },
                 { label:'少し寄付する', effect: () => { gameData.money = Math.max(0, gameData.money - 3000); gameData.fame = Math.min(999, gameData.fame + 2); return '資金 -3,000円、名声 +2'; } },
                 { label:'通り過ぎる', effect: () => { return '変化なし'; } }
               ] },
@@ -10468,9 +10468,9 @@
               type:'choice',
               choices: [
                 { label:'一緒に親を探す', effect: () => {
-                    gameData.fame = Math.min(999, gameData.fame + 7);
+                    gameData.fame = Math.min(999, gameData.fame + 4);
                     gameData.players.filter(p => p.starter).forEach(p => { p.condition = Math.max(0, (p.condition||2) - 1); });
-                    return '名声 +7、スタメン全員のコンディション -1（帰宅が遅れた）';
+                    return '名声 +4、スタメン全員のコンディション -1（帰宅が遅れた）';
                   } },
                 { label:'警察に連絡だけ', effect: () => { gameData.fame = Math.min(999, gameData.fame + 2); return '名声 +2'; } }
               ] },
@@ -10490,9 +10490,8 @@
               choices: [
                 { label:'購入して読む', effect: () => {
                     gameData.money = Math.max(0, gameData.money - 2000);
-                    gameData.fame = Math.min(999, gameData.fame + 2);
                     gameData.outingNextMatchBonus = { of: 2, df: 2 };
-                    return '資金 -2,000円、名声 +2、次節OF/DF +2（一時）';
+                    return '資金 -2,000円・次節OF/DF +2（一時）';
                   } },
                 { label:'スルー', effect: () => { return '変化なし'; } }
               ] },
@@ -10680,8 +10679,8 @@
               desc:'公園のベンチで出会った老人が、かつての名将だと名乗った。',
               type:'choice',
               choices: [
-                { label:'素直に聞く', effect: () => { gameData.outingNextMatchBonus = { of: 3, df: 3 }; return '次節OF/DF +3（一時）'; } },
-                { label:'半信半疑で聞く', effect: () => { gameData.outingNextMatchBonus = { of: 1, df: 1 }; return '次節OF/DF +1（一時）'; } },
+                { label:'素直に聞く', effect: () => { gameData.outingNextMatchBonus = { of: 5, df: 5 }; return '次節OF/DF +5（一時）'; } },
+                { label:'半信半疑で聞く', effect: () => { gameData.outingNextMatchBonus = { of: 2, df: 2 }; return '次節OF/DF +2（一時）'; } },
                 { label:'話を切り上げる', effect: () => { return '変化なし'; } }
               ] },
             { id:'o40', rarity:3, icon:'🏅', title:'地元の英雄として表彰式に招かれた',
@@ -10828,7 +10827,7 @@
               desc:'早朝ハイキングで山頂まで登ると、一人の老人が座っていた。元名将だという。',
               type:'choice',
               choices: [
-                { label:'教えを乞う', effect: () => { gameData.outingNextMatchBonus = { of: 4, df: 4 }; return '次節OF/DF +4（一時）'; } },
+                { label:'教えを乞う', effect: () => { gameData.outingNextMatchBonus = { of: 6, df: 6 }; return '次節OF/DF +6（一時）'; } },
                 { label:'無視する', effect: () => { return '変化なし'; } }
               ] },
             { id:'o52', rarity:3, icon:'🤵', title:'元代表監督と食事の機会を得た',
@@ -10842,7 +10841,7 @@
               desc:'伝説的な監督が突然クラブを訪問し、直接指導を申し出てくれた。',
               type:'choice',
               choices: [
-                { label:'受け入れる', effect: () => { gameData.outingNextMatchBonus = { of: 4, df: 4 }; return '次節OF/DF +4（一時）'; } },
+                { label:'受け入れる', effect: () => { gameData.outingNextMatchBonus = { of: 5, df: 5 }; gameData.players.forEach(p=>{ p.exp=(p.exp||0)+8; }); return '次節OF/DF +5・全選手の経験値+8'; } },
                 { label:'断る', effect: () => { return '変化なし'; } }
               ] },
             { id:'o60', rarity:3, icon:'🌐', title:'海外メディアに取り上げられた',
@@ -10941,7 +10940,7 @@
               choices: [
                 { label:'大物を狙う', effect: () => {
                     const r=Math.random();
-                    if(r<0.3){ gameData.fame=Math.min(999,gameData.fame+15); return '大物ゲット！名声+15'; }
+                    if(r<0.3){ gameData.fame=Math.min(999,gameData.fame+8); return '大物ゲット！名声+8'; }
                     else { gameData.players.forEach(p=>{ p.fatigue=Math.min(100,(p.fatigue||0)+5); }); return 'ボウズ…長時間粘って疲労+5'; }
                   } },
                 { label:'のんびり楽しむ', effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-6); }); return '全選手の疲労-6'; } }
@@ -10958,7 +10957,7 @@
             { id:'o75', rarity:3, icon:'🌅', title:'絶景スポットで感動',
               desc:'素晴らしい景色に選手たちが感動し、モチベーションが大きく上がった。',
               type:'instant',
-              effect: () => { gameData.outingNextMatchBonus={of:3,df:3}; gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-8); }); return '次節OF/DF+3・全選手の疲労-8'; } },
+              effect: () => { gameData.outingNextMatchBonus={of:4,df:4}; gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-8); p.exp=(p.exp||0)+5; }); return '次節OF/DF+4・全選手の疲労-8・経験値+5'; } },
             { id:'o76', rarity:2, icon:'🏕️', title:'チームでキャンプ',
               desc:'夜の野外でキャンプを楽しんだ。しかし翌朝の寝不足が響いた。',
               type:'choice',
@@ -10981,7 +10980,7 @@
             { id:'o78', rarity:1, icon:'🎵', title:'ライブハウスで音楽を楽しんだ',
               desc:'地元のライブハウスで音楽を楽しんだ。気分転換になった。',
               type:'instant',
-              effect: () => { gameData.fame=Math.min(999,gameData.fame+3); gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-5); }); return '名声+3・全選手の疲労-5'; } },
+              effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-5); }); return '全選手の疲労-5'; } },
             { id:'o79', rarity:2, icon:'🎤', title:'カラオケ大会で盛り上がった',
               desc:'選手たちとカラオケで大盛り上がり。チームの結束力が高まった。',
               type:'instant',
@@ -11021,9 +11020,9 @@
               desc:'神社のおみくじを引いた。結果は…。',
               type:'choice',
               choices: [
-                { label:'大吉！', effect: () => { gameData.outingNextMatchBonus = { of: 6, df: 6 }; gameData.fame = Math.min(999, gameData.fame + 5); return '次範のOF/DF +6・名声+5（大吉！）'; } },
-                { label:'吉', effect: () => { gameData.outingNextMatchBonus = { of: 3, df: 3 }; return '次範のOF/DF +3（吉）'; } },
-                { label:'末吉', effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.min(100,(p.fatigue||0)+5); }); return '全選手の疲労+5（末吉…）'; } }
+                { label:'大吉！', effect: () => { gameData.outingNextMatchBonus = { of: 4, df: 4 }; gameData.fame = Math.min(999, gameData.fame + 5); return '次節のOF/DF +4・名声+5（大吉！）'; } },
+                { label:'吉', effect: () => { gameData.outingNextMatchBonus = { of: 2, df: 2 }; return '次節のOF/DF +2（吉）'; } },
+                { label:'末吉', effect: () => { return '変化なし（末吉…）'; } }
               ] },
             { id:'o87', rarity:1, icon:'👨‍🌾', title:'地元の神主に声をかけられた',
               desc:'神社の神主から地元クラブへの期待を伝えられた。地元の応援が熱くなった。',
@@ -11032,11 +11031,11 @@
             { id:'o88', rarity:2, icon:'🧘', title:'寺院で座禅体験',
               desc:'選手たちが寺院で座禅体験。第一は进まなかったが、精神的に辞めるものがあった。',
               type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-10); p.condition=Math.min(4,(p.condition||2)+1); }); return '全選手の疲労-10・コンディション+1'; } },
+              effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-8); p.condition=Math.min(4,(p.condition||2)+1); }); return '全選手の疲労-8・コンディション+1'; } },
             { id:'o89', rarity:3, icon:'✨', title:'神社の大祭りに遇遇した',
               desc:'年に一度の大祭り。神輟に乗った子供たちから応援され、チームに大きな活力が準んだ。',
               type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+15; p.fatigue=Math.max(0,(p.fatigue||0)-8); }); gameData.popularity=Math.min(300,(gameData.popularity||50)+10); return '全選手の経験値+15・疲労-8・人気+10'; } },
+              effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+15; }); gameData.popularity=Math.min(300,(gameData.popularity||50)+10); return '全選手の経験値+15・人気+10'; } },
             { id:'o90', rarity:2, icon:'📿', title:'お守りを購入した',
               desc:'神社でチーム全員の分のお守りを購入した。心の拠りどころがあるかもしれない。',
               type:'instant',
@@ -11060,11 +11059,11 @@
             { id:'o94', rarity:2, icon:'🎰', title:'UFOキャッチャーで景品を獲得！',
               desc:'UFOキャッチャーで大きな景品を獲得！運気がいい。',
               type:'instant',
-              effect: () => { gameData.outingNextMatchBonus = { of: 4, df: 4 }; return '次範のOF/DF +4（運気上昇！）'; } },
+              effect: () => { gameData.outingNextMatchBonus = { of: 3, df: 3 }; return '次節のOF/DF +3（運気上昇！）'; } },
             { id:'o95', rarity:1, icon:'🎟️', title:'映画館で気分転換',
               desc:'ゲームセンター隔の映画館でスポーツ映画を観た。選手たちが熱くなった。',
               type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-6); p.exp=(p.exp||0)+5; }); return '全選手の疲労-6・経験値+5'; } },
+              effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-6); }); return '全選手の疲労-6'; } },
             { id:'o96', rarity:2, icon:'🕹️', title:'アーケードゲームに熱中になった',
               desc:'少年時代のゲームに熱中。小子たちに囲まれて大人気に。',
               type:'instant',
@@ -11072,11 +11071,11 @@
             { id:'o97', rarity:3, icon:'🏆', title:'大会で優勝した！',
               desc:'ゲームセンターの大会に参加した選手が優勝！トロフィーを持ち帰った。',
               type:'instant',
-              effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.exp=(p.exp||0)+30; gameData.fame=Math.min(999,gameData.fame+10); return p.name+'の経験値+30・名声+10（優勝！）'; } return '変化なし'; } },
+              effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.exp=(p.exp||0)+30; gameData.fame=Math.min(999,gameData.fame+10); return p.name+'の経験値+30・名声+10（優勝！）'; } else { gameData.fame=Math.min(999,gameData.fame+10); return '名声+10（優勝！）'; } } },
             { id:'o98', rarity:1, icon:'😴', title:'遷刻まで遊んでしまった',
               desc:'楽しすぎて帰りが遷刻に。翌日の練習に影響が出た。',
               type:'instant',
-              effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.fatigue=Math.min(100,(p.fatigue||0)+18); return p.name+'が遷刻まで遊んで疲労+18'; } return '変化なし'; } },
+              effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.fatigue=Math.min(100,(p.fatigue||0)+15); return p.name+'が遅刻まで遊んで疲労+15'; } return '変化なし'; } },
             { id:'o99', rarity:2, icon:'🥇', title:'ゲームのランキング上位に載った！',
               desc:'ゲームセンターのスコアランキング上位に載った。地元のニュースに取り上げられた。',
               type:'instant',
@@ -11084,7 +11083,7 @@
             { id:'o100', rarity:2, icon:'👾', title:'ゲームでチームワークを学んだ',
               desc:'チームワークが必要なゲームで選手たちが協力の大切さを学んだ。',
               type:'instant',
-              effect: () => { gameData.outingNextMatchBonus = { of: 3, df: 3 }; gameData.players.forEach(p=>{ p.exp=(p.exp||0)+5; }); return '次範のOF/DF +3・全選手の経験値+5'; } }
+              effect: () => { gameData.outingNextMatchBonus = { of: 2, df: 2 }; gameData.players.forEach(p=>{ p.exp=(p.exp||0)+5; }); return '次節のOF/DF +2・全選手の経験値+5'; } }
         ];
         // 行き先スポット定義
         const OUTING_SPOTS = [
