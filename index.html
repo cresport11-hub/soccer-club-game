@@ -3326,6 +3326,16 @@
                             <button class="btn btn-danger" onclick="resetAllGame()">全てリセット</button>
                         </div>
                     </div>
+                    <!-- テストプレイ -->
+                    <div class="card" style="margin-top:16px; border:1px solid rgba(255,100,100,0.4); background:rgba(255,50,50,0.07);">
+                        <div class="card-title" style="color:#FF8A80;">🧪 テストプレイ</div>
+                        <div style="font-size:11px; color:rgba(255,255,255,0.55); margin-bottom:12px;">指定した戦力値の相手と即座に試合を行います。スコア・スタッツの確認用です。セーブデータには影響しません。</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+                            <button class="btn btn-primary" onclick="startTestMatch(80,80)" style="background:linear-gradient(135deg,#2e7d32,#1b5e20); font-size:12px; padding:10px 4px;">⚽ 80 / 80<br><span style="font-size:10px; opacity:0.8;">攻80 守80</span></button>
+                            <button class="btn btn-primary" onclick="startTestMatch(100,100)" style="background:linear-gradient(135deg,#1565c0,#0d47a1); font-size:12px; padding:10px 4px;">⚽ 100 / 100<br><span style="font-size:10px; opacity:0.8;">攻100 守100</span></button>
+                            <button class="btn btn-primary" onclick="startTestMatch(120,120)" style="background:linear-gradient(135deg,#6a1b9a,#4a148c); font-size:12px; padding:10px 4px;">⚽ 120 / 120<br><span style="font-size:10px; opacity:0.8;">攻120 守120</span></button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 練習タブ -->
@@ -3404,16 +3414,6 @@
                         <div id="recruitPanel" style="display:none;">
                             <div class="card-title" id="recruitPanelTitle" style="font-size:14px; margin-bottom:12px;"></div>
                             <div id="recruitCandidates" style="display:flex; gap:12px; flex-wrap:wrap;"></div>
-                        </div>
-                    </div>
-                    <!-- テストプレイ -->
-                    <div class="card" style="margin-top:16px; border:1px solid rgba(255,100,100,0.4); background:rgba(255,50,50,0.07);">
-                        <div class="card-title" style="color:#FF8A80;">🧪 テストプレイ</div>
-                        <div style="font-size:11px; color:rgba(255,255,255,0.55); margin-bottom:12px;">指定した戦力値の相手と即座に試合を行います。スコア・スタッツの確認用です。セーブデータには影響しません。</div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-                            <button class="btn btn-primary" onclick="startTestMatch(80,80)" style="background:linear-gradient(135deg,#2e7d32,#1b5e20); font-size:12px; padding:10px 4px;">⚽ 80 / 80<br><span style="font-size:10px; opacity:0.8;">攻80 守80</span></button>
-                            <button class="btn btn-primary" onclick="startTestMatch(100,100)" style="background:linear-gradient(135deg,#1565c0,#0d47a1); font-size:12px; padding:10px 4px;">⚽ 100 / 100<br><span style="font-size:10px; opacity:0.8;">攻100 守100</span></button>
-                            <button class="btn btn-primary" onclick="startTestMatch(120,120)" style="background:linear-gradient(135deg,#6a1b9a,#4a148c); font-size:12px; padding:10px 4px;">⚽ 120 / 120<br><span style="font-size:10px; opacity:0.8;">攻120 守120</span></button>
                         </div>
                     </div>
                 </div>
