@@ -15310,8 +15310,8 @@
             gameData._pendingPopularityChange = popularityChange;
             // シーズン目標カウンター更新
             updateSeasonGoalCounters(myScore, oppScore, fame);
-            // ライバル対戦成績更新
-            updateRivalRecord(opponent, myScore, oppScore);
+            // ライバル対戦成績更新（テストプレイ時はスキップ）
+            if (!(savedPendingMatch && savedPendingMatch.isTestMatch)) updateRivalRecord(opponent, myScore, oppScore);
             if (!isCupMatch) {
                 if (savedPendingMatch && savedPendingMatch.isTestMatch) {
                     // テストプレイ: 仮データをクリーンアップ（セーブデータに影響しない）
@@ -15353,8 +15353,9 @@
                 if (myScore > oppScore) _pendingManagerXP = 2;
                 else _pendingManagerXP = 1;
             }
-            // 連勝・無失点連続・逆転勝利カウンタ更新
+            // 連勝・無失点連続・逆転勝利カウンタ更新（テストプレイ時はスキップ）
             const comebackWin = (firstHalfOppScore > firstHalfMyScore) && (myScore > oppScore);
+            if (!(savedPendingMatch && savedPendingMatch.isTestMatch)) {
             if (myScore > oppScore) {
                 gameData.winStreak = (gameData.winStreak || 0) + 1;
                 gameData.totalWins = (gameData.totalWins || 0) + 1;
@@ -15383,11 +15384,14 @@
             } else if (gameData.winStreak >= 5) {
                 gameData.seasonHighlights.push('🔥 第' + matchNode + '節 vs ' + opponent + 'で' + gameData.winStreak + '連勝達成！');
             }
+            } // end if (!isTestMatch) for streak/highlights
 
-                        healInjuries();
-            // 移籍オファー期限切れ処理（先に古いオファーを削除してから新規生成）
-            expireTransferOffers();
-            generateTransferOffer();
+            if (!(savedPendingMatch && savedPendingMatch.isTestMatch)) {
+                healInjuries();
+                // 移籍オファー期限切れ処理（先に古いオファーを削除してから新規生成）
+                expireTransferOffers();
+                generateTransferOffer();
+            }
             // 3節ごとに市場を自動更新
             {
                 const curIdx2 = gameData.currentMatchIndex || 0;
@@ -15470,12 +15474,13 @@
             if (startersHaveSkill(starters, 'longShooter') && Math.random() < 0.05 * _skillPowerRatio) { myScore += 1; myScore2 += 1; }
             if (myScore >= 3 && startersHaveSkill(starters, 'hatTricker') && Math.random() < 0.15 * _skillPowerRatio) { myScore += 1; myScore2 += 1; }
             if (myScore >= 3 && startersHaveSkill(starters, 'goalRush')) gameData.fame += 5;
-            // 疲労処理
+            // 疲労処理（テストプレイ時はスキップ）
             // ハーフタイム交代に関わった選手アイディー（イン・アウト両方）
             const htSubIds = new Set();
             const htSubOutIds = new Set(); // アウト選手のみ
             const htSubInIds = new Set(); // イン選手のみ
             (halftimeSubstitutions || []).forEach(sub => { htSubIds.add(sub.out); htSubIds.add(sub.in); htSubOutIds.add(sub.out); htSubInIds.add(sub.in); });
+            if (!(savedPendingMatch && savedPendingMatch.isTestMatch)) {
             gameData.players.forEach(player => {
                 if (player.fatigue === undefined) player.fatigue = 0;
                 const isHtOut = htSubOutIds.has(player.id); // 前半のみ出場した交代アウト選手
@@ -15515,6 +15520,7 @@
                 // ハーフタイム交代イン選手は疲労回復なし（上の蓄積処理のみ）
             });
 
+            } // end if (!isTestMatch) for fatigue
             // EXP付与（テストプレイ時はスキップ）
             const expLevelUpMessages = [];
             if (!(savedPendingMatch && savedPendingMatch.isTestMatch)) {
@@ -15710,7 +15716,7 @@
             document.getElementById('resultFame').textContent = fame;
             document.getElementById('resultPopularityChange').textContent = (popularityChange > 0 ? '+' : '') + popularityChange;
 
-            const injuryResult = checkPlayerInjury();
+            const injuryResult = (savedPendingMatch && savedPendingMatch.isTestMatch) ? '' : checkPlayerInjury();
             if (injuryResult) {
                 document.getElementById('injuryResultDiv').style.display = 'block';
                 document.getElementById('injuryResult').textContent = injuryResult;
