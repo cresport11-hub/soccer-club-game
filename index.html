@@ -6435,7 +6435,7 @@
                            : t === 3 ? 2.0   // 3部
                            : t === 4 ? 1.5   // 4部
                            : 1.0;            // 5部
-            const fee = Math.floor(salary * 4.0 * ageFactor * tierMult) + skillBonus;
+            const fee = Math.floor(salary * 3.6 * ageFactor * tierMult) + skillBonus;
             // ラウンドアップ（1万単位）
             return Math.ceil(fee / 10000) * 10000;
         }
