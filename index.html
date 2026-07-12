@@ -3931,6 +3931,14 @@
             </div>
                         <div id="rivalOfferSection" style="margin-top:12px;display:none;">
                 <div id="rivalOfferFeeInfo" style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:8px;text-align:center;"></div>
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:12px;color:rgba(255,255,255,0.7);display:block;margin-bottom:4px;">オファー金額（円）</label>
+                    <input type="number" id="offerAmountInput" min="0" step="100000"
+                        style="width:100%;padding:8px 10px;font-size:14px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.3);border-radius:8px;color:#fff;box-sizing:border-box;"
+                        oninput="updateOfferSuccessRate()"
+                        placeholder="金額を入力"/>
+                    <div id="offerSuccessRateInfo" style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px;text-align:right;"></div>
+                </div>
                 <div style="display:flex;gap:8px;">
                     <button class="btn btn-primary btn-large" onclick="makeDirectOffer()" style="flex:1;">💰 オファーを出す</button>
                     <button class="btn btn-secondary btn-large" onclick="closeRivalPlayerDetail()" style="flex:1;">閉じる</button>
@@ -12174,9 +12182,13 @@
                 const _actualFee = Math.floor(_fee * (1 - _trDiscount));
                 const _fameCost = Math.max(5, Math.floor(_fee / 100000) * 8);
                 window._directOfferTarget = { player: p, teamName: _offerTeamName, tier: _offerTier, fee: _actualFee, fameCost: _fameCost };
-                _offerFeeInfo.innerHTML = `移籍金: <strong style="color:#4CAF50;">${formatNumber(_actualFee)}円</strong>　名声コスト: <strong style="color:#FFD700;">⭐${_fameCost}</strong>`;
+                _offerFeeInfo.innerHTML = `評価額: <strong style="color:#4CAF50;">${formatNumber(_actualFee)}円</strong>　名声コスト: <strong style="color:#FFD700;">⭐${_fameCost}</strong>`;
                 _offerSection.style.display = '';
                 _noOfferSection.style.display = 'none';
+                // 入力欄に評価額をデフォルト値として設定
+                const _amtInput = document.getElementById('offerAmountInput');
+                if (_amtInput) { _amtInput.value = _actualFee; }
+                updateOfferSuccessRate();
             } else {
                 _offerSection.style.display = 'none';
                 _noOfferSection.style.display = '';
@@ -12187,34 +12199,59 @@
         function closeRivalPlayerDetail() {
             document.getElementById('rivalPlayerDetailModal').classList.remove('active');
         }
+        // オファー成功率表示を更新する
+        function updateOfferSuccessRate() {
+            const target = window._directOfferTarget;
+            if (!target) return;
+            const { player: p, fee: baseFee } = target;
+            const input = document.getElementById('offerAmountInput');
+            const infoEl = document.getElementById('offerSuccessRateInfo');
+            if (!input || !infoEl) return;
+            const inputFee = parseInt(input.value) || baseFee;
+            const fameBonus = Math.min(0.20, (gameData.fame || 0) / 500 * 0.20);
+            const marketFee = calcTransferFee(p, gameData.league);
+            const feeRatio = inputFee / marketFee;
+            const feeBonus = feeRatio >= 1.5 ? 0.20 : feeRatio >= 1.2 ? 0.10 : 0;
+            const rate = Math.min(0.85, 0.50 + fameBonus + feeBonus);
+            const rateColor = rate >= 0.75 ? '#4CAF50' : rate >= 0.60 ? '#FFD700' : '#FF7043';
+            infoEl.innerHTML = '交渉成功率: <strong style="color:' + rateColor + ';">' + Math.round(rate * 100) + '%</strong>';
+        }
         // 他クラブの選手への直接オファー
         function makeDirectOffer() {
             const target = window._directOfferTarget;
             if (!target) return;
-            const { player: p, teamName, fee, fameCost } = target;
+            const { player: p, teamName, fee: baseFee, fameCost } = target;
+            // 入力欄から金額を取得（未入力時は評価額）
+            const amtInput = document.getElementById('offerAmountInput');
+            const offerFee = amtInput && parseInt(amtInput.value) > 0 ? parseInt(amtInput.value) : baseFee;
             if (gameData.players.length >= 32) {
                 showNotification('選手数が上限（32名）に達しています');
                 return;
             }
-            if (gameData.money < fee) {
-                showNotification('資金が不足しています（必要: ' + formatNumber(fee) + '円）');
+            if (offerFee <= 0) {
+                showNotification('オファー金額を入力してください');
+                return;
+            }
+            if (gameData.money < offerFee) {
+                showNotification('資金が不足しています（必要: ' + formatNumber(offerFee) + '円）');
                 return;
             }
             if ((gameData.fame || 0) < fameCost) {
                 showNotification('名声が不足しています（必要: ⭐' + fameCost + '）');
                 return;
             }
-                        if (!confirm(
+            if (!confirm(
                 p.name + ' にオファーを出しますか？\n' +
-                '移籍金: ' + formatNumber(fee) + '円\n' +
+                '評価額: ' + formatNumber(baseFee) + '円\n' +
+                'オファー金額: ' + formatNumber(offerFee) + '円\n' +
                 '名声コスト: ⭐' + fameCost + '\n' +
                 '※ 相手クラブが承諾するかどうかは交渉次第です'
             )) return;
-
+            const fee = offerFee;
             // 交渉成功率の計算
-            // 基本成功率 50%、名声が高いほど上昇（最大+20%）、移籍金が高いほど上昇（最大+20%）
+            // 基本成功率 50%、名声が高いほど上昇（最大+20%）、オファー金額が高いほど上昇（最大+20%）
             const fameBonus = Math.min(0.20, (gameData.fame || 0) / 500 * 0.20);
-            // 移籍金が市場価格（calcTransferFee）の1.2倍以上なら+10%、1.5倍以上なら+20%
+            // オファー金額が評価額の1.2倍以上なら+10%、1.5倍以上なら+20%
             const marketFee = calcTransferFee(p, gameData.league);
             const feeRatio = fee / marketFee;
             const feeBonus = feeRatio >= 1.5 ? 0.20 : feeRatio >= 1.2 ? 0.10 : 0;
@@ -12281,7 +12318,7 @@
             closeRivalPlayerDetail();
             closeRivalSquad();
             renderTransferTab();
-            showNotification('🎉 ' + p.name + ' の移籍が成立！移籍金 ' + formatNumber(fee) + '円支払');
+            showNotification('🎉 ' + p.name + ' の移籍が成立！オファー金額 ' + formatNumber(fee) + '円支払');
         }
 
 
