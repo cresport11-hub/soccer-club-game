@@ -11985,6 +11985,8 @@
             let listHtml = '';
             // 選手データをグローバルに保持（showRivalPlayerDetailで使用）
             window._currentRivalSquadSorted = sorted;
+            window._currentRivalSquadTeamName = teamName;
+            window._currentRivalSquadTier = tier;
             sorted.forEach(function(p, idx) {
                 const isStarter = idx < starterCount;
                 const mainStat = p.position === 'GK' ? 'GK: ' + p.keeper : '攻' + p.offense + ' 守' + p.defense;
@@ -12070,10 +12072,10 @@
                     <span style="font-size:10px;color:rgba(255,255,255,0.35);">&#9656;</span>
                 </div>`;
             }).join('');
-            // 選手データをグローバルに保持
+                        // 選手データをグローバルに保持
             window._currentRivalSquadSorted = sorted;
             window._currentRivalSquadTeamName = teamName;
-
+            window._currentRivalSquadTier = gameData.league;
             document.getElementById('rivalSquadTitle').textContent = teamName;
             document.getElementById('rivalSquadStats').innerHTML =
                 `<span style="color:rgba(255,255,255,0.5);font-size:11px;">基本値</span>&nbsp;
@@ -12149,21 +12151,29 @@
                 }
             }
 
-                        // オファーボタンの表示制御
+            // オファーボタンの表示制御
             const _offerTeamName = window._currentRivalSquadTeamName || '';
-            const _offerTeam = gameData.leagueStandings ? gameData.leagueStandings.find(t => t.name === _offerTeamName) : null;
+            const _offerTier = window._currentRivalSquadTier != null ? window._currentRivalSquadTier : gameData.league;
+            // 同リーグまたは他リーグのチームを検索
+            let _offerTeam = null;
+            if (gameData.leagueStandings) _offerTeam = gameData.leagueStandings.find(t => t.name === _offerTeamName) || null;
+            if (!_offerTeam && gameData.allLeagues) {
+                for (const tier in gameData.allLeagues) {
+                    const st = gameData.allLeagues[tier].standings;
+                    if (st) { const found = st.find(t => t.name === _offerTeamName); if (found) { _offerTeam = found; break; } }
+                }
+            }
             const _offerSection = document.getElementById('rivalOfferSection');
             const _noOfferSection = document.getElementById('rivalNoOfferSection');
             const _offerFeeInfo = document.getElementById('rivalOfferFeeInfo');
             const _canOffer = _offerTeam && _offerTeam.name !== gameData.clubName && _offerTeam.squad;
             if (_canOffer) {
-                const _tier = gameData.league;
-                const _fee = calcTransferFee(p, _tier);
+                const _fee = calcTransferFee(p, _offerTier);
                 const _mseTr = getManagerSkillEffects();
                 const _trDiscount = _mseTr.transferDiscount || 0;
                 const _actualFee = Math.floor(_fee * (1 - _trDiscount));
                 const _fameCost = Math.max(5, Math.floor(_fee / 100000) * 8);
-                window._directOfferTarget = { player: p, teamName: _offerTeamName, fee: _actualFee, fameCost: _fameCost };
+                window._directOfferTarget = { player: p, teamName: _offerTeamName, tier: _offerTier, fee: _actualFee, fameCost: _fameCost };
                 _offerFeeInfo.innerHTML = `移籍金: <strong style="color:#4CAF50;">${formatNumber(_actualFee)}円</strong>　名声コスト: <strong style="color:#FFD700;">⭐${_fameCost}</strong>`;
                 _offerSection.style.display = '';
                 _noOfferSection.style.display = 'none';
@@ -12247,14 +12257,20 @@
             gameData.players.push(newPlayer);
 
             // 元クラブsquadから削除し、補充選手を生成
-            const srcTeam = gameData.leagueStandings ? gameData.leagueStandings.find(t => t.name === teamName) : null;
+            let srcTeam = gameData.leagueStandings ? gameData.leagueStandings.find(t => t.name === teamName) : null;
+            if (!srcTeam && gameData.allLeagues) {
+                for (const t in gameData.allLeagues) {
+                    const st = gameData.allLeagues[t].standings;
+                    if (st) { const found = st.find(tm => tm.name === teamName); if (found) { srcTeam = found; break; } }
+                }
+            }
             if (srcTeam && srcTeam.squad) {
                 srcTeam.squad = srcTeam.squad.filter(pl => pl.id !== origId);
-                const repPlayer = createRivalPlayer(p.position, gameData.league);
+                const _srcTier = (() => { const _t = findTeamTier(srcTeam.name); return _t != null ? _t : (target.tier != null ? target.tier : gameData.league); })();
+                const repPlayer = createRivalPlayer(p.position, _srcTier);
                 repPlayer.id = 'rival_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
                 repPlayer.starter = false;
                 srcTeam.squad.push(repPlayer);
-                const _srcTier = (() => { const _t = findTeamTier(srcTeam.name); return _t != null ? _t : gameData.league; })();
                 srcTeam.offense = calcRivalOffense(srcTeam.squad, srcTeam.formation, _srcTier);
                 srcTeam.defense = calcRivalDefense(srcTeam.squad, srcTeam.formation, _srcTier);
             }
