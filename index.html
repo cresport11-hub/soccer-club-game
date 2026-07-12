@@ -13264,8 +13264,28 @@
                 const mults = getPreviewMultipliers();
                 // 性格相性ボーナス
                 const _pvCompatMult2 = calcCompatBonus(starters).mult;
-                const yourOffense = Math.round(yourOffenseBase * mults.offMult * _pvCompatMult2);
-                const yourDefense = Math.round(yourDefenseBase * mults.defMult * _pvCompatMult2);
+                // スキル補正（実際の試合計算と同じ）
+                let _pvSkillOffMult = 1.0;
+                if (startersHaveSkill(starters, 'playmaker')) _pvSkillOffMult *= 1.03;
+                if (startersHaveSkill(starters, 'boxToBox')) _pvSkillOffMult *= 1.03;
+                if (startersHaveSkill(starters, 'longPass') && starters.filter(p => p.position === 'FW').length >= 2) _pvSkillOffMult *= 1.03;
+                if (startersHaveSkill(starters, 'technician') && starters.some(p => p.position === 'FW' && (p.dribble || 0) > 70)) _pvSkillOffMult *= 1.02;
+                if (startersHaveSkill(starters, 'aggressive')) _pvSkillOffMult *= 1.03;
+                if (startersHaveSkill(starters, 'buildUp')) {
+                    const _pvMfPassAvg = starters.filter(p => p.position === 'MF').reduce((s, p) => s + (p.passing || 0), 0) / Math.max(starters.filter(p => p.position === 'MF').length, 1);
+                    _pvSkillOffMult *= (1 + _pvMfPassAvg * 0.0003);
+                }
+                let _pvSkillDefMult = 1.0;
+                if (startersHaveSkill(starters, 'aerial')) _pvSkillDefMult *= 1.03;
+                if (startersHaveSkill(starters, 'coaching')) _pvSkillDefMult *= 1.02;
+                if (startersHaveSkill(starters, 'boxToBox')) _pvSkillDefMult *= 1.03;
+                if (startersHaveSkill(starters, 'deepLine')) _pvSkillDefMult *= 1.02;
+                // 監督補正（実際の試合計算と同じ）
+                const _pvMse = getManagerSkillEffects();
+                const _pvMgrOffMult = _pvMse.offMult || 1.0;
+                const _pvMgrDefMult = _pvMse.defMult || 1.0;
+                const yourOffense = Math.round(yourOffenseBase * _pvSkillOffMult * mults.offMult * _pvMgrOffMult * _pvCompatMult2);
+                const yourDefense = Math.round(yourDefenseBase * _pvSkillDefMult * mults.defMult * _pvMgrDefMult * _pvCompatMult2);
                 document.getElementById('previewYourOffense').textContent = yourOffense;
                 document.getElementById('previewOppOffense').textContent = oppOffense;
                 document.getElementById('previewYourDefense').textContent = yourDefense;
@@ -13414,10 +13434,35 @@
             // 試合プレビューモーダルを表示
             const yourOffenseBase = getFormationAdjustedOffense(starters, gameData.pitchAssignment);
             const yourDefenseBase = getFormationAdjustedDefense(starters, gameData.pitchAssignment);
-            document.getElementById('previewYourOffense').textContent = Math.round(yourOffenseBase);
-            document.getElementById('previewOppOffense').textContent = oppOff;
-            document.getElementById('previewYourDefense').textContent = Math.round(yourDefenseBase);
-            document.getElementById('previewOppDefense').textContent = oppDef;
+            // スキル補正・監督補正・相性補正・作戦補正を適用して実際の計算値と一致させる
+            {
+                const _tpTP = { ultra_attack:{offMult:1.12,defMult:0.82}, attack:{offMult:1.06,defMult:0.91}, balance:{offMult:1.00,defMult:1.00}, defend:{offMult:0.91,defMult:1.06}, ultra_defend:{offMult:0.82,defMult:1.12} };
+                const _tpMults = _tpTP[gameData.tactics] || _tpTP['balance'];
+                let _tpSkillOff = 1.0, _tpSkillDef = 1.0;
+                if (startersHaveSkill(starters, 'playmaker')) _tpSkillOff *= 1.03;
+                if (startersHaveSkill(starters, 'boxToBox')) { _tpSkillOff *= 1.03; _tpSkillDef *= 1.03; }
+                if (startersHaveSkill(starters, 'longPass') && starters.filter(p => p.position === 'FW').length >= 2) _tpSkillOff *= 1.03;
+                if (startersHaveSkill(starters, 'aggressive')) _tpSkillOff *= 1.03;
+                if (startersHaveSkill(starters, 'aerial')) _tpSkillDef *= 1.03;
+                if (startersHaveSkill(starters, 'coaching')) _tpSkillDef *= 1.02;
+                if (startersHaveSkill(starters, 'deepLine')) _tpSkillDef *= 1.02;
+                const _tpMse = getManagerSkillEffects();
+                const _tpCompatMult = calcCompatBonus(starters).mult;
+                const _tpYourOff = Math.round(yourOffenseBase * _tpSkillOff * _tpMults.offMult * (_tpMse.offMult || 1.0) * _tpCompatMult);
+                const _tpYourDef = Math.round(yourDefenseBase * _tpSkillDef * _tpMults.defMult * (_tpMse.defMult || 1.0) * _tpCompatMult);
+                document.getElementById('previewYourOffense').textContent = _tpYourOff;
+                document.getElementById('previewOppOffense').textContent = oppOff;
+                document.getElementById('previewYourDefense').textContent = _tpYourDef;
+                document.getElementById('previewOppDefense').textContent = oppDef;
+                // バー更新
+                const _tpMaxOD = Math.max(_tpYourOff, oppDef, 1);
+                const _tpMaxDO = Math.max(_tpYourDef, oppOff, 1);
+                const _tpSetW = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = pct + '%'; };
+                _tpSetW('previewYourOffenseBar', (_tpYourOff / _tpMaxOD) * 100);
+                _tpSetW('previewOppDefenseBar', (oppDef / _tpMaxOD) * 100);
+                _tpSetW('previewYourDefenseBar', (_tpYourDef / _tpMaxDO) * 100);
+                _tpSetW('previewOppOffenseBar', (oppOff / _tpMaxDO) * 100);
+            }
             if (document.getElementById('previewOppLabel')) {
                 document.getElementById('previewOppLabel').textContent = testOpponentName;
             }
@@ -13427,14 +13472,7 @@
             if (document.getElementById('previewHomeAwayLabel')) {
                 document.getElementById('previewHomeAwayLabel').textContent = '(テストプレイ)';
             }
-            // バー更新
-            const maxOD = Math.max(yourOffenseBase, oppDef, 1);
-            const maxDO = Math.max(yourDefenseBase, oppOff, 1);
-            const setW = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = pct + '%'; };
-            setW('previewYourOffenseBar', (yourOffenseBase / maxOD) * 100);
-            setW('previewOppDefenseBar', (oppDef / maxOD) * 100);
-            setW('previewYourDefenseBar', (yourDefenseBase / maxDO) * 100);
-            setW('previewOppOffenseBar', (oppOff / maxDO) * 100);
+            // バー更新は上記ブロック内で実施済み
             const previewModal = document.getElementById('matchPreviewModal');
             previewModal.classList.add('active');
             requestAnimationFrame(() => { previewModal.scrollTop = 0; });
