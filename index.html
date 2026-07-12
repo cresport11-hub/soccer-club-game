@@ -3151,7 +3151,7 @@
                             <button class="btn btn-primary" onclick="doOuting('nightout')" style="padding:14px 8px; font-size:14px;">🌃 夜の街</button>
                             <button class="btn btn-primary" onclick="doOuting('media')" style="padding:14px 8px; font-size:14px;">📺 メディア・その他</button>
                             <button class="btn btn-primary" onclick="doOuting('shrine')" style="padding:14px 8px; font-size:14px;">⛩️ 神社・寺院</button>
-                            <button class="btn btn-primary" onclick="doOuting('arcade')" style="padding:14px 8px; font-size:14px;">🎮 ゲームセンター</button>
+                            <button class="btn btn-primary" onclick="doOuting('school')" style="padding:14px 8px; font-size:14px;">🏫 学校・大学</button>
                         </div>
                         <div id="outingResultCard" style="display:none; margin-top:16px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:16px;">
                             <div style="text-align:center; font-size:40px; margin-bottom:8px;" id="outingResultIcon"></div>
@@ -11098,41 +11098,39 @@
               type:'instant',
               effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.exp=(p.exp||0)+20; p.condition=Math.min(4,(p.condition||2)+2); return p.name+'の経験値+20・コンディション+2（誓いの力）'; } return '変化なし'; } },
             // ―― ゲームセンター・娯楽施設イベント (o93〜o100) ――
-            { id:'o93', rarity:1, icon:'🎮', title:'選手たちがゲームで白熱した',
-              desc:'ゲームセンターで選手たちが対戦ゲームに熱中。チームの絆が深まった。',
-              type:'choice',
-              choices: [
-                { label:'真剣勝負', effect: () => { gameData.players.forEach(p=>{ p.exp=(p.exp||0)+8; }); return '全選手の経験値+8（雘志の火が燃えた）'; } },
-                { label:'みんなで楽しむ', effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-7); }); return '全選手の疲労-7（リフレッシュ）'; } }
-              ] },
-            { id:'o94', rarity:2, icon:'🎰', title:'UFOキャッチャーで景品を獲得！',
-              desc:'UFOキャッチャーで大きな景品を獲得！運気がいい。',
+            // ―― 学校・大学イベント (o93〜o100) ――
+            { id:'o93', rarity:1, icon:'🎪', title:'地元の小学校でサッカー教室を開いた',
+              desc:'地元の小学校に招待され、子供たちにサッカーを教えた。地域に感謝された。',
               type:'instant',
-              effect: () => { gameData.outingNextMatchBonus = { of: 3, df: 3 }; return '次節のOF/DF +3（運気上昇！）'; } },
-            { id:'o95', rarity:1, icon:'🎟️', title:'映画館で気分転換',
-              desc:'ゲームセンター隔の映画館でスポーツ映画を観た。選手たちが熱くなった。',
+              effect: () => { gameData.popularity=Math.min(300,(gameData.popularity||50)+8); gameData.fame=Math.min(999,gameData.fame+5); return '人気+8・名声+5（地域貢献）'; } },
+            { id:'o94', rarity:2, icon:'🏋️', title:'大学の体育学部と合同練習',
+              desc:'近くの大学の体育学部から依頼を受け、合同練習を実施。若手選手が刺激を受けた。',
               type:'instant',
-              effect: () => { gameData.players.forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue||0)-6); }); return '全選手の疲労-6'; } },
-            { id:'o96', rarity:2, icon:'🕹️', title:'アーケードゲームに熱中になった',
-              desc:'少年時代のゲームに熱中。小子たちに囲まれて大人気に。',
+              effect: () => { const young=gameData.players.filter(p=>(p.age||22)<=23); young.forEach(p=>{ p.exp=(p.exp||0)+15; }); return '若手選手（23歳以下）の経験値+15（合同練習）'; } },
+            { id:'o95', rarity:3, icon:'🔭', title:'優秀な学生選手を発見！',
+              desc:'大学のグラウンドで目を引く若手選手を発見。スカウト候補に登録した。',
               type:'instant',
-              effect: () => { gameData.popularity=Math.min(300,(gameData.popularity||50)+6); gameData.fame=Math.min(999,gameData.fame+4); return '人気+6・名声+4（子供たちに囲まれた）'; } },
-            { id:'o97', rarity:3, icon:'🏆', title:'大会で優勝した！',
-              desc:'ゲームセンターの大会に参加した選手が優勝！トロフィーを持ち帰った。',
+              effect: () => { gameData.fame=Math.min(999,gameData.fame+8); gameData.popularity=Math.min(300,(gameData.popularity||50)+5); return '名声+8・人気+5（スカウト活動）'; } },
+            { id:'o96', rarity:1, icon:'📚', title:'講演会に招待された',
+              desc:'大学のスポーツ科学講座に招待され、監督が講演を行った。',
               type:'instant',
-              effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.exp=(p.exp||0)+30; gameData.fame=Math.min(999,gameData.fame+10); return p.name+'の経験値+30・名声+10（優勝！）'; } else { gameData.fame=Math.min(999,gameData.fame+10); return '名声+10（優勝！）'; } } },
-            { id:'o98', rarity:1, icon:'😴', title:'遷刻まで遊んでしまった',
-              desc:'楽しすぎて帰りが遷刻に。翌日の練習に影響が出た。',
+              effect: () => { gameData.fame=Math.min(999,gameData.fame+6); return '名声+6（講演活動）'; } },
+            { id:'o97', rarity:2, icon:'🤝', title:'他クラブの監督と情報交換',
+              desc:'大学のグラウンドで他クラブの監督と偶然出会い、戦術情報を交換した。',
               type:'instant',
-              effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.fatigue=Math.min(100,(p.fatigue||0)+15); return p.name+'が遅刻まで遊んで疲労+15'; } return '変化なし'; } },
-            { id:'o99', rarity:2, icon:'🥇', title:'ゲームのランキング上位に載った！',
-              desc:'ゲームセンターのスコアランキング上位に載った。地元のニュースに取り上げられた。',
+              effect: () => { gameData.outingNextMatchBonus = { of: 3, df: 3 }; return '次節のOF/DF +3（情報収集）'; } },
+            { id:'o98', rarity:2, icon:'🎓', title:'学生たちから熱い応援を受けた',
+              desc:'サッカー部の学生たちから熱い応援を受け、選手たちが奮い立った。',
               type:'instant',
-              effect: () => { gameData.popularity=Math.min(300,(gameData.popularity||50)+8); gameData.money+=30000; return '人気+8・資金+30,000円（取材料）'; } },
-            { id:'o100', rarity:2, icon:'👾', title:'ゲームでチームワークを学んだ',
-              desc:'チームワークが必要なゲームで選手たちが協力の大切さを学んだ。',
+              effect: () => { gameData.outingNextMatchBonus = { of: 4, df: 2 }; return '次節のOF +4・DF +2（応援の力）'; } },
+            { id:'o99', rarity:1, icon:'📝', title:'入学希望者の見学対応で疲れた',
+              desc:'クラブへの入学希望者の見学対応が多すぎて選手たちが疲弊した。',
               type:'instant',
-              effect: () => { gameData.outingNextMatchBonus = { of: 2, df: 2 }; gameData.players.forEach(p=>{ p.exp=(p.exp||0)+5; }); return '次節のOF/DF +2・全選手の経験値+5'; } }
+              effect: () => { const p=gameData.players[Math.floor(Math.random()*gameData.players.length)]; if(p){ p.fatigue=Math.min(100,(p.fatigue||0)+10); return p.name+'が対応疲れで疲労+10'; } return '変化なし'; } },
+            { id:'o100', rarity:3, icon:'🏅', title:'大学の学園大会に参加し優勝！',
+              desc:'大学のサッカー大会に特別参加して優勝。地元メディアに大きく取り上げられた。',
+              type:'instant',
+              effect: () => { gameData.fame=Math.min(999,gameData.fame+12); gameData.popularity=Math.min(300,(gameData.popularity||50)+10); return '名声+12・人気+10（大会優勝！）'; } }
         ];
         // 行き先スポット定義
         const OUTING_SPOTS = [
@@ -11191,9 +11189,9 @@
                 eventIds: ['o85','o86','o87','o88','o89','o90','o91','o92']
             },
             {
-                id: 'arcade',
-                icon: '🎮',
-                name: 'ゲームセンター・娯楽施設',
+                id: 'school',
+                icon: '🏫',
+                name: '学校・大学',
                 eventIds: ['o93','o94','o95','o96','o97','o98','o99','o100']
             }
         ];
