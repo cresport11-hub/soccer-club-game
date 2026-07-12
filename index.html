@@ -14245,7 +14245,9 @@
             if (startersHaveSkill(starters, 'pressureResist') && adjOppDef > adjYourOff) mySkillBonus += 0.03;
             if (startersHaveSkill(starters, 'boxPenalty') && starters.some(p => p.position === 'FW')) mySkillBonus += 0.05;
             mySkillBonus = Math.min(0.25, mySkillBonus); // 攻撃スキル上限
-            myScoreBase += mySkillBonus;
+            // 戦力差に応じてスキルボーナスを減衰（強敵相手ではスキルの効果も小さくなる）
+            const _prePenaltyRatio = Math.min(1.0, Math.max(0.3, adjYourOff / Math.max(adjOppDef, 1)));
+            myScoreBase += mySkillBonus * _prePenaltyRatio;
 
             // 守備スキルボーナス（上限-0.30）
             let defSkillReduction = 0;
@@ -14297,8 +14299,9 @@
             // 共通: 適応力: アウェー時のペナルティ -50%（awayPenalty処理内で対応）
 
             // 監督スキル: goalChance・setPlayBonus・concedeMult・cleanSheetBonusを反映
-            myScoreBase += (_mse.goalChance || 0) * 2.5;
-            myScoreBase += (_mse.setPlayBonus || 0) * 2.0;
+            // 戦力差に応じて監督スキルボーナスも減衰（強敵相手では監督の効果も小さくなる）
+            myScoreBase += (_mse.goalChance || 0) * 2.5 * _prePenaltyRatio;
+            myScoreBase += (_mse.setPlayBonus || 0) * 2.0 * _prePenaltyRatio;
             if (_mse.concedeMult) oppScoreBase = Math.max(0, oppScoreBase * _mse.concedeMult);
             if (_mse.cleanSheetBonus && oppScoreBase < 0.8 && Math.random() < (_mse.cleanSheetBonus || 0)) {
                 oppScoreBase = 0;
@@ -15126,7 +15129,9 @@
             if (startersHaveSkill(starters, 'boxPenalty') && starters.some(p => p.position === 'FW')) mySkillBonus2 += 0.05;
             if (startersHaveSkill(starters, 'counterPress') && firstHalfOppScore > 0) mySkillBonus2 += 0.08;
             mySkillBonus2 = Math.min(0.25, mySkillBonus2);
-            myScoreBase2 += mySkillBonus2;
+            // 戦力差に応じてスキルボーナスを減衰（強敵相手ではスキルの効果も小さくなる）
+            const _prePenaltyRatio2 = Math.min(1.0, Math.max(0.3, adjYourOff2 / Math.max(adjOppDef2, 1)));
+            myScoreBase2 += mySkillBonus2 * _prePenaltyRatio2;
 
             let defSkillReduction2 = 0;
             if (startersHaveSkill(starters, 'bigHands')) defSkillReduction2 += 0.10;
@@ -15173,8 +15178,9 @@
             }
 
             // 監督スキル: goalChance・setPlayBonus・concedeMult・cleanSheetBonusを後半にも反映
-            myScoreBase2 += (_mse.goalChance || 0) * 2.5;
-            myScoreBase2 += (_mse.setPlayBonus || 0) * 2.0;
+            // 戦力差に応じて監督スキルボーナスも減衰（強敵相手では監督の効果も小さくなる）
+            myScoreBase2 += (_mse.goalChance || 0) * 2.5 * _prePenaltyRatio2;
+            myScoreBase2 += (_mse.setPlayBonus || 0) * 2.0 * _prePenaltyRatio2;
             if (_mse.concedeMult) oppScoreBase2 = Math.max(0, oppScoreBase2 * _mse.concedeMult);
             if (_mse.cleanSheetBonus && oppScoreBase2 < 0.8 && Math.random() < (_mse.cleanSheetBonus || 0)) {
                 oppScoreBase2 = 0;
