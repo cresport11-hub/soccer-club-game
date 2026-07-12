@@ -11971,7 +11971,14 @@
             const league = gameData.allLeagues && gameData.allLeagues[tier];
             if (!league) return;
             const team = league.standings.find(function(t){ return t.name === teamName; });
-            if (!team || !team.squad) return;
+            if (!team) return;
+            // squadがない場合（セーブ後ロード時など）は遅延生成する
+            if (!team.squad || team.squad.length === 0) {
+                team.squad = generateRivalSquad(tier, team.formation || '4-4-2');
+                team.offense = calcRivalOffense(team.squad, team.formation || '4-4-2', tier);
+                team.defense = calcRivalDefense(team.squad, team.formation || '4-4-2', tier);
+                if (typeof initSubPositions === 'function') initSubPositions(team.squad);
+            }
             const posOrder = { GK: 0, DF: 1, MF: 2, FW: 3 };
             const starters11 = selectRivalStarters(team.squad, team.formation);
             const starterSet = new Set(starters11.map(function(p){ return team.squad.indexOf(p); }));
@@ -12174,7 +12181,14 @@
             const _offerSection = document.getElementById('rivalOfferSection');
             const _noOfferSection = document.getElementById('rivalNoOfferSection');
             const _offerFeeInfo = document.getElementById('rivalOfferFeeInfo');
-            const _canOffer = _offerTeam && _offerTeam.name !== gameData.clubName && _offerTeam.squad;
+            // squadがない場合（セーブ後ロード時など）は遅延生成する
+            if (_offerTeam && _offerTeam.name !== gameData.clubName && (!_offerTeam.squad || _offerTeam.squad.length === 0)) {
+                _offerTeam.squad = generateRivalSquad(_offerTier, _offerTeam.formation || '4-4-2');
+                _offerTeam.offense = calcRivalOffense(_offerTeam.squad, _offerTeam.formation || '4-4-2', _offerTier);
+                _offerTeam.defense = calcRivalDefense(_offerTeam.squad, _offerTeam.formation || '4-4-2', _offerTier);
+                if (typeof initSubPositions === 'function') initSubPositions(_offerTeam.squad);
+            }
+            const _canOffer = _offerTeam && _offerTeam.name !== gameData.clubName && _offerTeam.squad && _offerTeam.squad.length > 0;
             if (_canOffer) {
                 const _fee = calcTransferFee(p, _offerTier);
                 const _mseTr = getManagerSkillEffects();
