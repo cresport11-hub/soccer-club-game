@@ -3406,6 +3406,16 @@
                             <div id="recruitCandidates" style="display:flex; gap:12px; flex-wrap:wrap;"></div>
                         </div>
                     </div>
+                    <!-- テストプレイ -->
+                    <div class="card" style="margin-top:16px; border:1px solid rgba(255,100,100,0.4); background:rgba(255,50,50,0.07);">
+                        <div class="card-title" style="color:#FF8A80;">🧪 テストプレイ</div>
+                        <div style="font-size:11px; color:rgba(255,255,255,0.55); margin-bottom:12px;">指定した戦力値の相手と即座に試合を行います。スコア・スタッツの確認用です。セーブデータには影響しません。</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+                            <button class="btn btn-primary" onclick="startTestMatch(80,80)" style="background:linear-gradient(135deg,#2e7d32,#1b5e20); font-size:12px; padding:10px 4px;">⚽ 80 / 80<br><span style="font-size:10px; opacity:0.8;">攻80 守80</span></button>
+                            <button class="btn btn-primary" onclick="startTestMatch(100,100)" style="background:linear-gradient(135deg,#1565c0,#0d47a1); font-size:12px; padding:10px 4px;">⚽ 100 / 100<br><span style="font-size:10px; opacity:0.8;">攻100 守100</span></button>
+                            <button class="btn btn-primary" onclick="startTestMatch(120,120)" style="background:linear-gradient(135deg,#6a1b9a,#4a148c); font-size:12px; padding:10px 4px;">⚽ 120 / 120<br><span style="font-size:10px; opacity:0.8;">攻120 守120</span></button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -13360,6 +13370,89 @@
             pendingMatch = null;
         }
 
+        // ===== テストプレイ =====
+        function startTestMatch(oppOff, oppDef) {
+            if (!gameData) { showNotification('ゲームを開始してください'); return; }
+            const starters = gameData.players.filter(p => p.starter && p.injury !== 'heavy');
+            if (starters.length !== 11) {
+                showNotification('スタメンが11名である必要があります');
+                return;
+            }
+            // テスト用の仮相手チーム名
+            const testOpponentName = 'テスト相手（攻' + oppOff + '/守' + oppDef + '）';
+            // leagueStandingsに仮チームを一時追加
+            const tempTeam = {
+                name: testOpponentName,
+                offense: oppOff,
+                defense: oppDef,
+                formation: '4-4-2',
+                tactics: 'balance',
+                manager: null,
+                squad: null,
+                _isTestTeam: true
+            };
+            gameData.leagueStandings.push(tempTeam);
+            // pendingMatchをセット（isTestMatchフラグを立てる）
+            pendingMatch = {
+                opponent: testOpponentName,
+                yourStrength: calculateTeamStrength(starters),
+                opponentStrength: oppOff + oppDef,
+                matchIndex: gameData.currentMatchIndex,
+                isTestMatch: true,
+                _tempTeamName: testOpponentName
+            };
+            // テスト用の仮currentMatchをscheduleに差し込む
+            const fakeMatch = {
+                round: 0,
+                opponent: testOpponentName,
+                home: true,
+                played: false,
+                _isTestMatch: true
+            };
+            gameData.schedule.unshift(fakeMatch);
+            pendingMatch.matchIndex = 0;
+            // 試合プレビューモーダルを表示
+            const yourOffenseBase = getFormationAdjustedOffense(starters, gameData.pitchAssignment);
+            const yourDefenseBase = getFormationAdjustedDefense(starters, gameData.pitchAssignment);
+            document.getElementById('previewYourOffense').textContent = Math.round(yourOffenseBase);
+            document.getElementById('previewOppOffense').textContent = oppOff;
+            document.getElementById('previewYourDefense').textContent = Math.round(yourDefenseBase);
+            document.getElementById('previewOppDefense').textContent = oppDef;
+            if (document.getElementById('previewOppLabel')) {
+                document.getElementById('previewOppLabel').textContent = testOpponentName;
+            }
+            if (document.getElementById('previewOpponentName')) {
+                document.getElementById('previewOpponentName').textContent = testOpponentName;
+            }
+            if (document.getElementById('previewHomeAwayLabel')) {
+                document.getElementById('previewHomeAwayLabel').textContent = '(テストプレイ)';
+            }
+            // バー更新
+            const maxOD = Math.max(yourOffenseBase, oppDef, 1);
+            const maxDO = Math.max(yourDefenseBase, oppOff, 1);
+            const setW = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = pct + '%'; };
+            setW('previewYourOffenseBar', (yourOffenseBase / maxOD) * 100);
+            setW('previewOppDefenseBar', (oppDef / maxOD) * 100);
+            setW('previewYourDefenseBar', (yourDefenseBase / maxDO) * 100);
+            setW('previewOppOffenseBar', (oppOff / maxDO) * 100);
+            const previewModal = document.getElementById('matchPreviewModal');
+            previewModal.classList.add('active');
+            requestAnimationFrame(() => { previewModal.scrollTop = 0; });
+            // セーブタブを閉じてスタメンタブへ
+            switchTab('home', null);
+        }
+        // テストプレイ終了後のクリーンアップ
+        function cleanupTestMatch() {
+            if (!gameData) return;
+            // 仮チームをleagueStandingsから削除
+            gameData.leagueStandings = gameData.leagueStandings.filter(t => !t._isTestTeam);
+            // 仮試合をscheduleから削除
+            if (gameData.schedule.length > 0 && gameData.schedule[0]._isTestMatch) {
+                gameData.schedule.shift();
+            }
+        }
+
+
         // 試合開始ボタンの二重クリック防止用フラグ
         let matchExecuting = false;
 
@@ -13904,7 +13997,7 @@
             // カップ戦試合の場合はリーグスケジュールを参照しない
             const currentMatch = isCupMatch ? null : gameData.schedule[matchIndex];
             const round = (currentMatch && currentMatch.round) ? currentMatch.round - 1 : -1;
-            if (!isCupMatch) simulateOtherTeamMatches(round);
+            if (!isCupMatch && !(savedPendingMatch && savedPendingMatch.isTestMatch)) simulateOtherTeamMatches(round);
 
             // ===== 前半スコア計算 =====
             // 前半は得点期待値の半分で計算（最大3点）
@@ -15183,6 +15276,10 @@
             // ライバル対戦成績更新
             updateRivalRecord(opponent, myScore, oppScore);
             if (!isCupMatch) {
+                if (savedPendingMatch && savedPendingMatch.isTestMatch) {
+                    // テストプレイ: 仮データをクリーンアップ（セーブデータに影響しない）
+                    cleanupTestMatch();
+                } else {
                 gameData.seasonProgress = Math.min(gameData.seasonProgress + (100 / 38), 100);
                 currentMatch.played = true;
                 currentMatch.result = { score: myScore + ' - ' + oppScore, result: result };
@@ -15196,6 +15293,7 @@
                     gameData.campUsedThisWeek = false;
                     gameData._pendingCampNotify = true;
                 }
+                } // end else (not isTestMatch)
             } else {
                 // カップ戦試合結果を処理
                 const cupMsg = processCupMatchResult(myScore, oppScore);
