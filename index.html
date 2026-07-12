@@ -14266,13 +14266,29 @@
                 oppScoreBase = 0;
             }
             // 前半: 期待値の約半分で計算（最大3点）
+            // ===== 戦力差ペナルティ（前半）=====
+            // 自攻撃が相手守備を大幅に下回る場合、myScoreBaseを減衰させる
+            {
+                const _powerRatio = adjYourOff / Math.max(adjOppDef, 1);
+                if (_powerRatio < 0.50) {
+                    myScoreBase *= _powerRatio * 1.2;
+                } else if (_powerRatio < 0.65) {
+                    myScoreBase *= 0.50 + _powerRatio * 0.70;
+                } else if (_powerRatio < 0.80) {
+                    myScoreBase *= 0.70 + _powerRatio * 0.30;
+                }
+                // 相手攻撃が自守備を大幅に上回る場合、oppScoreBaseを増強する（緩やか）
+                const _oppPowerRatio = adjOppOff / Math.max(adjYourDef, 1);
+                if (_oppPowerRatio > 1.80) {
+                    oppScoreBase = Math.min(2.5, oppScoreBase * 1.15);
+                } else if (_oppPowerRatio > 1.40) {
+                    oppScoreBase = Math.min(2.5, oppScoreBase * 1.08);
+                }
+            }
             // 動的ランダム幅: 攻撃 vs 相手守備の差が大きいほどランダム幅が小さくなり、戦力差が結果に反映されやすくなる
-            // 差+15: ±0.65、差+30: ±0.50、差±0: ±0.80（基本）、差-15: ±0.65（不利側も収束）
             const myOffVsOppDef = adjYourOff - adjOppDef; // 自攻撃 vs 相手守備の差
             const oppOffVsMyDef = adjOppOff - adjYourDef; // 相手攻撃 vs 自守備の差
-            // 不利側（差が負）はランダム幅を縮小、有利側（差が正）はランダム幅を拡大して戦力差を結果に反映
             // ランダム幅: 戦力差が大きいほど幅が小さくなる（結果が確定的に）
-            // 差±0: ±0.30、差+40: ±0.15、差-40: ±0.15
             const myRandRange  = Math.max(0.10, 0.30 - Math.abs(myOffVsOppDef) / 400) * 2;
             const oppRandRange = Math.max(0.10, 0.30 - Math.abs(oppOffVsMyDef) / 400) * 2;
             let myScore = Math.max(0, Math.min(3, Math.round(myScoreBase * 0.70 + (Math.random() - 0.5) * myRandRange)));
@@ -14350,7 +14366,8 @@
             const oppGkKeeper = 50 + Math.floor(Math.random() * 30); // 相手GKのkeeper値（推定）
 
             // 自チームFK
-            if (fkKickers.length > 0 && Math.random() < 0.13) {
+            const _fkPowerRatio = Math.min(1.0, Math.max(0.3, adjYourOff / Math.max(adjOppDef, 1)));
+            if (fkKickers.length > 0 && Math.random() < 0.13 * _fkPowerRatio) {
                 // 重み付きでキッカー選択（passing + shoot が高い選手ほど選ばれやすい）
                 const fkWeights = fkKickers.map(p => (p.passing || 40) + (p.shoot || 40));
                 const fkTotal = fkWeights.reduce((s, w) => s + w, 0);
@@ -14374,7 +14391,7 @@
             }
 
             // 自チームPK
-            if (pkKickers.length > 0 && Math.random() < 0.07) {
+            if (pkKickers.length > 0 && Math.random() < 0.07 * _fkPowerRatio) {
                 // shoot値が最も高いFWがキッカー
                 const pkKicker = pkKickers.reduce((best, p) => (p.shoot || 0) > (best.shoot || 0) ? p : best, pkKickers[0]);
                 // PK成功率: shoot値 + penaltyKingスキル補正
@@ -15125,8 +15142,24 @@
                 oppScoreBase2 = 0;
             }
             // 後半スコア（最大3点）
+            // ===== 戦力差ペナルティ（後半）=====
+            {
+                const _powerRatio2 = adjYourOff2 / Math.max(adjOppDef2, 1);
+                if (_powerRatio2 < 0.50) {
+                    myScoreBase2 *= _powerRatio2 * 1.2;
+                } else if (_powerRatio2 < 0.65) {
+                    myScoreBase2 *= 0.50 + _powerRatio2 * 0.70;
+                } else if (_powerRatio2 < 0.80) {
+                    myScoreBase2 *= 0.70 + _powerRatio2 * 0.30;
+                }
+                const _oppPowerRatio2 = adjOppOff2 / Math.max(adjYourDef2, 1);
+                if (_oppPowerRatio2 > 1.80) {
+                    oppScoreBase2 = Math.min(2.5, oppScoreBase2 * 1.15);
+                } else if (_oppPowerRatio2 > 1.40) {
+                    oppScoreBase2 = Math.min(2.5, oppScoreBase2 * 1.08);
+                }
+            }
             // 動的ランダム幅（後半も同じ計算式を適用）
-            // 不利側（差が負）はランダム幅を縮小、有利側（差が正）はランダム幅を拡大して戦力差を結果に反映
             const myRandRange2  = Math.max(0.10, 0.30 - Math.abs(myDiff2)  / 400) * 2;
             const oppRandRange2 = Math.max(0.10, 0.30 - Math.abs(oppDiff2) / 400) * 2;
             let myScore2 = Math.max(0, Math.min(3, Math.round(myScoreBase2 * 0.70 + (Math.random() - 0.5) * myRandRange2)));
@@ -15161,7 +15194,8 @@
             const fkKickers2 = starters.filter(p => p.position === 'MF' || p.position === 'FW');
             const pkKickers2 = starters.filter(p => p.position === 'FW');
             const oppGkKeeper2 = 50 + Math.floor(Math.random() * 30);
-            if (fkKickers2.length > 0 && Math.random() < 0.13) {
+            const _fkPowerRatio2 = Math.min(1.0, Math.max(0.3, adjYourOff2 / Math.max(adjOppDef2, 1)));
+            if (fkKickers2.length > 0 && Math.random() < 0.13 * _fkPowerRatio2) {
                 const fkWeights2 = fkKickers2.map(p => (p.passing || 40) + (p.shoot || 40));
                 const fkTotal2 = fkWeights2.reduce((s, w) => s + w, 0);
                 let fkRand2 = Math.random() * fkTotal2;
@@ -15177,7 +15211,7 @@
                 if (oppFkSuccess2) oppScore2++;
                 fkEvents2.push({ kicker: null, success: oppFkSuccess2, side: 'opp' });
             }
-            if (pkKickers2.length > 0 && Math.random() < 0.07) {
+            if (pkKickers2.length > 0 && Math.random() < 0.07 * _fkPowerRatio2) {
                 const pkKicker2 = pkKickers2.reduce((best, p) => (p.shoot || 0) > (best.shoot || 0) ? p : best, pkKickers2[0]);
                 let pkSuccessRate2 = Math.min(0.88, Math.max(0.60, (pkKicker2.shoot || 50) / 100 * 1.1));
                 if (startersHaveSkill(starters, 'penaltyKing')) pkSuccessRate2 = Math.min(0.95, pkSuccessRate2 + 0.10);
