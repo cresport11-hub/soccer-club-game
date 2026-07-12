@@ -11932,7 +11932,8 @@
                 if (isPromoZone) rowStyle = 'background:rgba(76,175,80,0.08);';
                 if (isRelZone) rowStyle = 'background:rgba(239,154,154,0.08);';
                 let clickAttr = '';
-                if (!isYourClub && hasSquad) {
+                // squadがなくても遅延生成するのでsquadチェックを外す
+                if (!isYourClub) {
                     const safeName = team.name.replace(/'/g, "\\'");
                     if (isPlayerLeague) {
                         clickAttr = 'onclick="showRivalSquad(\'' + safeName + '\')" style="cursor:pointer;' + rowStyle + '"';
@@ -11946,7 +11947,7 @@
                 const relIcon = isRelZone ? '<span style="font-size:9px;color:#EF9A9A;margin-left:2px;">▼</span>' : '';
                 tableDiv.innerHTML += '<div class="league-row ' + (isYourClub ? 'your-club' : '') + '" ' + clickAttr + '>' +
                     '<div>' + (i+1) + promoIcon + relIcon + '</div>' +
-                    '<div>' + getTeamWithEmblem(team.name, 20) + (hasSquad && !isYourClub ? ' <span style="font-size:10px;opacity:0.6;">👁</span>' : '') + '</div>' +
+                    '<div>' + getTeamWithEmblem(team.name, 20) + (!isYourClub ? ' <span style="font-size:10px;opacity:0.6;">👁</span>' : '') + '</div>' +
                     '<div>' + (team.wins + team.draws + team.losses) + '</div>' +
                     '<div>' + team.wins + '</div>' +
                     '<div>' + team.draws + '</div>' +
@@ -12026,8 +12027,14 @@
         function showRivalSquad(teamName) {
             const team = gameData.leagueStandings.find(t => t.name === teamName);
             if (!team) return;
-
-                        const posOrder = { GK: 0, DF: 1, MF: 2, FW: 3 };
+            // squadがない場合（セーブ後ロード時など）は遅延生成する
+            if (!team.squad || team.squad.length === 0) {
+                team.squad = generateRivalSquad(gameData.league, team.formation || '4-4-2');
+                team.offense = calcRivalOffense(team.squad, team.formation || '4-4-2', gameData.league);
+                team.defense = calcRivalDefense(team.squad, team.formation || '4-4-2', gameData.league);
+                if (typeof initSubPositions === 'function') initSubPositions(team.squad);
+            }
+            const posOrder = { GK: 0, DF: 1, MF: 2, FW: 3 };
             // スタメン11名と控え5名を分けて表示
             const starters11 = team.squad ? selectRivalStarters(team.squad, team.formation) : [];
             const starterSet = new Set(starters11.map(p => team.squad.indexOf(p)));
