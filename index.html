@@ -6283,7 +6283,7 @@
             }, 0) / fwMf.length;
             // 案A: リーグレベル別の他クラブ仮想施設ボーナス（5部:+1, 4部:+2, 3部:+3, 2部:+4, 1部:+5）
             // leagueLevelが指定されていればそのティアのボーナスを使用（カップ戦・他リーグの正確な戦力値のため）
-            const _rivalFacilityBonus = { 5: 1, 4: 2, 3: 3, 2: 4, 1: 5, 0: 5 };
+            const _rivalFacilityBonus = { 5: 2, 4: 3, 3: 4, 2: 5, 1: 6, 0: 6 };
             const _rfb = _rivalFacilityBonus[leagueLevel != null ? leagueLevel : gameData.league] || 1;
             return Math.round(avg) + _rfb;
         }
@@ -6316,7 +6316,7 @@
             }, 0) / dfGk.length;
             // 案A: リーグレベル別の他クラブ仮想施設ボーナス
             // leagueLevelが指定されていればそのティアのボーナスを使用（カップ戦・他リーグの正確な戦力値のため）
-            const _rivalFacilityBonusDef = { 5: 1, 4: 2, 3: 3, 2: 4, 1: 5, 0: 5 };
+            const _rivalFacilityBonusDef = { 5: 2, 4: 3, 3: 4, 2: 5, 1: 6, 0: 6 };
             const _rfbDef = _rivalFacilityBonusDef[leagueLevel != null ? leagueLevel : gameData.league] || 1;
             return Math.round(avg) + _rfbDef;
         }
@@ -8856,8 +8856,8 @@
         }
 
         function getOpponentStrength(opponentName) {
-            const leagueMin = { 5: 42, 4: 54, 3: 66, 2: 74, 1: 82, 0: 92 }; // 難易度調整
-            const leagueMax = { 5: 72, 4: 82, 3: 90, 2: 96, 1: 102, 0: 122 };
+            const leagueMin = { 5: 48, 4: 60, 3: 72, 2: 80, 1: 88, 0: 98 }; // 難易度調整
+            const leagueMax = { 5: 78, 4: 88, 3: 96, 2: 102, 1: 108, 0: 128 };
             const min = leagueMin[gameData.league] || 30;
             const max = leagueMax[gameData.league] || 55;
             if (opponentName) {
@@ -8877,7 +8877,7 @@
         function generateRivalManagerSkills(league) {
             // リーグレベルが高いほど多くのスキルを持つ
             // league: 5=最下位, 0=最上位
-            const skillCountByLeague = { 5: 1, 4: 2, 3: 3, 2: 4, 1: 5, 0: 6 };
+            const skillCountByLeague = { 5: 2, 4: 3, 3: 4, 2: 5, 1: 6, 0: 7 };
             const count = skillCountByLeague[league] !== undefined ? skillCountByLeague[league] : 0;
             if (count === 0) return { learned: [] };
 
@@ -8961,8 +8961,8 @@
         }
 
         function getOpponentOffense(opponentName) {
-            const leagueMin = { 5: 42, 4: 54, 3: 66, 2: 74, 1: 82, 0: 92 }; // 難易度調整
-            const leagueMax = { 5: 72, 4: 82, 3: 90, 2: 96, 1: 102, 0: 122 };
+            const leagueMin = { 5: 48, 4: 60, 3: 72, 2: 80, 1: 88, 0: 98 }; // 難易度調整
+            const leagueMax = { 5: 78, 4: 88, 3: 96, 2: 102, 1: 108, 0: 128 };
             const min = leagueMin[gameData.league] || 30;
             const max = leagueMax[gameData.league] || 55;
             if (opponentName) {
@@ -8981,8 +8981,8 @@
             return getRandomAbility(min, max);
         }
         function getOpponentDefense(opponentName) {
-            const leagueMin = { 5: 42, 4: 54, 3: 66, 2: 74, 1: 82, 0: 92 }; // 難易度調整
-            const leagueMax = { 5: 72, 4: 82, 3: 90, 2: 96, 1: 102, 0: 122 };
+            const leagueMin = { 5: 48, 4: 60, 3: 72, 2: 80, 1: 88, 0: 98 }; // 難易度調整
+            const leagueMax = { 5: 78, 4: 88, 3: 96, 2: 102, 1: 108, 0: 128 };
             const min = leagueMin[gameData.league] || 30;
             const max = leagueMax[gameData.league] || 55;
             if (opponentName) {
@@ -13900,7 +13900,7 @@
             // sigmoid的な変換: base = 0.80 * exp(diff / 60)
             // diff=0: 0.80, diff=+30: 1.46, diff=+60: 2.66, diff=-30: 0.44, diff=-60: 0.24
             let myScoreBase  = 0.80 * Math.exp(myDiff  / 60) + aceBonus + chanceBonus + condBonus;
-            let oppScoreBase = 0.80 * Math.exp(oppDiff / 60) - gkSaveReduction - tackleReduction;
+            let oppScoreBase = 0.88 * Math.exp(oppDiff / 60) - gkSaveReduction - tackleReduction;
             // 上限クランプ（最大2.5）
             myScoreBase  = Math.min(2.5, Math.max(0.05, myScoreBase));
             oppScoreBase = Math.min(2.5, Math.max(0.05, oppScoreBase));
