@@ -15312,7 +15312,7 @@
             gameData.soloTrainingUsed = false;
             // 監督XP付与は後半ハイライト完了後に行う（_pendingManagerXP に保存）
             let _pendingManagerXP = 0;
-            if (!isCupMatch) {
+            if (!isCupMatch && !(savedPendingMatch && savedPendingMatch.isTestMatch)) {
                 if (myScore > oppScore) _pendingManagerXP = 2;
                 else _pendingManagerXP = 1;
             }
@@ -15478,8 +15478,9 @@
                 // ハーフタイム交代イン選手は疲労回復なし（上の蓄積処理のみ）
             });
 
-            // EXP付与
+            // EXP付与（テストプレイ時はスキップ）
             const expLevelUpMessages = [];
+            if (!(savedPendingMatch && savedPendingMatch.isTestMatch)) {
             const hasDistribution = startersHaveSkill(starters, 'distribution');
             gameData.players.filter(p => p.injury !== 'heavy').forEach(player => {
                 // スタメン: 5固定、ハーフタイム交代（イン/アウト）: 3固定、その他: 0
@@ -15532,8 +15533,8 @@
                     const skillMsg = learnedSkill ? '　★スキル「' + learnedSkill + '」を習得！' : '';
                     expLevelUpMessages.push(player.name + ' が Lv' + player.level + ' にレベルアップ！' + skillMsg);
                 }
-            });
-
+                        });
+            } // end if (!isTestMatch) for EXP付与
             // ===== 覚醒イベント判定 =====
             // 条件: 試合出場した選手のうち、小数点の確率で覚醒が発生
             // 覚醒効果: 全能力値+5、性格変化のどちらか（ランダム）
