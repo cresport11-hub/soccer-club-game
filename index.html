@@ -3929,10 +3929,18 @@
                 <div class="card-title">スキル</div>
                 <div id="rivalSkillContainer" style="display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0;"></div>
             </div>
-            <button class="btn btn-secondary btn-large" onclick="closeRivalPlayerDetail()" style="margin-top:10px;">閉じる</button>
+                        <div id="rivalOfferSection" style="margin-top:12px;display:none;">
+                <div id="rivalOfferFeeInfo" style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:8px;text-align:center;"></div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-primary btn-large" onclick="makeDirectOffer()" style="flex:1;">💰 オファーを出す</button>
+                    <button class="btn btn-secondary btn-large" onclick="closeRivalPlayerDetail()" style="flex:1;">閉じる</button>
+                </div>
+            </div>
+            <div id="rivalNoOfferSection" style="margin-top:10px;">
+                <button class="btn btn-secondary btn-large" onclick="closeRivalPlayerDetail()" style="width:100%;">閉じる</button>
+            </div>
         </div>
     </div>
-
     <!-- シーズン終了モーダル（旧）–非表示で残す -->
     <div id="seasonEndModal" class="modal" style="display:none !important;"></div>
 
@@ -12064,6 +12072,7 @@
             }).join('');
             // 選手データをグローバルに保持
             window._currentRivalSquadSorted = sorted;
+            window._currentRivalSquadTeamName = teamName;
 
             document.getElementById('rivalSquadTitle').textContent = teamName;
             document.getElementById('rivalSquadStats').innerHTML =
@@ -12140,11 +12149,127 @@
                 }
             }
 
+                        // オファーボタンの表示制御
+            const _offerTeamName = window._currentRivalSquadTeamName || '';
+            const _offerTeam = gameData.leagueStandings ? gameData.leagueStandings.find(t => t.name === _offerTeamName) : null;
+            const _offerSection = document.getElementById('rivalOfferSection');
+            const _noOfferSection = document.getElementById('rivalNoOfferSection');
+            const _offerFeeInfo = document.getElementById('rivalOfferFeeInfo');
+            const _canOffer = _offerTeam && _offerTeam.name !== gameData.clubName && _offerTeam.squad;
+            if (_canOffer) {
+                const _tier = gameData.league;
+                const _fee = calcTransferFee(p, _tier);
+                const _mseTr = getManagerSkillEffects();
+                const _trDiscount = _mseTr.transferDiscount || 0;
+                const _actualFee = Math.floor(_fee * (1 - _trDiscount));
+                const _fameCost = Math.max(5, Math.floor(_fee / 100000) * 8);
+                window._directOfferTarget = { player: p, teamName: _offerTeamName, fee: _actualFee, fameCost: _fameCost };
+                _offerFeeInfo.innerHTML = `移籍金: <strong style="color:#4CAF50;">${formatNumber(_actualFee)}円</strong>　名声コスト: <strong style="color:#FFD700;">⭐${_fameCost}</strong>`;
+                _offerSection.style.display = '';
+                _noOfferSection.style.display = 'none';
+            } else {
+                _offerSection.style.display = 'none';
+                _noOfferSection.style.display = '';
+                window._directOfferTarget = null;
+            }
             document.getElementById('rivalPlayerDetailModal').classList.add('active');
         }
-
         function closeRivalPlayerDetail() {
             document.getElementById('rivalPlayerDetailModal').classList.remove('active');
+        }
+        // 他クラブの選手への直接オファー
+        function makeDirectOffer() {
+            const target = window._directOfferTarget;
+            if (!target) return;
+            const { player: p, teamName, fee, fameCost } = target;
+            if (gameData.players.length >= 32) {
+                showNotification('選手数が上限（32名）に達しています');
+                return;
+            }
+            if (gameData.money < fee) {
+                showNotification('資金が不足しています（必要: ' + formatNumber(fee) + '円）');
+                return;
+            }
+            if ((gameData.fame || 0) < fameCost) {
+                showNotification('名声が不足しています（必要: ⭐' + fameCost + '）');
+                return;
+            }
+            if (!confirm(
+                p.name + ' にオファーを出しますか？
+' +
+                '移籍金: ' + formatNumber(fee) + '円
+' +
+                '名声コスト: ⭐' + fameCost + '
+
+' +
+                '※ 相手クラブが承諾するかどうかは交渉次第です'
+            )) return;
+
+            // 交渉成功率の計算
+            // 基本成功率 50%、名声が高いほど上昇（最大+20%）、移籍金が高いほど上昇（最大+20%）
+            const fameBonus = Math.min(0.20, (gameData.fame || 0) / 500 * 0.20);
+            // 移籍金が市場価格（calcTransferFee）の1.2倍以上なら+10%、1.5倍以上なら+20%
+            const marketFee = calcTransferFee(p, gameData.league);
+            const feeRatio = fee / marketFee;
+            const feeBonus = feeRatio >= 1.5 ? 0.20 : feeRatio >= 1.2 ? 0.10 : 0;
+            const successRate = Math.min(0.85, 0.50 + fameBonus + feeBonus);
+
+            // 名声コストは交渉失敗でも半額消費
+            gameData.fame = Math.max(0, (gameData.fame || 0) - fameCost);
+
+            const roll = Math.random();
+            if (roll > successRate) {
+                // 交渉失敗
+                saveGame();
+                showNotification(teamName + ' はオファーを拒否しました（名声 ⭐' + Math.ceil(fameCost / 2) + ' 消費）');
+                // 失敗時は半額のみ消費（残りを返却）
+                gameData.fame = Math.max(0, (gameData.fame || 0) + Math.floor(fameCost / 2));
+                saveGame();
+                closeRivalPlayerDetail();
+                return;
+            }
+
+            // 交渉成功 → 移籍金を支払い選手を獲得
+            gameData.money -= fee;
+
+            const newPlayer = Object.assign({}, p);
+            const origId = p.id;
+            delete newPlayer.transferFee;
+            delete newPlayer.loanFame;
+            delete newPlayer.fromClub;
+            delete newPlayer._squadId;
+            newPlayer.id = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+            newPlayer.fatigue = 0;
+            newPlayer.injury = 0;
+            newPlayer.morale = 80;
+            newPlayer.exp = 0;
+            if (!newPlayer.salary) newPlayer.salary = calculatePlayerSalary(newPlayer);
+            gameData.players.push(newPlayer);
+
+            // 元クラブsquadから削除し、補充選手を生成
+            const srcTeam = gameData.leagueStandings ? gameData.leagueStandings.find(t => t.name === teamName) : null;
+            if (srcTeam && srcTeam.squad) {
+                srcTeam.squad = srcTeam.squad.filter(pl => pl.id !== origId);
+                const repPlayer = createRivalPlayer(p.position, gameData.league);
+                repPlayer.id = 'rival_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+                repPlayer.starter = false;
+                srcTeam.squad.push(repPlayer);
+                const _srcTier = (() => { const _t = findTeamTier(srcTeam.name); return _t != null ? _t : gameData.league; })();
+                srcTeam.offense = calcRivalOffense(srcTeam.squad, srcTeam.formation, _srcTier);
+                srcTeam.defense = calcRivalDefense(srcTeam.squad, srcTeam.formation, _srcTier);
+            }
+
+            // 移籍市場に同じ選手が出ていれば削除
+            if (gameData.transferMarket) {
+                gameData.transferMarket = gameData.transferMarket.filter(pl => (pl._squadId || pl.id) !== origId);
+            }
+
+            gameData.transferCount = (gameData.transferCount || 0) + 1;
+            saveGame();
+            closeRivalPlayerDetail();
+            closeRivalSquad();
+            renderTransferTab();
+            showNotification('🎉 ' + p.name + ' の移籍が成立！移籍金 ' + formatNumber(fee) + '円支払');
         }
 
 
@@ -18438,6 +18563,7 @@
         window.showTransferPlayerDetail = showTransferPlayerDetail;
         window.closeTransferPlayerDetail = closeTransferPlayerDetail;
         window.showRivalSquad = showRivalSquad;
+        window.makeDirectOffer = makeDirectOffer;
         window.showOtherLeagueRivalSquad = showOtherLeagueRivalSquad;
         window.showRivalPlayerDetail = showRivalPlayerDetail;
         window.closeRivalPlayerDetail = closeRivalPlayerDetail;
