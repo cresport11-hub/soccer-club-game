@@ -3704,8 +3704,8 @@
                 <div id="resultCupLabel" style="font-size:11px; color:#FFD700; font-weight:bold; margin-bottom:2px;"></div>
                 <div id="resultOpponent">vs 相チーム</div>
                 <div id="resultHomeAwayLabel" style="font-size:11px; color:rgba(255,255,255,0.55); margin-bottom:4px;"></div>
-                <div class="result-score" id="resultScore">0 - 0</div>
-
+                                <div class="result-score" id="resultScore">0 - 0</div>
+                <div id="resultPkDiv" style="display:none; margin-top:6px; font-size:13px; font-weight:bold; padding:6px 12px; border-radius:8px; text-align:center;"></div>
                 <!-- ハイライト（先に表示） -->
                 <div id="matchHighlightDiv" style="margin-top: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px; text-align: left;">
                     <div style="font-size: 11px; color: rgba(255,255,255,0.5); font-weight: bold; margin-bottom: 6px; letter-spacing: 0.5px;">📋 後半ハイライト</div>
@@ -7748,6 +7748,46 @@
             return winners;
         }
         // カップ戦ラウンドを完了してラウンドを進める
+        // PK戦シミュレーション（5本ずつ、同点の場合はサドンデス方式）
+        function simulatePenaltyShootout() {
+            const GK = gameData.players.find(p => p.position === 'GK' && p.starter);
+            const gkKeeper = GK ? (GK.keeper || 50) : 50;
+            const hasPkStopper = GK && GK.skills && GK.skills.includes('penaltyStopper');
+            // 各キッカーの成功確率：GKのkeeper値で相手のPK成功確率を下げる
+            const mySuccessRate = 0.75; // 自クラブのPK成功確率
+            const oppSuccessRate = Math.max(0.40, 0.75 - (gkKeeper - 50) * 0.003 - (hasPkStopper ? 0.10 : 0)); // 相手のPK成功確率
+            let myScore = 0, oppScore = 0;
+            let myKicks = [], oppKicks = [];
+            // 最初の5本
+            for (let i = 0; i < 5; i++) {
+                const myOk = Math.random() < mySuccessRate;
+                const oppOk = Math.random() < oppSuccessRate;
+                if (myOk) myScore++;
+                if (oppOk) oppScore++;
+                myKicks.push(myOk);
+                oppKicks.push(oppOk);
+            }
+            // 同点の場合はサドンデス（1本ずつ交互）
+            let round = 0;
+            while (myScore === oppScore && round < 10) {
+                const myOk = Math.random() < mySuccessRate;
+                const oppOk = Math.random() < oppSuccessRate;
+                if (myOk) myScore++;
+                if (oppOk) oppScore++;
+                myKicks.push(myOk);
+                oppKicks.push(oppOk);
+                round++;
+                // このラウンドで差がついたら終了
+                if (myScore !== oppScore) break;
+            }
+            // まだ同点なら最終コイントス
+            const myWin = myScore > oppScore ? true : myScore < oppScore ? false : Math.random() < 0.5;
+            if (myScore === oppScore) {
+                if (myWin) myScore++; else oppScore++;
+            }
+            return { myWin, myScore, oppScore, myKicks, oppKicks };
+        }
+
         function completeCupRound(myGoals, oppGoals) {
             const cup = gameData.cup;
             if (!cup) return;
@@ -7767,19 +7807,26 @@
                 } else if (awayGoals > homeGoals) {
                     winner = myMatch.away;
                 } else {
-                    // 引き分けはPK（50/50）
-                    winner = Math.random() < 0.5 ? myMatch.home : myMatch.away;
+                    // 引き分けはPK戦（5本ずつ）
+                    const pkResult = simulatePenaltyShootout();
+                    winner = pkResult.myWin ? myMatch.home : myMatch.away;
+                    // イサウル側の勝者に合わせる
+                    if (!isHome) winner = pkResult.myWin ? myMatch.away : myMatch.home;
+                    myMatch.pkResult = pkResult;
                 }
                 myMatch.result = { homeGoals, awayGoals, winner };
                 myMatch.played = true;
                 const myResult = (winner === gameData.clubName) ? '勝利' : '敗退';
+                const pkData = myMatch.pkResult || null;
                 cup.myRoundResult.push({
                     round: round.name,
                     opponent: opponent,
                     myGoals: isHome ? homeGoals : awayGoals,
                     oppGoals: isHome ? awayGoals : homeGoals,
                     result: myResult,
-                    pkWin: (homeGoals === awayGoals) ? (winner === gameData.clubName) : null
+                    pkWin: (homeGoals === awayGoals) ? (winner === gameData.clubName) : null,
+                    pkMyScore: pkData ? pkData.myScore : null,
+                    pkOppScore: pkData ? pkData.oppScore : null
                 });
                 if (winner === gameData.clubName) {
                     addManagerXP(2); // カップ戦勝利：XP+2
@@ -15298,6 +15345,34 @@
                 }
             }
             document.getElementById('resultScore').textContent = myScore + ' - ' + oppScore;
+            // PK戦結果表示
+            const pkDiv = document.getElementById('resultPkDiv');
+            if (pkDiv) {
+                if (isCupMatch && gameData.cup) {
+                    const lastCupResult = gameData.cup.myRoundResult[gameData.cup.myRoundResult.length - 1];
+                    if (lastCupResult && lastCupResult.pkWin !== null && lastCupResult.pkMyScore !== null) {
+                        const pkWon = lastCupResult.pkWin;
+                        const pkMy = lastCupResult.pkMyScore;
+                        const pkOpp = lastCupResult.pkOppScore;
+                        pkDiv.style.display = 'block';
+                        if (pkWon) {
+                            pkDiv.style.background = 'rgba(76,175,80,0.2)';
+                            pkDiv.style.border = '1px solid rgba(76,175,80,0.5)';
+                            pkDiv.style.color = '#81C784';
+                            pkDiv.innerHTML = '⚽ PK戦 勝利 &nbsp; <span style="font-size:16px;">' + pkMy + ' - ' + pkOpp + '</span>';
+                        } else {
+                            pkDiv.style.background = 'rgba(244,67,54,0.15)';
+                            pkDiv.style.border = '1px solid rgba(244,67,54,0.4)';
+                            pkDiv.style.color = '#EF9A9A';
+                            pkDiv.innerHTML = '⚽ PK戦 敗退 &nbsp; <span style="font-size:16px;">' + pkMy + ' - ' + pkOpp + '</span>';
+                        }
+                    } else {
+                        pkDiv.style.display = 'none';
+                    }
+                } else {
+                    pkDiv.style.display = 'none';
+                }
+            }
             document.getElementById('resultAttendance').textContent = formatNumber(attendance);
             const stadiumLvDisp = gameData.facilities.stadium || 1;
             const stadiumRateDisp = 0.8 + stadiumLvDisp * 0.05;
