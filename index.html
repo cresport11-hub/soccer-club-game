@@ -12211,10 +12211,9 @@
             const fameBonus = Math.min(0.20, (gameData.fame || 0) / 500 * 0.20);
             const marketFee = calcTransferFee(p, gameData.league);
             const feeRatio = inputFee / marketFee;
-            const feeBonus = feeRatio >= 1.5 ? 0.20 : feeRatio >= 1.2 ? 0.10 : 0;
-            const rate = Math.min(0.85, 0.50 + fameBonus + feeBonus);
-            const rateColor = rate >= 0.75 ? '#4CAF50' : rate >= 0.60 ? '#FFD700' : '#FF7043';
-            infoEl.innerHTML = '交渉成功率: <strong style="color:' + rateColor + ';">' + Math.round(rate * 100) + '%</strong>';
+            const feeBonus = feeRatio >= 1.5 ? 0.50 : feeRatio >= 1.4 ? 0.40 : feeRatio >= 1.3 ? 0.30 : feeRatio >= 1.2 ? 0.20 : feeRatio >= 1.1 ? 0.10 : 0;
+            const rate = Math.min(0.85, 0.30 + fameBonus + feeBonus);
+            infoEl.innerHTML = '交渉成功率: <strong>' + Math.round(rate * 100) + '%</strong>';
         }
         // 他クラブの選手への直接オファー
         function makeDirectOffer() {
@@ -12249,13 +12248,13 @@
             )) return;
             const fee = offerFee;
             // 交渉成功率の計算
-            // 基本成功率 50%、名声が高いほど上昇（最大+20%）、オファー金額が高いほど上昇（最大+20%）
+            // 基本成功率 30%、名声が高いほど上昇（最大+20%）、オファー金額が高いほど上昇（最大+50%）
             const fameBonus = Math.min(0.20, (gameData.fame || 0) / 500 * 0.20);
-            // オファー金額が評価額の1.2倍以上なら+10%、1.5倍以上なら+20%
+            // オファー金額が評価額の1.1倍で+10%、1.2倍で+20%、1.3倍で+30%、1.4倍で+40%、1.5倍以上で+50%
             const marketFee = calcTransferFee(p, gameData.league);
             const feeRatio = fee / marketFee;
-            const feeBonus = feeRatio >= 1.5 ? 0.20 : feeRatio >= 1.2 ? 0.10 : 0;
-            const successRate = Math.min(0.85, 0.50 + fameBonus + feeBonus);
+            const feeBonus = feeRatio >= 1.5 ? 0.50 : feeRatio >= 1.4 ? 0.40 : feeRatio >= 1.3 ? 0.30 : feeRatio >= 1.2 ? 0.20 : feeRatio >= 1.1 ? 0.10 : 0;
+            const successRate = Math.min(0.85, 0.30 + fameBonus + feeBonus);
 
             // 名声コストは交渉失敗でも半額消費
             gameData.fame = Math.max(0, (gameData.fame || 0) - fameCost);
