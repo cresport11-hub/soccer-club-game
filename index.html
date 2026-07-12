@@ -12204,14 +12204,10 @@
                 showNotification('名声が不足しています（必要: ⭐' + fameCost + '）');
                 return;
             }
-            if (!confirm(
-                p.name + ' にオファーを出しますか？
-' +
-                '移籍金: ' + formatNumber(fee) + '円
-' +
-                '名声コスト: ⭐' + fameCost + '
-
-' +
+                        if (!confirm(
+                p.name + ' にオファーを出しますか？\n' +
+                '移籍金: ' + formatNumber(fee) + '円\n' +
+                '名声コスト: ⭐' + fameCost + '\n' +
                 '※ 相手クラブが承諾するかどうかは交渉次第です'
             )) return;
 
