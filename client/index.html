@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>タッチライン戦術室</title>
+    <link rel="icon" href="/manus-storage/club-orbit-mark_c3fb53ec.png" />
+    <style>
+      :root { color-scheme: dark; background: #031108; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-width: 320px; background: #031108; color: #edf9eb; font-family: -apple-system, BlinkMacSystemFont, "Noto Sans JP", sans-serif; }
+      #app-fallback { min-height: 100svh; padding: 18px; background: radial-gradient(circle at 82% 8%, rgba(106,215,255,.12), transparent 28%), linear-gradient(135deg,#02140a,#062113 66%,#031108); }
+      .fallback-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0 18px; border-bottom: 1px solid rgba(217,255,74,.25); }
+      .fallback-brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 18px; }
+      .fallback-brand img { width: 38px; height: 38px; object-fit: contain; }
+      .fallback-brand small, .fallback-kicker { display: block; color: #d9ff4a; font-size: 10px; letter-spacing: .16em; font-weight: 900; }
+      .fallback-state { color: #b8d5ba; font-size: 12px; text-align: right; }
+      .fallback-state b { display: block; color: #d9ff4a; font-size: 16px; margin-top: 3px; }
+      .fallback-home { max-width: 760px; margin: 42px auto; padding: 28px; border: 1px solid rgba(217,255,74,.35); border-left: 4px solid #d9ff4a; background: rgba(3,20,10,.78); box-shadow: 0 18px 54px rgba(0,0,0,.24); }
+      .fallback-home h1 { margin: 10px 0 8px; font-size: clamp(32px, 9vw, 48px); line-height: 1.18; }
+      .fallback-home p { margin: 0; color: #bdd7bf; line-height: 1.7; }
+      .fallback-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 28px 0; }
+      .fallback-card { padding: 14px; border: 1px solid rgba(106,215,255,.26); background: rgba(4,31,16,.72); }
+      .fallback-card span { display: block; color: #8eb4ff; font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+      .fallback-card b { display: block; margin-top: 8px; color: #f5c955; font-size: 22px; }
+      .fallback-retry { width: 100%; min-height: 52px; border: 0; background: #d9ff4a; color: #061709; font-size: 16px; font-weight: 900; cursor: pointer; }
+      .fallback-note { display: none; margin-top: 14px; color: #f5c955; font-size: 13px; }
+      #app-fallback.is-retry .fallback-note { display: block; }
+      @media (max-width: 520px) { #app-fallback { padding: 16px; } .fallback-header { align-items: flex-start; } .fallback-brand { font-size: 16px; } .fallback-home { margin: 28px 0; padding: 22px; } .fallback-grid { grid-template-columns: 1fr; } .fallback-card { display: flex; align-items: baseline; justify-content: space-between; } .fallback-card b { margin-top: 0; } }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <main id="app-fallback" aria-live="polite">
+        <header class="fallback-header"><div class="fallback-brand"><img src="/manus-storage/club-orbit-mark_c3fb53ec.png" alt="" /><div><small>TOUCHLINE</small>オービット東京</div></div><div class="fallback-state">MATCHDAY<b>ホーム</b></div></header>
+        <section class="fallback-home"><span class="fallback-kicker">CLUBHOUSE / HOME</span><h1>指揮官の戦術室</h1><p>次節の戦術、スタメン、クラブ状態をこの画面から確認できます。</p><div class="fallback-grid"><div class="fallback-card"><span>NEXT FIXTURE</span><b>第1節</b></div><div class="fallback-card"><span>CLUB FUND</span><b>¥3.2M</b></div><div class="fallback-card"><span>FAN PULSE</span><b>42%</b></div></div><button class="fallback-retry" type="button" onclick="window.location.reload()">戦術室を開く</button><p class="fallback-note">画面を再読み込みしています。通信が不安定な場合は、しばらく待ってからもう一度お試しください。</p></section>
+      </main>
+    </div>
+    <script>window.addEventListener('error', function () { document.getElementById('app-fallback')?.classList.add('is-retry'); });</script>
+    <script type="module" src="/src/main.tsx"></script>
+    <script defer src="%VITE_ANALYTICS_ENDPOINT%/umami" data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
+  </body>
+</html>
