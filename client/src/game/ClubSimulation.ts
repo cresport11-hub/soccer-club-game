@@ -98,7 +98,7 @@ export type TacticalMatchup = { label: string; playerAttackModifier: number; pla
 export type ScoutTacticalFit = { score: number; grade: "戦術の核" | "高適合" | "起用可能" | "調整が必要"; formation: number; mentality: number; playingStyle: number; chemistry: number; formationLabel: string; mentalityLabel: string; playingStyleLabel: string; strengths: string[]; concern: string };
 export type RecruitmentPriority = { position: Player["position"]; score: number; grade: "最優先" | "高" | "中" | "低"; demand: number; coverage: number; available: number; averagePower: number; injuryCount: number; fatigueRisk: number; contractRisk: number; ageRisk: number; reasons: string[] };
 export type MarketCandidateComparison = { player: Player; tacticalFit: ScoutTacticalFit; recruitmentPriority: RecruitmentPriority; openingFee: number; annualImpact: number; status: "閲覧中" | "市場候補" };
-export type MarketBudgetSimulation = { candidate: Player | null; transferFee: number; annualSalary: number; weeklySalaryImpact: number; renewalReserve: number; cashBefore: number; cashAfterTransfer: number; cashAfterReserve: number; canAffordTransfer: boolean; canCoverReserve: boolean };
+export type MarketUpdateNotice = { week: number; candidateIds: string[]; requestedPositions: Player["position"][] };
 export type ContractAlert = { player: Player; positionPriority: RecruitmentPriority; renewalFee: number; years: number; urgency: "至急" | "要判断"; note: string };
 
 export type LeagueRow = {
@@ -163,7 +163,7 @@ export type MarkingMatchImpact = { attackModifier: number; defenseModifier: numb
 export type IndividualBonusEntry = { playerId: string; player: string; appearance: number; goals: number; amount: number };
 export type IndividualBonusReceipt = { total: number; entries: IndividualBonusEntry[] };
 export type PlayerSeasonStat = { playerId: string; player: string; position: string; appearances: number; starts: number; goals: number; assists: number; ratingTotal: number; ratingCount: number; mvpAwards: number };
-export type MatchHighlight = { minute: number; kind: "kickoff" | "goal" | "tactic" | "substitution" | "injury" | "halftime" | "fulltime"; team: "orbit" | "opponent" | "neutral"; text: string; scorer?: string; assistant?: string };
+export type MatchHighlight = { minute: number; kind: "kickoff" | "action" | "goal" | "tactic" | "substitution" | "injury" | "halftime" | "fulltime"; team: "orbit" | "opponent" | "neutral"; text: string; scorer?: string; assistant?: string };
 export type HalfTimeReport = { playerGoals: number; opponentGoals: number; message: string; tacticalNote: string; recommendation: string };
 export type MatchResult = { opponent: string; opponentId: string; playerGoals: number; opponentGoals: number; message: string; won: boolean; reward: number; sponsorRevenue: number; cupResult: CupMatchResult | null; gate: GateReceipt; merchandise: MerchandiseReceipt; membership: MembershipReceipt; concession: ConcessionReceipt; totalTicketRevenue: number; totalAttendance: number; totalCommercialRevenue: number; popularityDelta: number; leaguePopularityDelta: number; popularity: number; tactics: TacticalAssessment; opponentTactics: OpponentTacticalAssessment; tacticalMatchup: TacticalMatchup; markingImpact: MarkingMatchImpact; matchAttack: number; matchDefense: number; matchCondition: TeamMatchCondition; conditionAfter: TeamMatchCondition; halfTime: HalfTimeReport; highlights: MatchHighlight[]; substitutions: MatchSubstitution[]; injuries: MatchInjury[]; playerRatings: PlayerMatchRating[]; markDuels: MarkDuelReport[]; mvp: PlayerMatchRating | null; individualBonuses: IndividualBonusReceipt; skillXpGrants: SkillXpGrant[]; halfTimeChanges: string[] };
 
@@ -193,6 +193,10 @@ type Persisted = {
   trainingSessionsThisWeek?: number;
   trainingFacilityLevel?: number;
   marketSignedIds?: string[];
+  marketCandidateIds?: string[];
+  marketPreferredPositions?: Player["position"][];
+  marketCandidateCycle?: number;
+  marketUpdateNotice?: MarketUpdateNotice | null;
   youthPlayers?: YouthPlayer[];
   seasonStats?: PlayerSeasonStat[];
   scoutLevel?: number;
@@ -389,6 +393,10 @@ export class ClubSimulation {
   private injuries: Record<string, number> = {};
   private recruitNegotiation = initialRecruitNegotiation();
   private marketSignedIds: string[] = [];
+  private marketCandidateIds: string[] = [];
+  private marketPreferredPositions: Player["position"][] = [];
+  private marketCandidateCycle = 0;
+  private pendingMarketUpdateNotice: MarketUpdateNotice | null = null;
   private youthPlayers: YouthPlayer[] = youthProspects.map((player) => this.scoutYouthProspect(player));
   private youthIntakeCursor = 0;
   private saleOffers = initialSaleOffers();
@@ -402,6 +410,7 @@ export class ClubSimulation {
 
   constructor() {
     this.load();
+    this.ensureMarketCandidateList();
     this.autoLineup();
   }
 
@@ -429,8 +438,13 @@ export class ClubSimulation {
     this.ledger = [{ week: 0, label: "開幕運転資金", category: "繰越資金", amount: 3200000, kind: "income", note: "クラブの初期運転資金" }];
     this.cashTrail = [3200000];
     this.injuries = {};
-    this.recruitNegotiation = initialRecruitNegotiation();
     this.marketSignedIds = [];
+    this.marketCandidateIds = marketRecruits.map((player) => player.id);
+    this.marketPreferredPositions = [];
+    this.marketCandidateCycle = 0;
+    this.pendingMarketUpdateNotice = null;
+    this.recruitNegotiation = initialRecruitNegotiation();
+    this.ensureMarketCandidateList();
     this.youthPlayers = youthProspects.map((player) => this.scoutYouthProspect(player));
     this.youthIntakeCursor = 0;
     this.saleOffers = initialSaleOffers();
@@ -492,10 +506,19 @@ export class ClubSimulation {
   get isRecruited() { return this.recruited; }
   get lineupState() { return this.lineup; }
   get currentSponsor() { return this.sponsor; }
-  get currentMarketCandidate() { const available = marketRecruits.filter((player) => !this.marketSignedIds.includes(player.id)); const base = available.length ? available[Math.floor(this.week / 3) % available.length] : null; return base ? this.scoutCandidate(base) : null; }
+  get currentMarketCandidate() { const base = this.marketCandidates[0] ?? null; return base ? this.scoutCandidate(base) : null; }
   get currentMarketTacticalFit() { const candidate = this.currentMarketCandidate; return candidate ? this.scoutTacticalFit(candidate) : null; }
   get marketCandidateComparison() { return this.buildMarketCandidateComparison(); }
-  get marketBudgetSimulation() { return this.buildMarketBudgetSimulation(); }
+  get selectedMarketPositions() { return [...this.marketPreferredPositions]; }
+  get marketNextRefreshWeek() { return this.week + this.marketRefreshIn; }
+  get marketUpdateNotice() {
+    if (!this.pendingMarketUpdateNotice) return null;
+    const candidates = this.pendingMarketUpdateNotice.candidateIds
+      .map((id) => marketRecruits.find((player) => player.id === id))
+      .filter((player): player is Player => player !== undefined)
+      .map((player) => this.scoutCandidate(player));
+    return { ...this.pendingMarketUpdateNotice, candidates };
+  }
   get contractAlerts() { return this.buildContractAlerts(); }
   get recruitmentPriorities() { return this.recruitmentPriorityBoard(); }
   get currentMarketRecruitmentMatch() { const candidate = this.currentMarketCandidate; if (!candidate) return null; const matches = this.recruitmentPriorities.filter((priority) => priority.position === candidate.position || priority.position === candidate.secondary).sort((a, b) => b.score - a.score); const priority = matches[0]; return priority ? { priority, score: priority.score, label: priority.grade, note: `${candidate.name}は現在${priority.grade === "最優先" ? "最優先の" : `${priority.grade}優先の`}${priority.position}補強に合致します。` } : null; }
@@ -1277,6 +1300,69 @@ export class ClubSimulation {
     return candidate;
   }
 
+  setMarketPreferredPosition(position: Player["position"]) {
+    const current = new Set(this.marketPreferredPositions);
+    if (current.has(position)) current.delete(position); else current.add(position);
+    this.marketPreferredPositions = Array.from(current);
+    this.persist();
+    const nextRefresh = this.marketNextRefreshWeek;
+    const selected = this.marketPreferredPositions.join(" / ");
+    return { ok: true, text: this.marketPreferredPositions.length ? `${selected}を希望ポジションに登録しました。第${nextRefresh}節の市場更新で該当選手だけを一覧にします。` : `希望ポジションを解除しました。第${nextRefresh}節は全ポジションから候補を更新します。` };
+  }
+
+  clearMarketPreferredPositions() {
+    if (!this.marketPreferredPositions.length) return { ok: false, text: "希望ポジションは選択されていません。" };
+    this.marketPreferredPositions = [];
+    this.persist();
+    return { ok: true, text: `希望ポジションをすべて解除しました。第${this.marketNextRefreshWeek}節は全ポジションから候補を更新します。` };
+  }
+
+  dismissMarketUpdateNotice() {
+    if (!this.pendingMarketUpdateNotice) return null;
+    const notice = this.marketUpdateNotice;
+    this.pendingMarketUpdateNotice = null;
+    this.persist();
+    return notice;
+  }
+
+  private get marketCandidates() {
+    return this.marketCandidateIds
+      .map((id) => marketRecruits.find((player) => player.id === id))
+      .filter((player): player is Player => player !== undefined && !this.marketSignedIds.includes(player.id));
+  }
+
+  private buildMarketCandidateIds() {
+    const available = marketRecruits.filter((player) => !this.marketSignedIds.includes(player.id));
+    const requested = this.marketPreferredPositions.length
+      ? available.filter((player) => this.marketPreferredPositions.includes(player.position) || (player.secondary !== undefined && this.marketPreferredPositions.includes(player.secondary)))
+      : available;
+    const pool = this.marketPreferredPositions.length ? requested : available;
+    if (!pool.length) return [];
+    const offset = (Math.floor(this.week / 3) * 4) % pool.length;
+    return [...pool.slice(offset), ...pool.slice(0, offset)].slice(0, Math.min(4, pool.length)).map((player) => player.id);
+  }
+
+  private ensureMarketCandidateList() {
+    const expectedCycle = Math.floor(this.week / 3) * 3;
+    const candidateIdsAreValid = this.marketCandidateIds.length > 0 && this.marketCandidateIds.every((id) => marketRecruits.some((player) => player.id === id));
+    if (candidateIdsAreValid && this.marketCandidateCycle === expectedCycle) return;
+    this.marketCandidateCycle = expectedCycle;
+    this.marketCandidateIds = this.buildMarketCandidateIds();
+    const candidate = this.marketCandidates[0];
+    this.recruitNegotiation = candidate ? initialRecruitNegotiation(candidate) : initialRecruitNegotiation();
+  }
+
+  private refreshMarketCandidates(notify = false) {
+    this.marketCandidateCycle = this.week;
+    this.marketCandidateIds = this.buildMarketCandidateIds();
+    const candidate = this.marketCandidates[0];
+    this.recruitNegotiation = candidate ? initialRecruitNegotiation(candidate) : initialRecruitNegotiation();
+    if (notify) this.pendingMarketUpdateNotice = { week: this.week, candidateIds: [...this.marketCandidateIds], requestedPositions: [...this.marketPreferredPositions] };
+    return this.marketPreferredPositions.length
+      ? `希望ポジション（${this.marketPreferredPositions.join(" / ")}）に限定して${this.marketCandidateIds.length}名の市場候補を更新。`
+      : `${this.marketCandidateIds.length}名の市場候補を更新。`;
+  }
+
   private scoutCandidate(candidate: Player): Player {
     const facility = this.scoutFacility;
     const boost = facility.ratingBoost;
@@ -1353,23 +1439,12 @@ export class ClubSimulation {
   private buildMarketCandidateComparison(): MarketCandidateComparison[] {
     const priorities = this.recruitmentPriorities;
     const currentId = this.currentMarketCandidate?.id;
-    return marketRecruits.filter((player) => !this.marketSignedIds.includes(player.id)).map((player) => {
+    return this.marketCandidates.map((player) => {
       const scouted = this.scoutCandidate(player);
       const priority = priorities.filter((item) => item.position === scouted.position || item.position === scouted.secondary).sort((a, b) => b.score - a.score)[0] ?? priorities.at(-1)!;
       const status: MarketCandidateComparison["status"] = scouted.id === currentId ? "閲覧中" : "市場候補";
       return { player: scouted, tacticalFit: this.scoutTacticalFit(scouted), recruitmentPriority: priority, openingFee: Math.round(scouted.salary * .82), annualImpact: scouted.salary, status };
     }).sort((a, b) => b.recruitmentPriority.score - a.recruitmentPriority.score || b.tacticalFit.score - a.tacticalFit.score || a.openingFee - b.openingFee);
-  }
-
-  private buildMarketBudgetSimulation(): MarketBudgetSimulation {
-    const candidate = this.currentMarketCandidate;
-    const negotiation = this.currentRecruitNegotiation;
-    const transferFee = candidate ? negotiation?.stage === "agreed" ? negotiation.agreedFee ?? negotiation.counterOffer : negotiation?.stage === "countered" ? negotiation.counterOffer : negotiation?.openingOffer ?? Math.round(candidate.salary * .82) : 0;
-    const annualSalary = candidate?.salary ?? 0;
-    const renewalReserve = this.contractDuePlayers.reduce((sum, player) => sum + this.contractRenewalFee(player), 0);
-    const cashAfterTransfer = this.money - transferFee;
-    const cashAfterReserve = cashAfterTransfer - renewalReserve;
-    return { candidate, transferFee, annualSalary, weeklySalaryImpact: Math.round(annualSalary / 52), renewalReserve, cashBefore: this.money, cashAfterTransfer, cashAfterReserve, canAffordTransfer: cashAfterTransfer >= 0, canCoverReserve: cashAfterReserve >= 0 };
   }
 
   private buildContractAlerts(): ContractAlert[] {
@@ -1543,7 +1618,6 @@ export class ClubSimulation {
     const opponentGoals = clamp(Math.round(((opponentTactics.attack + tacticalMatchup.opponentAttackModifier) - matchDefense + 22 + deterministic(this.week + 18) * 20) / 21), 0, 4);
     const matchFlow = this.createMatchFlow(playerGoals, opponentGoals, opponent.name, tactics, opponentTactics, tacticalMatchup, matchCondition);
     matchFlow.halfTime.tacticalNote += ` / ${markingImpact.summary} / ${matchCondition.summary}`;
-    matchFlow.highlights.push({ minute: 18, kind: "tactic", team: "orbit", text: `${markingImpact.summary}。${markingImpact.reason}` });
     matchFlow.highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind));
     const injuries = this.createMatchInjuries(matchFlow.highlights, this.week);
     const reward = playerGoals > opponentGoals ? 245000 : playerGoals === opponentGoals ? 105000 : 48000;
@@ -1646,6 +1720,7 @@ export class ClubSimulation {
     recoveringPlayers.forEach((playerId) => { if (!this.injuries[playerId]) return; this.injuries[playerId] -= 1; const player = this.roster.find((item) => item.id === playerId); if (this.injuries[playerId] <= 0) { delete this.injuries[playerId]; if (player) delete player.injuryWeeks; } else if (player) player.injuryWeeks = this.injuries[playerId]; });
     this.week += 1;
     this.saleOffers = this.saleOffers.filter((offer) => offer.expiresWeek >= this.week && this.roster.some((player) => player.id === offer.playerId));
+    const marketRefreshLog = this.week % 3 === 0 ? this.refreshMarketCandidates(true) : "";
     this.captureCashPoint();
     result.playerRatings = this.createPlayerRatings(result.highlights, result.substitutions, result.injuries);
     result.markDuels = this.createMarkDuelReports(result.opponentTactics, result.playerRatings, result.playerGoals, result.opponentGoals);
@@ -1672,7 +1747,7 @@ export class ClubSimulation {
     const skillXpLog = result.skillXpGrants.length ? ` スキルXP +${result.skillXpGrants.reduce((sum, grant) => sum + grant.xp, 0)}（${result.skillXpGrants.filter((grant) => grant.learned).map((grant) => `${grant.player}が${grant.label}を習得`).join("、") || "試合経験を蓄積"}）。` : "";
     const medicalLog = injuries.length ? ` 医療報告: ${injuries.map((injury) => `${injury.player}が${injury.weeks}週離脱`).join("、")}。` : "";
     const cupLog = cupResult ? ` カップ戦 ${cupResult.round} ${cupResult.playerGoals}-${cupResult.opponentGoals}。` : "";
-    this.logs.unshift(`第${this.week}節 ${isHome ? "HOME" : "AWAY"} ${opponent.name}戦 ${playerGoals}-${opponentGoals}。賞金 ${reward.toLocaleString()}円を獲得。${sponsorLog}${gateLog}${goodsLog}${concessionLog}${membershipLog}${salaryLog}${bonusLog}${personalBonusLog}${skillXpLog}${fanLog}${tacticsLog}${medicalLog}${cupLog}`);
+    this.logs.unshift(`第${this.week}節 ${isHome ? "HOME" : "AWAY"} ${opponent.name}戦 ${playerGoals}-${opponentGoals}。賞金 ${reward.toLocaleString()}円を獲得。${sponsorLog}${gateLog}${goodsLog}${concessionLog}${membershipLog}${salaryLog}${bonusLog}${personalBonusLog}${skillXpLog}${fanLog}${tacticsLog}${medicalLog}${cupLog}${marketRefreshLog ? ` ${marketRefreshLog}` : ""}`);
     this.persist();
     return result;
   }
@@ -1711,17 +1786,14 @@ export class ClubSimulation {
   private createMatchFlow(playerGoals: number, opponentGoals: number, opponentName: string, tactics: TacticalAssessment, opponentTactics: OpponentTacticalAssessment, tacticalMatchup: TacticalMatchup, matchCondition: TeamMatchCondition, matchWeek = this.week, fixedHalf?: Pick<HalfTimeReport, "playerGoals" | "opponentGoals">): { halfTime: HalfTimeReport; highlights: MatchHighlight[] } {
     const playerFirst = fixedHalf?.playerGoals ?? clamp(Math.round(playerGoals * (.38 + deterministic(matchWeek + 61) * .25)), 0, playerGoals);
     const opponentFirst = fixedHalf?.opponentGoals ?? clamp(Math.round(opponentGoals * (.38 + deterministic(matchWeek + 83) * .25)), 0, opponentGoals);
-    const highlights: MatchHighlight[] = [
-      { minute: 1, kind: "kickoff", team: "neutral", text: `${tactics.formationLabel}・${tactics.playingStyleLabel} vs ${opponentTactics.formationLabel}・${opponentTactics.playingStyleLabel}でキックオフ。` },
-      { minute: 9, kind: "tactic", team: matchCondition.isHome ? "orbit" : "opponent", text: `${matchCondition.summary}。${matchCondition.reason}` },
-      { minute: 14, kind: "tactic", team: "orbit", text: `${tacticalMatchup.label}。${tacticalMatchup.note}` },
-      { minute: 22, kind: "tactic", team: "opponent", text: `${opponentName}は${opponentTactics.trait}。${opponentTactics.roles.slice(0, 3).join(" / ")}を軸に組み立てる。` },
-      { minute: 29, kind: "tactic", team: "orbit", text: `${tactics.cbRoleSummary} / ${tactics.sbRoleSummary} / ${tactics.gkRoleSummary}。最終ラインとGKが役割を共有し、危険なスペースを消している。` },
-      ...(tactics.skillDetails.some((skill) => skill.active) ? [{ minute: 33, kind: "tactic" as const, team: "orbit" as const, text: `${tactics.skillSummary}。個の強みを現在の作戦へ接続し、局面の優位をつくっている。` }] : []),
-      ...(tactics.sideLinkDetails.length ? [{ minute: 37, kind: "tactic" as const, team: "orbit" as const, text: `${tactics.sideLinkSummary}。サイドの距離感を保ち、前進の出口をつくっている。` }] : []),
-      ...(tactics.midfieldPressDetail.active ? [{ minute: 41, kind: "tactic" as const, team: "orbit" as const, text: `${tactics.midfieldPressSummary}。中央の距離を詰め、一斉にボールへ寄せている。` }] : []),
+    const goalHighlights = [
       ...this.goalHighlights("orbit", playerGoals, playerFirst, opponentName, tactics, opponentTactics, 101, matchWeek),
       ...this.goalHighlights("opponent", opponentGoals, opponentFirst, opponentName, tactics, opponentTactics, 211, matchWeek),
+    ];
+    const highlights: MatchHighlight[] = [
+      { minute: 1, kind: "kickoff", team: "neutral", text: "キックオフ。両チームが主導権を求めてボールを動かし始めた。" },
+      ...this.keyPlayHighlights(opponentName, opponentTactics, matchWeek, goalHighlights.map((item) => item.minute), playerGoals, opponentGoals, playerFirst, opponentFirst),
+      ...goalHighlights,
     ];
     const scoreAtHalf = `${playerFirst}-${opponentFirst}`;
     const halfTime: HalfTimeReport = {
@@ -1732,8 +1804,119 @@ export class ClubSimulation {
       recommendation: playerFirst > opponentFirst ? "試合を急がず、連携を保って相手の前進を受け止めよう。" : playerFirst === opponentFirst ? `後半は${tactics.playingStyleLabel}の狙いを継続し、決定機を一つずつ増やそう。` : tactics.mentality === "defensive" ? "得点が必要な時間帯。攻守意識をバランス以上へ引き上げる選択もある。" : "失点リスクを抑えつつ、前線へ届ける本数を増やそう。",
     };
     highlights.push({ minute: 45, kind: "halftime", team: "neutral", text: halfTime.message });
+    highlights.push({ minute: 46, kind: "kickoff", team: "neutral", text: "後半開始。両チームが再び前線へ人数をかけ、試合が動き出した。" });
     highlights.push({ minute: 90, kind: "fulltime", team: "neutral", text: `試合終了。オービット東京 ${playerGoals}-${opponentGoals} ${opponentName}。` });
     return { halfTime, highlights: highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind)) };
+  }
+
+  private keyPlayHighlights(opponentName: string, opponentTactics: OpponentTacticalAssessment, matchWeek: number, blockedMinutes: number[], playerGoals: number, opponentGoals: number, playerFirst: number, opponentFirst: number): MatchHighlight[] {
+    const orbitAttackers = this.startingPlayers().filter((player) => player.position !== "GK").sort((a, b) => this.attackPower(b) - this.attackPower(a));
+    const opponentAttackers = opponentTactics.lineup.filter((player) => player.position !== "GK").sort((a, b) => b.attack - a.attack);
+    const ownGoalkeeper = this.startingPlayers().find((player) => player.position === "GK")?.name ?? "守護神";
+    const ownDefender = this.startingPlayers().filter((player) => ["CB", "SB", "DM"].includes(player.position)).sort((a, b) => this.defensePower(b) - this.defensePower(a))[0]?.name ?? "最終ライン";
+    if (!orbitAttackers.length || !opponentAttackers.length) return [];
+    const usedMinutes = new Set([1, 45, 46, 90, ...blockedMinutes]);
+    const firstHalfGoalCount = blockedMinutes.filter((minute) => minute >= 2 && minute <= 44).length;
+    const secondHalfGoalCount = blockedMinutes.filter((minute) => minute >= 47 && minute <= 89).length;
+    // キックオフ／終了を含めて各ハーフ10件を基本にし、ゴール数に応じて重要プレー数を調整する。
+    const tenseMatch = Math.abs(playerGoals - opponentGoals) <= 1 || playerGoals + opponentGoals >= 3 || Math.abs(playerFirst - opponentFirst) <= 1;
+    const actionBase = tenseMatch ? 6 : 8;
+    const firstHalfActionCount = Math.max(0, actionBase - firstHalfGoalCount);
+    const secondHalfActionCount = Math.max(0, actionBase - secondHalfGoalCount);
+    const allocateMinute = (base: number, min: number, max: number, seed: number) => {
+      const desired = clamp(base + Math.round(deterministic(seed) * 4) - 2, min, max);
+      for (let distance = 0; distance <= max - min; distance += 1) {
+        const later = desired + distance;
+        if (later <= max && !usedMinutes.has(later)) {
+          usedMinutes.add(later);
+          return later;
+        }
+        const earlier = desired - distance;
+        if (earlier >= min && !usedMinutes.has(earlier)) {
+          usedMinutes.add(earlier);
+          return earlier;
+        }
+      }
+      return desired;
+    };
+    const createHalfMinutes = (bases: number[], count: number, min: number, max: number, seedOffset: number) => Array.from({ length: count }, (_, index) => {
+      const baseIndex = count <= 1 ? Math.floor(bases.length / 2) : Math.round((index * (bases.length - 1)) / (count - 1));
+      return allocateMinute(bases[baseIndex], min, max, matchWeek * 31 + 331 + seedOffset + index);
+    });
+    const minutes = [
+      ...createHalfMinutes([5, 10, 15, 20, 25, 30, 35, 40], firstHalfActionCount, 3, 44, 0),
+      ...createHalfMinutes([49, 54, 59, 64, 69, 74, 79, 84], secondHalfActionCount, 47, 89, 32),
+    ];
+    const baseHighlights = minutes.map((minute, index) => {
+      const orbitAction = deterministic(matchWeek * 37 + 401 + index) >= .43;
+      const orbitCreator = orbitAttackers[(index + 1) % orbitAttackers.length];
+      const orbitFinisher = orbitAttackers[(index + 2) % orbitAttackers.length];
+      const opponentCreator = opponentAttackers[(index + 1) % opponentAttackers.length];
+      const opponentFinisher = opponentAttackers[(index + 2) % opponentAttackers.length];
+      const orbitPlays = [
+        `${orbitCreator.name}が右サイドを華麗なドリブルで崩し、鋭いクロス。${orbitFinisher.name}が飛び込むが、シュートは惜しくも枠を外れる！`,
+        `${orbitCreator.name}が中盤で相手をかわして${orbitFinisher.name}へスルーパス。抜け出した${orbitFinisher.name}のシュートはGKの好セーブに阻まれた！`,
+        `${orbitCreator.name}のコーナーキックに${orbitFinisher.name}が競り勝つ。高い打点のヘディングは、ゴールライン手前でかき出された！`,
+        `${orbitCreator.name}が左サイドでワンツーから抜け出し、マイナスの折り返し。${orbitFinisher.name}のダイレクトシュートは、わずかにサイドネット！`,
+        `${orbitCreator.name}が高い位置でボールを奪い、${orbitFinisher.name}へ素早く預ける。振り抜いたミドルシュートはGKが弾き出した！`,
+        `${orbitCreator.name}が相手の寄せを外してペナルティエリアへ侵入。${orbitFinisher.name}へ送ったラストパスは、相手DFが寸前でカットした！`,
+        `${orbitCreator.name}がカウンターを加速させ、${orbitFinisher.name}が裏へ抜け出す。角度のない位置からのシュートは、GKが足で止めた！`,
+        `${orbitCreator.name}の鋭いクロスに${orbitFinisher.name}が頭で合わせる。ボールはクロスバーをわずかに越えていった！`,
+        `${orbitCreator.name}がタッチライン際で巧みに収め、切り返しからクロス。${orbitFinisher.name}のボレーは相手DFに当たってコーナーへ逃れた！`,
+        `${orbitCreator.name}が素早いリスタートから前を向き、${orbitFinisher.name}へ浮き球のパス。胸で収めた${orbitFinisher.name}の一撃はGKの正面！`,
+        `${orbitCreator.name}が中央をドリブルで運び、${orbitFinisher.name}とパスを交換。ペナルティエリア手前からのシュートは、わずかにポストの外！`,
+        `${orbitCreator.name}のFKがゴール前へ落ちる。${orbitFinisher.name}が混戦で押し込もうとするが、GKが間一髪でキャッチした！`,
+      ];
+      const opponentPlays = [
+        `${opponentName}の${opponentCreator.name}がサイドを抜け出してクロス。${opponentFinisher.name}が合わせるが、${ownGoalkeeper}が横っ飛びで防いだ！`,
+        `${opponentName}の${opponentCreator.name}が鋭い縦パスを通す。${opponentFinisher.name}の強烈なシュートは、わずかに枠の外へ！`,
+        `${opponentName}の${opponentCreator.name}がこぼれ球を拾い、${opponentFinisher.name}へラストパス。至近距離の一撃を${ownGoalkeeper}が体を張って止めた！`,
+        `${opponentName}の${opponentCreator.name}のコーナーキックに${opponentFinisher.name}が競り勝つ。ヘディングシュートは、クロスバーの上へ！`,
+        `${opponentName}の${opponentCreator.name}がワンツーで中央を突破。${opponentFinisher.name}のシュートは${ownDefender}が身を投げ出してブロックした！`,
+        `${opponentName}の${opponentCreator.name}が切り返しから右足を振り抜く。鋭いミドルシュートを${ownGoalkeeper}が片手でかき出した！`,
+        `${opponentName}の${opponentCreator.name}が速攻から折り返し。${opponentFinisher.name}の決定的な一撃は、${ownDefender}がゴール前でクリア！`,
+        `${opponentName}の${opponentCreator.name}が最終ラインの背後へロングパス。${opponentFinisher.name}が狙うが、${ownGoalkeeper}が飛び出して先に収めた！`,
+        `${opponentName}の${opponentCreator.name}がタッチライン際で巧みにキープし、深い位置からクロス。${opponentFinisher.name}のボレーは${ownDefender}に当たってコーナーへ！`,
+        `${opponentName}の${opponentCreator.name}が素早いリスタートで前を向き、${opponentFinisher.name}へ浮き球のパス。胸で収めた${opponentFinisher.name}の一撃を${ownGoalkeeper}が正面で抑えた！`,
+        `${opponentName}の${opponentCreator.name}が中央をドリブルで運び、${opponentFinisher.name}とパスを交換。ペナルティエリア手前からのシュートは、ポストの外へ外れた！`,
+        `${opponentName}の${opponentCreator.name}のFKがゴール前へ落ちる。${opponentFinisher.name}が混戦で押し込もうとするが、${ownGoalkeeper}が間一髪でキャッチした！`,
+      ];
+      const playIndex = index % orbitPlays.length;
+      return { minute, kind: "action" as const, team: orbitAction ? "orbit" as const : "opponent" as const, text: orbitAction ? orbitPlays[playIndex] : opponentPlays[playIndex] };
+    });
+    const sequenceHighlights: MatchHighlight[] = [];
+    if (tenseMatch) {
+      const sequenceBases = [[16, 20], [31, 35], [58, 62], [73, 77]];
+      sequenceBases.forEach(([base, counterBase], sequenceIndex) => {
+        const firstHalf = sequenceIndex < 2;
+        const min = firstHalf ? 3 : 47;
+        const max = firstHalf ? 44 : 89;
+        const firstMinute = allocateMinute(base, min, max, matchWeek * 43 + 501 + sequenceIndex);
+        const counterMinute = allocateMinute(counterBase, min, max, matchWeek * 43 + 511 + sequenceIndex);
+        const orbitCreator = orbitAttackers[(sequenceIndex + 2) % orbitAttackers.length];
+        const orbitFinisher = orbitAttackers[(sequenceIndex + 3) % orbitAttackers.length];
+        const opponentCreator = opponentAttackers[(sequenceIndex + 2) % opponentAttackers.length];
+        const opponentFinisher = opponentAttackers[(sequenceIndex + 3) % opponentAttackers.length];
+        const orbitFirst = deterministic(matchWeek * 47 + 521 + sequenceIndex) >= .5;
+        sequenceHighlights.push({
+          minute: firstMinute,
+          kind: "action",
+          team: orbitFirst ? "orbit" : "opponent",
+          text: orbitFirst
+            ? `${orbitCreator.name}が縦へ仕掛け、${orbitFinisher.name}がゴール前へ飛び込む。シュートは相手GKの反応に阻まれた！`
+            : `${opponentName}の${opponentCreator.name}が一気に前進し、${opponentFinisher.name}が決定的な一撃。${ownGoalkeeper}が間一髪で防いだ！`,
+        });
+        sequenceHighlights.push({
+          minute: counterMinute,
+          kind: "action",
+          team: orbitFirst ? "opponent" : "orbit",
+          text: orbitFirst
+            ? `${opponentName}がこぼれ球から即座に反撃。${opponentCreator.name}の折り返しを${ownDefender}が体を張ってクリアした！`
+            : `${orbitCreator.name}が奪い返してカウンター。${orbitFinisher.name}のシュートはわずかに枠を外れた！`,
+        });
+      });
+    }
+    return [...baseHighlights, ...sequenceHighlights];
   }
 
   private goalHighlights(team: "orbit" | "opponent", goals: number, firstHalfGoals: number, opponentName: string, tactics: TacticalAssessment, opponentTactics: OpponentTacticalAssessment, seed: number, matchWeek: number): MatchHighlight[] {
@@ -1747,12 +1930,11 @@ export class ClubSimulation {
       const scorer = scorerPlayer?.name ?? opponentAttacker?.name ?? (team === "orbit" ? "オービット東京" : `${opponentName}のFW`);
       const assistant = team === "orbit" && attackers.length > 1 ? attackers[(index + 1) % attackers.length].name : undefined;
       const role = scorerPlayer ? this.matchRoleFor(scorerPlayer) : null;
-      const activeSkill = scorerPlayer ? tactics.skillDetails.find((skill) => skill.playerId === scorerPlayer.id && skill.active) : null;
-      const buildUp = team === "orbit" && tactics.sideLinkAttack >= 2 && index % 2 === 0 ? "SH・WGとSBが同サイドで連動し、外側のレーンを切り裂いた。" : team === "orbit" && tactics.midfieldPressDetail.active && index % 2 === 1 ? "六枚の中盤が一斉に奪い、ショートカウンターへつなげた。" : tactics.playingStyle === "direct" ? "ダイレクトな縦パスから、最終ラインの背後を突いた。" : tactics.playingStyle === "press" ? "高い位置でボールを奪い切り、ショートカウンターへ移る。" : "連携したパスワークで守備を外した。";
-      const opponentBuildUp = opponentTactics.playingStyle === "direct" ? "素早い縦への切り替えで、最終ラインの背後を取った。" : opponentTactics.playingStyle === "press" ? "高い位置での奪回から、間を置かずに前へ出た。" : "中盤でパスをつなぎ、守備ブロックの間を通した。";
+      const buildUp = tactics.sideLinkAttack >= 2 && index % 2 === 0 ? `${assistant ?? scorer}がサイドを崩してクロスを送った。` : tactics.midfieldPressDetail.active && index % 2 === 1 ? `${assistant ?? scorer}が高い位置でボールを奪い、素早く前へ運んだ。` : tactics.playingStyle === "direct" ? `${assistant ?? scorer}が縦パスで最終ラインの背後を突いた。` : tactics.playingStyle === "press" ? `${assistant ?? scorer}が敵陣で奪い返し、すぐにチャンスへつなげた。` : `${assistant ?? scorer}が細かなパス交換で守備を崩した。`;
+      const opponentBuildUp = opponentTactics.playingStyle === "direct" ? `${opponentName}が素早い縦パスで背後を取った。` : opponentTactics.playingStyle === "press" ? `${opponentName}が高い位置で奪い返し、すぐに攻め込んだ。` : `${opponentName}が中盤でパスをつなぎ、守備の間を通した。`;
       const text = team === "orbit"
-        ? `${scorer}${assistant ? `（${assistant}のアシスト）` : ""}。${buildUp}${activeSkill ? `【${activeSkill.label}】${activeSkill.highlight}` : ""}${role ? `${role.label}として${role.finishCopy} ゴール！` : "ネットを揺らす！"}`
-        : `${scorer}。${opponentBuildUp}${opponentAttacker ? `${opponentAttacker.position}の${opponentAttacker.role}として仕留めた。` : `${opponentName}がチャンスを仕留めた。`}`;
+        ? `${buildUp}${scorer}が${role?.finishCopy ?? "ゴール右隅へ流し込み"}、ネットを揺らした！ ゴール！`
+        : `${opponentBuildUp}${scorer}が${opponentAttacker?.role.includes("ターゲット") ? "競り合いを制してヘディングを叩き込み" : "冷静にシュートを流し込み"}、ゴール！`;
       highlights.push({ minute, kind: "goal", team, text, scorer, assistant });
     }
     return highlights;
@@ -2006,6 +2188,7 @@ export class ClubSimulation {
     this.cup = initialCup();
     this.lastResult = null;
     this.saleOffers = initialSaleOffers();
+    this.refreshMarketCandidates();
     this.roster.forEach((player) => { player.contractYears = Math.max(1, (player.contractYears ?? defaultContractYears(player)) - 1); });
     const contractDue = this.contractDuePlayers.length;
     const newcomers = this.replenishYouthPlayers();
@@ -2244,7 +2427,7 @@ export class ClubSimulation {
   }
 
   private persist() {
-    const saved: Persisted = { money: this.money, fame: this.fame, week: this.week, formationId: this.formationId, lineup: this.lineup, players: this.roster, rows: this.rows, logs: this.logs, recruited: this.recruited, sponsor: this.sponsor, cup: this.cup, popularity: this.popularity, teamMorale: this.teamMorale, recentMatchForm: this.recentMatchForm, concessionLevel: this.concessionLevel, scoutLevel: this.scoutLevel, trainingFacilityLevel: this.trainingFacilityLevel, trainingSessionsThisWeek: this.trainingSessionsThisWeek, youthIntakeCursor: this.youthIntakeCursor, ledger: this.ledger, cashTrail: this.cashTrail, mentality: this.mentality, playingStyle: this.playingStyle, injuries: this.injuries, recruitNegotiation: this.recruitNegotiation, saleOffers: this.saleOffers, trainingHistory: this.trainingHistory, lastTrainingWeek: this.lastTrainingWeek, marketSignedIds: this.marketSignedIds, youthPlayers: this.youthPlayers, seasonStats: this.seasonStats, manualMarkAssignments: this.manualMarkAssignments };
+    const saved: Persisted = { money: this.money, fame: this.fame, week: this.week, formationId: this.formationId, lineup: this.lineup, players: this.roster, rows: this.rows, logs: this.logs, recruited: this.recruited, sponsor: this.sponsor, cup: this.cup, popularity: this.popularity, teamMorale: this.teamMorale, recentMatchForm: this.recentMatchForm, concessionLevel: this.concessionLevel, scoutLevel: this.scoutLevel, trainingFacilityLevel: this.trainingFacilityLevel, trainingSessionsThisWeek: this.trainingSessionsThisWeek, youthIntakeCursor: this.youthIntakeCursor, ledger: this.ledger, cashTrail: this.cashTrail, mentality: this.mentality, playingStyle: this.playingStyle, injuries: this.injuries, recruitNegotiation: this.recruitNegotiation, saleOffers: this.saleOffers, trainingHistory: this.trainingHistory, lastTrainingWeek: this.lastTrainingWeek, marketSignedIds: this.marketSignedIds, marketCandidateIds: this.marketCandidateIds, marketPreferredPositions: this.marketPreferredPositions, marketCandidateCycle: this.marketCandidateCycle, marketUpdateNotice: this.pendingMarketUpdateNotice, youthPlayers: this.youthPlayers, seasonStats: this.seasonStats, manualMarkAssignments: this.manualMarkAssignments };
     saved.assignedScoutId = this.assignedScoutId;
     try { localStorage.setItem(storageKey, JSON.stringify(saved)); } catch { /* Private mode or storage restrictions must not block gameplay. */ }
   }
@@ -2256,7 +2439,7 @@ export class ClubSimulation {
       const parsed = JSON.parse(raw) as Persisted;
       if (!this.hasUsableSave(parsed)) throw new Error("Invalid save data");
       this.money = parsed.money; this.fame = parsed.fame; this.week = parsed.week; this.formationId = parsed.formationId; this.lineup = parsed.lineup; this.roster = this.hydrateOpeningRoster(parsed.players, parsed.week); this.rows = parsed.rows; this.logs = parsed.logs; this.recruited = parsed.recruited;
-      this.sponsor = parsed.sponsor ?? null; this.cup = parsed.cup ?? initialCup(); this.popularity = parsed.popularity ?? 42; this.teamMorale = clamp(Math.round(finiteOr(parsed.teamMorale, 58)), 0, 100); this.recentMatchForm = Array.isArray(parsed.recentMatchForm) ? parsed.recentMatchForm.filter((entry): entry is RecentMatchForm => !!entry && ["W", "D", "L"].includes(entry.outcome) && Number.isFinite(entry.margin) && (entry.competition === "リーグ" || entry.competition === "カップ")).slice(0, 5).map((entry) => ({ outcome: entry.outcome, margin: clamp(Math.round(entry.margin), -5, 5), competition: entry.competition })) : []; this.concessionLevel = clamp(parsed.concessionLevel ?? 1, 1, concessionLevels.length); this.scoutLevel = clamp(parsed.scoutLevel ?? 1, 1, scoutLevels.length); this.assignedScoutId = scoutStaff.some((staff) => staff.id === parsed.assignedScoutId) ? parsed.assignedScoutId! : "scout-forward"; this.trainingFacilityLevel = clamp(parsed.trainingFacilityLevel ?? 1, 1, trainingFacilityLevels.length); this.trainingSessionsThisWeek = Math.max(0, Math.round(finiteOr(parsed.trainingSessionsThisWeek, 0))); this.youthIntakeCursor = Math.max(0, Math.round(finiteOr(parsed.youthIntakeCursor, 0))); this.lastTrainingWeek = typeof parsed.lastTrainingWeek === "number" && Number.isFinite(parsed.lastTrainingWeek) && parsed.lastTrainingWeek >= 0 ? Math.round(parsed.lastTrainingWeek) : null; this.mentality = mentalityOptions.some((item) => item.id === parsed.mentality) ? parsed.mentality! : "balanced"; this.playingStyle = playingStyleOptions.some((item) => item.id === parsed.playingStyle) ? parsed.playingStyle! : "possession"; this.injuries = parsed.injuries ?? Object.fromEntries(this.roster.filter((player) => (player.injuryWeeks ?? 0) > 0).map((player) => [player.id, player.injuryWeeks!])); this.ledger = parsed.ledger?.length ? parsed.ledger : [{ week: parsed.week, label: "既存シーズン繰越", category: "繰越資金", amount: parsed.money, kind: "income", note: "財務ダッシュボード導入前の残高" }]; this.cashTrail = parsed.cashTrail?.length ? parsed.cashTrail : [parsed.money]; this.marketSignedIds = this.hydrateMarketSignedIds(parsed.marketSignedIds, parsed.recruited); this.recruitNegotiation = this.hydrateRecruitNegotiation(parsed.recruitNegotiation, parsed.recruited); this.saleOffers = this.hydrateSaleOffers(parsed.saleOffers); this.trainingHistory = this.hydrateTrainingHistory(parsed.trainingHistory); this.youthPlayers = this.hydrateYouthPlayers(parsed.youthPlayers); this.seasonStats = this.hydrateSeasonStats(parsed.seasonStats); this.manualMarkAssignments = Object.fromEntries(Object.entries(parsed.manualMarkAssignments ?? {}).filter(([, playerId]) => typeof playerId === "string" && this.roster.some((player) => player.id === playerId)));
+      this.sponsor = parsed.sponsor ?? null; this.cup = parsed.cup ?? initialCup(); this.popularity = parsed.popularity ?? 42; this.teamMorale = clamp(Math.round(finiteOr(parsed.teamMorale, 58)), 0, 100); this.recentMatchForm = Array.isArray(parsed.recentMatchForm) ? parsed.recentMatchForm.filter((entry): entry is RecentMatchForm => !!entry && ["W", "D", "L"].includes(entry.outcome) && Number.isFinite(entry.margin) && (entry.competition === "リーグ" || entry.competition === "カップ")).slice(0, 5).map((entry) => ({ outcome: entry.outcome, margin: clamp(Math.round(entry.margin), -5, 5), competition: entry.competition })) : []; this.concessionLevel = clamp(parsed.concessionLevel ?? 1, 1, concessionLevels.length); this.scoutLevel = clamp(parsed.scoutLevel ?? 1, 1, scoutLevels.length); this.assignedScoutId = scoutStaff.some((staff) => staff.id === parsed.assignedScoutId) ? parsed.assignedScoutId! : "scout-forward"; this.trainingFacilityLevel = clamp(parsed.trainingFacilityLevel ?? 1, 1, trainingFacilityLevels.length); this.trainingSessionsThisWeek = Math.max(0, Math.round(finiteOr(parsed.trainingSessionsThisWeek, 0))); this.youthIntakeCursor = Math.max(0, Math.round(finiteOr(parsed.youthIntakeCursor, 0))); this.lastTrainingWeek = typeof parsed.lastTrainingWeek === "number" && Number.isFinite(parsed.lastTrainingWeek) && parsed.lastTrainingWeek >= 0 ? Math.round(parsed.lastTrainingWeek) : null; this.mentality = mentalityOptions.some((item) => item.id === parsed.mentality) ? parsed.mentality! : "balanced"; this.playingStyle = playingStyleOptions.some((item) => item.id === parsed.playingStyle) ? parsed.playingStyle! : "possession"; this.injuries = parsed.injuries ?? Object.fromEntries(this.roster.filter((player) => (player.injuryWeeks ?? 0) > 0).map((player) => [player.id, player.injuryWeeks!])); this.ledger = parsed.ledger?.length ? parsed.ledger : [{ week: parsed.week, label: "既存シーズン繰越", category: "繰越資金", amount: parsed.money, kind: "income", note: "財務ダッシュボード導入前の残高" }]; this.cashTrail = parsed.cashTrail?.length ? parsed.cashTrail : [parsed.money]; this.marketSignedIds = this.hydrateMarketSignedIds(parsed.marketSignedIds, parsed.recruited); this.marketPreferredPositions = Array.isArray(parsed.marketPreferredPositions) ? Array.from(new Set(parsed.marketPreferredPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)))) : []; this.marketCandidateIds = Array.isArray(parsed.marketCandidateIds) ? Array.from(new Set(parsed.marketCandidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)))) : []; this.marketCandidateCycle = Math.max(0, Math.round(finiteOr(parsed.marketCandidateCycle, -1))); const savedMarketNotice = parsed.marketUpdateNotice; this.pendingMarketUpdateNotice = savedMarketNotice && Number.isFinite(savedMarketNotice.week) && Array.isArray(savedMarketNotice.candidateIds) ? { week: Math.max(0, Math.round(savedMarketNotice.week)), candidateIds: savedMarketNotice.candidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)), requestedPositions: Array.isArray(savedMarketNotice.requestedPositions) ? savedMarketNotice.requestedPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)) : [] } : null; this.recruitNegotiation = this.hydrateRecruitNegotiation(parsed.recruitNegotiation, parsed.recruited); this.saleOffers = this.hydrateSaleOffers(parsed.saleOffers); this.trainingHistory = this.hydrateTrainingHistory(parsed.trainingHistory); this.youthPlayers = this.hydrateYouthPlayers(parsed.youthPlayers); this.seasonStats = this.hydrateSeasonStats(parsed.seasonStats); this.manualMarkAssignments = Object.fromEntries(Object.entries(parsed.manualMarkAssignments ?? {}).filter(([, playerId]) => typeof playerId === "string" && this.roster.some((player) => player.id === playerId)));
     } catch {
       try { localStorage.removeItem(storageKey); } catch { /* Storage may be disabled; the initial state remains usable. */ }
       this.resetToInitialState();
