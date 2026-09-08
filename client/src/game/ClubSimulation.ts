@@ -196,6 +196,7 @@ type Persisted = {
   marketCandidateIds?: string[];
   marketPreferredPositions?: Player["position"][];
   marketCandidateCycle?: number;
+  marketSelectedCandidateId?: string | null;
   marketUpdateNotice?: MarketUpdateNotice | null;
   youthPlayers?: YouthPlayer[];
   seasonStats?: PlayerSeasonStat[];
@@ -403,6 +404,7 @@ export class ClubSimulation {
   private marketCandidateIds: string[] = [];
   private marketPreferredPositions: Player["position"][] = [];
   private marketCandidateCycle = 0;
+  private selectedMarketCandidateId: string | null = null;
   private pendingMarketUpdateNotice: MarketUpdateNotice | null = null;
   private youthPlayers: YouthPlayer[] = youthProspects.map((player) => this.scoutYouthProspect(player));
   private youthIntakeCursor = 0;
@@ -450,6 +452,7 @@ export class ClubSimulation {
     this.marketCandidateIds = marketRecruits.map((player) => player.id);
     this.marketPreferredPositions = [];
     this.marketCandidateCycle = 0;
+    this.selectedMarketCandidateId = null;
     this.pendingMarketUpdateNotice = null;
     this.recruitNegotiation = initialRecruitNegotiation();
     this.ensureMarketCandidateList();
@@ -515,9 +518,10 @@ export class ClubSimulation {
   get isRecruited() { return this.recruited; }
   get lineupState() { return this.lineup; }
   get currentSponsor() { return this.sponsor; }
-  get currentMarketCandidate() { const base = this.marketCandidates[0] ?? null; return base ? this.scoutCandidate(base) : null; }
+  get currentMarketCandidate() { const base = (this.selectedMarketCandidateId ? this.marketCandidates.find((player) => player.id === this.selectedMarketCandidateId) : undefined) ?? this.marketCandidates[0] ?? null; return base ? this.scoutCandidate(base) : null; }
   get currentMarketTacticalFit() { const candidate = this.currentMarketCandidate; return candidate ? this.scoutTacticalFit(candidate) : null; }
   get marketCandidateComparison() { return this.buildMarketCandidateComparison(); }
+  get selectedMarketCandidateIdValue() { return this.currentMarketCandidate?.id ?? null; }
   get selectedMarketPositions() { return [...this.marketPreferredPositions]; }
   get marketNextRefreshWeek() { return this.week + this.marketRefreshIn; }
   get marketUpdateNotice() {
@@ -1313,6 +1317,14 @@ export class ClubSimulation {
     return { ok: true, text: `${player.name}をトップチームへ昇格しました。` };
   }
 
+  selectMarketCandidate(candidateId: string) {
+    const candidate = this.marketCandidates.find((player) => player.id === candidateId);
+    if (!candidate) return { ok: false, text: "この候補は現在の市場リストにありません。" };
+    this.selectedMarketCandidateId = candidate.id;
+    this.persist();
+    return { ok: true, text: `${candidate.name}のスカウトデータを表示しました。` };
+  }
+
   private ensureCurrentRecruitNegotiation() {
     const candidate = this.currentMarketCandidate;
     if (!candidate) return null;
@@ -1369,6 +1381,7 @@ export class ClubSimulation {
     this.marketCandidateCycle = expectedCycle;
     this.marketCandidateIds = this.buildMarketCandidateIds();
     const candidate = this.marketCandidates[0];
+    this.selectedMarketCandidateId = candidate?.id ?? null;
     this.recruitNegotiation = candidate ? initialRecruitNegotiation(candidate) : initialRecruitNegotiation();
   }
 
@@ -1376,6 +1389,7 @@ export class ClubSimulation {
     this.marketCandidateCycle = this.week;
     this.marketCandidateIds = this.buildMarketCandidateIds();
     const candidate = this.marketCandidates[0];
+    this.selectedMarketCandidateId = candidate?.id ?? null;
     this.recruitNegotiation = candidate ? initialRecruitNegotiation(candidate) : initialRecruitNegotiation();
     if (notify) this.pendingMarketUpdateNotice = { week: this.week, candidateIds: [...this.marketCandidateIds], requestedPositions: [...this.marketPreferredPositions] };
     return this.marketPreferredPositions.length
@@ -2447,7 +2461,7 @@ export class ClubSimulation {
   }
 
   private persist() {
-    const saved: Persisted = { money: this.money, fame: this.fame, week: this.week, clubName: this.clubName, formationId: this.formationId, lineup: this.lineup, players: this.roster, rows: this.rows, logs: this.logs, recruited: this.recruited, sponsor: this.sponsor, cup: this.cup, popularity: this.popularity, teamMorale: this.teamMorale, recentMatchForm: this.recentMatchForm, concessionLevel: this.concessionLevel, scoutLevel: this.scoutLevel, trainingFacilityLevel: this.trainingFacilityLevel, trainingSessionsThisWeek: this.trainingSessionsThisWeek, youthIntakeCursor: this.youthIntakeCursor, ledger: this.ledger, cashTrail: this.cashTrail, mentality: this.mentality, playingStyle: this.playingStyle, injuries: this.injuries, recruitNegotiation: this.recruitNegotiation, saleOffers: this.saleOffers, trainingHistory: this.trainingHistory, lastTrainingWeek: this.lastTrainingWeek, marketSignedIds: this.marketSignedIds, marketCandidateIds: this.marketCandidateIds, marketPreferredPositions: this.marketPreferredPositions, marketCandidateCycle: this.marketCandidateCycle, marketUpdateNotice: this.pendingMarketUpdateNotice, youthPlayers: this.youthPlayers, seasonStats: this.seasonStats, manualMarkAssignments: this.manualMarkAssignments };
+    const saved: Persisted = { money: this.money, fame: this.fame, week: this.week, clubName: this.clubName, formationId: this.formationId, lineup: this.lineup, players: this.roster, rows: this.rows, logs: this.logs, recruited: this.recruited, sponsor: this.sponsor, cup: this.cup, popularity: this.popularity, teamMorale: this.teamMorale, recentMatchForm: this.recentMatchForm, concessionLevel: this.concessionLevel, scoutLevel: this.scoutLevel, trainingFacilityLevel: this.trainingFacilityLevel, trainingSessionsThisWeek: this.trainingSessionsThisWeek, youthIntakeCursor: this.youthIntakeCursor, ledger: this.ledger, cashTrail: this.cashTrail, mentality: this.mentality, playingStyle: this.playingStyle, injuries: this.injuries, recruitNegotiation: this.recruitNegotiation, saleOffers: this.saleOffers, trainingHistory: this.trainingHistory, lastTrainingWeek: this.lastTrainingWeek, marketSignedIds: this.marketSignedIds, marketCandidateIds: this.marketCandidateIds, marketPreferredPositions: this.marketPreferredPositions, marketCandidateCycle: this.marketCandidateCycle, marketSelectedCandidateId: this.selectedMarketCandidateId, marketUpdateNotice: this.pendingMarketUpdateNotice, youthPlayers: this.youthPlayers, seasonStats: this.seasonStats, manualMarkAssignments: this.manualMarkAssignments };
     saved.assignedScoutId = this.assignedScoutId;
     try { localStorage.setItem(storageKey, JSON.stringify(saved)); } catch { /* Private mode or storage restrictions must not block gameplay. */ }
   }
@@ -2459,7 +2473,8 @@ export class ClubSimulation {
       const parsed = JSON.parse(raw) as Persisted;
       if (!this.hasUsableSave(parsed)) throw new Error("Invalid save data");
       this.money = parsed.money; this.fame = parsed.fame; this.week = parsed.week; this.clubName = normalizeClubName(parsed.clubName); this.formationId = parsed.formationId; this.lineup = parsed.lineup; this.roster = this.hydrateOpeningRoster(parsed.players, parsed.week); this.rows = parsed.rows.map((row) => row.id === userClub.id ? { ...row, name: this.clubName } : row); this.logs = parsed.logs; this.recruited = parsed.recruited;
-      this.sponsor = parsed.sponsor ?? null; this.cup = parsed.cup ?? initialCup(); this.popularity = parsed.popularity ?? 42; this.teamMorale = clamp(Math.round(finiteOr(parsed.teamMorale, 58)), 0, 100); this.recentMatchForm = Array.isArray(parsed.recentMatchForm) ? parsed.recentMatchForm.filter((entry): entry is RecentMatchForm => !!entry && ["W", "D", "L"].includes(entry.outcome) && Number.isFinite(entry.margin) && (entry.competition === "リーグ" || entry.competition === "カップ")).slice(0, 5).map((entry) => ({ outcome: entry.outcome, margin: clamp(Math.round(entry.margin), -5, 5), competition: entry.competition })) : []; this.concessionLevel = clamp(parsed.concessionLevel ?? 1, 1, concessionLevels.length); this.scoutLevel = clamp(parsed.scoutLevel ?? 1, 1, scoutLevels.length); this.assignedScoutId = scoutStaff.some((staff) => staff.id === parsed.assignedScoutId) ? parsed.assignedScoutId! : "scout-forward"; this.trainingFacilityLevel = clamp(parsed.trainingFacilityLevel ?? 1, 1, trainingFacilityLevels.length); this.trainingSessionsThisWeek = Math.max(0, Math.round(finiteOr(parsed.trainingSessionsThisWeek, 0))); this.youthIntakeCursor = Math.max(0, Math.round(finiteOr(parsed.youthIntakeCursor, 0))); this.lastTrainingWeek = typeof parsed.lastTrainingWeek === "number" && Number.isFinite(parsed.lastTrainingWeek) && parsed.lastTrainingWeek >= 0 ? Math.round(parsed.lastTrainingWeek) : null; this.mentality = mentalityOptions.some((item) => item.id === parsed.mentality) ? parsed.mentality! : "balanced"; this.playingStyle = playingStyleOptions.some((item) => item.id === parsed.playingStyle) ? parsed.playingStyle! : "possession"; this.injuries = parsed.injuries ?? Object.fromEntries(this.roster.filter((player) => (player.injuryWeeks ?? 0) > 0).map((player) => [player.id, player.injuryWeeks!])); this.ledger = parsed.ledger?.length ? parsed.ledger : [{ week: parsed.week, label: "既存シーズン繰越", category: "繰越資金", amount: parsed.money, kind: "income", note: "財務ダッシュボード導入前の残高" }]; this.cashTrail = parsed.cashTrail?.length ? parsed.cashTrail : [parsed.money]; this.marketSignedIds = this.hydrateMarketSignedIds(parsed.marketSignedIds, parsed.recruited); this.marketPreferredPositions = Array.isArray(parsed.marketPreferredPositions) ? Array.from(new Set(parsed.marketPreferredPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)))) : []; this.marketCandidateIds = Array.isArray(parsed.marketCandidateIds) ? Array.from(new Set(parsed.marketCandidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)))) : []; this.marketCandidateCycle = Math.max(0, Math.round(finiteOr(parsed.marketCandidateCycle, -1))); const savedMarketNotice = parsed.marketUpdateNotice; this.pendingMarketUpdateNotice = savedMarketNotice && Number.isFinite(savedMarketNotice.week) && Array.isArray(savedMarketNotice.candidateIds) ? { week: Math.max(0, Math.round(savedMarketNotice.week)), candidateIds: savedMarketNotice.candidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)), requestedPositions: Array.isArray(savedMarketNotice.requestedPositions) ? savedMarketNotice.requestedPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)) : [] } : null; this.recruitNegotiation = this.hydrateRecruitNegotiation(parsed.recruitNegotiation, parsed.recruited); this.saleOffers = this.hydrateSaleOffers(parsed.saleOffers); this.trainingHistory = this.hydrateTrainingHistory(parsed.trainingHistory); this.youthPlayers = this.hydrateYouthPlayers(parsed.youthPlayers); this.seasonStats = this.hydrateSeasonStats(parsed.seasonStats); this.manualMarkAssignments = Object.fromEntries(Object.entries(parsed.manualMarkAssignments ?? {}).filter(([, playerId]) => typeof playerId === "string" && this.roster.some((player) => player.id === playerId)));
+      this.sponsor = parsed.sponsor ?? null; this.cup = parsed.cup ?? initialCup(); this.popularity = parsed.popularity ?? 42; this.teamMorale = clamp(Math.round(finiteOr(parsed.teamMorale, 58)), 0, 100); this.recentMatchForm = Array.isArray(parsed.recentMatchForm) ? parsed.recentMatchForm.filter((entry): entry is RecentMatchForm => !!entry && ["W", "D", "L"].includes(entry.outcome) && Number.isFinite(entry.margin) && (entry.competition === "リーグ" || entry.competition === "カップ")).slice(0, 5).map((entry) => ({ outcome: entry.outcome, margin: clamp(Math.round(entry.margin), -5, 5), competition: entry.competition })) : []; this.concessionLevel = clamp(parsed.concessionLevel ?? 1, 1, concessionLevels.length); this.scoutLevel = clamp(parsed.scoutLevel ?? 1, 1, scoutLevels.length); this.assignedScoutId = scoutStaff.some((staff) => staff.id === parsed.assignedScoutId) ? parsed.assignedScoutId! : "scout-forward"; this.trainingFacilityLevel = clamp(parsed.trainingFacilityLevel ?? 1, 1, trainingFacilityLevels.length); this.trainingSessionsThisWeek = Math.max(0, Math.round(finiteOr(parsed.trainingSessionsThisWeek, 0))); this.youthIntakeCursor = Math.max(0, Math.round(finiteOr(parsed.youthIntakeCursor, 0))); this.lastTrainingWeek = typeof parsed.lastTrainingWeek === "number" && Number.isFinite(parsed.lastTrainingWeek) && parsed.lastTrainingWeek >= 0 ? Math.round(parsed.lastTrainingWeek) : null; this.mentality = mentalityOptions.some((item) => item.id === parsed.mentality) ? parsed.mentality! : "balanced"; this.playingStyle = playingStyleOptions.some((item) => item.id === parsed.playingStyle) ? parsed.playingStyle! : "possession"; this.injuries = parsed.injuries ?? Object.fromEntries(this.roster.filter((player) => (player.injuryWeeks ?? 0) > 0).map((player) => [player.id, player.injuryWeeks!])); this.ledger = parsed.ledger?.length ? parsed.ledger : [{ week: parsed.week, label: "既存シーズン繰越", category: "繰越資金", amount: parsed.money, kind: "income", note: "財務ダッシュボード導入前の残高" }]; this.cashTrail = parsed.cashTrail?.length ? parsed.cashTrail : [parsed.money]; this.marketSignedIds = this.hydrateMarketSignedIds(parsed.marketSignedIds, parsed.recruited); this.marketPreferredPositions = Array.isArray(parsed.marketPreferredPositions) ? Array.from(new Set(parsed.marketPreferredPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)))) : []; this.marketCandidateIds = Array.isArray(parsed.marketCandidateIds) ? Array.from(new Set(parsed.marketCandidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)))) : []; this.marketCandidateCycle = Math.max(0, Math.round(finiteOr(parsed.marketCandidateCycle, -1)));     this.selectedMarketCandidateId = typeof parsed.marketSelectedCandidateId === "string" && this.marketCandidateIds.includes(parsed.marketSelectedCandidateId) ? parsed.marketSelectedCandidateId : this.marketCandidateIds[0] ?? null;
+    const savedMarketNotice = parsed.marketUpdateNotice; this.pendingMarketUpdateNotice = savedMarketNotice && Number.isFinite(savedMarketNotice.week) && Array.isArray(savedMarketNotice.candidateIds) ? { week: Math.max(0, Math.round(savedMarketNotice.week)), candidateIds: savedMarketNotice.candidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)), requestedPositions: Array.isArray(savedMarketNotice.requestedPositions) ? savedMarketNotice.requestedPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)) : [] } : null; this.recruitNegotiation = this.hydrateRecruitNegotiation(parsed.recruitNegotiation, parsed.recruited); this.saleOffers = this.hydrateSaleOffers(parsed.saleOffers); this.trainingHistory = this.hydrateTrainingHistory(parsed.trainingHistory); this.youthPlayers = this.hydrateYouthPlayers(parsed.youthPlayers); this.seasonStats = this.hydrateSeasonStats(parsed.seasonStats); this.manualMarkAssignments = Object.fromEntries(Object.entries(parsed.manualMarkAssignments ?? {}).filter(([, playerId]) => typeof playerId === "string" && this.roster.some((player) => player.id === playerId)));
     } catch {
       try { localStorage.removeItem(storageKey); } catch { /* Storage may be disabled; the initial state remains usable. */ }
       this.resetToInitialState();

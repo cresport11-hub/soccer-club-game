@@ -40,6 +40,25 @@ describe("ClubSimulation match commentary", () => {
     expect(secondHalfGoals.length).toBe(result.playerGoals + result.opponentGoals - firstHalfGoals.length);
   });
 
+  it("switches the market dossier and negotiation target when a candidate is selected", () => {
+    const simulation = new ClubSimulation();
+    const currentId = simulation.selectedMarketCandidateIdValue;
+    const target = simulation.marketCandidateComparison.find((item) => item.player.id !== currentId);
+    expect(target).toBeDefined();
+
+    const selection = simulation.selectMarketCandidate(target!.player.id);
+    expect(selection.ok).toBe(true);
+    expect(simulation.selectedMarketCandidateIdValue).toBe(target!.player.id);
+    expect(simulation.currentMarketCandidate?.name).toBe(target!.player.name);
+    expect(simulation.currentRecruitNegotiation?.candidateId).toBe(target!.player.id);
+    expect(simulation.marketCandidateComparison.find((item) => item.player.id === target!.player.id)?.status).toBe("閲覧中");
+    expect(simulation.marketCandidateComparison.find((item) => item.player.id === currentId)?.status).toBe("市場候補");
+
+    const restoredSimulation = new ClubSimulation();
+    expect(restoredSimulation.selectedMarketCandidateIdValue).toBe(target!.player.id);
+    expect(restoredSimulation.currentMarketTacticalFit?.score).toBe(target!.tacticalFit.score);
+  });
+
   it("persists a renamed club across simulation instances and match reports", () => {
     const firstSimulation = new ClubSimulation();
     const update = firstSimulation.setClubName("  ブライト 札幌  ");

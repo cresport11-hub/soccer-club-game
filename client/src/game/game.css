@@ -237,3 +237,13 @@ button { font: inherit; }
 .settings-example span { color:var(--gold); font-size:8px; font-weight:900; letter-spacing:.12em; }
 .settings-example b { color:#f0f7e8; font-size:12px; overflow-wrap:anywhere; }
 @media (max-width:700px) { .settings-layout { grid-template-columns:1fr; gap:12px; }.club-name-panel, .settings-help-card { padding:14px; }.club-name-panel h2 { font-size:22px; }.club-name-panel .primary-action { width:100%; min-height:42px; }.club-name-field input { min-height:48px; font-size:16px; } }
+
+/* Market candidates are interactive scouting profiles: the active row stays visually anchored while the detail dossier updates below. */
+.market-selection-note { margin: 8px 0 0; padding: 8px 10px; border-left: 2px solid var(--lime); color: #a9c6ad; background: rgba(217,255,74,.06); font-size: 9px; line-height: 1.55; }
+.market-selection-note b { color: var(--lime); }
+.candidate-compare-row { width: 100%; border-right: 0; border-bottom: 0; border-left: 0; outline: none; appearance: none; font: inherit; text-align: left; cursor: pointer; transition: background .18s ease, border-color .18s ease, color .18s ease; }
+.candidate-compare-row:hover { background: rgba(106,215,255,.08); }
+.candidate-compare-row:focus-visible { position: relative; z-index: 1; box-shadow: inset 0 0 0 2px rgba(217,255,74,.75); }
+.candidate-compare-row.is-current { border-left: 2px solid var(--lime); padding-left: 2px; }
+.candidate-compare-row.is-current strong i { color: var(--lime); }
+@media (max-width:600px) { .market-selection-note { font-size: 8px; margin-top: 7px; }.candidate-compare-row { min-height: 56px; } }
