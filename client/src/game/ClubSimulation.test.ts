@@ -39,4 +39,18 @@ describe("ClubSimulation match commentary", () => {
     expect(opponentGoals.length).toBe(result.opponentGoals);
     expect(secondHalfGoals.length).toBe(result.playerGoals + result.opponentGoals - firstHalfGoals.length);
   });
+
+  it("persists a renamed club across simulation instances and match reports", () => {
+    const firstSimulation = new ClubSimulation();
+    const update = firstSimulation.setClubName("  ブライト 札幌  ");
+    expect(update.ok).toBe(true);
+    expect(firstSimulation.clubNameValue).toBe("ブライト 札幌");
+
+    const restoredSimulation = new ClubSimulation();
+    expect(restoredSimulation.clubNameValue).toBe("ブライト 札幌");
+    expect(restoredSimulation.leagueRows.find((row) => row.id === "orbit")?.name).toBe("ブライト 札幌");
+
+    const result = restoredSimulation.advanceWeek();
+    expect(result.highlights.some((item) => item.kind === "fulltime" && item.text.includes("ブライト 札幌"))).toBe(true);
+  });
 });

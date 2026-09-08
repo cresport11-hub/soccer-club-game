@@ -217,3 +217,23 @@ button { font: inherit; }
 
 /* Candidate filter: ice-blue marks the selected position lens, lime is primary fit, and gold is secondary fit. */
 .candidate-filter { display:grid; gap:8px; margin:12px 0 13px; padding:11px 12px; border:1px solid rgba(106,215,255,.24); border-left:2px solid #6ad7ff; background:rgba(3,25,17,.52); }.candidate-filter > span { color:#6ad7ff; font-size:8px; font-weight:900; letter-spacing:.14em; }.candidate-filter > div { display:flex; flex-wrap:wrap; gap:5px; }.candidate-filter button { min-height:30px; padding:0 9px; color:#a8c4ab; border:1px solid rgba(198,232,202,.18); background:rgba(2,16,9,.48); font-size:9px; font-weight:800; transition:transform .16s cubic-bezier(.23,1,.32,1),background .16s,border-color .16s,color .16s; }.candidate-filter button:hover { color:#eaffdf; border-color:rgba(106,215,255,.55); }.candidate-filter button.is-selected { color:#082b35; border-color:#6ad7ff; background:#6ad7ff; }.candidate-filter p { margin:0; color:#8eaba0; font-size:9px; line-height:1.5; }.position-fit { display:inline-flex; width:fit-content; margin-top:5px; padding:3px 6px; font-size:7px; font-weight:900; letter-spacing:.05em; }.position-fit.primary { color:#173109; border:1px solid rgba(217,255,74,.65); background:var(--lime); }.position-fit.secondary { color:#30240a; border:1px solid rgba(245,201,85,.65); background:var(--gold); }@media (max-width:600px) { .candidate-filter { padding:10px; }.candidate-filter > div { gap:4px; }.candidate-filter button { min-height:31px; padding:0 8px; font-size:8px; }.candidate-filter p { font-size:8px; }.position-fit { font-size:7px; } }
+
+/* Club identity settings keep the rename flow compact on mobile while making the saved name visible at a glance. */
+.settings-layout { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(240px,.75fr); gap:16px; max-width:1080px; margin:0 auto 18px; }
+.club-name-panel, .settings-help-card { display:grid; align-content:start; gap:12px; }
+.club-name-panel { border-top:2px solid var(--lime); }
+.club-name-panel h2, .settings-help-card h3 { margin:0; color:#f0faee; font:900 clamp(20px,2.6vw,30px)/1.2 "Zen Kaku Gothic New",sans-serif; }
+.settings-help-card h3 { font-size:20px; }
+.club-name-panel p, .settings-help-card p { margin:0; color:#abc6ae; font-size:10px; line-height:1.7; }
+.club-name-field { display:grid; gap:6px; }
+.club-name-field span, .club-name-preview span { color:var(--lime); font-size:8px; font-weight:900; letter-spacing:.13em; }
+.club-name-field input { width:100%; min-height:46px; padding:10px 12px; border:1px solid rgba(217,255,74,.42); outline:none; color:#f2f9ed; background:rgba(1,18,9,.8); font:700 16px/1.2 "Noto Sans JP",sans-serif; }
+.club-name-field input:focus { border-color:var(--lime); box-shadow:0 0 0 2px rgba(217,255,74,.16); }
+.club-name-preview { display:grid; gap:4px; padding:11px 12px; border-left:2px solid #6ad7ff; background:rgba(106,215,255,.07); }
+.club-name-preview strong { color:#eaf6e6; font-size:17px; overflow-wrap:anywhere; }
+.club-name-panel .primary-action { width:fit-content; min-width:190px; }
+.settings-note { color:#88a88f; font-size:8px; line-height:1.5; }
+.settings-example { display:grid; gap:5px; margin-top:8px; padding:12px; border:1px solid rgba(245,201,85,.2); background:rgba(245,201,85,.06); }
+.settings-example span { color:var(--gold); font-size:8px; font-weight:900; letter-spacing:.12em; }
+.settings-example b { color:#f0f7e8; font-size:12px; overflow-wrap:anywhere; }
+@media (max-width:700px) { .settings-layout { grid-template-columns:1fr; gap:12px; }.club-name-panel, .settings-help-card { padding:14px; }.club-name-panel h2 { font-size:22px; }.club-name-panel .primary-action { width:100%; min-height:42px; }.club-name-field input { min-height:48px; font-size:16px; } }

@@ -8,11 +8,12 @@ import { formations, opponentSeeds, playerSkillCatalog, positionLabel, recruit, 
 const navItems: Array<{ id: PageId; icon: string; label: string }> = [
   { id: "home", icon: "⌂", label: "ホーム" }, { id: "lineup", icon: "◫", label: "スタメン" }, { id: "team", icon: "◎", label: "チーム" }, { id: "stats", icon: "◈", label: "成績" },
   { id: "league", icon: "▤", label: "リーグ" }, { id: "cup", icon: "♛", label: "カップ戦" }, { id: "training", icon: "↗", label: "練習" },
-  { id: "market", icon: "◇", label: "移籍市場" }, { id: "academy", icon: "✦", label: "ユース" }, { id: "sponsors", icon: "▣", label: "スポンサー" }, { id: "facilities", icon: "▥", label: "施設" }, { id: "finance", icon: "◒", label: "財務" },
+  { id: "market", icon: "◇", label: "移籍市場" }, { id: "academy", icon: "✦", label: "ユース" }, { id: "sponsors", icon: "▣", label: "スポンサー" }, { id: "facilities", icon: "▥", label: "施設" }, { id: "finance", icon: "◒", label: "財務" }, { id: "settings", icon: "⚙", label: "クラブ設定" },
 ];
 const mobileDockItems = navItems.filter((item) => ["home", "lineup", "team", "league"].includes(item.id));
 
 const formatMoney = (value: number) => `${value.toLocaleString()}円`;
+const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[character] ?? character);
 const average = (values: number[]) => values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : 0;
 const surname = (name: string) => name.trim();
 const compactSurname = (name: string) => name.trim().split(/\s+/)[0] || name;
@@ -222,6 +223,13 @@ export class GameUI {
       case "upgrade-scout": { const result = this.simulation.upgradeScoutNetwork(); this.toast = result.text; this.render(); break; }
       case "upgrade-training": { const result = this.simulation.upgradeTrainingFacility(); this.toast = result.text; this.render(); break; }
       case "save": this.toast = "クラブデータをこのブラウザに保存しました。"; this.render(); break;
+      case "save-club-name": {
+        const input = this.root.querySelector<HTMLInputElement>("[data-club-name-input]");
+        const result = this.simulation.setClubName(input?.value ?? "");
+        this.toast = result.text;
+        this.render();
+        break;
+      }
       case "reset-game": {
         if (!window.confirm("テストプレイ用にゲームを初期状態へ戻します。現在の進行状況は失われます。実行しますか？")) break;
         this.stopLiveCommentary();
@@ -452,7 +460,7 @@ export class GameUI {
     this.root.innerHTML = `
       <div class="ambient-grain"></div>
       <header class="club-header">
-        <div class="club-brand"><img src="${assets.clubMark}" alt="" /><div><span>TOUCHLINE</span><strong>オービット東京</strong></div></div>
+        <div class="club-brand"><img src="${assets.clubMark}" alt="" /><div><span>TOUCHLINE</span><strong>${escapeHtml(this.simulation.clubNameValue)}</strong></div></div>
         <div class="header-score"><span>第 ${this.simulation.currentWeek} 節</span><b>${this.simulation.teamPosition} 位</b></div>
         <div class="header-metrics"><span class="money-metric"><i>💰</i><em class="money-full">${formatMoney(this.simulation.currentMoney)}</em><em class="money-short">${Math.round(this.simulation.currentMoney / 10000).toLocaleString()}万</em></span><span>✦ ${this.simulation.currentFame}</span><span class="fan-header">♬ ${this.simulation.fanPopularity}%</span>${contractAlertCount ? `<button data-nav="team" class="header-contract-alert">契約 ${contractAlertCount}名</button>` : ""}<button data-action="save" class="icon-button" aria-label="セーブ">⌘</button></div>
         <button class="mobile-nav-toggle" data-mobile-nav aria-label="${this.mobileNavOpen ? "メニューを閉じる" : "メニューを開く"}" aria-expanded="${this.mobileNavOpen}"><i>${this.mobileNavOpen ? "×" : "☰"}</i><span>MENU</span></button>
@@ -500,6 +508,7 @@ export class GameUI {
       case "sponsors": return this.sponsorPage();
       case "facilities": return this.facilitiesPage();
       case "finance": return this.financePage();
+      case "settings": return this.settingsPage();
       default: return this.homePage(score);
     }
   }
@@ -690,6 +699,25 @@ export class GameUI {
     return `<section class="match-condition-board ${condition.isHome ? "is-home" : "is-away"}"><div class="condition-board-head"><span>${condition.isHome ? "HOME EDGE" : "AWAY PRESSURE"}</span><b>${condition.isHome ? "ホームの後押し" : "アウェーの環境"}</b></div><div class="condition-metrics"><span><i>MORALE</i><b>${condition.morale}</b><small>${condition.moraleLabel}　攻${signedValue(condition.moraleAttack)}／守${signedValue(condition.moraleDefense)}</small></span><span><i>FORM</i><b>${signedValue(condition.momentum)}</b><small>${condition.momentumLabel}　攻${signedValue(condition.momentumAttack)}／守${signedValue(condition.momentumDefense)}</small></span><span><i>VENUE</i><b>攻${signedValue(condition.homeAttack - condition.opponentHomeAttack)}</b><small>守${signedValue(condition.homeDefense - condition.opponentHomeDefense)}　人気連動</small></span></div><div class="condition-form"><span>LAST 3</span>${form}</div><p>${condition.reason}</p></section>`;
   }
 
+  private settingsPage() {
+    const clubName = escapeHtml(this.simulation.clubNameValue);
+    return `
+      ${this.pageHeading("CLUB IDENTITY", "クラブ設定", "チームの看板を整え、戦術室の名前をあなたのクラブに合わせる。")}
+      <section class="settings-layout">
+        <article class="tactical-card club-name-panel">
+          <div class="card-kicker">TEAM IDENTITY</div>
+          <h2>チーム名を変更</h2>
+          <p>ここで設定した名前は、ヘッダー、順位表、試合前のカード、実況結果、保存データへ反映されます。</p>
+          <label class="club-name-field"><span>表示名</span><input data-club-name-input type="text" value="${clubName}" maxlength="24" autocomplete="off" aria-label="チーム名" /></label>
+          <div class="club-name-preview"><span>CURRENT DISPLAY</span><strong>${clubName}</strong></div>
+          <button data-action="save-club-name" class="primary-action">この名前で保存 <b>✓</b></button>
+          <small class="settings-note">1〜24文字。前後の空白は自動で整理されます。</small>
+        </article>
+        <aside class="tactical-card settings-help-card"><div class="card-kicker">CLUBHOUSE NOTE</div><h3>名前は戦術の旗印</h3><p>クラブ名を変えても、選手、戦績、資金、移籍市場の進行はそのまま維持されます。</p><div class="settings-example"><span>試合結果</span><b>${clubName} 2 - 1 対戦クラブ</b></div></aside>
+      </section>
+    `;
+  }
+
   private homePage(score: ReturnType<ClubSimulation["score"]>) {
     const opponent = this.simulation.currentOpponent;
     const recent = this.simulation.currentLogs;
@@ -702,7 +730,7 @@ export class GameUI {
     return `
       ${this.pageHeading("DASHBOARD", "指揮官の戦術室", "全ての決断は、次の90分につながる。")}
       <section class="home-hero" style="background-image:linear-gradient(90deg,rgba(5,20,13,.96) 3%,rgba(5,20,13,.72) 43%,rgba(5,20,13,.24) 100%),url('${assets.commandCenter}')">
-        <div class="hero-copy"><span class="eyebrow">NEXT FIXTURE / WEEK ${this.simulation.currentWeek}</span><h2>オービット東京 <i>vs</i> ${opponent.name}</h2><p>${opponent.form}。現在の戦術総合値は <b>${score.total || "--"}</b>。スタメンを確認してからキックオフへ。</p><div class="venue-note ${nextGate.isHome ? "is-home" : "is-away"}"><span>${nextGate.isHome ? "⌂" : "↗"}</span>${venueCopy}</div>${this.matchConditionBoard(condition)}<div class="hero-actions"><button data-action="open-opponent-scout" class="ghost-action">相手を偵察</button><button data-nav="lineup" class="ghost-action">戦術を確認</button><button data-action="advance" class="primary-action">試合をプレイ <b>▶</b></button></div></div>
+        <div class="hero-copy"><span class="eyebrow">NEXT FIXTURE / WEEK ${this.simulation.currentWeek}</span><h2>${escapeHtml(this.simulation.clubNameValue)} <i>vs</i> ${opponent.name}</h2><p>${opponent.form}。現在の戦術総合値は <b>${score.total || "--"}</b>。スタメンを確認してからキックオフへ。</p><div class="venue-note ${nextGate.isHome ? "is-home" : "is-away"}"><span>${nextGate.isHome ? "⌂" : "↗"}</span>${venueCopy}</div>${this.matchConditionBoard(condition)}<div class="hero-actions"><button data-action="open-opponent-scout" class="ghost-action">相手を偵察</button><button data-nav="lineup" class="ghost-action">戦術を確認</button><button data-action="advance" class="primary-action">試合をプレイ <b>▶</b></button></div></div>
         <div class="hero-rival"><span class="rival-dot" style="background:${opponent.color}"></span><small>OPPONENT RATING</small><strong>${opponent.rating}</strong><em>${opponent.form}</em></div>
       </section>
       ${this.opponentDossier()}
@@ -926,7 +954,7 @@ export class GameUI {
     const rows = this.simulation.leagueRows;
     return `
       ${this.pageHeading("NATIONAL LEAGUE", "リーグ順位表", "勝点、得失点差、そして次節への執念。")}
-      <section class="league-intro tactical-card"><div><span class="card-kicker">DIVISION 5 / 20 CLUBS</span><h3>昇格圏は、上位3クラブ。</h3><p>現在のオービット東京は <b>${this.simulation.teamPosition}位</b>。毎節の結果が、クラブの物語を動かします。</p></div><div class="league-key"><span><i class="promotion"></i>昇格圏</span><span><i class="club-dot"></i>あなたのクラブ</span></div></section>
+      <section class="league-intro tactical-card"><div><span class="card-kicker">DIVISION 5 / 20 CLUBS</span><h3>昇格圏は、上位3クラブ。</h3><p>現在の${escapeHtml(this.simulation.clubNameValue)}は <b>${this.simulation.teamPosition}位</b>。毎節の結果が、クラブの物語を動かします。</p></div><div class="league-key"><span><i class="promotion"></i>昇格圏</span><span><i class="club-dot"></i>あなたのクラブ</span></div></section>
       <section class="league-table tactical-card"><div class="league-head"><span>順位 / クラブ</span><span>試</span><span>勝</span><span>分</span><span>負</span><span>得点</span><span>失点</span><span>差</span><span>勝点</span></div>${rows.map((row, index) => `<div class="league-row ${row.id === "orbit" ? "is-user" : ""} ${index < 3 ? "is-promotion" : ""}"><strong><i>${index + 1}</i><b style="background:${row.color}"></b>${row.name}</strong><span>${row.played}</span><span>${row.win}</span><span>${row.draw}</span><span>${row.loss}</span><span>${row.gf}</span><span>${row.ga}</span><span>${row.gf - row.ga > 0 ? "+" : ""}${row.gf - row.ga}</span><span><em>${row.pts}</em></span></div>`).join("")}</section>
     `;
   }
@@ -951,7 +979,7 @@ export class GameUI {
     const cup = this.simulation.cupState;
     const round = this.simulation.cupCurrentRound;
     const nextWeek = this.simulation.nextCupWeek;
-    const nameFor = (id: string) => id === "orbit" ? "オービット東京" : opponentSeeds.find((club) => club.id === id)?.name ?? "TBD";
+    const nameFor = (id: string) => id === "orbit" ? this.simulation.clubNameValue : opponentSeeds.find((club) => club.id === id)?.name ?? "TBD";
     const status = cup.status === "champion" ? "CHAMPIONS" : cup.status === "eliminated" ? "ELIMINATED" : "IN THE RUN";
     const statusCopy = cup.status === "champion" ? "クラブはカップの頂点へ。優勝賞金を獲得しました。" : cup.status === "eliminated" ? "今季のカップ戦はここで終了。リーグ戦で巻き返しましょう。" : nextWeek ? `次のカップ戦は第${nextWeek}節。ノックアウトの緊張が近づく。` : "カップ戦の全日程が完了しました。";
     return `
@@ -1106,7 +1134,7 @@ export class GameUI {
     return `<div class="match-overlay">
       <section class="match-modal halftime-modal" style="background-image:linear-gradient(180deg,rgba(3,15,10,.35),rgba(3,15,10,.95)),url('${assets.commandCenter}')">
         <span class="modal-kicker">${liveFirstHalf ? "LIVE FIRST HALF" : "HALF TIME"} / WEEK ${this.simulation.completedWeeks}</span>
-        <div class="match-crests"><div><img src="${assets.clubMark}" alt=""/><b>オービット東京</b></div><strong>${displayScore.playerGoals}<i>-</i>${displayScore.opponentGoals}</strong><div><span class="opponent-crest">◉</span><b>${result.opponent}</b></div></div>
+        <div class="match-crests"><div><img src="${assets.clubMark}" alt=""/><b>${escapeHtml(this.simulation.clubNameValue)}</b></div><strong>${displayScore.playerGoals}<i>-</i>${displayScore.opponentGoals}</strong><div><span class="opponent-crest">◉</span><b>${result.opponent}</b></div></div>
         <p>${report.message}</p>
         <section class="match-live-top" aria-live="polite"><span class="match-live-top-label">LATEST HIGHLIGHT</span>${liveFirstHalf ? this.liveCommentaryStatus(result, "first-half") : "<strong>HALF-TIME FEED</strong>"}${this.highlightsTimeline(result.highlights, true, liveFirstHalf ? this.commentaryVisibleCount : undefined)}</section>
         <section class="half-time-brief"><span>TACTICAL BRIEF</span><b>${report.tacticalNote}</b><p>${report.recommendation}</p></section>${this.matchConditionBoard(result.matchCondition)}
@@ -1134,6 +1162,6 @@ export class GameUI {
     const ratings = result.playerRatings.length ? `<section class="player-ratings"><div><span>PLAYER RATINGS</span><b>${result.playerRatings.length} PLAYERS</b></div>${result.playerRatings.slice(0, 8).map((player) => `<article class="rating-row ${player.injured ? "injured" : ""}"><strong>${surname(player.player)}<small>${positionLabel(player.position)}</small></strong><span>${player.goals ? `${player.goals}G` : ""}${player.assists ? `${player.assists}A` : ""}${player.injured ? "MED" : ""}</span><p>${player.note}</p><b>${player.rating.toFixed(1)}</b></article>`).join("")}</section>` : "";
     const duels = result.markDuels.length ? `<section class="mark-duel-report"><div class="mark-duel-head"><div><span>MARK DUEL REPORT</span><b>対人局面の振り返り</b></div><aside><i class="win">勝利 ${result.markDuels.filter((duel) => duel.outcome === "勝利").length}</i><i class="even">拮抗 ${result.markDuels.filter((duel) => duel.outcome === "拮抗").length}</i><i class="loss">苦戦 ${result.markDuels.filter((duel) => duel.outcome === "苦戦").length}</i></aside></div><p>自クラブの最終スタメンと相手の対応関係を、試合採点・対人能力・結果から再評価。</p><div class="mark-duel-list">${result.markDuels.map((duel) => `<article class="mark-duel-row ${duel.outcome === "勝利" ? "win" : duel.outcome === "苦戦" ? "loss" : "even"}"><div class="duel-player"><span>${positionLabel(duel.position)} / ORBIT</span><strong>${surname(duel.player)}</strong><small>採点 ${duel.rating.toFixed(1)}</small></div><div class="duel-battle"><b>${duel.outcome}</b><i><em style="width:${duel.activity}%"></em></i><small>活躍度 ${duel.activity} / 対決 ${duel.engagements}回・${duel.activityGrade}</small></div><div class="duel-opponent"><span>vs ${positionLabel(duel.opponentPosition)} / ${duel.opponentRole}</span><strong>${surname(duel.opponent)}</strong><small>対人差 ${signed(duel.differential)}</small></div><p>${duel.summary}</p></article>`).join("")}</div></section>` : "";
     const individualBonuses = result.individualBonuses.total ? `<section class="individual-bonus-receipt"><div><span>INDIVIDUAL BONUS</span><b>−${formatMoney(result.individualBonuses.total)}</b></div>${result.individualBonuses.entries.map((entry) => `<p><strong>${surname(entry.player)}</strong><span>${entry.appearance ? `出場 ${formatMoney(entry.appearance)}` : ""}${entry.goals ? `${entry.appearance ? " / " : ""}${entry.goals / Math.max(1, this.simulation.rosterPlayers.find((player) => player.id === entry.playerId)?.goalBonus ?? 1)}得点 ${formatMoney(entry.goals)}` : ""}</span><b>−${formatMoney(entry.amount)}</b></p>`).join("")}</section>` : "";
-    return `<div class="match-overlay"><section class="match-modal ${liveSecondHalf ? "live-match-modal" : ""}" style="background-image:linear-gradient(180deg,rgba(3,15,10,.35),rgba(3,15,10,.95)),url('${assets.commandCenter}')"><span class="modal-kicker">${liveSecondHalf ? "LIVE SECOND HALF" : "FULL TIME"} / WEEK ${this.simulation.completedWeeks}</span><div class="match-crests"><div><img src="${assets.clubMark}" alt=""/><b>オービット東京</b></div><strong>${displayPlayerGoals}<i>-</i>${displayOpponentGoals}</strong><div><span class="opponent-crest">◉</span><b>${result.opponent}</b></div></div><p>${liveSecondHalf ? "後半のプレーを実況で追跡中。最後の一行まで、戦況はまだ決まらない。" : result.message}</p>${liveSecondHalf ? `<section class="match-live-top" aria-live="polite"><span class="match-live-top-label">LATEST HIGHLIGHT</span>${this.liveCommentaryStatus(result, "second-half")}${this.highlightsTimeline(result.highlights, false, this.commentaryVisibleCount)}</section>` : `<section class="match-live-top" aria-live="polite"><span class="match-live-top-label">MATCH HIGHLIGHTS</span>${this.highlightsTimeline(result.highlights, false)}</section><section class="match-tactics"><span>GAME PLAN</span><b>${result.tactics.formationLabel} / ${result.tactics.formationTrait} / ${result.tactics.mentalityLabel}</b><p>${result.tactics.playingStyleLabel}　連携 ${result.tactics.chemistry}%　攻 ${signed(result.tactics.attackModifier)} / 守 ${signed(result.tactics.defenseModifier)}<br/>${result.tactics.sideLinkDetails.length ? `WIDE LINK-UP　攻 ${signed(result.tactics.sideLinkAttack)} / 守 ${signed(result.tactics.sideLinkDefense)}` : "WIDE LINK-UP　未発動"}<br/>${result.tactics.midfieldPressDetail.active ? `MIDFIELD PRESS　${result.tactics.midfieldPressDetail.grade}　攻 ${signed(result.tactics.midfieldPressAttack)} / 守 ${signed(result.tactics.midfieldPressDefense)}` : "MIDFIELD PRESS　準備中"}<br/><strong>OPPOSITION　${result.opponentTactics.formationLabel} / ${result.opponentTactics.mentalityLabel} / ${result.opponentTactics.playingStyleLabel}</strong><br/>${result.opponentTactics.trait}　${result.opponentTactics.roles.slice(0, 3).join(" / ")}<br/>MATCH-UP ${result.tacticalMatchup.label}　自 攻 ${signed(result.tacticalMatchup.playerAttackModifier)} / 守 ${signed(result.tacticalMatchup.playerDefenseModifier)}</p></section>${mvp}${ratings}${duels}${individualBonuses}${this.gateReceipt(result.gate)}${result.cupResult ? this.gateReceipt(result.cupResult.gate, `CUP ${result.cupResult.round}`) : ""}${this.commerceReceipt(result.merchandise, result.membership)}<section class="concession-receipts">${this.concessionReceipt(result.concession)}${result.cupResult ? this.concessionReceipt(result.cupResult.concession, `CUP FOOD`) : ""}</section><div class="reward-line"><span>PRIZE MONEY</span><b>+ ${formatMoney(result.reward)}</b>${result.sponsorRevenue ? `<span>PARTNER</span><b>+ ${formatMoney(result.sponsorRevenue)}</b>` : ""}${result.cupResult ? `<span>CUP ${result.cupResult.round}</span><b>+ ${formatMoney(result.cupResult.reward)}</b>` : ""}<span>FANS</span><b>${result.popularityDelta >= 0 ? "+" : ""}${result.popularityDelta} → ${result.popularity}%</b><span>FAME</span><b>+ ${result.won ? 11 : result.playerGoals === result.opponentGoals ? 4 : 1}</b></div><button data-action="close-modal" class="primary-action">戦術室へ戻る <b>→</b></section>`}</section></div>`;
+    return `<div class="match-overlay"><section class="match-modal ${liveSecondHalf ? "live-match-modal" : ""}" style="background-image:linear-gradient(180deg,rgba(3,15,10,.35),rgba(3,15,10,.95)),url('${assets.commandCenter}')"><span class="modal-kicker">${liveSecondHalf ? "LIVE SECOND HALF" : "FULL TIME"} / WEEK ${this.simulation.completedWeeks}</span><div class="match-crests"><div><img src="${assets.clubMark}" alt=""/><b>${escapeHtml(this.simulation.clubNameValue)}</b></div><strong>${displayPlayerGoals}<i>-</i>${displayOpponentGoals}</strong><div><span class="opponent-crest">◉</span><b>${result.opponent}</b></div></div><p>${liveSecondHalf ? "後半のプレーを実況で追跡中。最後の一行まで、戦況はまだ決まらない。" : result.message}</p>${liveSecondHalf ? `<section class="match-live-top" aria-live="polite"><span class="match-live-top-label">LATEST HIGHLIGHT</span>${this.liveCommentaryStatus(result, "second-half")}${this.highlightsTimeline(result.highlights, false, this.commentaryVisibleCount)}</section>` : `<section class="match-live-top" aria-live="polite"><span class="match-live-top-label">MATCH HIGHLIGHTS</span>${this.highlightsTimeline(result.highlights, false)}</section><section class="match-tactics"><span>GAME PLAN</span><b>${result.tactics.formationLabel} / ${result.tactics.formationTrait} / ${result.tactics.mentalityLabel}</b><p>${result.tactics.playingStyleLabel}　連携 ${result.tactics.chemistry}%　攻 ${signed(result.tactics.attackModifier)} / 守 ${signed(result.tactics.defenseModifier)}<br/>${result.tactics.sideLinkDetails.length ? `WIDE LINK-UP　攻 ${signed(result.tactics.sideLinkAttack)} / 守 ${signed(result.tactics.sideLinkDefense)}` : "WIDE LINK-UP　未発動"}<br/>${result.tactics.midfieldPressDetail.active ? `MIDFIELD PRESS　${result.tactics.midfieldPressDetail.grade}　攻 ${signed(result.tactics.midfieldPressAttack)} / 守 ${signed(result.tactics.midfieldPressDefense)}` : "MIDFIELD PRESS　準備中"}<br/><strong>OPPOSITION　${result.opponentTactics.formationLabel} / ${result.opponentTactics.mentalityLabel} / ${result.opponentTactics.playingStyleLabel}</strong><br/>${result.opponentTactics.trait}　${result.opponentTactics.roles.slice(0, 3).join(" / ")}<br/>MATCH-UP ${result.tacticalMatchup.label}　自 攻 ${signed(result.tacticalMatchup.playerAttackModifier)} / 守 ${signed(result.tacticalMatchup.playerDefenseModifier)}</p></section>${mvp}${ratings}${duels}${individualBonuses}${this.gateReceipt(result.gate)}${result.cupResult ? this.gateReceipt(result.cupResult.gate, `CUP ${result.cupResult.round}`) : ""}${this.commerceReceipt(result.merchandise, result.membership)}<section class="concession-receipts">${this.concessionReceipt(result.concession)}${result.cupResult ? this.concessionReceipt(result.cupResult.concession, `CUP FOOD`) : ""}</section><div class="reward-line"><span>PRIZE MONEY</span><b>+ ${formatMoney(result.reward)}</b>${result.sponsorRevenue ? `<span>PARTNER</span><b>+ ${formatMoney(result.sponsorRevenue)}</b>` : ""}${result.cupResult ? `<span>CUP ${result.cupResult.round}</span><b>+ ${formatMoney(result.cupResult.reward)}</b>` : ""}<span>FANS</span><b>${result.popularityDelta >= 0 ? "+" : ""}${result.popularityDelta} → ${result.popularity}%</b><span>FAME</span><b>+ ${result.won ? 11 : result.playerGoals === result.opponentGoals ? 4 : 1}</b></div><button data-action="close-modal" class="primary-action">戦術室へ戻る <b>→</b></section>`}</section></div>`;
   }
 }
