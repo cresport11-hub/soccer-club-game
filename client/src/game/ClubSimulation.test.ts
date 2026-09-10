@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ClubSimulation } from "./ClubSimulation";
+import { commonGivenNamePool, commonSurnamePool, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, youthIntakes, youthProspects } from "./data";
 
 describe("ClubSimulation match commentary", () => {
   beforeEach(() => {
@@ -84,6 +85,19 @@ describe("ClubSimulation match commentary", () => {
     expect(result.markDuels.every((duel) => defensivePositions.includes(duel.position))).toBe(true);
     expect(result.markDuels.some((duel) => duel.position === "GK")).toBe(false);
     expect(result.markDuels.some((duel) => ["CB", "SB"].includes(duel.opponentPosition))).toBe(false);
+  });
+
+  it("keeps generated and catalog player names readable", () => {
+    const givenNames = [...commonGivenNamePool, ...marketRecruits, ...youthProspects, ...youthIntakes].map((item) => typeof item === "string" ? item : item.name.split(/\s+/).slice(1).join(""));
+    const catalogNames = [...marketRecruits, ...youthProspects, ...youthIntakes].map((player) => player.name);
+    const opponentNames = opponentSeeds.flatMap((club) => opponentSquadFor(club.id).map((player) => player.name));
+
+    expect(commonSurnamePool.length).toBeGreaterThan(90);
+    expect(commonGivenNamePool.length).toBeGreaterThan(90);
+    expect(givenNames.every((name) => name.replace(/\s/g, "").length >= 2)).toBe(true);
+    expect(catalogNames.every((name) => name.split(/\s+/).slice(1).join("").length >= 2)).toBe(true);
+    expect(opponentNames.every((name) => name.split(/\s+/).slice(1).join("").length >= 2)).toBe(true);
+    expect(normalizePlayerName("篠崎 深", "r2", "篠崎 直人")).toBe("篠崎 直人");
   });
 
   it("rejects marking a goalkeeper and accepts a defensive marker for an attacker", () => {

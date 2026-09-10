@@ -235,25 +235,25 @@ export const formations: Formation[] = [
 
 export const players: Player[] = [
   { id: "p1", name: "相良 遥斗", position: "CF", secondary: "WG", cfPlayStyle: "runner", attack: 72, dribble: 69, pass: 55, shoot: 78, defense: 25, tackle: 22, block: 20, interception: 27, fatigue: 8, age: 22, salary: 18000000, level: 4, ceiling: 8, chemistry: "spark" },
-  { id: "p2", name: "御影 蓮", position: "CF", secondary: "AM", cfPlayStyle: "false-nine", attack: 68, dribble: 62, pass: 61, shoot: 74, defense: 33, tackle: 29, block: 28, interception: 39, fatigue: 5, age: 25, salary: 14000000, level: 4, ceiling: 6, chemistry: "steady" },
-  { id: "p3", name: "山城 蒼", position: "WG", secondary: "AM", wgPlayStyle: "inverted", amPlayStyle: "shadow-striker", attack: 64, dribble: 75, pass: 60, shoot: 58, defense: 38, tackle: 35, block: 30, interception: 46, fatigue: 12, age: 21, salary: 7200000, level: 3, ceiling: 9, chemistry: "spark" },
-  { id: "p4", name: "栗原 湊", position: "WG", secondary: "CF", cfPlayStyle: "target", wgPlayStyle: "wide-worker", attack: 61, dribble: 71, pass: 54, shoot: 59, defense: 34, tackle: 31, block: 27, interception: 43, fatigue: 3, age: 20, salary: 4800000, level: 3, ceiling: 9, chemistry: "edge" },
-  { id: "p5", name: "鳴海 晴", position: "AM", secondary: "CM", amPlayStyle: "playmaker", attack: 67, dribble: 66, pass: 73, shoot: 63, defense: 48, tackle: 42, block: 39, interception: 57, fatigue: 9, age: 24, salary: 12000000, level: 4, ceiling: 7, chemistry: "spark" },
+  { id: "p2", name: "御影 蓮斗", position: "CF", secondary: "AM", cfPlayStyle: "false-nine", attack: 68, dribble: 62, pass: 61, shoot: 74, defense: 33, tackle: 29, block: 28, interception: 39, fatigue: 5, age: 25, salary: 14000000, level: 4, ceiling: 6, chemistry: "steady" },
+  { id: "p3", name: "山城 翔太", position: "WG", secondary: "AM", wgPlayStyle: "inverted", amPlayStyle: "shadow-striker", attack: 64, dribble: 75, pass: 60, shoot: 58, defense: 38, tackle: 35, block: 30, interception: 46, fatigue: 12, age: 21, salary: 7200000, level: 3, ceiling: 9, chemistry: "spark" },
+  { id: "p4", name: "栗原 湊斗", position: "WG", secondary: "CF", cfPlayStyle: "target", wgPlayStyle: "wide-worker", attack: 61, dribble: 71, pass: 54, shoot: 59, defense: 34, tackle: 31, block: 27, interception: 43, fatigue: 3, age: 20, salary: 4800000, level: 3, ceiling: 9, chemistry: "edge" },
+  { id: "p5", name: "鳴海 健太", position: "AM", secondary: "CM", amPlayStyle: "playmaker", attack: 67, dribble: 66, pass: 73, shoot: 63, defense: 48, tackle: 42, block: 39, interception: 57, fatigue: 9, age: 24, salary: 12000000, level: 4, ceiling: 7, chemistry: "spark" },
   { id: "p6", name: "八雲 琉生", position: "CM", secondary: "DM", cmPlayStyle: "box-to-box", dmPlayStyle: "anchor", attack: 58, dribble: 57, pass: 69, shoot: 50, defense: 62, tackle: 60, block: 55, interception: 70, fatigue: 6, age: 26, salary: 10200000, level: 4, ceiling: 6, chemistry: "steady" },
   { id: "p7", name: "朝倉 悠真", position: "CM", secondary: "AM", cmPlayStyle: "mezzala", attack: 62, dribble: 63, pass: 68, shoot: 56, defense: 54, tackle: 49, block: 45, interception: 63, fatigue: 10, age: 23, salary: 8400000, level: 3, ceiling: 8, chemistry: "spark" },
-  { id: "p8", name: "新田 迅", position: "DM", secondary: "CB", dmPlayStyle: "destroyer", attack: 48, dribble: 45, pass: 57, shoot: 38, defense: 69, tackle: 72, block: 67, interception: 75, fatigue: 4, age: 28, salary: 11000000, level: 5, ceiling: 6, chemistry: "steady" },
-  { id: "p9", name: "安西 颯", position: "SB", secondary: "WG", sbPlayStyle: "overlap", attack: 50, dribble: 61, pass: 55, shoot: 42, defense: 65, tackle: 66, block: 58, interception: 70, fatigue: 8, age: 22, salary: 6800000, level: 3, ceiling: 8, chemistry: "edge" },
-  { id: "p10", name: "黒川 岳", position: "SB", secondary: "CB", sbPlayStyle: "defensive-fullback", cbPlayStyle: "cover", attack: 46, dribble: 48, pass: 52, shoot: 35, defense: 68, tackle: 71, block: 66, interception: 69, fatigue: 2, age: 27, salary: 9000000, level: 4, ceiling: 6, chemistry: "steady" },
-  { id: "p11", name: "冬木 海", position: "CB", secondary: "SB", cbPlayStyle: "ball-playing", sbPlayStyle: "defensive-fullback", attack: 38, dribble: 40, pass: 47, shoot: 34, defense: 73, tackle: 74, block: 78, interception: 69, fatigue: 11, age: 25, salary: 13000000, level: 5, ceiling: 7, chemistry: "spark" },
-  { id: "p12", name: "七瀬 陸", position: "CB", cbPlayStyle: "cover", attack: 33, dribble: 41, pass: 43, shoot: 29, defense: 70, tackle: 68, block: 74, interception: 68, fatigue: 3, age: 21, salary: 5600000, level: 3, ceiling: 8, chemistry: "edge" },
-  { id: "p13", name: "柏木 篤", position: "GK", gkPlayStyle: "sweeper-keeper", gk: 76, attack: 15, dribble: 15, pass: 43, shoot: 9, defense: 21, tackle: 16, block: 25, interception: 31, fatigue: 6, age: 29, salary: 16000000, level: 6, ceiling: 7, chemistry: "steady" },
-  { id: "p14", name: "砂川 司", position: "GK", gkPlayStyle: "shot-stopper", gk: 66, attack: 13, dribble: 14, pass: 38, shoot: 8, defense: 19, tackle: 15, block: 23, interception: 28, fatigue: 0, age: 20, salary: 3600000, level: 2, ceiling: 9, chemistry: "spark" },
-  { id: "p15", name: "坂口 叶", position: "CM", secondary: "DM", cmPlayStyle: "deep-playmaker", dmPlayStyle: "regista", attack: 54, dribble: 55, pass: 66, shoot: 48, defense: 60, tackle: 55, block: 58, interception: 66, fatigue: 7, age: 19, salary: 3200000, level: 2, ceiling: 10, chemistry: "spark" },
-  { id: "p16", name: "神谷 奏", position: "CB", secondary: "DM", dmPlayStyle: "anchor", cbPlayStyle: "stopper", attack: 41, dribble: 44, pass: 48, shoot: 35, defense: 64, tackle: 66, block: 69, interception: 60, fatigue: 1, age: 24, salary: 6200000, level: 3, ceiling: 7, chemistry: "edge" },
-  { id: "p17", name: "沢渡 駿", position: "SB", secondary: "CB", sbPlayStyle: "inverted-fullback", cbPlayStyle: "cover", attack: 44, dribble: 52, pass: 58, shoot: 32, defense: 62, tackle: 64, block: 56, interception: 65, fatigue: 4, age: 20, salary: 4400000, level: 2, ceiling: 9, chemistry: "steady" },
-  { id: "p18", name: "桐生 玲", position: "DM", secondary: "CM", dmPlayStyle: "regista", cmPlayStyle: "deep-playmaker", attack: 47, dribble: 49, pass: 63, shoot: 38, defense: 61, tackle: 59, block: 55, interception: 67, fatigue: 6, age: 22, salary: 5800000, level: 3, ceiling: 8, chemistry: "edge" },
-  { id: "p19", name: "白瀬 透", position: "SH", secondary: "WG", wgPlayStyle: "touchline", attack: 59, dribble: 64, pass: 62, shoot: 54, defense: 42, tackle: 39, block: 34, interception: 51, fatigue: 5, age: 21, salary: 5400000, level: 3, ceiling: 9, chemistry: "spark" },
-  { id: "p20", name: "三好 湊", position: "CF", secondary: "WG", cfPlayStyle: "target", wgPlayStyle: "wide-worker", attack: 57, dribble: 55, pass: 49, shoot: 64, defense: 31, tackle: 27, block: 25, interception: 34, fatigue: 3, age: 19, salary: 3600000, level: 2, ceiling: 10, chemistry: "steady" },
+  { id: "p8", name: "新田 直人", position: "DM", secondary: "CB", dmPlayStyle: "destroyer", attack: 48, dribble: 45, pass: 57, shoot: 38, defense: 69, tackle: 72, block: 67, interception: 75, fatigue: 4, age: 28, salary: 11000000, level: 5, ceiling: 6, chemistry: "steady" },
+  { id: "p9", name: "安西 颯太", position: "SB", secondary: "WG", sbPlayStyle: "overlap", attack: 50, dribble: 61, pass: 55, shoot: 42, defense: 65, tackle: 66, block: 58, interception: 70, fatigue: 8, age: 22, salary: 6800000, level: 3, ceiling: 8, chemistry: "edge" },
+  { id: "p10", name: "黒川 大輔", position: "SB", secondary: "CB", sbPlayStyle: "defensive-fullback", cbPlayStyle: "cover", attack: 46, dribble: 48, pass: 52, shoot: 35, defense: 68, tackle: 71, block: 66, interception: 69, fatigue: 2, age: 27, salary: 9000000, level: 4, ceiling: 6, chemistry: "steady" },
+  { id: "p11", name: "冬木 海斗", position: "CB", secondary: "SB", cbPlayStyle: "ball-playing", sbPlayStyle: "defensive-fullback", attack: 38, dribble: 40, pass: 47, shoot: 34, defense: 73, tackle: 74, block: 78, interception: 69, fatigue: 11, age: 25, salary: 13000000, level: 5, ceiling: 7, chemistry: "spark" },
+  { id: "p12", name: "七瀬 颯人", position: "CB", cbPlayStyle: "cover", attack: 33, dribble: 41, pass: 43, shoot: 29, defense: 70, tackle: 68, block: 74, interception: 68, fatigue: 3, age: 21, salary: 5600000, level: 3, ceiling: 8, chemistry: "edge" },
+  { id: "p13", name: "柏木 篤志", position: "GK", gkPlayStyle: "sweeper-keeper", gk: 76, attack: 15, dribble: 15, pass: 43, shoot: 9, defense: 21, tackle: 16, block: 25, interception: 31, fatigue: 6, age: 29, salary: 16000000, level: 6, ceiling: 7, chemistry: "steady" },
+  { id: "p14", name: "砂川 司朗", position: "GK", gkPlayStyle: "shot-stopper", gk: 66, attack: 13, dribble: 14, pass: 38, shoot: 8, defense: 19, tackle: 15, block: 23, interception: 28, fatigue: 0, age: 20, salary: 3600000, level: 2, ceiling: 9, chemistry: "spark" },
+  { id: "p15", name: "坂口 和也", position: "CM", secondary: "DM", cmPlayStyle: "deep-playmaker", dmPlayStyle: "regista", attack: 54, dribble: 55, pass: 66, shoot: 48, defense: 60, tackle: 55, block: 58, interception: 66, fatigue: 7, age: 19, salary: 3200000, level: 2, ceiling: 10, chemistry: "spark" },
+  { id: "p16", name: "神谷 奏太", position: "CB", secondary: "DM", dmPlayStyle: "anchor", cbPlayStyle: "stopper", attack: 41, dribble: 44, pass: 48, shoot: 35, defense: 64, tackle: 66, block: 69, interception: 60, fatigue: 1, age: 24, salary: 6200000, level: 3, ceiling: 7, chemistry: "edge" },
+  { id: "p17", name: "沢渡 翔太", position: "SB", secondary: "CB", sbPlayStyle: "inverted-fullback", cbPlayStyle: "cover", attack: 44, dribble: 52, pass: 58, shoot: 32, defense: 62, tackle: 64, block: 56, interception: 65, fatigue: 4, age: 20, salary: 4400000, level: 2, ceiling: 9, chemistry: "steady" },
+  { id: "p18", name: "桐生 玲央", position: "DM", secondary: "CM", dmPlayStyle: "regista", cmPlayStyle: "deep-playmaker", attack: 47, dribble: 49, pass: 63, shoot: 38, defense: 61, tackle: 59, block: 55, interception: 67, fatigue: 6, age: 22, salary: 5800000, level: 3, ceiling: 8, chemistry: "edge" },
+  { id: "p19", name: "白瀬 透真", position: "SH", secondary: "WG", wgPlayStyle: "touchline", attack: 59, dribble: 64, pass: 62, shoot: 54, defense: 42, tackle: 39, block: 34, interception: 51, fatigue: 5, age: 21, salary: 5400000, level: 3, ceiling: 9, chemistry: "spark" },
+  { id: "p20", name: "三好 湊斗", position: "CF", secondary: "WG", cfPlayStyle: "target", wgPlayStyle: "wide-worker", attack: 57, dribble: 55, pass: 49, shoot: 64, defense: 31, tackle: 27, block: 25, interception: 34, fatigue: 3, age: 19, salary: 3600000, level: 2, ceiling: 10, chemistry: "steady" },
 ];
 
 const openingPlayerSkills: Record<string, PlayerSkillId[]> = {
@@ -306,22 +306,50 @@ export const opponentTactics: Record<string, OpponentTacticalPlan> = {
   tide: { formationId: "4-5-1", mentality: "defensive", playingStyle: "press", cohesion: 69, attackBias: -1, defenseBias: 2, trait: "残留プレス", note: "中盤からの粘り強いプレスで試合を五分へ引き戻す。", roles: [{ position: "CF", role: "裏抜け" }, { position: "SH", role: "ワイド・ワーカー" }, { position: "CM", role: "ボックス・トゥ・ボックス" }, { position: "DM", role: "デストロイヤー" }, { position: "SB", role: "守備的SB" }, { position: "GK", role: "ショットストッパー" }] },
 };
 
-const opponentSurnamePool = [
-  "神楽", "相沢", "一ノ瀬", "結城", "真壁", "榊", "高遠", "柊", "秋月", "久世", "鷹野", "白鳥",
-  "桐谷", "小野寺", "成瀬", "日向", "水城", "早瀬", "如月", "御堂", "深見", "遠野", "橘", "朝霧",
-  "綾部", "泉", "五十嵐", "宇佐美", "江波", "大槻", "梶原", "片瀬", "金森", "川嶋", "木戸", "北見",
-  "桐原", "国枝", "黒瀬", "小松", "佐伯", "笹原", "篠宮", "白川", "杉浦", "瀬尾", "高城", "立花",
-  "月岡", "鶴見", "寺島", "時任", "永瀬", "長峰", "西園", "野々村", "羽鳥", "早川", "樋口", "福井",
-  "古川", "星野", "本多", "牧野", "松波", "水上", "三田", "宮坂", "村瀬", "望月", "森下", "八代",
+export const commonSurnamePool = [
+  "佐藤", "鈴木", "高橋", "田中", "伊藤", "渡辺", "山本", "中村", "小林", "加藤", "吉田", "山田",
+  "佐々木", "山口", "松本", "井上", "木村", "林", "斎藤", "清水", "山崎", "森", "池田", "橋本",
+  "阿部", "石川", "山下", "中島", "前田", "藤田", "小川", "後藤", "岡田", "長谷川", "村上", "近藤",
+  "石井", "坂本", "遠藤", "青木", "藤井", "西村", "福田", "太田", "三浦", "藤原", "岡本", "松田",
+  "中川", "中野", "原田", "小野", "田村", "竹内", "金子", "和田", "中山", "石田", "上田", "森田",
+  "柴田", "酒井", "工藤", "横山", "宮崎", "宮本", "内田", "高木", "安藤", "島田", "谷口", "大野",
+  "丸山", "今井", "河野", "藤本", "村田", "上野", "杉山", "増田", "小島", "小山", "大塚", "平野",
+  "菅野", "久保", "松井", "千葉", "岩崎", "桜井", "木下", "野口", "松尾", "菊地", "野村", "相沢",
+  "結城", "真壁", "桐谷", "成瀬", "日向", "早瀬", "深見", "綾部", "江波", "梶原", "金森", "佐伯",
+  "白川", "杉浦", "瀬尾", "立花", "寺島", "永瀬", "早川", "樋口", "福井", "古川", "星野", "本多",
 ];
-const opponentGivenPool = [
-  "蓮", "蒼", "隼", "誠", "湊", "陸", "悠", "晴", "樹", "颯太", "迅", "律",
-  "海斗", "陽", "凪", "翔", "叶", "弦", "仁", "透", "岳", "澪", "圭", "奏",
-  "颯真", "結人", "瑛太", "朔", "蒼士", "伊織", "蒼介", "紬", "直哉", "瑛", "景", "柊真",
-  "悠斗", "匠", "怜", "理人", "遼", "朔也", "壮真", "大和", "千隼", "拓海", "知己", "冬真",
-  "尚輝", "颯介", "創", "大翔", "晴也", "光希", "湊斗", "優斗", "悠生", "理玖", "琉真", "怜司",
-  "颯人", "雄大", "結翔", "龍之介", "蓮斗", "和真", "侑真", "凌", "律希", "瑛人", "奏太", "遥斗",
+
+/** 一文字の名を避け、日常的に見かける二文字以上の名を中心にした生成プール。 */
+export const commonGivenNamePool = [
+  "翔太", "健太", "大輔", "拓也", "直樹", "和也", "亮太", "祐介", "雄太", "達也", "颯太", "海斗",
+  "陽向", "陸斗", "悠斗", "蓮斗", "優斗", "拓海", "大和", "直人", "亮介", "雄大", "健吾", "康平",
+  "俊介", "圭吾", "恒一", "直哉", "和真", "悠真", "智也", "遼太", "健人", "隼人", "翔平", "裕太",
+  "将太", "亮平", "大樹", "蓮也", "颯真", "悠生", "湊斗", "結人", "拓真", "智紀", "竜也", "啓太",
+  "悠希", "航平", "一輝", "康太", "修平", "慎吾", "勇人", "陽介", "圭太", "恒一", "和樹", "貴之",
+  "美咲", "花音", "七海", "彩乃", "愛理", "遥香", "真央", "杏奈", "結菜", "莉子", "優花", "明日香",
+  "里奈", "美穂", "千夏", "春香", "陽菜", "菜月", "沙織", "麻衣", "美月", "梨花", "桃子", "佳奈",
+  "怜奈", "香織", "由佳", "奈緒", "理沙", "千尋", "瑞希", "遥斗", "理人", "瑛太", "蒼介", "柊真",
+  "大翔", "晴也", "光希", "優真", "理玖", "琉真", "怜司", "颯人", "結翔", "龍之介", "奏太", "律希",
 ];
+
+const opponentSurnamePool = commonSurnamePool;
+const opponentGivenPool = commonGivenNamePool;
+
+const nameSeed = (value: string) => Array.from(value).reduce((total, character) => total + character.codePointAt(0)!, 0);
+const splitPlayerName = (value: string) => value.trim().split(/\s+/).filter(Boolean);
+
+/** 姓名を正規化し、空白や一文字の名をゲーム内で残さない。 */
+export const normalizePlayerName = (value: string, seed = value, fallback?: string) => {
+  const parts = splitPlayerName(value);
+  const fallbackParts = fallback ? splitPlayerName(fallback) : [];
+  const surname = parts[0] || fallbackParts[0] || commonSurnamePool[nameSeed(seed) % commonSurnamePool.length];
+  const given = parts.slice(1).join("");
+  if (given.length >= 2) return `${surname} ${given}`;
+  const fallbackGiven = fallbackParts.slice(1).join("");
+  if (fallbackGiven.length >= 2) return `${fallbackParts[0] || surname} ${fallbackGiven}`;
+  return `${surname} ${commonGivenNamePool[nameSeed(seed) % commonGivenNamePool.length]}`;
+};
+
 const fallbackOpponentRole: Record<Position, string> = { GK: "ショットストッパー", CB: "カバー", SB: "守備的SB", DM: "アンカー", CM: "ボックス・トゥ・ボックス", AM: "ゲームメーカー", SH: "ワイド・ワーカー", WG: "タッチライン・ウイング", CF: "ターゲットマン" };
 const opponentValue = (value: number) => Math.max(12, Math.min(94, Math.round(value)));
 const opponentPositionModifier: Record<Position, { attack: number; defense: number }> = { GK: { attack: -52, defense: 1 }, CB: { attack: -10, defense: 6 }, SB: { attack: -5, defense: 4 }, DM: { attack: -2, defense: 5 }, CM: { attack: 1, defense: 1 }, AM: { attack: 5, defense: -4 }, SH: { attack: 4, defense: -1 }, WG: { attack: 6, defense: -4 }, CF: { attack: 8, defense: -10 } };
@@ -352,35 +380,36 @@ export function opponentSquadFor(clubId: string): OpponentPlayer[] {
     const givenIndex = (serial * 31 + Math.floor(serial / opponentSurnamePool.length) * 13 + 22) % opponentGivenPool.length;
     const attack = opponentValue(club.rating + profile.attack + plan.attackBias + variance);
     const defense = opponentValue(club.rating + profile.defense + plan.defenseBias - variance);
-    return { id: `${club.id}-${slot.id}`, name: `${opponentSurnamePool[surnameIndex]} ${opponentGivenPool[givenIndex]}`, position, role, attack, defense, pass: opponentValue((attack + defense) / 2 + (role.includes("プレーメーカー") || role === "レジスタ" ? 7 : 0)), tackle: opponentValue(defense + (role === "デストロイヤー" || role === "ストッパー" ? 4 : 0)), interception: opponentValue(defense + (role === "アンカー" || role === "カバー" ? 4 : 0)), gk: position === "GK" ? opponentValue(club.rating + 7 + plan.defenseBias + variance) : undefined, skills: [opponentSkillFor(position, role)] };
+    const name = normalizePlayerName(`${opponentSurnamePool[surnameIndex]} ${opponentGivenPool[givenIndex]}`, `${club.id}-${slot.id}`);
+    return { id: `${club.id}-${slot.id}`, name, position, role, attack, defense, pass: opponentValue((attack + defense) / 2 + (role.includes("プレーメーカー") || role === "レジスタ" ? 7 : 0)), tackle: opponentValue(defense + (role === "デストロイヤー" || role === "ストッパー" ? 4 : 0)), interception: opponentValue(defense + (role === "アンカー" || role === "カバー" ? 4 : 0)), gk: position === "GK" ? opponentValue(club.rating + 7 + plan.defenseBias + variance) : undefined, skills: [opponentSkillFor(position, role)] };
   });
 }
 
 export const marketRecruits: Player[] = [
-  { id: "r1", name: "東雲 レイ", position: "SH", secondary: "AM", wgPlayStyle: "inverted", amPlayStyle: "playmaker", attack: 74, dribble: 76, pass: 78, shoot: 70, defense: 44, tackle: 37, block: 41, interception: 53, fatigue: 0, age: 20, salary: 22000000, contractYears: 3, level: 5, ceiling: 10, chemistry: "spark" },
-  { id: "r2", name: "篠崎 深", position: "CB", secondary: "SB", cbPlayStyle: "ball-playing", sbPlayStyle: "inverted-fullback", attack: 46, dribble: 48, pass: 61, shoot: 34, defense: 76, tackle: 77, block: 80, interception: 72, fatigue: 0, age: 25, salary: 15400000, contractYears: 3, level: 5, ceiling: 7, chemistry: "steady" },
-  { id: "r3", name: "皆本 律", position: "GK", gkPlayStyle: "distributor", gk: 73, attack: 17, dribble: 18, pass: 55, shoot: 10, defense: 25, tackle: 18, block: 29, interception: 37, fatigue: 0, age: 21, salary: 9200000, contractYears: 3, level: 4, ceiling: 9, chemistry: "edge" },
-  { id: "r4", name: "志摩 湊", position: "CF", secondary: "WG", cfPlayStyle: "runner", attack: 71, dribble: 74, pass: 58, shoot: 76, defense: 31, tackle: 27, block: 24, interception: 35, fatigue: 0, age: 19, salary: 11800000, contractYears: 3, level: 4, ceiling: 10, chemistry: "spark" },
-  { id: "r5", name: "本多 朔", position: "DM", secondary: "CB", dmPlayStyle: "anchor", cbPlayStyle: "stopper", attack: 48, dribble: 50, pass: 69, shoot: 41, defense: 72, tackle: 74, block: 70, interception: 76, fatigue: 0, age: 24, salary: 16800000, contractYears: 3, level: 5, ceiling: 8, chemistry: "steady" },
-  { id: "r6", name: "日向 透", position: "CM", secondary: "DM", cmPlayStyle: "box-to-box", dmPlayStyle: "regista", attack: 65, dribble: 67, pass: 74, shoot: 58, defense: 63, tackle: 61, block: 55, interception: 64, fatigue: 0, age: 23, salary: 17600000, contractYears: 3, level: 5, ceiling: 9, chemistry: "edge" },
-  { id: "r7", name: "天城 陸", position: "AM", secondary: "SH", amPlayStyle: "playmaker", wgPlayStyle: "touchline", attack: 72, dribble: 73, pass: 79, shoot: 64, defense: 39, tackle: 34, block: 31, interception: 48, fatigue: 0, age: 22, salary: 21400000, contractYears: 3, level: 5, ceiling: 9, chemistry: "spark" },
-  { id: "r8", name: "有沢 航", position: "SB", secondary: "SH", sbPlayStyle: "overlap", wgPlayStyle: "wide-worker", attack: 59, dribble: 63, pass: 68, shoot: 45, defense: 67, tackle: 69, block: 60, interception: 62, fatigue: 0, age: 22, salary: 13900000, contractYears: 3, level: 4, ceiling: 9, chemistry: "spark" },
-  { id: "r9", name: "鷹野 玲", position: "WG", secondary: "CF", wgPlayStyle: "inverted", cfPlayStyle: "false-nine", attack: 75, dribble: 81, pass: 66, shoot: 72, defense: 34, tackle: 30, block: 27, interception: 38, fatigue: 0, age: 20, salary: 19800000, contractYears: 3, level: 5, ceiling: 10, chemistry: "edge" },
+  { id: "r1", name: "東雲 怜司", position: "SH", secondary: "AM", wgPlayStyle: "inverted", amPlayStyle: "playmaker", attack: 74, dribble: 76, pass: 78, shoot: 70, defense: 44, tackle: 37, block: 41, interception: 53, fatigue: 0, age: 20, salary: 22000000, contractYears: 3, level: 5, ceiling: 10, chemistry: "spark" },
+  { id: "r2", name: "篠崎 直人", position: "CB", secondary: "SB", cbPlayStyle: "ball-playing", sbPlayStyle: "inverted-fullback", attack: 46, dribble: 48, pass: 61, shoot: 34, defense: 76, tackle: 77, block: 80, interception: 72, fatigue: 0, age: 25, salary: 15400000, contractYears: 3, level: 5, ceiling: 7, chemistry: "steady" },
+  { id: "r3", name: "皆本 律希", position: "GK", gkPlayStyle: "distributor", gk: 73, attack: 17, dribble: 18, pass: 55, shoot: 10, defense: 25, tackle: 18, block: 29, interception: 37, fatigue: 0, age: 21, salary: 9200000, contractYears: 3, level: 4, ceiling: 9, chemistry: "edge" },
+  { id: "r4", name: "志摩 湊斗", position: "CF", secondary: "WG", cfPlayStyle: "runner", attack: 71, dribble: 74, pass: 58, shoot: 76, defense: 31, tackle: 27, block: 24, interception: 35, fatigue: 0, age: 19, salary: 11800000, contractYears: 3, level: 4, ceiling: 10, chemistry: "spark" },
+  { id: "r5", name: "本多 朔也", position: "DM", secondary: "CB", dmPlayStyle: "anchor", cbPlayStyle: "stopper", attack: 48, dribble: 50, pass: 69, shoot: 41, defense: 72, tackle: 74, block: 70, interception: 76, fatigue: 0, age: 24, salary: 16800000, contractYears: 3, level: 5, ceiling: 8, chemistry: "steady" },
+  { id: "r6", name: "日向 透真", position: "CM", secondary: "DM", cmPlayStyle: "box-to-box", dmPlayStyle: "regista", attack: 65, dribble: 67, pass: 74, shoot: 58, defense: 63, tackle: 61, block: 55, interception: 64, fatigue: 0, age: 23, salary: 17600000, contractYears: 3, level: 5, ceiling: 9, chemistry: "edge" },
+  { id: "r7", name: "天城 陸斗", position: "AM", secondary: "SH", amPlayStyle: "playmaker", wgPlayStyle: "touchline", attack: 72, dribble: 73, pass: 79, shoot: 64, defense: 39, tackle: 34, block: 31, interception: 48, fatigue: 0, age: 22, salary: 21400000, contractYears: 3, level: 5, ceiling: 9, chemistry: "spark" },
+  { id: "r8", name: "有沢 航平", position: "SB", secondary: "SH", sbPlayStyle: "overlap", wgPlayStyle: "wide-worker", attack: 59, dribble: 63, pass: 68, shoot: 45, defense: 67, tackle: 69, block: 60, interception: 62, fatigue: 0, age: 22, salary: 13900000, contractYears: 3, level: 4, ceiling: 9, chemistry: "spark" },
+  { id: "r9", name: "鷹野 玲央", position: "WG", secondary: "CF", wgPlayStyle: "inverted", cfPlayStyle: "false-nine", attack: 75, dribble: 81, pass: 66, shoot: 72, defense: 34, tackle: 30, block: 27, interception: 38, fatigue: 0, age: 20, salary: 19800000, contractYears: 3, level: 5, ceiling: 10, chemistry: "edge" },
 ];
 
 export const recruit = marketRecruits[0];
 
 export const youthProspects: Player[] = [
-  { id: "y1", name: "水瀬 湊", position: "CF", secondary: "WG", cfPlayStyle: "runner", attack: 48, dribble: 52, pass: 42, shoot: 55, defense: 26, tackle: 22, block: 19, interception: 29, fatigue: 0, age: 17, salary: 1800000, contractYears: 3, level: 1, ceiling: 9, chemistry: "spark", skills: ["finisher"], skillXp: { finisher: 18, "aerial-target": 32 }, skillTrainingTarget: "aerial-target", youthSkillTendency: { archetype: "ゴール前の嗅覚", headline: "フィニッシュの土台を持つ裏抜け型", primarySkill: "finisher", developmentSkill: "aerial-target", recommendedFocus: "finishing", growthPace: "早熟", coachNote: "まずフィニッシュでポストプレーを100 XPへ。CFの幅を増やしてから、WG起用も検討する。" } },
-  { id: "y2", name: "高瀬 澪", position: "CM", secondary: "AM", amPlayStyle: "playmaker", attack: 46, dribble: 50, pass: 58, shoot: 41, defense: 44, tackle: 39, block: 34, interception: 51, fatigue: 0, age: 16, salary: 1600000, contractYears: 3, level: 1, ceiling: 10, chemistry: "edge", skills: ["switcher"], skillXp: { switcher: 14, "tempo-controller": 38 }, skillTrainingTarget: "tempo-controller", youthSkillTendency: { archetype: "展開の設計者", headline: "逆サイドを使える配球型の中盤", primarySkill: "switcher", developmentSkill: "tempo-controller", recommendedFocus: "passing", growthPace: "じっくり", coachNote: "パス＆組立を継続してテンポ支配を100 XPへ。先にCMで育て、後からAMの創造性を足す。" } },
+  { id: "y1", name: "水瀬 湊斗", position: "CF", secondary: "WG", cfPlayStyle: "runner", attack: 48, dribble: 52, pass: 42, shoot: 55, defense: 26, tackle: 22, block: 19, interception: 29, fatigue: 0, age: 17, salary: 1800000, contractYears: 3, level: 1, ceiling: 9, chemistry: "spark", skills: ["finisher"], skillXp: { finisher: 18, "aerial-target": 32 }, skillTrainingTarget: "aerial-target", youthSkillTendency: { archetype: "ゴール前の嗅覚", headline: "フィニッシュの土台を持つ裏抜け型", primarySkill: "finisher", developmentSkill: "aerial-target", recommendedFocus: "finishing", growthPace: "早熟", coachNote: "まずフィニッシュでポストプレーを100 XPへ。CFの幅を増やしてから、WG起用も検討する。" } },
+  { id: "y2", name: "高瀬 美咲", position: "CM", secondary: "AM", amPlayStyle: "playmaker", attack: 46, dribble: 50, pass: 58, shoot: 41, defense: 44, tackle: 39, block: 34, interception: 51, fatigue: 0, age: 16, salary: 1600000, contractYears: 3, level: 1, ceiling: 10, chemistry: "edge", skills: ["switcher"], skillXp: { switcher: 14, "tempo-controller": 38 }, skillTrainingTarget: "tempo-controller", youthSkillTendency: { archetype: "展開の設計者", headline: "逆サイドを使える配球型の中盤", primarySkill: "switcher", developmentSkill: "tempo-controller", recommendedFocus: "passing", growthPace: "じっくり", coachNote: "パス＆組立を継続してテンポ支配を100 XPへ。先にCMで育て、後からAMの創造性を足す。" } },
   { id: "y3", name: "榊 晴也", position: "CB", secondary: "DM", attack: 34, dribble: 39, pass: 46, shoot: 28, defense: 56, tackle: 58, block: 61, interception: 53, fatigue: 0, age: 18, salary: 2000000, contractYears: 3, level: 2, ceiling: 8, chemistry: "steady", skills: ["aerial-wall"], skillXp: { "aerial-wall": 22, interceptor: 29 }, skillTrainingTarget: "interceptor", youthSkillTendency: { archetype: "後方の読み", headline: "高さを土台にパスコースを消すCB", primarySkill: "aerial-wall", developmentSkill: "interceptor", recommendedFocus: "defending", growthPace: "標準", coachNote: "守備組織でインターセプトを100 XPへ。CBの強度を固めてからDMの保険として育成する。" } },
 ];
 
 export const youthIntakes: Player[] = [
-  { id: "yi1", name: "有馬 仁", position: "GK", gk: 60, attack: 15, dribble: 18, pass: 49, shoot: 9, defense: 24, tackle: 19, block: 28, interception: 35, fatigue: 0, age: 16, salary: 1500000, contractYears: 3, level: 1, ceiling: 9, chemistry: "steady", skills: ["one-on-one"], skillXp: { "one-on-one": 16, sweeper: 24 }, skillTrainingTarget: "sweeper", youthSkillTendency: { archetype: "反応の守護者", headline: "至近距離に強い将来のGK", primarySkill: "one-on-one", developmentSkill: "sweeper", recommendedFocus: "goalkeeping", growthPace: "標準", coachNote: "GK専門でスイーパー対応を磨き、高い最終ラインを支える選択肢をつくる。" } },
-  { id: "yi2", name: "鷺沢 陽", position: "WG", secondary: "CF", cfPlayStyle: "false-nine", wgPlayStyle: "inverted", attack: 51, dribble: 58, pass: 43, shoot: 50, defense: 27, tackle: 23, block: 20, interception: 31, fatigue: 0, age: 17, salary: 1700000, contractYears: 3, level: 1, ceiling: 10, chemistry: "spark", skills: ["cut-in"], skillXp: { "cut-in": 20, finisher: 34 }, skillTrainingTarget: "finisher", youthSkillTendency: { archetype: "内へ切る得点源", headline: "ドリブル起点で得点に近づくWG", primarySkill: "cut-in", developmentSkill: "finisher", recommendedFocus: "finishing", growthPace: "早熟", coachNote: "フィニッシュを優先して決定力を開花させる。WGからCFへ入る起用まで見据える。" } },
-  { id: "yi3", name: "宮代 凪", position: "DM", secondary: "CB", attack: 39, dribble: 42, pass: 52, shoot: 29, defense: 58, tackle: 60, block: 54, interception: 61, fatigue: 0, age: 16, salary: 1600000, contractYears: 3, level: 1, ceiling: 9, chemistry: "edge", skills: ["interceptor"], skillXp: { interceptor: 17, "ball-hunter": 27 }, skillTrainingTarget: "ball-hunter", youthSkillTendency: { archetype: "回収の起点", headline: "読みを生かして前向きに奪うDM", primarySkill: "interceptor", developmentSkill: "ball-hunter", recommendedFocus: "defending", growthPace: "じっくり", coachNote: "守備組織でボールハンターを習得。まずDMで鍛え、CBのバックアップへ広げる。" } },
-  { id: "yi4", name: "比嘉 樹", position: "SB", secondary: "WG", attack: 47, dribble: 51, pass: 48, shoot: 37, defense: 49, tackle: 53, block: 42, interception: 47, fatigue: 0, age: 17, salary: 1800000, contractYears: 3, level: 1, ceiling: 8, chemistry: "spark", skills: ["overlap"], skillXp: { overlap: 19, "cross-master": 31 }, skillTrainingTarget: "cross-master", youthSkillTendency: { archetype: "上下動するSB", headline: "外側の追い越しで幅をつくるサイド型", primarySkill: "overlap", developmentSkill: "cross-master", recommendedFocus: "passing", growthPace: "標準", coachNote: "パス＆組立でクロス職人を開放し、SH・WGと連動する右左の出口を育てる。" } },
+  { id: "yi1", name: "有馬 隼人", position: "GK", gk: 60, attack: 15, dribble: 18, pass: 49, shoot: 9, defense: 24, tackle: 19, block: 28, interception: 35, fatigue: 0, age: 16, salary: 1500000, contractYears: 3, level: 1, ceiling: 9, chemistry: "steady", skills: ["one-on-one"], skillXp: { "one-on-one": 16, sweeper: 24 }, skillTrainingTarget: "sweeper", youthSkillTendency: { archetype: "反応の守護者", headline: "至近距離に強い将来のGK", primarySkill: "one-on-one", developmentSkill: "sweeper", recommendedFocus: "goalkeeping", growthPace: "標準", coachNote: "GK専門でスイーパー対応を磨き、高い最終ラインを支える選択肢をつくる。" } },
+  { id: "yi2", name: "鷺沢 陽向", position: "WG", secondary: "CF", cfPlayStyle: "false-nine", wgPlayStyle: "inverted", attack: 51, dribble: 58, pass: 43, shoot: 50, defense: 27, tackle: 23, block: 20, interception: 31, fatigue: 0, age: 17, salary: 1700000, contractYears: 3, level: 1, ceiling: 10, chemistry: "spark", skills: ["cut-in"], skillXp: { "cut-in": 20, finisher: 34 }, skillTrainingTarget: "finisher", youthSkillTendency: { archetype: "内へ切る得点源", headline: "ドリブル起点で得点に近づくWG", primarySkill: "cut-in", developmentSkill: "finisher", recommendedFocus: "finishing", growthPace: "早熟", coachNote: "フィニッシュを優先して決定力を開花させる。WGからCFへ入る起用まで見据える。" } },
+  { id: "yi3", name: "宮代 凪人", position: "DM", secondary: "CB", attack: 39, dribble: 42, pass: 52, shoot: 29, defense: 58, tackle: 60, block: 54, interception: 61, fatigue: 0, age: 16, salary: 1600000, contractYears: 3, level: 1, ceiling: 9, chemistry: "edge", skills: ["interceptor"], skillXp: { interceptor: 17, "ball-hunter": 27 }, skillTrainingTarget: "ball-hunter", youthSkillTendency: { archetype: "回収の起点", headline: "読みを生かして前向きに奪うDM", primarySkill: "interceptor", developmentSkill: "ball-hunter", recommendedFocus: "defending", growthPace: "じっくり", coachNote: "守備組織でボールハンターを習得。まずDMで鍛え、CBのバックアップへ広げる。" } },
+  { id: "yi4", name: "比嘉 樹生", position: "SB", secondary: "WG", attack: 47, dribble: 51, pass: 48, shoot: 37, defense: 49, tackle: 53, block: 42, interception: 47, fatigue: 0, age: 17, salary: 1800000, contractYears: 3, level: 1, ceiling: 8, chemistry: "spark", skills: ["overlap"], skillXp: { overlap: 19, "cross-master": 31 }, skillTrainingTarget: "cross-master", youthSkillTendency: { archetype: "上下動するSB", headline: "外側の追い越しで幅をつくるサイド型", primarySkill: "overlap", developmentSkill: "cross-master", recommendedFocus: "passing", growthPace: "標準", coachNote: "パス＆組立でクロス職人を開放し、SH・WGと連動する右左の出口を育てる。" } },
   { id: "yi5", name: "葉山 颯太", position: "AM", secondary: "CM", amPlayStyle: "shadow-striker", attack: 54, dribble: 55, pass: 61, shoot: 43, defense: 33, tackle: 28, block: 25, interception: 40, fatigue: 0, age: 16, salary: 1900000, contractYears: 3, level: 1, ceiling: 10, chemistry: "edge", skills: ["vision"], skillXp: { vision: 21, linkman: 28 }, skillTrainingTarget: "linkman", youthSkillTendency: { archetype: "間の創造者", headline: "ラストパスと前線接続を両立するAM", primarySkill: "vision", developmentSkill: "linkman", recommendedFocus: "passing", growthPace: "じっくり", coachNote: "パス＆組立でリンクマンを開放。AMで判断を磨き、CFとの接続役へ伸ばす。" } },
   { id: "yi6", name: "古賀 侑真", position: "CB", secondary: "SB", attack: 32, dribble: 37, pass: 44, shoot: 22, defense: 60, tackle: 62, block: 64, interception: 56, fatigue: 0, age: 17, salary: 1800000, contractYears: 3, level: 1, ceiling: 8, chemistry: "steady", skills: ["aerial-wall"], skillXp: { "aerial-wall": 24, "duel-master": 35 }, skillTrainingTarget: "duel-master", youthSkillTendency: { archetype: "対空の番人", headline: "空中戦を軸に対人強度を足すCB", primarySkill: "aerial-wall", developmentSkill: "duel-master", recommendedFocus: "defending", growthPace: "標準", coachNote: "守備組織で対人強度を100 XPへ。中央を基準に、SBの守備固めにも備える。" } },
 ];
