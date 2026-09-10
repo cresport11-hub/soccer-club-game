@@ -100,6 +100,27 @@ describe("ClubSimulation match commentary", () => {
     expect(normalizePlayerName("篠崎 深", "r2", "篠崎 直人")).toBe("篠崎 直人");
   });
 
+  it("accumulates individual attribute XP and position mastery through training and matches", () => {
+    const simulation = new ClubSimulation();
+    const player = simulation.rosterPlayers.find((item) => item.position !== "GK" && Object.values(simulation.lineupState).includes(item.id));
+    expect(player).toBeDefined();
+    const beforeAttributeXp = player!.attributeXp?.attack ?? 0;
+    const beforeMastery = player!.positionMastery?.[player!.position] ?? 0;
+    const training = simulation.train("attacking");
+    expect(training.ok).toBe(true);
+    const afterTraining = simulation.rosterPlayers.find((item) => item.id === player!.id)!;
+    expect(afterTraining.attributeXp?.attack ?? 0).toBeGreaterThan(beforeAttributeXp);
+    expect(afterTraining.positionMastery?.[afterTraining.position] ?? 0).toBeGreaterThan(beforeMastery);
+
+    const result = simulation.advanceWeek();
+    expect(result.attributeXpGrants.length).toBeGreaterThan(0);
+    expect(result.positionMasteryGrants.length).toBeGreaterThan(0);
+    const restored = new ClubSimulation();
+    const restoredPlayer = restored.rosterPlayers.find((item) => item.id === player!.id)!;
+    expect(restoredPlayer.attributeXp?.attack).toBe(afterTraining.attributeXp?.attack);
+    expect(restoredPlayer.positionMastery?.[afterTraining.position]).toBe(afterTraining.positionMastery?.[afterTraining.position]);
+  });
+
   it("rejects marking a goalkeeper and accepts a defensive marker for an attacker", () => {
     const simulation = new ClubSimulation();
     const opponent = simulation.currentOpponentTactics;

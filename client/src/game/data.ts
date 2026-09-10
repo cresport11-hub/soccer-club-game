@@ -25,6 +25,9 @@ export const markingDefenderRank = (opponentPosition: Position, defenderPosition
 export const canMarkOpponent = (opponentPosition: Position, defenderPosition: Position) => markingDefenderRank(opponentPosition, defenderPosition) !== null;
 export const positionLabel = (position: Position | string) => positionLabels[position as Position] ?? position;
 export type TrainingLoad = "recovery" | "light" | "standard" | "high";
+export type PlayerAttributeKey = "attack" | "dribble" | "pass" | "shoot" | "defense" | "tackle" | "block" | "interception" | "gk";
+export const playerAttributeKeys: PlayerAttributeKey[] = ["attack", "dribble", "pass", "shoot", "defense", "tackle", "block", "interception", "gk"];
+export const playerAttributeLabels: Record<PlayerAttributeKey, string> = { attack: "OF", dribble: "ドリブル", pass: "パス", shoot: "シュート", defense: "DF", tackle: "タックル", block: "ブロック", interception: "パスカット", gk: "GK" };
 export type SkillGrowthFocus = "attacking" | "passing" | "finishing" | "defending" | "goalkeeping";
 export type PlayerSkillId = "finisher" | "linkman" | "cut-in" | "cross-master" | "vision" | "engine" | "switcher" | "ball-hunter" | "overlap" | "duel-master" | "aerial-wall" | "interceptor" | "sweeper" | "one-on-one" | "tempo-controller" | "recovery-run" | "regista-scan" | "touchline-drive" | "aerial-target";
 export type PlayerSkillDefinition = { id: PlayerSkillId; label: string; short: string; description: string; positions: Position[]; focus: "attack" | "defense" | "pass" | "tackle" | "interception" | "gk"; minimum: number; styles?: Array<"possession" | "direct" | "press">; attackBoost: number; defenseBoost: number; highlight: string };
@@ -86,6 +89,8 @@ export type Player = {
   youthScoutStaffImpact?: string;
   youthScoutStaffEntryXpBonus?: number;
   youthScoutStaffSessionXpBonus?: number;
+  attributeXp?: Partial<Record<PlayerAttributeKey, number>>;
+  positionMastery?: Partial<Record<Position, number>>;
 };
 
 export type Slot = {

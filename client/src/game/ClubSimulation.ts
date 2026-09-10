@@ -2,7 +2,7 @@
  * Design system: 「タッチライン戦術室」— game rules remain framework-independent and flow through one state owner.
  * Sponsors fund the season; financial history, matchday commerce, and facility levels evolve through this single state owner.
  */
-import { canMarkOpponent, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
+import { canMarkOpponent, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerAttributeKeys, playerAttributeLabels, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, positionLabel, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerAttributeKey, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
 
 export type PageId = "home" | "lineup" | "team" | "stats" | "league" | "training" | "market" | "academy" | "facilities" | "sponsors" | "cup" | "finance" | "settings";
 export type Mentality = "defensive" | "balanced" | "attacking";
@@ -26,6 +26,8 @@ export type MidfieldPressDetail = { active: boolean; grade: "一斉奪回" | "�
 export type PlayerSkillActivation = { playerId: string; player: string; skillId: string; label: string; short: string; description: string; active: boolean; focusValue: number; minimum: number; attackBoost: number; defenseBoost: number; masteryLevel: number; masteryLabel: string; xp: number; reason: string; highlight: string };
 export type PlayerSkillProgress = { skillId: PlayerSkillId; label: string; short: string; learned: boolean; canTrain: boolean; target: boolean; xp: number; level: number; levelLabel: string; nextXp: number | null; progress: number; trainingLabels: string[]; reason: string };
 export type SkillXpGrant = { playerId: string; player: string; skillId: PlayerSkillId; label: string; xp: number; totalXp: number; levelUp: boolean; learned: boolean; source: "練習" | "試合" | "ユース" };
+export type AttributeXpGrant = { playerId: string; player: string; attribute: PlayerAttributeKey; label: string; xp: number; totalXp: number; levelUps: number; source: "練習" | "試合" | "ユース" };
+export type PositionMasteryGrant = { playerId: string; player: string; position: Player["position"]; xp: number; totalXp: number; level: number; source: "練習" | "試合" | "ユース" };
 export type RecruitNegotiation = { candidateId: string; stage: "scouting" | "countered" | "agreed"; openingOffer: number; counterOffer: number; agreedFee: number | null };
 export type SaleOffer = { id: string; playerId: string; clubName: string; proposedFee: number; expiresWeek: number };
 export type ContractOfferId = "retention" | "balanced" | "ambitious";
@@ -165,7 +167,7 @@ export type IndividualBonusReceipt = { total: number; entries: IndividualBonusEn
 export type PlayerSeasonStat = { playerId: string; player: string; position: string; appearances: number; starts: number; goals: number; assists: number; ratingTotal: number; ratingCount: number; mvpAwards: number };
 export type MatchHighlight = { minute: number; kind: "kickoff" | "action" | "goal" | "tactic" | "substitution" | "injury" | "halftime" | "fulltime"; team: "orbit" | "opponent" | "neutral"; text: string; scorer?: string; assistant?: string };
 export type HalfTimeReport = { playerGoals: number; opponentGoals: number; message: string; tacticalNote: string; recommendation: string };
-export type MatchResult = { opponent: string; opponentId: string; playerGoals: number; opponentGoals: number; message: string; won: boolean; reward: number; sponsorRevenue: number; cupResult: CupMatchResult | null; gate: GateReceipt; merchandise: MerchandiseReceipt; membership: MembershipReceipt; concession: ConcessionReceipt; totalTicketRevenue: number; totalAttendance: number; totalCommercialRevenue: number; popularityDelta: number; leaguePopularityDelta: number; popularity: number; tactics: TacticalAssessment; opponentTactics: OpponentTacticalAssessment; tacticalMatchup: TacticalMatchup; markingImpact: MarkingMatchImpact; matchAttack: number; matchDefense: number; matchCondition: TeamMatchCondition; conditionAfter: TeamMatchCondition; halfTime: HalfTimeReport; highlights: MatchHighlight[]; substitutions: MatchSubstitution[]; injuries: MatchInjury[]; playerRatings: PlayerMatchRating[]; markDuels: MarkDuelReport[]; mvp: PlayerMatchRating | null; individualBonuses: IndividualBonusReceipt; skillXpGrants: SkillXpGrant[]; halfTimeChanges: string[] };
+export type MatchResult = { opponent: string; opponentId: string; playerGoals: number; opponentGoals: number; message: string; won: boolean; reward: number; sponsorRevenue: number; cupResult: CupMatchResult | null; gate: GateReceipt; merchandise: MerchandiseReceipt; membership: MembershipReceipt; concession: ConcessionReceipt; totalTicketRevenue: number; totalAttendance: number; totalCommercialRevenue: number; popularityDelta: number; leaguePopularityDelta: number; popularity: number; tactics: TacticalAssessment; opponentTactics: OpponentTacticalAssessment; tacticalMatchup: TacticalMatchup; markingImpact: MarkingMatchImpact; matchAttack: number; matchDefense: number; matchCondition: TeamMatchCondition; conditionAfter: TeamMatchCondition; halfTime: HalfTimeReport; highlights: MatchHighlight[]; substitutions: MatchSubstitution[]; injuries: MatchInjury[]; playerRatings: PlayerMatchRating[]; markDuels: MarkDuelReport[]; mvp: PlayerMatchRating | null; individualBonuses: IndividualBonusReceipt; skillXpGrants: SkillXpGrant[]; attributeXpGrants: AttributeXpGrant[]; positionMasteryGrants: PositionMasteryGrant[]; halfTimeChanges: string[] };
 
 type Persisted = {
   money: number;
@@ -345,7 +347,7 @@ const isDmEligible = (player: Pick<Player, "position" | "secondary">) => player.
 const isCbEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "CB" || player.secondary === "CB";
 const isSbEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "SB" || player.secondary === "SB";
 const isGkEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "GK" || player.secondary === "GK";
-const copyPlayers = () => players.map((player) => ({ ...player, contractYears: defaultContractYears(player), trainingLoad: player.trainingLoad ?? "standard", skillXp: { ...(player.skillXp ?? {}) }, skillTrainingTarget: player.skillTrainingTarget ?? playerSkillsFor(player)[0], cfPlayStyle: isCfEligible(player) ? player.cfPlayStyle ?? cfPlayStyleOptions[0].id : undefined, wgPlayStyle: isWgEligible(player) ? player.wgPlayStyle ?? wgPlayStyleOptions[0].id : undefined, amPlayStyle: isAmEligible(player) ? player.amPlayStyle ?? amPlayStyleOptions[0].id : undefined, cmPlayStyle: isCmEligible(player) ? player.cmPlayStyle ?? cmPlayStyleOptions[0].id : undefined, dmPlayStyle: isDmEligible(player) ? player.dmPlayStyle ?? dmPlayStyleOptions[0].id : undefined, cbPlayStyle: isCbEligible(player) ? player.cbPlayStyle ?? cbPlayStyleOptions[0].id : undefined, sbPlayStyle: isSbEligible(player) ? player.sbPlayStyle ?? sbPlayStyleOptions[0].id : undefined, gkPlayStyle: isGkEligible(player) ? player.gkPlayStyle ?? gkPlayStyleOptions[0].id : undefined }));
+const copyPlayers = () => players.map((player) => ({ ...player, contractYears: defaultContractYears(player), trainingLoad: player.trainingLoad ?? "standard", skillXp: { ...(player.skillXp ?? {}) }, attributeXp: Object.fromEntries(playerAttributeKeys.map((attribute) => [attribute, Math.max(0, Math.round(player.attributeXp?.[attribute] ?? 0))])), positionMastery: { ...(player.positionMastery ?? {}), [player.position]: Math.max(28, Math.round(player.positionMastery?.[player.position] ?? 28)), ...(player.secondary ? { [player.secondary]: Math.max(12, Math.round(player.positionMastery?.[player.secondary] ?? 12)) } : {}) }, skillTrainingTarget: player.skillTrainingTarget ?? playerSkillsFor(player)[0], cfPlayStyle: isCfEligible(player) ? player.cfPlayStyle ?? cfPlayStyleOptions[0].id : undefined, wgPlayStyle: isWgEligible(player) ? player.wgPlayStyle ?? wgPlayStyleOptions[0].id : undefined, amPlayStyle: isAmEligible(player) ? player.amPlayStyle ?? amPlayStyleOptions[0].id : undefined, cmPlayStyle: isCmEligible(player) ? player.cmPlayStyle ?? cmPlayStyleOptions[0].id : undefined, dmPlayStyle: isDmEligible(player) ? player.dmPlayStyle ?? dmPlayStyleOptions[0].id : undefined, cbPlayStyle: isCbEligible(player) ? player.cbPlayStyle ?? cbPlayStyleOptions[0].id : undefined, sbPlayStyle: isSbEligible(player) ? player.sbPlayStyle ?? sbPlayStyleOptions[0].id : undefined, gkPlayStyle: isGkEligible(player) ? player.gkPlayStyle ?? gkPlayStyleOptions[0].id : undefined }));
 const blankLineup = () => Object.fromEntries(formations[0].slots.map((slot) => [slot.id, null])) as Record<string, string | null>;
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const deterministic = (seed: number) => { const value = Math.sin(seed * 12.9898 + 78.233) * 43758.5453; return value - Math.floor(value); };
@@ -716,6 +718,111 @@ export class ClubSimulation {
     return { ok: true, text: `${player.name}の重点を「${progress.label}」へ変更しました。次のユースセッションからXPを獲得します。` };
   }
 
+  private attributeValue(player: Player, attribute: PlayerAttributeKey) {
+    return attribute === "gk" ? player.gk ?? 0 : player[attribute];
+  }
+
+  private setAttributeValue(player: Player, attribute: PlayerAttributeKey, value: number) {
+    if (attribute === "gk") player.gk = clamp(Math.round(value), 0, 99);
+    else player[attribute] = clamp(Math.round(value), 0, 99);
+  }
+
+  attributeProgressFor(player: Player) {
+    return playerAttributeKeys.map((attribute) => {
+      const totalXp = clamp(Math.round(finiteOr(player.attributeXp?.[attribute], 0)), 0, 999);
+      const level = Math.floor(totalXp / 100);
+      return { attribute, label: playerAttributeLabels[attribute], value: this.attributeValue(player, attribute), totalXp, xp: totalXp % 100, level, progress: totalXp % 100 };
+    });
+  }
+
+  private grantAttributeXp(player: Player, attribute: PlayerAttributeKey, amount: number, source: AttributeXpGrant["source"]) {
+    if (amount <= 0) return null;
+    const previousXp = clamp(Math.round(finiteOr(player.attributeXp?.[attribute], 0)), 0, 999);
+    const totalXp = clamp(previousXp + Math.max(1, Math.round(amount)), 0, 999);
+    const levelUps = Math.floor(totalXp / 100) - Math.floor(previousXp / 100);
+    player.attributeXp = { ...(player.attributeXp ?? {}), [attribute]: totalXp };
+    if (levelUps > 0) this.setAttributeValue(player, attribute, this.attributeValue(player, attribute) + levelUps);
+    return { playerId: player.id, player: player.name, attribute, label: playerAttributeLabels[attribute], xp: totalXp - previousXp, totalXp, levelUps, source } satisfies AttributeXpGrant;
+  }
+
+  private rollbackAttributeXp(grants: AttributeXpGrant[] = []) {
+    grants.forEach((grant) => {
+      const player = this.roster.find((item) => item.id === grant.playerId);
+      if (!player) return;
+      const current = clamp(Math.round(finiteOr(player.attributeXp?.[grant.attribute], 0)), 0, 999);
+      player.attributeXp = { ...(player.attributeXp ?? {}), [grant.attribute]: Math.max(0, current - grant.xp) };
+      if (grant.levelUps) this.setAttributeValue(player, grant.attribute, this.attributeValue(player, grant.attribute) - grant.levelUps);
+    });
+  }
+
+  positionMasteryFor(player: Player, position: Player["position"] = player.position) {
+    return clamp(Math.round(finiteOr(player.positionMastery?.[position], 0)), 0, 100);
+  }
+
+  positionMasterySummaryFor(player: Player) {
+    const positions = Array.from(new Set([player.position, player.secondary].filter((position): position is Player["position"] => Boolean(position))));
+    return positions.map((position) => {
+      const totalXp = this.positionMasteryFor(player, position);
+      const level = totalXp >= 85 ? 3 : totalXp >= 60 ? 2 : totalXp >= 25 ? 1 : 0;
+      const levelLabel = ["経験前", "対応可能", "習熟", "主戦場"][level];
+      return { position, label: positionLabel(position), totalXp, level, levelLabel, progress: totalXp };
+    });
+  }
+
+  private grantPositionMastery(player: Player, position: Player["position"], amount: number, source: PositionMasteryGrant["source"]) {
+    if (amount <= 0) return null;
+    const previous = this.positionMasteryFor(player, position);
+    const totalXp = clamp(previous + Math.max(1, Math.round(amount)), 0, 100);
+    player.positionMastery = { ...(player.positionMastery ?? {}), [position]: totalXp };
+    const level = totalXp >= 85 ? 3 : totalXp >= 60 ? 2 : totalXp >= 25 ? 1 : 0;
+    return { playerId: player.id, player: player.name, position, xp: totalXp - previous, totalXp, level, source } satisfies PositionMasteryGrant;
+  }
+
+  private rollbackPositionMastery(grants: PositionMasteryGrant[] = []) {
+    grants.forEach((grant) => {
+      const player = this.roster.find((item) => item.id === grant.playerId);
+      if (!player) return;
+      player.positionMastery = { ...(player.positionMastery ?? {}), [grant.position]: Math.max(0, this.positionMasteryFor(player, grant.position) - grant.xp) };
+    });
+  }
+
+  private positionForPlayer(player: Player) {
+    return this.formation.slots.find((slot) => this.lineup[slot.id] === player.id)?.label ?? player.position;
+  }
+
+  private attributeFocusForPosition(position: Player["position"]): PlayerAttributeKey[] {
+    if (position === "GK") return ["gk", "pass"];
+    if (["CF", "WG", "SH"].includes(position)) return ["attack", "dribble", "shoot", "pass"];
+    if (["AM", "CM", "DM"].includes(position)) return ["pass", "dribble", "attack", "defense"];
+    return ["defense", "tackle", "block", "interception"];
+  }
+
+  developmentAttributeKeysFor(player: Player) {
+    return this.attributeFocusForPosition(player.position);
+  }
+
+  private awardMatchAttributeXp(ratings: PlayerMatchRating[]) {
+    return ratings.flatMap((rating) => {
+      const player = this.roster.find((item) => item.id === rating.playerId);
+      if (!player) return [];
+      const keys = this.attributeFocusForPosition(this.positionForPlayer(player));
+      const base = 3 + (rating.started ? 2 : 1) + (rating.rating >= 7.5 ? 2 : 0);
+      return keys.slice(0, 3).flatMap((attribute, index) => {
+        const grant = this.grantAttributeXp(player, attribute, base + (index === 0 ? 2 : 0) + rating.goals * (attribute === "shoot" ? 2 : 0), "試合");
+        return grant ? [grant] : [];
+      });
+    });
+  }
+
+  private awardMatchPositionMastery(ratings: PlayerMatchRating[]) {
+    return ratings.flatMap((rating) => {
+      const player = this.roster.find((item) => item.id === rating.playerId);
+      if (!player) return [];
+      const grant = this.grantPositionMastery(player, this.positionForPlayer(player), 4 + (rating.started ? 3 : 1) + (rating.rating >= 7.5 ? 2 : 0), "試合");
+      return grant ? [grant] : [];
+    });
+  }
+
   private grantSkillXp(player: Player, skillId: PlayerSkillId, amount: number, source: SkillXpGrant["source"]) {
     const progress = this.skillProgressFor(player).find((item) => item.skillId === skillId);
     if (!progress || !progress.canTrain || amount <= 0) return null;
@@ -862,8 +969,9 @@ export class ClubSimulation {
     const selected = this.startingPlayers().filter((player) => this.injuryWeeksFor(player.id) === 0);
     const tactics = this.tacticalAssessment(selected);
     if (!selected.length) return { total: 0, attack: 0, defense: 0, readiness: 0, tactics };
-    const baseAttack = Math.round(selected.reduce((sum, player) => sum + this.attackPower(player) * (1 - player.fatigue / 150), 0) / selected.length);
-    const baseDefense = Math.round(selected.reduce((sum, player) => sum + this.defensePower(player) * (1 - player.fatigue / 150), 0) / selected.length);
+    const masteryBonus = Math.round(selected.reduce((sum, player) => sum + this.positionMasteryFor(player, this.positionForPlayer(player)) / 100 * 3, 0) / selected.length);
+    const baseAttack = Math.round(selected.reduce((sum, player) => sum + this.attackPower(player) * (1 - player.fatigue / 150), 0) / selected.length) + masteryBonus;
+    const baseDefense = Math.round(selected.reduce((sum, player) => sum + this.defensePower(player) * (1 - player.fatigue / 150), 0) / selected.length) + masteryBonus;
     const attack = clamp(baseAttack + tactics.attackModifier, 0, 99);
     const defense = clamp(baseDefense + tactics.defenseModifier, 0, 99);
     const readiness = Math.round(100 - selected.reduce((sum, player) => sum + player.fatigue, 0) / selected.length);
@@ -1011,6 +1119,8 @@ export class ClubSimulation {
     const result = this.lastResult;
     if (!result) return { ok: false, text: "進行中の試合がありません。" };
     this.rollbackSkillXp(result.skillXpGrants);
+    this.rollbackAttributeXp(result.attributeXpGrants);
+    this.rollbackPositionMastery(result.positionMasteryGrants);
     this.mentality = mentalityOptions.some((item) => item.id === mentality) ? mentality : this.mentality;
     this.playingStyle = playingStyleOptions.some((item) => item.id === playingStyle) ? playingStyle : this.playingStyle;
     const substitutions: MatchSubstitution[] = [];
@@ -1089,6 +1199,8 @@ export class ClubSimulation {
     result.mvp = result.playerRatings[0] ?? null;
     this.recordSeasonStats(result.playerRatings, result.mvp);
     result.skillXpGrants = this.awardMatchSkillXp(result.playerRatings, result.tactics);
+    result.attributeXpGrants = this.awardMatchAttributeXp(result.playerRatings);
+    result.positionMasteryGrants = this.awardMatchPositionMastery(result.playerRatings);
     result.individualBonuses = this.createIndividualBonusReceipt(result.playerRatings);
     this.money += oldIndividualBonus - result.individualBonuses.total;
     result.message = won ? "後半の采配が実を結び、勝利を手繰り寄せた。" : draw ? "後半の修正で、勝点を手放さなかった。" : "後半に手を打ったが、次節へ課題を残す結果となった。";
@@ -1149,7 +1261,7 @@ export class ClubSimulation {
     const primaryFit = Boolean(slot?.allowed.includes(player.position));
     const secondaryFit = Boolean(!primaryFit && player.secondary && slot?.allowed.includes(player.secondary));
     const fatiguePenalty = player.fatigue * .28 + (player.fatigue >= 80 ? 8 : player.fatigue >= 60 ? 3 : 0);
-    return this.playerPower(player) + (primaryFit ? 8 : secondaryFit ? 2 : 0) - fatiguePenalty;
+    return this.playerPower(player, slot?.label ?? player.position) + (primaryFit ? 8 : secondaryFit ? 2 : 0) - fatiguePenalty;
   }
 
   autoLineup() {
@@ -1241,16 +1353,25 @@ export class ClubSimulation {
     this.recordFinance("トレーニング", option.cost, "expense", `${option.label}を実施`, this.currentWeek);
     this.captureCashPoint();
     const before = { attack: boosted.reduce((sum, player) => sum + player.attack, 0), defense: boosted.reduce((sum, player) => sum + player.defense, 0), dribble: boosted.reduce((sum, player) => sum + player.dribble, 0), pass: boosted.reduce((sum, player) => sum + player.pass, 0), shoot: boosted.reduce((sum, player) => sum + player.shoot, 0), tackle: boosted.reduce((sum, player) => sum + player.tackle, 0), block: boosted.reduce((sum, player) => sum + player.block, 0), interception: boosted.reduce((sum, player) => sum + player.interception, 0), gk: boosted.reduce((sum, player) => sum + (player.gk ?? 0), 0), fatigue: boosted.reduce((sum, player) => sum + player.fatigue, 0) };
+    const attributeXpGrants: AttributeXpGrant[] = [];
+    const positionMasteryGrants: PositionMasteryGrant[] = [];
     boosted.forEach((player, index) => {
       const load = this.trainingLoadFor(player);
-      const skill = (base: number) => Math.max(0, base + facility.growthBonus + load.growthAdjustment);
+      const growth = (attribute: PlayerAttributeKey, base: number) => {
+        const grant = this.grantAttributeXp(player, attribute, Math.max(1, base + facility.growthBonus * 3 + load.growthAdjustment * 2 + (index % 2)), "練習");
+        if (grant) attributeXpGrants.push(grant);
+      };
       const fatigue = (base: number) => clamp(player.fatigue + base + (focus === "recovery" ? Math.min(0, load.fatigueAdjustment) : load.fatigueAdjustment), 0, 99);
-      if (focus === "attacking") { player.attack += skill(1); player.dribble += skill(1); player.pass += Math.max(0, index % 2 + load.growthAdjustment); player.shoot += skill(1); player.fatigue = fatigue(7); }
-      if (focus === "passing") { player.attack += skill(1); player.pass += skill(2); player.dribble += Math.max(0, index % 2 + load.growthAdjustment); player.fatigue = fatigue(5); }
-      if (focus === "finishing") { player.attack += skill(1); player.shoot += skill(2); player.dribble += Math.max(0, (index % 3 === 0 ? 1 : 0) + load.growthAdjustment); player.fatigue = fatigue(8); }
-      if (focus === "defending") { player.defense += skill(1); player.tackle += skill(1); player.block += Math.max(0, index % 2 + load.growthAdjustment); player.interception += skill(1); player.fatigue = fatigue(7); }
-      if (focus === "goalkeeping") { player.gk = (player.gk ?? 50) + skill(2); player.pass += skill(1); player.fatigue = fatigue(6); }
+      if (focus === "attacking") { growth("attack", 12); growth("dribble", 12); growth("pass", 7); growth("shoot", 11); player.fatigue = fatigue(7); }
+      if (focus === "passing") { growth("attack", 6); growth("pass", 16); growth("dribble", 8); player.fatigue = fatigue(5); }
+      if (focus === "finishing") { growth("attack", 7); growth("shoot", 16); growth("dribble", 8); player.fatigue = fatigue(8); }
+      if (focus === "defending") { growth("defense", 12); growth("tackle", 12); growth("block", 10); growth("interception", 12); player.fatigue = fatigue(7); }
+      if (focus === "goalkeeping") { growth("gk", 16); growth("pass", 8); player.fatigue = fatigue(6); }
       if (focus === "recovery") player.fatigue = fatigue(-13);
+      if (focus !== "recovery") {
+        const mastery = this.grantPositionMastery(player, this.positionForPlayer(player), 4 + facility.level + Math.max(0, load.growthAdjustment), "練習");
+        if (mastery) positionMasteryGrants.push(mastery);
+      }
     });
     const skillXpGrants = focus === "recovery" ? [] : boosted.flatMap((player) => {
       const target = this.skillTrainingTargetFor(player);
@@ -1263,6 +1384,9 @@ export class ClubSimulation {
     const after = { attack: boosted.reduce((sum, player) => sum + player.attack, 0), defense: boosted.reduce((sum, player) => sum + player.defense, 0), dribble: boosted.reduce((sum, player) => sum + player.dribble, 0), pass: boosted.reduce((sum, player) => sum + player.pass, 0), shoot: boosted.reduce((sum, player) => sum + player.shoot, 0), tackle: boosted.reduce((sum, player) => sum + player.tackle, 0), block: boosted.reduce((sum, player) => sum + player.block, 0), interception: boosted.reduce((sum, player) => sum + player.interception, 0), gk: boosted.reduce((sum, player) => sum + (player.gk ?? 0), 0), fatigue: boosted.reduce((sum, player) => sum + player.fatigue, 0) };
     const labels: Array<[keyof typeof before, string]> = [["attack", "OF"], ["defense", "DF"], ["dribble", "ドリブル"], ["pass", "パス"], ["shoot", "シュート"], ["tackle", "タックル"], ["block", "ブロック"], ["interception", "パスカット"], ["gk", "GK"]];
     const changes = labels.map(([key, label]) => ({ label, amount: after[key] - before[key] })).filter((item) => item.amount > 0).map((item) => `${item.label} +${item.amount}`);
+    if (attributeXpGrants.length) changes.push(`能力XP +${attributeXpGrants.reduce((sum, grant) => sum + grant.xp, 0)}`);
+    attributeXpGrants.filter((grant) => grant.levelUps > 0).forEach((grant) => changes.push(`${grant.player} ${grant.label} +${grant.levelUps}`));
+    if (positionMasteryGrants.length) changes.push(`ポジション熟練度 +${positionMasteryGrants.reduce((sum, grant) => sum + grant.xp, 0)}`);
     if (skillXpGrants.length) changes.push(`SKILL XP +${skillXpGrants.reduce((sum, grant) => sum + grant.xp, 0)}`);
     skillXpGrants.filter((grant) => grant.learned).forEach((grant) => changes.push(`${grant.player}が${grant.label}を習得`));
     skillXpGrants.filter((grant) => grant.levelUp).forEach((grant) => changes.push(`${grant.player} ${grant.label} Lv.UP`));
@@ -1285,12 +1409,20 @@ export class ClubSimulation {
     if (this.money < cost) return { ok: false, text: "ユースセッションの費用を確保できません。資金計画を確認してください。" };
     this.money -= cost;
     this.recordFinance("育成", cost, "expense", `ユース育成セッション ${this.youthPlayers.length}名`, this.currentWeek);
+    const attributeXpGrants: AttributeXpGrant[] = [];
+    const positionMasteryGrants: PositionMasteryGrant[] = [];
     const skillGrants = this.youthPlayers.flatMap((player, index) => {
       player.academyWeeks += 1;
-      if (["CF", "WG", "SH"].includes(player.position)) { player.attack += 1; player.dribble += 1; player.shoot += index % 2; }
-      if (["AM", "CM"].includes(player.position)) { player.attack += 1; player.pass += 1; player.dribble += index % 2; }
-      if (["DM", "CB", "SB"].includes(player.position)) { player.defense += 1; player.tackle += 1; player.interception += index % 2; }
-      if (player.position === "GK") { player.gk = (player.gk ?? 50) + 1; player.pass += 1; }
+      const growth = (attribute: PlayerAttributeKey, amount: number) => {
+        const grant = this.grantAttributeXp(player, attribute, amount + (index % 2), "ユース");
+        if (grant) attributeXpGrants.push(grant);
+      };
+      if (["CF", "WG", "SH"].includes(player.position)) { growth("attack", 9); growth("dribble", 9); growth("shoot", 8); }
+      if (["AM", "CM"].includes(player.position)) { growth("attack", 7); growth("pass", 10); growth("dribble", 7); }
+      if (["DM", "CB", "SB"].includes(player.position)) { growth("defense", 9); growth("tackle", 9); growth("interception", 8); }
+      if (player.position === "GK") { growth("gk", 10); growth("pass", 6); }
+      const mastery = this.grantPositionMastery(player, player.position, 7, "ユース");
+      if (mastery) positionMasteryGrants.push(mastery);
       if (player.academyWeeks % 2 === 0 && player.level < player.ceiling) player.level += 1;
       const target = player.skillTrainingTarget ?? player.youthSkillTendency?.developmentSkill ?? playerSkillsFor(player)[0];
       const paceBonus = player.youthSkillTendency?.growthPace === "早熟" ? 2 : player.youthSkillTendency?.growthPace === "標準" ? 1 : 0;
@@ -1299,9 +1431,10 @@ export class ClubSimulation {
     });
     this.captureCashPoint();
     const skillSummary = skillGrants.length ? ` 重点スキルXP +${skillGrants.reduce((sum, grant) => sum + grant.xp, 0)}。` : "";
-    this.logs.unshift(`ユース育成セッションを実施。${this.youthPlayers.length}名の基礎能力と将来性を高めた。${skillSummary}`);
+    const growthSummary = `能力XP +${attributeXpGrants.reduce((sum, grant) => sum + grant.xp, 0)} / ポジション熟練度 +${positionMasteryGrants.reduce((sum, grant) => sum + grant.xp, 0)}。`;
+    this.logs.unshift(`ユース育成セッションを実施。${this.youthPlayers.length}名の基礎能力と将来性を高めた。${growthSummary}${skillSummary}`);
     this.persist();
-    return { ok: true, text: `ユース${this.youthPlayers.length}名を育成しました。重点スキルXP +${skillGrants.reduce((sum, grant) => sum + grant.xp, 0)}。3セッションでトップ昇格の基準に達します。` };
+    return { ok: true, text: `ユース${this.youthPlayers.length}名を育成しました。${growthSummary}重点スキルXP +${skillGrants.reduce((sum, grant) => sum + grant.xp, 0)}。3セッションでトップ昇格の基準に達します。` };
   }
 
   promoteYouth(playerId: string) {
@@ -1703,6 +1836,8 @@ export class ClubSimulation {
       mvp: null,
       individualBonuses: { total: 0, entries: [] },
       skillXpGrants: [],
+      attributeXpGrants: [],
+      positionMasteryGrants: [],
       halfTimeChanges: [],
       message: won ? "勝利。スタンドの歓声が、次の挑戦を後押しする。" : draw ? "ドロー。サポーターへ、次節での反撃を約束する。" : "敗戦。戦術ボードを見直し、次節で取り返す。",
     };
@@ -1767,6 +1902,8 @@ export class ClubSimulation {
     result.mvp = result.playerRatings[0] ?? null;
     this.recordSeasonStats(result.playerRatings, result.mvp);
     result.skillXpGrants = this.awardMatchSkillXp(result.playerRatings, result.tactics);
+    result.attributeXpGrants = this.awardMatchAttributeXp(result.playerRatings);
+    result.positionMasteryGrants = this.awardMatchPositionMastery(result.playerRatings);
     result.individualBonuses = this.createIndividualBonusReceipt(result.playerRatings);
     if (result.individualBonuses.total) {
       this.money -= result.individualBonuses.total;
@@ -2264,7 +2401,7 @@ export class ClubSimulation {
     return player.position === "GK" ? (player.gk ?? 0) * .72 + outfieldDefense * .28 : outfieldDefense;
   }
 
-  private playerPower(player: Player) { return (this.attackPower(player) * .54 + this.defensePower(player) * .46) - player.fatigue * .12; }
+  private playerPower(player: Player, position: Player["position"] = player.position) { return (this.attackPower(player) * .54 + this.defensePower(player) * .46) + this.positionMasteryFor(player, position) * .04 - player.fatigue * .12; }
 
   private startingPlayers(): Player[] {
     return this.formation.slots.map((slot) => this.playerForSlot(slot.id)).filter((player): player is Player => Boolean(player));
@@ -2514,6 +2651,8 @@ export class ClubSimulation {
     const isLegacyYouthTendency = Boolean(reference?.youthSkillTendency) && !saved.youthSkillTendency;
     const savedXp = saved.skillXp && Object.keys(saved.skillXp).length ? saved.skillXp : reference?.skillXp ?? {};
     const skillXp = Object.fromEntries(Object.entries(savedXp).filter(([skillId, xp]) => Boolean(playerSkillCatalog[skillId as PlayerSkillId]) && Number.isFinite(xp)).map(([skillId, xp]) => [skillId, clamp(Math.round(xp as number), 0, 210)])) as Partial<Record<PlayerSkillId, number>>;
+    const attributeXp = Object.fromEntries(playerAttributeKeys.map((attribute) => [attribute, clamp(Math.round(finiteOr(saved.attributeXp?.[attribute], reference?.attributeXp?.[attribute] ?? 0)), 0, 999)])) as Partial<Record<PlayerAttributeKey, number>>;
+    const positionMastery = Object.fromEntries([position, secondary].filter((item, index, all): item is Player["position"] => Boolean(item) && all.indexOf(item) === index).map((item, index) => [item, clamp(Math.round(finiteOr(saved.positionMastery?.[item], reference?.positionMastery?.[item] ?? (index === 0 ? 28 : 12))), 0, 100)])) as Partial<Record<Player["position"], number>>;
     const savedTarget = isLegacyYouthTendency ? reference?.skillTrainingTarget : saved.skillTrainingTarget ?? reference?.skillTrainingTarget;
     const skillTrainingTarget = savedTarget && playerSkillCatalog[savedTarget] ? savedTarget : skills[0];
     return {
@@ -2531,6 +2670,8 @@ export class ClubSimulation {
       gkPlayStyle,
       skills,
       skillXp,
+      attributeXp,
+      positionMastery,
       skillTrainingTarget,
       youthSkillTendency: saved.youthSkillTendency ?? reference?.youthSkillTendency,
       salary: reference?.salary ?? Math.max(2400000, finiteOr(saved.salary, 2400000) * (finiteOr(saved.salary, 0) < 1000000 ? 12 : 1)),
