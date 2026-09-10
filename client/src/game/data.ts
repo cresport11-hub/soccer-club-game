@@ -3,6 +3,26 @@
  */
 export type Position = "GK" | "CB" | "SB" | "DM" | "CM" | "AM" | "SH" | "WG" | "CF";
 export const positionLabels: Record<Position, string> = { GK: "GK", CB: "CB", SB: "SB", DM: "DH", CM: "CH", AM: "OH", SH: "SH", WG: "WG", CF: "CF" };
+
+/** 実戦の守備対応に合わせたマーク対象と担当優先順位。GK・CB・SBは個別マークせず、守備ブロックで対応する。 */
+export const markingTargetPositions: Position[] = ["CF", "WG", "AM", "SH", "CM", "DM"];
+export const markingDefenderPositions: Position[] = ["CB", "SB", "DM", "CM", "SH"];
+const markingDefenderPriority: Partial<Record<Position, Position[]>> = {
+  CF: ["CB", "SB", "DM", "CM", "SH"],
+  WG: ["SB", "CB", "SH", "DM", "CM"],
+  AM: ["DM", "CM", "CB", "SB", "SH"],
+  SH: ["SB", "SH", "DM", "CM", "CB"],
+  CM: ["CM", "DM", "SH", "CB", "SB"],
+  DM: ["DM", "CM", "CB", "SB", "SH"],
+};
+export const isMarkableOpponentPosition = (position: Position) => markingTargetPositions.includes(position);
+export const isMarkingDefenderPosition = (position: Position) => markingDefenderPositions.includes(position);
+export const markingDefenderRank = (opponentPosition: Position, defenderPosition: Position) => {
+  if (!isMarkableOpponentPosition(opponentPosition) || !isMarkingDefenderPosition(defenderPosition)) return null;
+  const rank = markingDefenderPriority[opponentPosition]?.indexOf(defenderPosition) ?? -1;
+  return rank >= 0 ? rank : null;
+};
+export const canMarkOpponent = (opponentPosition: Position, defenderPosition: Position) => markingDefenderRank(opponentPosition, defenderPosition) !== null;
 export const positionLabel = (position: Position | string) => positionLabels[position as Position] ?? position;
 export type TrainingLoad = "recovery" | "light" | "standard" | "high";
 export type SkillGrowthFocus = "attacking" | "passing" | "finishing" | "defending" | "goalkeeping";

@@ -2,7 +2,7 @@
  * Design system: 「タッチライン戦術室」— game rules remain framework-independent and flow through one state owner.
  * Sponsors fund the season; financial history, matchday commerce, and facility levels evolve through this single state owner.
  */
-import { formations, marketRecruits, opponentSeeds, opponentSquadFor, opponentTactics, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
+import { canMarkOpponent, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, opponentSeeds, opponentSquadFor, opponentTactics, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
 
 export type PageId = "home" | "lineup" | "team" | "stats" | "league" | "training" | "market" | "academy" | "facilities" | "sponsors" | "cup" | "finance" | "settings";
 export type Mentality = "defensive" | "balanced" | "attacking";
@@ -506,9 +506,13 @@ export class ClubSimulation {
   get teamMoraleValue() { return this.teamMorale; }
   get recentForm() { return [...this.recentMatchForm]; }
   get currentManualMarkAssignments() {
-    const opponentIds = new Set(this.currentOpponentTactics.lineup.map((player) => player.id));
+    const opponentById = new Map(this.currentOpponentTactics.lineup.map((player) => [player.id, player]));
     const starterIds = new Set(Object.values(this.lineup).filter((id): id is string => Boolean(id)));
-    return Object.fromEntries(Object.entries(this.manualMarkAssignments).filter(([opponentId, playerId]) => opponentIds.has(opponentId) && starterIds.has(playerId)));
+    return Object.fromEntries(Object.entries(this.manualMarkAssignments).filter(([opponentId, playerId]) => {
+      const opponent = opponentById.get(opponentId);
+      const player = this.roster.find((item) => item.id === playerId);
+      return Boolean(opponent && player && starterIds.has(playerId) && canMarkOpponent(opponent.position, player.position));
+    }));
   }
   get currentWeek() { return this.week + 1; }
   get clubNameValue() { return this.clubName; }
@@ -557,6 +561,8 @@ export class ClubSimulation {
     const opponentPlayer = this.currentOpponentTactics.lineup.find((player) => player.id === opponentPlayerId);
     const player = this.roster.find((item) => item.id === playerId);
     if (!opponentPlayer || !player || !Object.values(this.lineup).includes(playerId)) return { ok: false, text: "相手または先発選手を確認できませんでした。" };
+    if (!isMarkableOpponentPosition(opponentPlayer.position)) return { ok: false, text: `${opponentPlayer.name}（${opponentPlayer.position}）は個別マーク対象外です。守備ブロックで対応します。` };
+    if (!isMarkingDefenderPosition(player.position) || !canMarkOpponent(opponentPlayer.position, player.position)) return { ok: false, text: `${player.name}は守備担当として${opponentPlayer.name}を個別マークできません。CB・SB・DH・CH・SHから選択してください。` };
     Object.entries(this.manualMarkAssignments).forEach(([opponentId, assignedId]) => { if (assignedId === playerId) delete this.manualMarkAssignments[opponentId]; });
     this.manualMarkAssignments[opponentPlayerId] = playerId;
     this.persist();
@@ -1786,22 +1792,39 @@ export class ClubSimulation {
     return result;
   }
 
-  private markingMatchImpact(opponentTactics: OpponentTacticalAssessment): MarkingMatchImpact {
+  private buildMarkingPairings(opponentTactics: OpponentTacticalAssessment) {
     const opponentFormation = formations.find((formation) => formation.id === opponentTactics.formationId);
-    const ownSlots = this.formation.slots.map((slot) => ({ slot, player: this.playerForSlot(slot.id) })).filter((item): item is { slot: Formation["slots"][number]; player: Player } => Boolean(item.player));
-    if (!opponentFormation || !ownSlots.length) return { attackModifier: 0, defenseModifier: 0, grade: "対人拮抗", advantageCount: 0, cautionCount: 0, summary: "MARKING IMPACT 拮抗（攻+0 / 守+0）", reason: "対応関係を十分に作れず、試合計算への補正は加えない。" };
-    const remainingOpponents = opponentTactics.lineup.map((opponentPlayer) => ({ opponentPlayer, slot: opponentFormation.slots.find((slot) => opponentPlayer.id.endsWith(`-${slot.id}`)) ?? opponentFormation.slots[0] }));
+    const ownDefenders = this.formation.slots
+      .map((slot) => ({ slot, player: this.playerForSlot(slot.id) }))
+      .filter((item): item is { slot: Formation["slots"][number]; player: Player } => item.player !== null && isMarkingDefenderPosition(item.player.position));
+    if (!opponentFormation || !ownDefenders.length) return [];
+    const remainingDefenders = [...ownDefenders];
+    return opponentTactics.lineup.filter((opponentPlayer) => isMarkableOpponentPosition(opponentPlayer.position)).map((opponentPlayer) => {
+      const opponentSlot = opponentFormation.slots.find((slot) => opponentPlayer.id.endsWith(`-${slot.id}`)) ?? opponentFormation.slots[0];
+      const manualPlayerId = this.currentManualMarkAssignments[opponentPlayer.id];
+      const manualIndex = remainingDefenders.findIndex((candidate) => candidate.player.id === manualPlayerId && canMarkOpponent(opponentPlayer.position, candidate.player.position));
+      const pool = remainingDefenders.length ? remainingDefenders : ownDefenders;
+      const bestIndex = manualIndex >= 0 ? manualIndex : pool.reduce((best, candidate, index) => {
+        const candidateRank = markingDefenderRank(opponentPlayer.position, candidate.player.position) ?? 99;
+        const bestRank = markingDefenderRank(opponentPlayer.position, pool[best].player.position) ?? 99;
+        const candidateScore = candidateRank * 10000 + (candidate.slot.x - opponentSlot.x) ** 2 + (candidate.slot.y - opponentSlot.y) ** 2;
+        const bestScore = bestRank * 10000 + (pool[best].slot.x - opponentSlot.x) ** 2 + (pool[best].slot.y - opponentSlot.y) ** 2;
+        return candidateScore < bestScore ? index : best;
+      }, 0);
+      const pairing = pool[bestIndex];
+      const remainingIndex = remainingDefenders.findIndex((candidate) => candidate.player.id === pairing.player.id);
+      if (remainingIndex >= 0) remainingDefenders.splice(remainingIndex, 1);
+      return { opponentPlayer, opponentSlot, player: pairing.player, slot: pairing.slot, manual: pairing.player.id === manualPlayerId };
+    });
+  }
+
+  private markingMatchImpact(opponentTactics: OpponentTacticalAssessment): MarkingMatchImpact {
+    const pairings = this.buildMarkingPairings(opponentTactics);
+    if (!pairings.length) return { attackModifier: 0, defenseModifier: 0, grade: "対人拮抗", advantageCount: 0, cautionCount: 0, summary: "MARKING IMPACT 拮抗（攻+0 / 守+0）", reason: "対応できる攻撃選手がいないため、GK・守備選手への個別マーク補正は加えない。" };
     let advantageCount = 0;
     let cautionCount = 0;
-    ownSlots.forEach(({ slot, player }) => {
-      const manualIndex = remainingOpponents.findIndex((candidate) => this.manualMarkAssignments[candidate.opponentPlayer.id] === player.id);
-      const bestIndex = manualIndex >= 0 ? manualIndex : remainingOpponents.reduce((best, candidate, index) => {
-        const candidateDistance = (slot.x - candidate.slot.x) ** 2 + (slot.y - candidate.slot.y) ** 2;
-        const bestDistance = (slot.x - remainingOpponents[best].slot.x) ** 2 + (slot.y - remainingOpponents[best].slot.y) ** 2;
-        return candidateDistance < bestDistance ? index : best;
-      }, 0);
-      const { opponentPlayer, slot: opponentSlot } = remainingOpponents.splice(bestIndex, 1)[0];
-      const defenderValue = player.position === "GK" ? (player.gk ?? 50) : Math.round(player.defense * .34 + player.tackle * .36 + player.interception * .3);
+    pairings.forEach(({ opponentPlayer, opponentSlot, player, slot }) => {
+      const defenderValue = Math.round(player.defense * .34 + player.tackle * .36 + player.interception * .3);
       const threatValue = Math.round(opponentPlayer.attack * .5 + opponentPlayer.pass * .3 + (opponentPlayer.role.includes("裏抜け") || opponentPlayer.role.includes("シャドー") ? 4 : opponentPlayer.role.includes("ターゲット") ? 2 : 0));
       const distancePenalty = Math.max(0, Math.hypot(slot.x - opponentSlot.x, slot.y - opponentSlot.y) - 14) * .16;
       const differential = defenderValue - threatValue - distancePenalty;
@@ -1812,8 +1835,8 @@ export class ClubSimulation {
     const attackModifier = balance >= 3 ? 1 : balance <= -3 ? -1 : 0;
     const defenseModifier = balance >= 2 ? 1 : balance <= -2 ? -1 : 0;
     const grade: MarkingMatchImpact["grade"] = balance >= 2 ? "対人優位" : balance <= -2 ? "対人警戒" : "対人拮抗";
-    const summary = `MARKING IMPACT ${grade}（有利 ${advantageCount} / 警戒 ${cautionCount}・攻${attackModifier >= 0 ? "+" : ""}${attackModifier} / 守${defenseModifier >= 0 ? "+" : ""}${defenseModifier}）`;
-    const reason = grade === "対人優位" ? "局地戦の優位が奪回と二次攻撃をわずかに後押しする。" : grade === "対人警戒" ? "不利な対人局面があり、カバーによる負荷を小さく織り込む。" : "対人局面は拮抗しており、チーム戦力と作戦が主な決定要因となる。";
+    const summary = `MARKING IMPACT ${grade}（攻撃選手 ${pairings.length}人 / 有利 ${advantageCount} / 警戒 ${cautionCount}・攻${attackModifier >= 0 ? "+" : ""}${attackModifier} / 守${defenseModifier >= 0 ? "+" : ""}${defenseModifier}）`;
+    const reason = grade === "対人優位" ? "相手の前線・中盤の攻撃選手へ守備担当が適切に付き、局地戦の優位が奪回を後押しする。" : grade === "対人警戒" ? "相手の攻撃選手との対人局面に不利があり、最終ラインのカバー負荷を織り込む。" : "攻撃選手への守備対応は拮抗しており、GK・守備選手は個別マークせず守備ブロックで対応する。";
     return { attackModifier, defenseModifier, grade, advantageCount, cautionCount, summary, reason };
   }
 
@@ -2005,21 +2028,11 @@ export class ClubSimulation {
   }
 
   private createMarkDuelReports(opponentTactics: OpponentTacticalAssessment, ratings: PlayerMatchRating[], playerGoals: number, opponentGoals: number): MarkDuelReport[] {
-    const opponentFormation = formations.find((formation) => formation.id === opponentTactics.formationId);
-    const ownSlots = this.formation.slots.map((slot) => ({ slot, player: this.playerForSlot(slot.id) })).filter((item): item is { slot: Formation["slots"][number]; player: Player } => Boolean(item.player));
     const ratingByPlayer = new Map(ratings.map((rating) => [rating.playerId, rating]));
-    if (!opponentFormation || !ownSlots.length) return [];
-    const remainingOpponents = opponentTactics.lineup.map((opponentPlayer) => ({ opponentPlayer, slot: opponentFormation.slots.find((slot) => opponentPlayer.id.endsWith(`-${slot.id}`)) ?? opponentFormation.slots[0] }));
-    return ownSlots.map(({ slot, player }) => {
-      const manualIndex = remainingOpponents.findIndex((candidate) => this.manualMarkAssignments[candidate.opponentPlayer.id] === player.id);
-      const bestIndex = manualIndex >= 0 ? manualIndex : remainingOpponents.reduce((best, candidate, index) => {
-        const candidateDistance = (slot.x - candidate.slot.x) ** 2 + (slot.y - candidate.slot.y) ** 2;
-        const bestDistance = (slot.x - remainingOpponents[best].slot.x) ** 2 + (slot.y - remainingOpponents[best].slot.y) ** 2;
-        return candidateDistance < bestDistance ? index : best;
-      }, 0);
-      const { opponentPlayer, slot: opponentSlot } = remainingOpponents.splice(bestIndex, 1)[0];
+    const pairings = this.buildMarkingPairings(opponentTactics);
+    return pairings.map(({ opponentPlayer, opponentSlot, player, slot }) => {
       const rating = ratingByPlayer.get(player.id);
-      const defenderValue = player.position === "GK" ? (player.gk ?? 50) : Math.round(player.defense * .34 + player.tackle * .36 + player.interception * .3);
+      const defenderValue = Math.round(player.defense * .34 + player.tackle * .36 + player.interception * .3);
       const threatValue = Math.round(opponentPlayer.attack * .5 + opponentPlayer.pass * .3 + (opponentPlayer.role.includes("裏抜け") || opponentPlayer.role.includes("シャドー") ? 4 : opponentPlayer.role.includes("ターゲット") ? 2 : 0));
       const distancePenalty = Math.max(0, Math.hypot(slot.x - opponentSlot.x, slot.y - opponentSlot.y) - 14) * .16;
       const ratingImpact = ((rating?.rating ?? 6.2) - 6.2) * 5 + (rating?.goals ?? 0) * 3 + (rating?.assists ?? 0) * 2 - (rating?.injured ? 5 : 0);
@@ -2029,7 +2042,7 @@ export class ClubSimulation {
       const activity = clamp(Math.round(48 + ((rating?.rating ?? 6.2) - 5.5) * 18 + Math.max(0, differential) * .28 - Math.max(0, -differential) * .12 + deterministic(this.week * 19 + player.pass) * 10), 35, 95);
       const activityGrade: MarkDuelReport["activityGrade"] = activity >= 84 ? "躍動" : activity >= 70 ? "貢献" : activity >= 56 ? "粘戦" : "苦戦";
       const engagements = clamp(Math.round(5 + activity / 14 + deterministic(this.week * 13 + player.defense) * 3), 5, 13);
-      const summary = outcome === "勝利" ? `${opponentPlayer.name}を抑え、対人局面で主導権を確保。` : outcome === "苦戦" ? `${opponentPlayer.role}への対応が後手に回り、援護が必要だった。` : `${opponentPlayer.name}と拮抗。局面ごとの集中が勝負を分けた。`;
+      const summary = outcome === "勝利" ? `${opponentPlayer.name}を守備担当として抑え、対人局面で主導権を確保。` : outcome === "苦戦" ? `${opponentPlayer.role}への対応が後手に回り、カバーが必要だった。` : `${opponentPlayer.name}と拮抗。守備ラインと中盤の距離感が勝負を分けた。`;
       return { playerId: player.id, player: player.name, position: player.position, opponent: opponentPlayer.name, opponentPosition: opponentPlayer.position, opponentRole: opponentPlayer.role, outcome, differential, engagements, activity, activityGrade, rating: rating?.rating ?? 6.2, summary };
     }).sort((a, b) => Math.abs(b.differential) - Math.abs(a.differential) || b.activity - a.activity);
   }

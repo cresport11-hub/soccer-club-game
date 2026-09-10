@@ -247,3 +247,8 @@ button { font: inherit; }
 .candidate-compare-row.is-current { border-left: 2px solid var(--lime); padding-left: 2px; }
 .candidate-compare-row.is-current strong i { color: var(--lime); }
 @media (max-width:600px) { .market-selection-note { font-size: 8px; margin-top: 7px; }.candidate-compare-row { min-height: 56px; } }
+
+.marking-legend i.not-required { background:#78957d; }
+.mark-player-label.not-required { color:#d7e7d5; background:#365342; border:1px solid rgba(184,216,183,.32); }
+.opponent-token.mark-not-required { border-color:rgba(120,149,125,.7); filter:saturate(.65); }
+.opponent-token.mark-not-required::after { position:absolute; top:-5px; right:-5px; display:grid; place-items:center; width:11px; height:11px; content:""; border-radius:50%; background:#78957d; box-shadow:0 0 0 2px #082516; }

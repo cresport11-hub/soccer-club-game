@@ -72,4 +72,33 @@ describe("ClubSimulation match commentary", () => {
     const result = restoredSimulation.advanceWeek();
     expect(result.highlights.some((item) => item.kind === "fulltime" && item.text.includes("ブライト 札幌"))).toBe(true);
   });
+
+  it("maps only attack or midfield opponents to defensive markers", () => {
+    const simulation = new ClubSimulation();
+    const result = simulation.advanceWeek();
+    const markableOpponentPositions = ["CF", "WG", "AM", "SH", "CM", "DM"];
+    const defensivePositions = ["CB", "SB", "DM", "CM", "SH"];
+
+    expect(result.markDuels.length).toBeGreaterThan(0);
+    expect(result.markDuels.every((duel) => markableOpponentPositions.includes(duel.opponentPosition))).toBe(true);
+    expect(result.markDuels.every((duel) => defensivePositions.includes(duel.position))).toBe(true);
+    expect(result.markDuels.some((duel) => duel.position === "GK")).toBe(false);
+    expect(result.markDuels.some((duel) => ["CB", "SB"].includes(duel.opponentPosition))).toBe(false);
+  });
+
+  it("rejects marking a goalkeeper and accepts a defensive marker for an attacker", () => {
+    const simulation = new ClubSimulation();
+    const opponent = simulation.currentOpponentTactics;
+    const starterIds = Object.values(simulation.lineupState).filter((id): id is string => Boolean(id));
+    const goalkeeper = opponent.lineup.find((player) => player.position === "GK");
+    const attacker = opponent.lineup.find((player) => ["CF", "WG", "AM", "SH"].includes(player.position));
+    const defender = starterIds.map((id) => simulation.rosterPlayers.find((player) => player.id === id)).find((player) => player && ["CB", "SB", "DM", "CM", "SH"].includes(player.position));
+
+    expect(goalkeeper).toBeDefined();
+    expect(attacker).toBeDefined();
+    expect(defender).toBeDefined();
+    expect(simulation.setManualMarkAssignment(goalkeeper!.id, defender!.id).ok).toBe(false);
+    expect(simulation.setManualMarkAssignment(attacker!.id, defender!.id).ok).toBe(true);
+    expect(simulation.currentManualMarkAssignments[attacker!.id]).toBe(defender!.id);
+  });
 });
