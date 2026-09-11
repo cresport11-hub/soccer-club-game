@@ -331,10 +331,10 @@ export const commonGivenNamePool = [
   "俊介", "圭吾", "恒一", "直哉", "和真", "悠真", "智也", "遼太", "健人", "隼人", "翔平", "裕太",
   "将太", "亮平", "大樹", "蓮也", "颯真", "悠生", "湊斗", "結人", "拓真", "智紀", "竜也", "啓太",
   "悠希", "航平", "一輝", "康太", "修平", "慎吾", "勇人", "陽介", "圭太", "恒一", "和樹", "貴之",
-  "美咲", "花音", "七海", "彩乃", "愛理", "遥香", "真央", "杏奈", "結菜", "莉子", "優花", "明日香",
-  "里奈", "美穂", "千夏", "春香", "陽菜", "菜月", "沙織", "麻衣", "美月", "梨花", "桃子", "佳奈",
-  "怜奈", "香織", "由佳", "奈緒", "理沙", "千尋", "瑞希", "遥斗", "理人", "瑛太", "蒼介", "柊真",
+  "遥斗", "理人", "瑛太", "蒼介", "柊真",
   "大翔", "晴也", "光希", "優真", "理玖", "琉真", "怜司", "颯人", "結翔", "龍之介", "奏太", "律希",
+  "浩二", "修司", "哲也", "啓介", "圭介", "義人", "淳也", "達郎", "康弘", "雅也", "英樹", "和彦",
+  "直紀", "慎一", "健一", "雄一", "拓郎", "一真", "和弘", "智之",
 ];
 
 const opponentSurnamePool = commonSurnamePool;
@@ -342,16 +342,17 @@ const opponentGivenPool = commonGivenNamePool;
 
 const nameSeed = (value: string) => Array.from(value).reduce((total, character) => total + character.codePointAt(0)!, 0);
 const splitPlayerName = (value: string) => value.trim().split(/\s+/).filter(Boolean);
+const excludedGivenNameSet = new Set(["美咲", "花音", "七海", "彩乃", "愛理", "遥香", "真央", "杏奈", "結菜", "莉子", "優花", "明日香", "里奈", "美穂", "千夏", "春香", "陽菜", "菜月", "沙織", "麻衣", "美月", "梨花", "桃子", "佳奈", "怜奈", "香織", "由佳", "奈緒", "理沙"]);
 
-/** 姓名を正規化し、空白や一文字の名をゲーム内で残さない。 */
+/** 姓名を正規化し、女性名・空白・一文字の名をゲーム内で残さない。 */
 export const normalizePlayerName = (value: string, seed = value, fallback?: string) => {
   const parts = splitPlayerName(value);
   const fallbackParts = fallback ? splitPlayerName(fallback) : [];
   const surname = parts[0] || fallbackParts[0] || commonSurnamePool[nameSeed(seed) % commonSurnamePool.length];
   const given = parts.slice(1).join("");
-  if (given.length >= 2) return `${surname} ${given}`;
+  if (given.length >= 2 && !excludedGivenNameSet.has(given)) return `${surname} ${given}`;
   const fallbackGiven = fallbackParts.slice(1).join("");
-  if (fallbackGiven.length >= 2) return `${fallbackParts[0] || surname} ${fallbackGiven}`;
+  if (fallbackGiven.length >= 2 && !excludedGivenNameSet.has(fallbackGiven)) return `${fallbackParts[0] || surname} ${fallbackGiven}`;
   return `${surname} ${commonGivenNamePool[nameSeed(seed) % commonGivenNamePool.length]}`;
 };
 
@@ -406,7 +407,7 @@ export const recruit = marketRecruits[0];
 
 export const youthProspects: Player[] = [
   { id: "y1", name: "水瀬 湊斗", position: "CF", secondary: "WG", cfPlayStyle: "runner", attack: 48, dribble: 52, pass: 42, shoot: 55, defense: 26, tackle: 22, block: 19, interception: 29, fatigue: 0, age: 17, salary: 1800000, contractYears: 3, level: 1, ceiling: 9, chemistry: "spark", skills: ["finisher"], skillXp: { finisher: 18, "aerial-target": 32 }, skillTrainingTarget: "aerial-target", youthSkillTendency: { archetype: "ゴール前の嗅覚", headline: "フィニッシュの土台を持つ裏抜け型", primarySkill: "finisher", developmentSkill: "aerial-target", recommendedFocus: "finishing", growthPace: "早熟", coachNote: "まずフィニッシュでポストプレーを100 XPへ。CFの幅を増やしてから、WG起用も検討する。" } },
-  { id: "y2", name: "高瀬 美咲", position: "CM", secondary: "AM", amPlayStyle: "playmaker", attack: 46, dribble: 50, pass: 58, shoot: 41, defense: 44, tackle: 39, block: 34, interception: 51, fatigue: 0, age: 16, salary: 1600000, contractYears: 3, level: 1, ceiling: 10, chemistry: "edge", skills: ["switcher"], skillXp: { switcher: 14, "tempo-controller": 38 }, skillTrainingTarget: "tempo-controller", youthSkillTendency: { archetype: "展開の設計者", headline: "逆サイドを使える配球型の中盤", primarySkill: "switcher", developmentSkill: "tempo-controller", recommendedFocus: "passing", growthPace: "じっくり", coachNote: "パス＆組立を継続してテンポ支配を100 XPへ。先にCMで育て、後からAMの創造性を足す。" } },
+  { id: "y2", name: "高瀬 和也", position: "CM", secondary: "AM", amPlayStyle: "playmaker", attack: 46, dribble: 50, pass: 58, shoot: 41, defense: 44, tackle: 39, block: 34, interception: 51, fatigue: 0, age: 16, salary: 1600000, contractYears: 3, level: 1, ceiling: 10, chemistry: "edge", skills: ["switcher"], skillXp: { switcher: 14, "tempo-controller": 38 }, skillTrainingTarget: "tempo-controller", youthSkillTendency: { archetype: "展開の設計者", headline: "逆サイドを使える配球型の中盤", primarySkill: "switcher", developmentSkill: "tempo-controller", recommendedFocus: "passing", growthPace: "じっくり", coachNote: "パス＆組立を継続してテンポ支配を100 XPへ。先にCMで育て、後からAMの創造性を足す。" } },
   { id: "y3", name: "榊 晴也", position: "CB", secondary: "DM", attack: 34, dribble: 39, pass: 46, shoot: 28, defense: 56, tackle: 58, block: 61, interception: 53, fatigue: 0, age: 18, salary: 2000000, contractYears: 3, level: 2, ceiling: 8, chemistry: "steady", skills: ["aerial-wall"], skillXp: { "aerial-wall": 22, interceptor: 29 }, skillTrainingTarget: "interceptor", youthSkillTendency: { archetype: "後方の読み", headline: "高さを土台にパスコースを消すCB", primarySkill: "aerial-wall", developmentSkill: "interceptor", recommendedFocus: "defending", growthPace: "標準", coachNote: "守備組織でインターセプトを100 XPへ。CBの強度を固めてからDMの保険として育成する。" } },
 ];
 
