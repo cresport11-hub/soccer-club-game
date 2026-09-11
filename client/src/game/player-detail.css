@@ -52,3 +52,9 @@
 .detail-condition-status.normal + .detail-condition-meter em { background:#9dcdb5; }
 .detail-condition-status.bad + .detail-condition-meter em { background:#ff9b82; }
 .detail-note > small { display:block; color:#91ad96; font-size:9px; line-height:1.5; }
+
+.detail-condition-status { display:inline-flex !important; align-items:center; gap:4px; }
+.detail-condition-status .condition-icon { display:inline-flex; align-items:center; justify-content:center; min-width:1.05em; font-size:1.25em; font-weight:900; line-height:1; }
+.detail-condition-status.good .condition-icon { color:#d9ff4a; }
+.detail-condition-status.normal .condition-icon { color:#b8d4c4; }
+.detail-condition-status.bad .condition-icon { color:#ff9b82; }

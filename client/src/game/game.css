@@ -264,3 +264,10 @@ button { font: inherit; }
 .condition-pill.player-condition { letter-spacing: .02em; }
 .condition-label { display:inline-flex; align-items:center; padding:2px 5px; border:1px solid transparent; font-size:8px; font-weight:800; white-space:nowrap; }
 @media (max-width:680px) { .player-condition { white-space:nowrap; } }
+
+/* Condition icons make match-day form scannable without relying on the number alone. */
+.condition-icon { display:inline-flex; align-items:center; justify-content:center; width:1.1em; margin-right:.28em; font-size:1.16em; font-weight:900; line-height:1; }
+.condition-label .condition-icon, .player-condition .condition-icon { vertical-align:-.08em; }
+.condition-label.good .condition-icon, .player-condition.good .condition-icon { color:#d9ff4a; }
+.condition-label.normal .condition-icon, .player-condition.normal .condition-icon { color:#b8d4c4; }
+.condition-label.bad .condition-icon, .player-condition.bad .condition-icon { color:#ff9b82; }
