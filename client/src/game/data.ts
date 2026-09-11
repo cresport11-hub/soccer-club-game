@@ -57,6 +57,8 @@ export type Player = {
   interception: number;
   gk?: number;
   fatigue: number;
+  /** 試合当日の状態。疲労とは別に0〜100で管理する。 */
+  condition?: number;
   trainingLoad?: TrainingLoad;
   cfPlayStyle?: CFPlayStyle;
   wgPlayStyle?: WGPlayStyle;

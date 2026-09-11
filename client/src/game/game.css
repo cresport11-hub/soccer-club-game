@@ -253,3 +253,14 @@ button { font: inherit; }
 .opponent-token.mark-not-required { border-color:rgba(120,149,125,.7); filter:saturate(.65); }
 .opponent-token.mark-not-required::after { position:absolute; top:-5px; right:-5px; display:grid; place-items:center; width:11px; height:11px; content:""; border-radius:50%; background:#78957d; box-shadow:0 0 0 2px #082516; }
 .development-mini{margin-top:12px;padding:10px 11px;border:1px solid rgba(132,255,183,.13);border-radius:12px;background:rgba(5,27,17,.46)}.development-mini-head{display:flex;justify-content:space-between;gap:8px;color:#cfe8d2;font-size:10px}.development-mini-head small{color:#8eae96;font-size:9px}.development-mini-bars{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;margin-top:8px}.development-mini-bars span{display:grid;grid-template-columns:48px 1fr;align-items:center;gap:5px;color:#9fc2a5;font-size:9px}.development-mini-bars i{display:block;height:4px;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.1)}.development-mini-bars em{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#85f6a5,#d8ff78)}.development-mini-mastery{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}.development-mini-mastery span{padding:3px 6px;border:1px solid rgba(120,207,255,.2);border-radius:99px;color:#9bc3ca;font-size:9px}.development-mini-mastery b{color:#e2fbff;font-weight:800}@media(max-width:520px){.development-mini-bars{gap:6px}.development-mini-bars span{grid-template-columns:42px 1fr;font-size:8px}.development-mini{padding:9px}}
+
+/* Player condition is separate from fatigue: it describes match-day form. */
+.player-condition.good, .condition-label.good { color: #d9ff4a; border-color: rgba(217,255,74,.45); background: rgba(217,255,74,.12); }
+.player-condition.normal, .condition-label.normal { color: #b8d4c4; border-color: rgba(184,212,196,.32); background: rgba(184,212,196,.08); }
+.player-condition.bad, .condition-label.bad { color: #ff9b82; border-color: rgba(255,155,130,.45); background: rgba(255,155,130,.11); }
+.player-token.condition-good { box-shadow: 0 0 0 2px rgba(217,255,74,.22), 0 8px 18px rgba(0,0,0,.2); }
+.player-token.condition-bad { box-shadow: 0 0 0 2px rgba(255,155,130,.24), 0 8px 18px rgba(0,0,0,.2); }
+.training-load-row .player-condition { margin-left: 4px; }
+.condition-pill.player-condition { letter-spacing: .02em; }
+.condition-label { display:inline-flex; align-items:center; padding:2px 5px; border:1px solid transparent; font-size:8px; font-weight:800; white-space:nowrap; }
+@media (max-width:680px) { .player-condition { white-space:nowrap; } }

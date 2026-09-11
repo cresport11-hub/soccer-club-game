@@ -124,6 +124,38 @@ describe("ClubSimulation match commentary", () => {
     expect(restoredPlayer.positionMastery?.[afterTraining.position]).toBe(afterTraining.positionMastery?.[afterTraining.position]);
   });
 
+  it("tracks match-day condition separately from fatigue and persists its changes", () => {
+    const simulation = new ClubSimulation();
+    const player = simulation.rosterPlayers.find((item) => item.position !== "GK" && Object.values(simulation.lineupState).includes(item.id));
+    expect(player).toBeDefined();
+    const beforeCondition = simulation.conditionFor(player!);
+    const beforeFatigue = player!.fatigue;
+    expect(simulation.conditionStatusFor(player!).label).toBe("標準");
+
+    const training = simulation.train("recovery");
+    expect(training.ok).toBe(true);
+    const afterTraining = simulation.rosterPlayers.find((item) => item.id === player!.id)!;
+    expect(simulation.conditionFor(afterTraining)).toBeGreaterThan(beforeCondition);
+    expect(afterTraining.fatigue).toBeLessThan(beforeFatigue);
+
+    const result = simulation.advanceWeek();
+    expect(result.conditionChanges.length).toBeGreaterThan(0);
+    const restored = new ClubSimulation();
+    expect(restored.conditionFor(restored.rosterPlayers.find((item) => item.id === player!.id)!)).toBe(simulation.conditionFor(afterTraining));
+  });
+
+  it("includes player condition in team readiness and attack strength", () => {
+    const simulation = new ClubSimulation();
+    const player = simulation.rosterPlayers.find((item) => item.position !== "GK" && Object.values(simulation.lineupState).includes(item.id));
+    expect(player).toBeDefined();
+    player!.condition = 20;
+    const lowConditionScore = simulation.score();
+    player!.condition = 90;
+    const highConditionScore = simulation.score();
+    expect(highConditionScore.attack).toBeGreaterThan(lowConditionScore.attack);
+    expect(highConditionScore.readiness).toBeGreaterThan(lowConditionScore.readiness);
+  });
+
   it("rejects marking a goalkeeper and accepts a defensive marker for an attacker", () => {
     const simulation = new ClubSimulation();
     const opponent = simulation.currentOpponentTactics;
