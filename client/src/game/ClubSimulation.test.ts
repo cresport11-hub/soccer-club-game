@@ -171,4 +171,26 @@ describe("ClubSimulation match commentary", () => {
     expect(simulation.setManualMarkAssignment(attacker!.id, defender!.id).ok).toBe(true);
     expect(simulation.currentManualMarkAssignments[attacker!.id]).toBe(defender!.id);
   });
+
+  it("keeps hidden attribute ceilings above current ability and blocks growth beyond them", () => {
+    const simulation = new ClubSimulation();
+    const player = simulation.rosterPlayers.find((item) => item.position !== "GK");
+    expect(player).toBeDefined();
+    const current = player!.attack;
+    player!.attributeCeilings = { ...(player!.attributeCeilings ?? {}), attack: current };
+    player!.attributeXp = { ...(player!.attributeXp ?? {}), attack: 99 };
+    const training = simulation.train("attacking");
+    expect(training.ok).toBe(true);
+    const afterTraining = simulation.rosterPlayers.find((item) => item.id === player!.id)!;
+    expect(afterTraining.attack).toBe(current);
+    expect(afterTraining.attributeCeilings?.attack).toBe(current);
+
+    const candidate = simulation.marketCandidateComparison[0]?.player;
+    expect(candidate).toBeDefined();
+    expect(Object.values(candidate!.attributeCeilings ?? {}).every((ceiling) => typeof ceiling === "number" && ceiling >= 0 && ceiling <= 99)).toBe(true);
+
+    const restored = new ClubSimulation();
+    const restoredPlayer = restored.rosterPlayers.find((item) => item.id === player!.id)!;
+    expect(restoredPlayer.attributeCeilings?.attack).toBe(current);
+  });
 });

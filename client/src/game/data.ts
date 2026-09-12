@@ -92,7 +92,34 @@ export type Player = {
   youthScoutStaffEntryXpBonus?: number;
   youthScoutStaffSessionXpBonus?: number;
   attributeXp?: Partial<Record<PlayerAttributeKey, number>>;
+  /** UIには公開しない、能力ごとの成長上限。既存セーブには後方互換で自動生成する。 */
+  attributeCeilings?: Partial<Record<PlayerAttributeKey, number>>;
   positionMastery?: Partial<Record<Position, number>>;
+};
+
+/** 選手の現在能力と潜在性から能力別の隠し上限を決める。 */
+export const defaultAttributeCeilingsFor = (player: Pick<Player, "position" | "secondary" | "age" | "ceiling" | "attack" | "dribble" | "pass" | "shoot" | "defense" | "tackle" | "block" | "interception" | "gk">): Partial<Record<PlayerAttributeKey, number>> => {
+  const focusByPosition: Record<Position, PlayerAttributeKey[]> = {
+    GK: ["gk", "pass"],
+    CB: ["defense", "tackle", "block", "interception"],
+    SB: ["defense", "tackle", "interception", "dribble"],
+    DM: ["defense", "tackle", "interception", "pass"],
+    CM: ["pass", "dribble", "defense", "attack"],
+    AM: ["pass", "dribble", "attack", "shoot"],
+    SH: ["dribble", "pass", "attack", "defense"],
+    WG: ["dribble", "attack", "shoot", "pass"],
+    CF: ["shoot", "attack", "dribble", "pass"],
+  };
+  const currentValue = (attribute: PlayerAttributeKey) => attribute === "gk" ? player.gk ?? 0 : player[attribute];
+  const focused = focusByPosition[player.position] ?? [];
+  const secondaryFocused = player.secondary ? focusByPosition[player.secondary] ?? [] : [];
+  const potentialBase = Math.min(99, 55 + Math.max(1, Math.round(player.ceiling)) * 4);
+  const ageModifier = player.age <= 20 ? 3 : player.age >= 30 ? -2 : 0;
+  return Object.fromEntries(playerAttributeKeys.map((attribute) => {
+    const roleBonus = focused.includes(attribute) ? 4 : secondaryFocused.includes(attribute) ? 2 : 0;
+    const minimum = Math.max(1, Math.round(currentValue(attribute)));
+    return [attribute, Math.max(minimum, Math.min(99, potentialBase + ageModifier + roleBonus))];
+  })) as Partial<Record<PlayerAttributeKey, number>>;
 };
 
 export type Slot = {

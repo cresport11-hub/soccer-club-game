@@ -2,7 +2,7 @@
  * Design system: 「タッチライン戦術室」— game rules remain framework-independent and flow through one state owner.
  * Sponsors fund the season; financial history, matchday commerce, and facility levels evolve through this single state owner.
  */
-import { canMarkOpponent, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerAttributeKeys, playerAttributeLabels, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, positionLabel, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerAttributeKey, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
+import { canMarkOpponent, defaultAttributeCeilingsFor, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerAttributeKeys, playerAttributeLabels, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, positionLabel, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerAttributeKey, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
 
 export type PageId = "home" | "lineup" | "team" | "stats" | "league" | "training" | "market" | "academy" | "facilities" | "sponsors" | "cup" | "finance" | "settings";
 export type Mentality = "defensive" | "balanced" | "attacking";
@@ -350,7 +350,7 @@ const isDmEligible = (player: Pick<Player, "position" | "secondary">) => player.
 const isCbEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "CB" || player.secondary === "CB";
 const isSbEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "SB" || player.secondary === "SB";
 const isGkEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "GK" || player.secondary === "GK";
-const copyPlayers = () => players.map((player) => ({ ...player, contractYears: defaultContractYears(player), condition: clamp(Math.round(finiteOr(player.condition, defaultPlayerCondition)), 0, 100), trainingLoad: player.trainingLoad ?? "standard", skillXp: { ...(player.skillXp ?? {}) }, attributeXp: Object.fromEntries(playerAttributeKeys.map((attribute) => [attribute, Math.max(0, Math.round(player.attributeXp?.[attribute] ?? 0))])), positionMastery: { ...(player.positionMastery ?? {}), [player.position]: Math.max(28, Math.round(player.positionMastery?.[player.position] ?? 28)), ...(player.secondary ? { [player.secondary]: Math.max(12, Math.round(player.positionMastery?.[player.secondary] ?? 12)) } : {}) }, skillTrainingTarget: player.skillTrainingTarget ?? playerSkillsFor(player)[0], cfPlayStyle: isCfEligible(player) ? player.cfPlayStyle ?? cfPlayStyleOptions[0].id : undefined, wgPlayStyle: isWgEligible(player) ? player.wgPlayStyle ?? wgPlayStyleOptions[0].id : undefined, amPlayStyle: isAmEligible(player) ? player.amPlayStyle ?? amPlayStyleOptions[0].id : undefined, cmPlayStyle: isCmEligible(player) ? player.cmPlayStyle ?? cmPlayStyleOptions[0].id : undefined, dmPlayStyle: isDmEligible(player) ? player.dmPlayStyle ?? dmPlayStyleOptions[0].id : undefined, cbPlayStyle: isCbEligible(player) ? player.cbPlayStyle ?? cbPlayStyleOptions[0].id : undefined, sbPlayStyle: isSbEligible(player) ? player.sbPlayStyle ?? sbPlayStyleOptions[0].id : undefined, gkPlayStyle: isGkEligible(player) ? player.gkPlayStyle ?? gkPlayStyleOptions[0].id : undefined }));
+const copyPlayers = () => players.map((player) => ({ ...player, contractYears: defaultContractYears(player), condition: clamp(Math.round(finiteOr(player.condition, defaultPlayerCondition)), 0, 100), trainingLoad: player.trainingLoad ?? "standard", skillXp: { ...(player.skillXp ?? {}) }, attributeXp: Object.fromEntries(playerAttributeKeys.map((attribute) => [attribute, Math.max(0, Math.round(player.attributeXp?.[attribute] ?? 0))])), attributeCeilings: { ...defaultAttributeCeilingsFor(player), ...(player.attributeCeilings ?? {}) }, positionMastery: { ...(player.positionMastery ?? {}), [player.position]: Math.max(28, Math.round(player.positionMastery?.[player.position] ?? 28)), ...(player.secondary ? { [player.secondary]: Math.max(12, Math.round(player.positionMastery?.[player.secondary] ?? 12)) } : {}) }, skillTrainingTarget: player.skillTrainingTarget ?? playerSkillsFor(player)[0], cfPlayStyle: isCfEligible(player) ? player.cfPlayStyle ?? cfPlayStyleOptions[0].id : undefined, wgPlayStyle: isWgEligible(player) ? player.wgPlayStyle ?? wgPlayStyleOptions[0].id : undefined, amPlayStyle: isAmEligible(player) ? player.amPlayStyle ?? amPlayStyleOptions[0].id : undefined, cmPlayStyle: isCmEligible(player) ? player.cmPlayStyle ?? cmPlayStyleOptions[0].id : undefined, dmPlayStyle: isDmEligible(player) ? player.dmPlayStyle ?? dmPlayStyleOptions[0].id : undefined, cbPlayStyle: isCbEligible(player) ? player.cbPlayStyle ?? cbPlayStyleOptions[0].id : undefined, sbPlayStyle: isSbEligible(player) ? player.sbPlayStyle ?? sbPlayStyleOptions[0].id : undefined, gkPlayStyle: isGkEligible(player) ? player.gkPlayStyle ?? gkPlayStyleOptions[0].id : undefined }));
 const blankLineup = () => Object.fromEntries(formations[0].slots.map((slot) => [slot.id, null])) as Record<string, string | null>;
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const deterministic = (seed: number) => { const value = Math.sin(seed * 12.9898 + 78.233) * 43758.5453; return value - Math.floor(value); };
@@ -733,8 +733,16 @@ export class ClubSimulation {
   }
 
   private setAttributeValue(player: Player, attribute: PlayerAttributeKey, value: number) {
-    if (attribute === "gk") player.gk = clamp(Math.round(value), 0, 99);
-    else player[attribute] = clamp(Math.round(value), 0, 99);
+    const ceiling = this.attributeCeilingFor(player, attribute);
+    const next = clamp(Math.round(value), 0, ceiling);
+    if (attribute === "gk") player.gk = next;
+    else player[attribute] = next;
+  }
+
+  private attributeCeilingFor(player: Player, attribute: PlayerAttributeKey) {
+    const fallback = defaultAttributeCeilingsFor(player)[attribute] ?? 99;
+    const current = this.attributeValue(player, attribute);
+    return clamp(Math.round(finiteOr(player.attributeCeilings?.[attribute], fallback)), current, 99);
   }
 
   attributeProgressFor(player: Player) {
@@ -749,9 +757,11 @@ export class ClubSimulation {
     if (amount <= 0) return null;
     const previousXp = clamp(Math.round(finiteOr(player.attributeXp?.[attribute], 0)), 0, 999);
     const totalXp = clamp(previousXp + Math.max(1, Math.round(amount)), 0, 999);
-    const levelUps = Math.floor(totalXp / 100) - Math.floor(previousXp / 100);
+    const rawLevelUps = Math.floor(totalXp / 100) - Math.floor(previousXp / 100);
+    const currentValue = this.attributeValue(player, attribute);
+    const levelUps = Math.min(rawLevelUps, Math.max(0, this.attributeCeilingFor(player, attribute) - currentValue));
     player.attributeXp = { ...(player.attributeXp ?? {}), [attribute]: totalXp };
-    if (levelUps > 0) this.setAttributeValue(player, attribute, this.attributeValue(player, attribute) + levelUps);
+    if (levelUps > 0) this.setAttributeValue(player, attribute, currentValue + levelUps);
     return { playerId: player.id, player: player.name, attribute, label: playerAttributeLabels[attribute], xp: totalXp - previousXp, totalXp, levelUps, source } satisfies AttributeXpGrant;
   }
 
@@ -1558,7 +1568,13 @@ export class ClubSimulation {
     const facility = this.scoutFacility;
     const boost = facility.ratingBoost;
     const boosted = (value: number) => clamp(value + boost, 0, 99);
-    return { ...candidate, attack: boosted(candidate.attack), defense: boosted(candidate.defense), dribble: boosted(candidate.dribble), pass: boosted(candidate.pass), shoot: boosted(candidate.shoot), tackle: boosted(candidate.tackle), block: boosted(candidate.block), interception: boosted(candidate.interception), gk: candidate.gk === undefined ? undefined : boosted(candidate.gk), ceiling: clamp(candidate.ceiling + facility.ceilingBoost, candidate.level, 10) };
+    const values: Partial<Record<PlayerAttributeKey, number>> = { attack: boosted(candidate.attack), dribble: boosted(candidate.dribble), pass: boosted(candidate.pass), shoot: boosted(candidate.shoot), defense: boosted(candidate.defense), tackle: boosted(candidate.tackle), block: boosted(candidate.block), interception: boosted(candidate.interception), gk: candidate.gk === undefined ? undefined : boosted(candidate.gk) };
+    const baseCeilings = { ...defaultAttributeCeilingsFor(candidate), ...(candidate.attributeCeilings ?? {}) };
+    const attributeCeilings = Object.fromEntries(playerAttributeKeys.map((attribute) => {
+      const current = values[attribute] ?? 0;
+      return [attribute, clamp(Math.round((baseCeilings[attribute] ?? current) + facility.ceilingBoost), Math.round(current), 99)];
+    })) as Partial<Record<PlayerAttributeKey, number>>;
+    return { ...candidate, ...values, attributeCeilings, ceiling: clamp(candidate.ceiling + facility.ceilingBoost, candidate.level, 10) };
   }
 
   private scoutTacticalFit(candidate: Player): ScoutTacticalFit {
@@ -2689,6 +2705,13 @@ export class ClubSimulation {
     const savedXp = saved.skillXp && Object.keys(saved.skillXp).length ? saved.skillXp : reference?.skillXp ?? {};
     const skillXp = Object.fromEntries(Object.entries(savedXp).filter(([skillId, xp]) => Boolean(playerSkillCatalog[skillId as PlayerSkillId]) && Number.isFinite(xp)).map(([skillId, xp]) => [skillId, clamp(Math.round(xp as number), 0, 210)])) as Partial<Record<PlayerSkillId, number>>;
     const attributeXp = Object.fromEntries(playerAttributeKeys.map((attribute) => [attribute, clamp(Math.round(finiteOr(saved.attributeXp?.[attribute], reference?.attributeXp?.[attribute] ?? 0)), 0, 999)])) as Partial<Record<PlayerAttributeKey, number>>;
+    const fallbackPlayer = { ...(reference ?? saved), ...saved, position, secondary, attack, defense, dribble: finiteOr(saved.dribble, reference?.dribble ?? attack), pass: finiteOr(saved.pass, reference?.pass ?? attack), shoot: finiteOr(saved.shoot, reference?.shoot ?? attack), tackle: finiteOr(saved.tackle, reference?.tackle ?? defense), block: finiteOr(saved.block, reference?.block ?? defense), interception: finiteOr(saved.interception, reference?.interception ?? defense) } as Player;
+    const defaultCeilings = defaultAttributeCeilingsFor(fallbackPlayer);
+    const attributeCeilings = Object.fromEntries(playerAttributeKeys.map((attribute) => {
+      const current = attribute === "gk" ? fallbackPlayer.gk ?? 0 : fallbackPlayer[attribute];
+      const ceiling = finiteOr(saved.attributeCeilings?.[attribute], reference?.attributeCeilings?.[attribute] ?? defaultCeilings[attribute] ?? current);
+      return [attribute, clamp(Math.round(ceiling), Math.round(current), 99)];
+    })) as Partial<Record<PlayerAttributeKey, number>>;
     const positionMastery = Object.fromEntries([position, secondary].filter((item, index, all): item is Player["position"] => Boolean(item) && all.indexOf(item) === index).map((item, index) => [item, clamp(Math.round(finiteOr(saved.positionMastery?.[item], reference?.positionMastery?.[item] ?? (index === 0 ? 28 : 12))), 0, 100)])) as Partial<Record<Player["position"], number>>;
     const savedTarget = isLegacyYouthTendency ? reference?.skillTrainingTarget : saved.skillTrainingTarget ?? reference?.skillTrainingTarget;
     const skillTrainingTarget = savedTarget && playerSkillCatalog[savedTarget] ? savedTarget : skills[0];
@@ -2709,6 +2732,7 @@ export class ClubSimulation {
       skills,
       skillXp,
       attributeXp,
+      attributeCeilings,
       positionMastery,
       skillTrainingTarget,
       youthSkillTendency: saved.youthSkillTendency ?? reference?.youthSkillTendency,
@@ -2773,7 +2797,12 @@ export class ClubSimulation {
     if (specialtyMatch) initialXp[staff.specialtySkill] = clamp((initialXp[staff.specialtySkill] ?? facility.youthInitialXpBonus) + staff.entryXpBonus, 0, 99);
     const basePace = tendency ? paceOrder.indexOf(tendency.growthPace) : 1;
     const growthPace = tendency ? paceOrder[clamp(basePace + facility.youthPaceStep, 0, paceOrder.length - 1)] : undefined;
-    return { ...prospect, skills, skillXp: initialXp, skillTrainingTarget: specialtyMatch ? staff.specialtySkill : prospect.skillTrainingTarget, youthScoutLevel: facility.level, youthSkillQuality: facility.youthQuality, youthInitialXpBonus: facility.youthInitialXpBonus, youthScoutXpBonus: facility.youthSessionXpBonus, youthScoutStaffId: specialtyMatch ? staff.id : undefined, youthScoutStaffName: specialtyMatch ? staff.name : undefined, youthScoutStaffImpact: specialtyMatch ? `${staff.profile}：${staff.specialtyLabel}に${playerSkillCatalog[staff.specialtySkill].label}の傾向を追加` : undefined, youthScoutStaffEntryXpBonus: specialtyMatch ? staff.entryXpBonus : 0, youthScoutStaffSessionXpBonus: specialtyMatch ? staff.sessionXpBonus : 0, youthSkillTendency: tendency && growthPace ? { ...tendency, developmentSkill: specialtyMatch ? staff.specialtySkill : tendency.developmentSkill, recommendedFocus: specialtyMatch ? playerSkillGrowthFocus[staff.specialtySkill][0] : tendency.recommendedFocus, growthPace, coachNote: `${tendency.coachNote} スカウト網Lv.${facility.level}の選抜により、${facility.youthQuality}品質で加入。${specialtyMatch ? ` ${staff.name}の${staff.profile}により、${playerSkillCatalog[staff.specialtySkill].label}を重点化。` : ""}` } : tendency, academyWeeks: 0 };
+    const baseCeilings = { ...defaultAttributeCeilingsFor(prospect), ...(prospect.attributeCeilings ?? {}) };
+    const attributeCeilings = Object.fromEntries(playerAttributeKeys.map((attribute) => {
+      const current = attribute === "gk" ? prospect.gk ?? 0 : prospect[attribute];
+      return [attribute, clamp(Math.round((baseCeilings[attribute] ?? current) + facility.ceilingBoost), Math.round(current), 99)];
+    })) as Partial<Record<PlayerAttributeKey, number>>;
+    return { ...prospect, skills, skillXp: initialXp, attributeCeilings, skillTrainingTarget: specialtyMatch ? staff.specialtySkill : prospect.skillTrainingTarget, youthScoutLevel: facility.level, youthSkillQuality: facility.youthQuality, youthInitialXpBonus: facility.youthInitialXpBonus, youthScoutXpBonus: facility.youthSessionXpBonus, youthScoutStaffId: specialtyMatch ? staff.id : undefined, youthScoutStaffName: specialtyMatch ? staff.name : undefined, youthScoutStaffImpact: specialtyMatch ? `${staff.profile}：${staff.specialtyLabel}に${playerSkillCatalog[staff.specialtySkill].label}の傾向を追加` : undefined, youthScoutStaffEntryXpBonus: specialtyMatch ? staff.entryXpBonus : 0, youthScoutStaffSessionXpBonus: specialtyMatch ? staff.sessionXpBonus : 0, youthSkillTendency: tendency && growthPace ? { ...tendency, developmentSkill: specialtyMatch ? staff.specialtySkill : tendency.developmentSkill, recommendedFocus: specialtyMatch ? playerSkillGrowthFocus[staff.specialtySkill][0] : tendency.recommendedFocus, growthPace, coachNote: `${tendency.coachNote} スカウト網Lv.${facility.level}の選抜により、${facility.youthQuality}品質で加入。${specialtyMatch ? ` ${staff.name}の${staff.profile}により、${playerSkillCatalog[staff.specialtySkill].label}を重点化。` : ""}` } : tendency, academyWeeks: 0 };
   }
 
   private hydrateYouthPlayers(saved: YouthPlayer[] | undefined): YouthPlayer[] {
