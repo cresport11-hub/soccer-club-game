@@ -2,7 +2,7 @@
  * Design system: 「タッチライン戦術室」— game rules remain framework-independent and flow through one state owner.
  * Sponsors fund the season; financial history, matchday commerce, and facility levels evolve through this single state owner.
  */
-import { canMarkOpponent, defaultAttributeCeilingsFor, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerAttributeKeys, playerAttributeLabels, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, positionLabel, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerAttributeKey, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
+import { canMarkOpponent, defaultAttributeCeilingsFor, defaultSystemMasteryFor, defaultSystemUnderstandingFor, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerAttributeKeys, playerAttributeLabels, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, positionLabel, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerAttributeKey, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
 
 export type PageId = "home" | "lineup" | "team" | "stats" | "league" | "training" | "market" | "academy" | "facilities" | "sponsors" | "cup" | "finance" | "settings";
 export type Mentality = "defensive" | "balanced" | "attacking";
@@ -28,6 +28,8 @@ export type PlayerSkillProgress = { skillId: PlayerSkillId; label: string; short
 export type SkillXpGrant = { playerId: string; player: string; skillId: PlayerSkillId; label: string; xp: number; totalXp: number; levelUp: boolean; learned: boolean; source: "練習" | "試合" | "ユース" };
 export type AttributeXpGrant = { playerId: string; player: string; attribute: PlayerAttributeKey; label: string; xp: number; totalXp: number; levelUps: number; source: "練習" | "試合" | "ユース" };
 export type PositionMasteryGrant = { playerId: string; player: string; position: Player["position"]; xp: number; totalXp: number; level: number; source: "練習" | "試合" | "ユース" };
+export type SystemMasteryGrant = { playerId: string; player: string; formationId: string; formationLabel: string; masteryXp: number; totalMastery: number; understandingXp: number; understandingLevelUps: number; source: "練習" | "試合" | "ユース" };
+export type SystemEffectiveness = { formationId: string; formationLabel: string; understanding: number; mastery: number; rate: number; grade: "完全適応" | "高適応" | "適応" | "要調整" | "不慣れ"; note: string };
 export type PlayerConditionStatus = { value: number; label: "好調" | "標準" | "不調"; tone: "good" | "normal" | "bad"; modifier: number; note: string };
 export type PlayerConditionChange = { playerId: string; player: string; from: number; to: number; delta: number; label: PlayerConditionStatus["label"] };
 export type RecruitNegotiation = { candidateId: string; stage: "scouting" | "countered" | "agreed"; openingOffer: number; counterOffer: number; agreedFee: number | null };
@@ -171,7 +173,7 @@ export type MatchHighlight = { minute: number; kind: "kickoff" | "action" | "goa
 export type HalfTimeReport = { playerGoals: number; opponentGoals: number; message: string; tacticalNote: string; recommendation: string };
 export type MatchStatsTeam = { possession: number; shots: number; shotsOnTarget: number; bigChances: number; corners: number; passes: number; passAccuracy: number; fouls: number; offsides: number; saves: number };
 export type MatchStats = { orbit: MatchStatsTeam; opponent: MatchStatsTeam };
-export type MatchResult = { opponent: string; opponentId: string; playerGoals: number; opponentGoals: number; message: string; won: boolean; reward: number; sponsorRevenue: number; cupResult: CupMatchResult | null; gate: GateReceipt; merchandise: MerchandiseReceipt; membership: MembershipReceipt; concession: ConcessionReceipt; totalTicketRevenue: number; totalAttendance: number; totalCommercialRevenue: number; popularityDelta: number; leaguePopularityDelta: number; popularity: number; tactics: TacticalAssessment; opponentTactics: OpponentTacticalAssessment; tacticalMatchup: TacticalMatchup; markingImpact: MarkingMatchImpact; matchAttack: number; matchDefense: number; matchCondition: TeamMatchCondition; conditionAfter: TeamMatchCondition; stats: MatchStats; halfTime: HalfTimeReport; highlights: MatchHighlight[]; substitutions: MatchSubstitution[]; injuries: MatchInjury[]; playerRatings: PlayerMatchRating[]; markDuels: MarkDuelReport[]; mvp: PlayerMatchRating | null; individualBonuses: IndividualBonusReceipt; skillXpGrants: SkillXpGrant[]; attributeXpGrants: AttributeXpGrant[]; positionMasteryGrants: PositionMasteryGrant[]; conditionChanges: PlayerConditionChange[]; halfTimeChanges: string[] };
+export type MatchResult = { opponent: string; opponentId: string; playerGoals: number; opponentGoals: number; message: string; won: boolean; reward: number; sponsorRevenue: number; cupResult: CupMatchResult | null; gate: GateReceipt; merchandise: MerchandiseReceipt; membership: MembershipReceipt; concession: ConcessionReceipt; totalTicketRevenue: number; totalAttendance: number; totalCommercialRevenue: number; popularityDelta: number; leaguePopularityDelta: number; popularity: number; tactics: TacticalAssessment; opponentTactics: OpponentTacticalAssessment; tacticalMatchup: TacticalMatchup; markingImpact: MarkingMatchImpact; matchAttack: number; matchDefense: number; matchCondition: TeamMatchCondition; conditionAfter: TeamMatchCondition; stats: MatchStats; halfTime: HalfTimeReport; highlights: MatchHighlight[]; substitutions: MatchSubstitution[]; injuries: MatchInjury[]; playerRatings: PlayerMatchRating[]; markDuels: MarkDuelReport[]; mvp: PlayerMatchRating | null; individualBonuses: IndividualBonusReceipt; skillXpGrants: SkillXpGrant[]; attributeXpGrants: AttributeXpGrant[]; positionMasteryGrants: PositionMasteryGrant[]; systemMasteryGrants: SystemMasteryGrant[]; conditionChanges: PlayerConditionChange[]; halfTimeChanges: string[] };
 
 type Persisted = {
   money: number;
@@ -352,7 +354,11 @@ const isDmEligible = (player: Pick<Player, "position" | "secondary">) => player.
 const isCbEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "CB" || player.secondary === "CB";
 const isSbEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "SB" || player.secondary === "SB";
 const isGkEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "GK" || player.secondary === "GK";
-const copyPlayers = () => players.map((player) => ({ ...player, contractYears: defaultContractYears(player), condition: clamp(Math.round(finiteOr(player.condition, defaultPlayerCondition)), 0, 100), trainingLoad: player.trainingLoad ?? "standard", skillXp: { ...(player.skillXp ?? {}) }, attributeXp: Object.fromEntries(playerAttributeKeys.map((attribute) => [attribute, Math.max(0, Math.round(player.attributeXp?.[attribute] ?? 0))])), attributeCeilings: { ...defaultAttributeCeilingsFor(player), ...(player.attributeCeilings ?? {}) }, positionMastery: { ...(player.positionMastery ?? {}), [player.position]: Math.max(28, Math.round(player.positionMastery?.[player.position] ?? 28)), ...(player.secondary ? { [player.secondary]: Math.max(12, Math.round(player.positionMastery?.[player.secondary] ?? 12)) } : {}) }, skillTrainingTarget: player.skillTrainingTarget ?? playerSkillsFor(player)[0], cfPlayStyle: isCfEligible(player) ? player.cfPlayStyle ?? cfPlayStyleOptions[0].id : undefined, wgPlayStyle: isWgEligible(player) ? player.wgPlayStyle ?? wgPlayStyleOptions[0].id : undefined, amPlayStyle: isAmEligible(player) ? player.amPlayStyle ?? amPlayStyleOptions[0].id : undefined, cmPlayStyle: isCmEligible(player) ? player.cmPlayStyle ?? cmPlayStyleOptions[0].id : undefined, dmPlayStyle: isDmEligible(player) ? player.dmPlayStyle ?? dmPlayStyleOptions[0].id : undefined, cbPlayStyle: isCbEligible(player) ? player.cbPlayStyle ?? cbPlayStyleOptions[0].id : undefined, sbPlayStyle: isSbEligible(player) ? player.sbPlayStyle ?? sbPlayStyleOptions[0].id : undefined, gkPlayStyle: isGkEligible(player) ? player.gkPlayStyle ?? gkPlayStyleOptions[0].id : undefined }));
+const copyPlayers = () => players.map((player) => {
+  const systemUnderstanding = clamp(Math.round(finiteOr(player.systemUnderstanding, defaultSystemUnderstandingFor(player))), 1, 99);
+  const systemMastery = Object.fromEntries(formations.map((formation) => [formation.id, clamp(Math.round(finiteOr(player.systemMastery?.[formation.id], defaultSystemMasteryFor(player, formation.id, systemUnderstanding))), 0, 100)]));
+  return { ...player, contractYears: defaultContractYears(player), condition: clamp(Math.round(finiteOr(player.condition, defaultPlayerCondition)), 0, 100), trainingLoad: player.trainingLoad ?? "standard", skillXp: { ...(player.skillXp ?? {}) }, attributeXp: Object.fromEntries(playerAttributeKeys.map((attribute) => [attribute, Math.max(0, Math.round(player.attributeXp?.[attribute] ?? 0))])), attributeCeilings: { ...defaultAttributeCeilingsFor(player), ...(player.attributeCeilings ?? {}) }, positionMastery: { ...(player.positionMastery ?? {}), [player.position]: Math.max(28, Math.round(player.positionMastery?.[player.position] ?? 28)), ...(player.secondary ? { [player.secondary]: Math.max(12, Math.round(player.positionMastery?.[player.secondary] ?? 12)) } : {}) }, systemUnderstanding, systemUnderstandingXp: Math.max(0, Math.round(player.systemUnderstandingXp ?? 0)), systemMastery, skillTrainingTarget: player.skillTrainingTarget ?? playerSkillsFor(player)[0], cfPlayStyle: isCfEligible(player) ? player.cfPlayStyle ?? cfPlayStyleOptions[0].id : undefined, wgPlayStyle: isWgEligible(player) ? player.wgPlayStyle ?? wgPlayStyleOptions[0].id : undefined, amPlayStyle: isAmEligible(player) ? player.amPlayStyle ?? amPlayStyleOptions[0].id : undefined, cmPlayStyle: isCmEligible(player) ? player.cmPlayStyle ?? cmPlayStyleOptions[0].id : undefined, dmPlayStyle: isDmEligible(player) ? player.dmPlayStyle ?? dmPlayStyleOptions[0].id : undefined, cbPlayStyle: isCbEligible(player) ? player.cbPlayStyle ?? cbPlayStyleOptions[0].id : undefined, sbPlayStyle: isSbEligible(player) ? player.sbPlayStyle ?? sbPlayStyleOptions[0].id : undefined, gkPlayStyle: isGkEligible(player) ? player.gkPlayStyle ?? gkPlayStyleOptions[0].id : undefined };
+});
 const blankLineup = () => Object.fromEntries(formations[0].slots.map((slot) => [slot.id, null])) as Record<string, string | null>;
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const deterministic = (seed: number) => { const value = Math.sin(seed * 12.9898 + 78.233) * 43758.5453; return value - Math.floor(value); };
@@ -808,6 +814,54 @@ export class ClubSimulation {
     });
   }
 
+  systemUnderstandingFor(player: Player) {
+    return clamp(Math.round(finiteOr(player.systemUnderstanding, defaultSystemUnderstandingFor(player))), 1, 99);
+  }
+
+  systemMasteryFor(player: Player, formationId = this.formation.id) {
+    return clamp(Math.round(finiteOr(player.systemMastery?.[formationId], defaultSystemMasteryFor(player, formationId, this.systemUnderstandingFor(player)))), 0, 100);
+  }
+
+  systemEffectivenessFor(player: Player, formationId = this.formation.id): SystemEffectiveness {
+    const formation = formations.find((item) => item.id === formationId) ?? this.formation;
+    const understanding = this.systemUnderstandingFor(player);
+    const mastery = this.systemMasteryFor(player, formation.id);
+    const rate = clamp(Math.round(78 + (understanding - 50) * .18 + (mastery - 40) * .15), 70, 104);
+    const grade: SystemEffectiveness["grade"] = rate >= 100 ? "完全適応" : rate >= 95 ? "高適応" : rate >= 88 ? "適応" : rate >= 80 ? "要調整" : "不慣れ";
+    const note = rate >= 100 ? "戦術意図を先読みし、基礎能力以上の働きを引き出せる。" : rate >= 95 ? "役割と立ち位置を理解し、ほぼ最大限の能力を発揮する。" : rate >= 88 ? "基本原則を理解し、安定して能力を発揮できる。" : rate >= 80 ? "連係の判断に遅れがあり、能力を出し切れない局面がある。" : "配置と役割への迷いが大きく、持ち味が制限される。";
+    return { formationId: formation.id, formationLabel: formation.label, understanding, mastery, rate, grade, note };
+  }
+
+  systemMasterySummaryFor(player: Player) {
+    return formations.map((formation) => this.systemEffectivenessFor(player, formation.id)).sort((a, b) => b.rate - a.rate || b.mastery - a.mastery);
+  }
+
+  private grantSystemExperience(player: Player, formationId: string, masteryAmount: number, understandingAmount: number, source: SystemMasteryGrant["source"]) {
+    const previousMastery = this.systemMasteryFor(player, formationId);
+    const understanding = this.systemUnderstandingFor(player);
+    const learningBonus = understanding >= 80 ? 2 : understanding >= 65 ? 1 : 0;
+    const totalMastery = clamp(previousMastery + Math.max(0, Math.round(masteryAmount + learningBonus)), 0, 100);
+    const previousUnderstandingXp = clamp(Math.round(finiteOr(player.systemUnderstandingXp, 0)), 0, 999);
+    const nextUnderstandingXp = clamp(previousUnderstandingXp + Math.max(0, Math.round(understandingAmount)), 0, 999);
+    const rawLevelUps = Math.floor(nextUnderstandingXp / 100) - Math.floor(previousUnderstandingXp / 100);
+    const understandingLevelUps = Math.min(rawLevelUps, Math.max(0, 99 - understanding));
+    player.systemMastery = { ...(player.systemMastery ?? {}), [formationId]: totalMastery };
+    player.systemUnderstandingXp = nextUnderstandingXp;
+    if (understandingLevelUps) player.systemUnderstanding = this.systemUnderstandingFor(player) + understandingLevelUps;
+    const formation = formations.find((item) => item.id === formationId) ?? this.formation;
+    return { playerId: player.id, player: player.name, formationId, formationLabel: formation.label, masteryXp: totalMastery - previousMastery, totalMastery, understandingXp: nextUnderstandingXp - previousUnderstandingXp, understandingLevelUps, source } satisfies SystemMasteryGrant;
+  }
+
+  private rollbackSystemExperience(grants: SystemMasteryGrant[] = []) {
+    grants.forEach((grant) => {
+      const player = this.roster.find((item) => item.id === grant.playerId);
+      if (!player) return;
+      player.systemMastery = { ...(player.systemMastery ?? {}), [grant.formationId]: Math.max(0, this.systemMasteryFor(player, grant.formationId) - grant.masteryXp) };
+      player.systemUnderstandingXp = Math.max(0, Math.round(finiteOr(player.systemUnderstandingXp, 0)) - grant.understandingXp);
+      if (grant.understandingLevelUps) player.systemUnderstanding = Math.max(1, this.systemUnderstandingFor(player) - grant.understandingLevelUps);
+    });
+  }
+
   private positionForPlayer(player: Player) {
     return this.formation.slots.find((slot) => this.lineup[slot.id] === player.id)?.label ?? player.position;
   }
@@ -842,6 +896,14 @@ export class ClubSimulation {
       if (!player) return [];
       const grant = this.grantPositionMastery(player, this.positionForPlayer(player), 4 + (rating.started ? 3 : 1) + (rating.rating >= 7.5 ? 2 : 0), "試合");
       return grant ? [grant] : [];
+    });
+  }
+
+  private awardMatchSystemMastery(ratings: PlayerMatchRating[]) {
+    return ratings.flatMap((rating) => {
+      const player = this.roster.find((item) => item.id === rating.playerId);
+      if (!player) return [];
+      return [this.grantSystemExperience(player, this.formation.id, 4 + (rating.started ? 3 : 1) + (rating.rating >= 7.5 ? 2 : 0), 4 + (rating.started ? 2 : 0), "試合")];
     });
   }
 
@@ -990,16 +1052,17 @@ export class ClubSimulation {
   score() {
     const selected = this.startingPlayers().filter((player) => this.injuryWeeksFor(player.id) === 0);
     const tactics = this.tacticalAssessment(selected);
-    if (!selected.length) return { total: 0, attack: 0, defense: 0, readiness: 0, tactics };
+    if (!selected.length) return { total: 0, attack: 0, defense: 0, readiness: 0, systemRate: 0, tactics };
     const masteryBonus = Math.round(selected.reduce((sum, player) => sum + this.positionMasteryFor(player, this.positionForPlayer(player)) / 100 * 3, 0) / selected.length);
     const conditionModifier = Math.round(selected.reduce((sum, player) => sum + this.conditionStatusFor(player).modifier, 0) / selected.length);
-    const baseAttack = Math.round(selected.reduce((sum, player) => sum + this.attackPower(player) * (1 - player.fatigue / 150), 0) / selected.length) + masteryBonus + conditionModifier;
-    const baseDefense = Math.round(selected.reduce((sum, player) => sum + this.defensePower(player) * (1 - player.fatigue / 150), 0) / selected.length) + masteryBonus + conditionModifier;
+    const systemRate = Math.round(selected.reduce((sum, player) => sum + this.systemEffectivenessFor(player).rate, 0) / selected.length);
+    const baseAttack = Math.round(selected.reduce((sum, player) => sum + this.attackPower(player) * (1 - player.fatigue / 150) * (this.systemEffectivenessFor(player).rate / 100), 0) / selected.length) + masteryBonus + conditionModifier;
+    const baseDefense = Math.round(selected.reduce((sum, player) => sum + this.defensePower(player) * (1 - player.fatigue / 150) * (this.systemEffectivenessFor(player).rate / 100), 0) / selected.length) + masteryBonus + conditionModifier;
     const attack = clamp(baseAttack + tactics.attackModifier, 0, 99);
     const defense = clamp(baseDefense + tactics.defenseModifier, 0, 99);
     const averageCondition = Math.round(selected.reduce((sum, player) => sum + this.conditionFor(player), 0) / selected.length);
-    const readiness = Math.round((100 - selected.reduce((sum, player) => sum + player.fatigue, 0) / selected.length) * .72 + averageCondition * .28);
-    return { total: Math.round((attack + defense) / 2), attack, defense, readiness, tactics };
+    const readiness = Math.round((100 - selected.reduce((sum, player) => sum + player.fatigue, 0) / selected.length) * .62 + averageCondition * .23 + systemRate * .15);
+    return { total: Math.round((attack + defense) / 2), attack, defense, readiness, systemRate, tactics };
   }
 
   setMentality(mentality: Mentality) {
@@ -1145,6 +1208,7 @@ export class ClubSimulation {
     this.rollbackSkillXp(result.skillXpGrants);
     this.rollbackAttributeXp(result.attributeXpGrants);
     this.rollbackPositionMastery(result.positionMasteryGrants);
+    this.rollbackSystemExperience(result.systemMasteryGrants);
     this.mentality = mentalityOptions.some((item) => item.id === mentality) ? mentality : this.mentality;
     this.playingStyle = playingStyleOptions.some((item) => item.id === playingStyle) ? playingStyle : this.playingStyle;
     const substitutions: MatchSubstitution[] = [];
@@ -1225,6 +1289,7 @@ export class ClubSimulation {
     result.skillXpGrants = this.awardMatchSkillXp(result.playerRatings, result.tactics);
     result.attributeXpGrants = this.awardMatchAttributeXp(result.playerRatings);
     result.positionMasteryGrants = this.awardMatchPositionMastery(result.playerRatings);
+    result.systemMasteryGrants = this.awardMatchSystemMastery(result.playerRatings);
     result.individualBonuses = this.createIndividualBonusReceipt(result.playerRatings);
     this.money += oldIndividualBonus - result.individualBonuses.total;
     result.message = won ? "後半の采配が実を結び、勝利を手繰り寄せた。" : draw ? "後半の修正で、勝点を手放さなかった。" : "後半に手を打ったが、次節へ課題を残す結果となった。";
@@ -1380,6 +1445,7 @@ export class ClubSimulation {
     const beforeCondition = boosted.reduce((sum, player) => sum + this.conditionFor(player), 0);
     const attributeXpGrants: AttributeXpGrant[] = [];
     const positionMasteryGrants: PositionMasteryGrant[] = [];
+    const systemMasteryGrants: SystemMasteryGrant[] = [];
     boosted.forEach((player, index) => {
       const load = this.trainingLoadFor(player);
       const growth = (attribute: PlayerAttributeKey, base: number) => {
@@ -1398,6 +1464,7 @@ export class ClubSimulation {
       if (focus !== "recovery") {
         const mastery = this.grantPositionMastery(player, this.positionForPlayer(player), 4 + facility.level + Math.max(0, load.growthAdjustment), "練習");
         if (mastery) positionMasteryGrants.push(mastery);
+        systemMasteryGrants.push(this.grantSystemExperience(player, this.formation.id, 2 + facility.level + Math.max(0, load.growthAdjustment), 2 + facility.growthBonus, "練習"));
       }
     });
     const skillXpGrants = focus === "recovery" ? [] : boosted.flatMap((player) => {
@@ -1415,6 +1482,7 @@ export class ClubSimulation {
     if (attributeXpGrants.length) changes.push(`能力XP +${attributeXpGrants.reduce((sum, grant) => sum + grant.xp, 0)}`);
     attributeXpGrants.filter((grant) => grant.levelUps > 0).forEach((grant) => changes.push(`${grant.player} ${grant.label} +${grant.levelUps}`));
     if (positionMasteryGrants.length) changes.push(`ポジション熟練度 +${positionMasteryGrants.reduce((sum, grant) => sum + grant.xp, 0)}`);
+    if (systemMasteryGrants.length) changes.push(`${this.formation.label}習熟 +${systemMasteryGrants.reduce((sum, grant) => sum + grant.masteryXp, 0)} / 理解XP +${systemMasteryGrants.reduce((sum, grant) => sum + grant.understandingXp, 0)}`);
     if (skillXpGrants.length) changes.push(`SKILL XP +${skillXpGrants.reduce((sum, grant) => sum + grant.xp, 0)}`);
     skillXpGrants.filter((grant) => grant.learned).forEach((grant) => changes.push(`${grant.player}が${grant.label}を習得`));
     skillXpGrants.filter((grant) => grant.levelUp).forEach((grant) => changes.push(`${grant.player} ${grant.label} Lv.UP`));
@@ -1441,6 +1509,7 @@ export class ClubSimulation {
     this.recordFinance("育成", cost, "expense", `ユース育成セッション ${this.youthPlayers.length}名`, this.currentWeek);
     const attributeXpGrants: AttributeXpGrant[] = [];
     const positionMasteryGrants: PositionMasteryGrant[] = [];
+    const systemMasteryGrants: SystemMasteryGrant[] = [];
     const skillGrants = this.youthPlayers.flatMap((player, index) => {
       player.academyWeeks += 1;
       const growth = (attribute: PlayerAttributeKey, amount: number) => {
@@ -1453,6 +1522,7 @@ export class ClubSimulation {
       if (player.position === "GK") { growth("gk", 10); growth("pass", 6); }
       const mastery = this.grantPositionMastery(player, player.position, 7, "ユース");
       if (mastery) positionMasteryGrants.push(mastery);
+      systemMasteryGrants.push(this.grantSystemExperience(player, this.formation.id, 6, 5, "ユース"));
       if (player.academyWeeks % 2 === 0 && player.level < player.ceiling) player.level += 1;
       const target = player.skillTrainingTarget ?? player.youthSkillTendency?.developmentSkill ?? playerSkillsFor(player)[0];
       const paceBonus = player.youthSkillTendency?.growthPace === "早熟" ? 2 : player.youthSkillTendency?.growthPace === "標準" ? 1 : 0;
@@ -1461,7 +1531,7 @@ export class ClubSimulation {
     });
     this.captureCashPoint();
     const skillSummary = skillGrants.length ? ` 重点スキルXP +${skillGrants.reduce((sum, grant) => sum + grant.xp, 0)}。` : "";
-    const growthSummary = `能力XP +${attributeXpGrants.reduce((sum, grant) => sum + grant.xp, 0)} / ポジション熟練度 +${positionMasteryGrants.reduce((sum, grant) => sum + grant.xp, 0)}。`;
+    const growthSummary = `能力XP +${attributeXpGrants.reduce((sum, grant) => sum + grant.xp, 0)} / ポジション熟練度 +${positionMasteryGrants.reduce((sum, grant) => sum + grant.xp, 0)} / ${this.formation.label}習熟 +${systemMasteryGrants.reduce((sum, grant) => sum + grant.masteryXp, 0)}。`;
     this.logs.unshift(`ユース育成セッションを実施。${this.youthPlayers.length}名の基礎能力と将来性を高めた。${growthSummary}${skillSummary}`);
     this.persist();
     return { ok: true, text: `ユース${this.youthPlayers.length}名を育成しました。${growthSummary}重点スキルXP +${skillGrants.reduce((sum, grant) => sum + grant.xp, 0)}。3セッションでトップ昇格の基準に達します。` };
@@ -1876,6 +1946,7 @@ export class ClubSimulation {
       skillXpGrants: [],
       attributeXpGrants: [],
       positionMasteryGrants: [],
+      systemMasteryGrants: [],
       conditionChanges: [],
       halfTimeChanges: [],
       message: won ? "勝利。スタンドの歓声が、次の挑戦を後押しする。" : draw ? "ドロー。サポーターへ、次節での反撃を約束する。" : "敗戦。戦術ボードを見直し、次節で取り返す。",
@@ -1944,6 +2015,7 @@ export class ClubSimulation {
     result.skillXpGrants = this.awardMatchSkillXp(result.playerRatings, result.tactics);
     result.attributeXpGrants = this.awardMatchAttributeXp(result.playerRatings);
     result.positionMasteryGrants = this.awardMatchPositionMastery(result.playerRatings);
+    result.systemMasteryGrants = this.awardMatchSystemMastery(result.playerRatings);
     result.individualBonuses = this.createIndividualBonusReceipt(result.playerRatings);
     if (result.individualBonuses.total) {
       this.money -= result.individualBonuses.total;
@@ -2488,7 +2560,10 @@ export class ClubSimulation {
     return player.position === "GK" ? (player.gk ?? 0) * .72 + outfieldDefense * .28 : outfieldDefense;
   }
 
-  private playerPower(player: Player, position: Player["position"] = player.position) { return (this.attackPower(player) * .54 + this.defensePower(player) * .46) + this.positionMasteryFor(player, position) * .04 + this.conditionStatusFor(player).modifier * .8 - player.fatigue * .12; }
+  private playerPower(player: Player, position: Player["position"] = player.position) {
+    const base = this.attackPower(player) * .54 + this.defensePower(player) * .46;
+    return base * (this.systemEffectivenessFor(player).rate / 100) + this.positionMasteryFor(player, position) * .04 + this.conditionStatusFor(player).modifier * .8 - player.fatigue * .12;
+  }
 
   private startingPlayers(): Player[] {
     return this.formation.slots.map((slot) => this.playerForSlot(slot.id)).filter((player): player is Player => Boolean(player));
@@ -2747,6 +2822,9 @@ export class ClubSimulation {
       return [attribute, clamp(Math.round(ceiling), Math.round(current), 99)];
     })) as Partial<Record<PlayerAttributeKey, number>>;
     const positionMastery = Object.fromEntries([position, secondary].filter((item, index, all): item is Player["position"] => Boolean(item) && all.indexOf(item) === index).map((item, index) => [item, clamp(Math.round(finiteOr(saved.positionMastery?.[item], reference?.positionMastery?.[item] ?? (index === 0 ? 28 : 12))), 0, 100)])) as Partial<Record<Player["position"], number>>;
+    const systemUnderstanding = clamp(Math.round(finiteOr(saved.systemUnderstanding, reference?.systemUnderstanding ?? defaultSystemUnderstandingFor(fallbackPlayer))), 1, 99);
+    const systemUnderstandingXp = clamp(Math.round(finiteOr(saved.systemUnderstandingXp, reference?.systemUnderstandingXp ?? 0)), 0, 999);
+    const systemMastery = Object.fromEntries(formations.map((formation) => [formation.id, clamp(Math.round(finiteOr(saved.systemMastery?.[formation.id], reference?.systemMastery?.[formation.id] ?? defaultSystemMasteryFor(fallbackPlayer, formation.id, systemUnderstanding))), 0, 100)]));
     const savedTarget = isLegacyYouthTendency ? reference?.skillTrainingTarget : saved.skillTrainingTarget ?? reference?.skillTrainingTarget;
     const skillTrainingTarget = savedTarget && playerSkillCatalog[savedTarget] ? savedTarget : skills[0];
     return {
@@ -2768,6 +2846,9 @@ export class ClubSimulation {
       attributeXp,
       attributeCeilings,
       positionMastery,
+      systemUnderstanding,
+      systemUnderstandingXp,
+      systemMastery,
       skillTrainingTarget,
       youthSkillTendency: saved.youthSkillTendency ?? reference?.youthSkillTendency,
       salary: reference?.salary ?? Math.max(2400000, finiteOr(saved.salary, 2400000) * (finiteOr(saved.salary, 0) < 1000000 ? 12 : 1)),

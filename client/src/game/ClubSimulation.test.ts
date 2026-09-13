@@ -221,6 +221,46 @@ describe("ClubSimulation match commentary", () => {
     const restoredPlayer = restored.rosterPlayers.find((item) => item.id === player!.id)!;
     expect(restoredPlayer.attributeCeilings?.attack).toBe(current);
   });
+
+  it("differentiates player output through system understanding and formation mastery", () => {
+    const simulation = new ClubSimulation();
+    const player = simulation.rosterPlayers[0];
+    const current = simulation.systemEffectivenessFor(player);
+    const systems = simulation.systemMasterySummaryFor(player);
+
+    expect(current.understanding).toBeGreaterThanOrEqual(1);
+    expect(current.understanding).toBeLessThanOrEqual(99);
+    expect(current.mastery).toBeGreaterThanOrEqual(0);
+    expect(current.rate).toBeGreaterThanOrEqual(70);
+    expect(current.rate).toBeLessThanOrEqual(104);
+    expect(systems.length).toBeGreaterThanOrEqual(8);
+    expect(new Set(systems.map((item) => item.mastery)).size).toBeGreaterThan(1);
+    expect(simulation.score().systemRate).toBeGreaterThanOrEqual(70);
+  });
+
+  it("grows and persists current-system mastery through training and match experience", () => {
+    const simulation = new ClubSimulation();
+    const player = simulation.rosterPlayers.find((item) => item.position !== "GK" && Object.values(simulation.lineupState).includes(item.id));
+    expect(player).toBeDefined();
+    const formationId = simulation.formation.id;
+    const masteryBefore = simulation.systemMasteryFor(player!, formationId);
+    const understandingXpBefore = player!.systemUnderstandingXp ?? 0;
+
+    const training = simulation.train("passing");
+    expect(training.ok).toBe(true);
+    expect(simulation.systemMasteryFor(player!, formationId)).toBeGreaterThan(masteryBefore);
+    expect(player!.systemUnderstandingXp ?? 0).toBeGreaterThan(understandingXpBefore);
+
+    const result = simulation.advanceWeek();
+    expect(result.systemMasteryGrants.length).toBeGreaterThan(0);
+    expect(result.systemMasteryGrants.every((grant) => grant.formationId === formationId)).toBe(true);
+
+    const masteryAfter = simulation.systemMasteryFor(player!, formationId);
+    const restored = new ClubSimulation();
+    const restoredPlayer = restored.rosterPlayers.find((item) => item.id === player!.id)!;
+    expect(restored.systemMasteryFor(restoredPlayer, formationId)).toBe(masteryAfter);
+    expect(restoredPlayer.systemUnderstandingXp).toBe(player!.systemUnderstandingXp);
+  });
 });
 
 

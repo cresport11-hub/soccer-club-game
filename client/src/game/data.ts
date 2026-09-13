@@ -95,6 +95,28 @@ export type Player = {
   /** UIには公開しない、能力ごとの成長上限。既存セーブには後方互換で自動生成する。 */
   attributeCeilings?: Partial<Record<PlayerAttributeKey, number>>;
   positionMastery?: Partial<Record<Position, number>>;
+  /** 戦術指示を読み取り、異なる布陣へ適応する基礎能力。 */
+  systemUnderstanding?: number;
+  /** システム理解力の成長XP。100XPごとに理解力が1上がる。 */
+  systemUnderstandingXp?: number;
+  /** フォーメーションIDごとの実戦習熟度。 */
+  systemMastery?: Record<string, number>;
+};
+
+const stableSystemSeed = (value: string) => Array.from(value).reduce((total, character, index) => total + character.charCodeAt(0) * (index + 3), 0);
+
+/** 選手ごとのシステム理解力を、判断系能力・経験・固定シードから決定する。 */
+export const defaultSystemUnderstandingFor = (player: Pick<Player, "id" | "age" | "level" | "pass" | "interception">) => {
+  const aptitude = Math.round((player.pass + player.interception) / 18);
+  const experience = player.age >= 29 ? 6 : player.age >= 24 ? 3 : player.age <= 20 ? -2 : 0;
+  const variation = stableSystemSeed(player.id) % 21;
+  return Math.max(40, Math.min(92, 43 + aptitude + experience + Math.min(4, player.level) + variation));
+};
+
+/** フォーメーション別の初期習熟度を、理解力と選手固有の相性から決定する。 */
+export const defaultSystemMasteryFor = (player: Pick<Player, "id">, formationId: string, understanding: number) => {
+  const variation = stableSystemSeed(`${player.id}:${formationId}`) % 27;
+  return Math.max(18, Math.min(72, Math.round(18 + understanding * .28 + variation)));
 };
 
 /** 選手の現在能力と潜在性から能力別の隠し上限を決める。 */
