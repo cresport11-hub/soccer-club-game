@@ -169,7 +169,9 @@ export type IndividualBonusReceipt = { total: number; entries: IndividualBonusEn
 export type PlayerSeasonStat = { playerId: string; player: string; position: string; appearances: number; starts: number; goals: number; assists: number; ratingTotal: number; ratingCount: number; mvpAwards: number };
 export type MatchHighlight = { minute: number; kind: "kickoff" | "action" | "goal" | "tactic" | "substitution" | "injury" | "halftime" | "fulltime"; team: "orbit" | "opponent" | "neutral"; text: string; scorer?: string; assistant?: string };
 export type HalfTimeReport = { playerGoals: number; opponentGoals: number; message: string; tacticalNote: string; recommendation: string };
-export type MatchResult = { opponent: string; opponentId: string; playerGoals: number; opponentGoals: number; message: string; won: boolean; reward: number; sponsorRevenue: number; cupResult: CupMatchResult | null; gate: GateReceipt; merchandise: MerchandiseReceipt; membership: MembershipReceipt; concession: ConcessionReceipt; totalTicketRevenue: number; totalAttendance: number; totalCommercialRevenue: number; popularityDelta: number; leaguePopularityDelta: number; popularity: number; tactics: TacticalAssessment; opponentTactics: OpponentTacticalAssessment; tacticalMatchup: TacticalMatchup; markingImpact: MarkingMatchImpact; matchAttack: number; matchDefense: number; matchCondition: TeamMatchCondition; conditionAfter: TeamMatchCondition; halfTime: HalfTimeReport; highlights: MatchHighlight[]; substitutions: MatchSubstitution[]; injuries: MatchInjury[]; playerRatings: PlayerMatchRating[]; markDuels: MarkDuelReport[]; mvp: PlayerMatchRating | null; individualBonuses: IndividualBonusReceipt; skillXpGrants: SkillXpGrant[]; attributeXpGrants: AttributeXpGrant[]; positionMasteryGrants: PositionMasteryGrant[]; conditionChanges: PlayerConditionChange[]; halfTimeChanges: string[] };
+export type MatchStatsTeam = { possession: number; shots: number; shotsOnTarget: number; bigChances: number; corners: number; passes: number; passAccuracy: number; fouls: number; offsides: number; saves: number };
+export type MatchStats = { orbit: MatchStatsTeam; opponent: MatchStatsTeam };
+export type MatchResult = { opponent: string; opponentId: string; playerGoals: number; opponentGoals: number; message: string; won: boolean; reward: number; sponsorRevenue: number; cupResult: CupMatchResult | null; gate: GateReceipt; merchandise: MerchandiseReceipt; membership: MembershipReceipt; concession: ConcessionReceipt; totalTicketRevenue: number; totalAttendance: number; totalCommercialRevenue: number; popularityDelta: number; leaguePopularityDelta: number; popularity: number; tactics: TacticalAssessment; opponentTactics: OpponentTacticalAssessment; tacticalMatchup: TacticalMatchup; markingImpact: MarkingMatchImpact; matchAttack: number; matchDefense: number; matchCondition: TeamMatchCondition; conditionAfter: TeamMatchCondition; stats: MatchStats; halfTime: HalfTimeReport; highlights: MatchHighlight[]; substitutions: MatchSubstitution[]; injuries: MatchInjury[]; playerRatings: PlayerMatchRating[]; markDuels: MarkDuelReport[]; mvp: PlayerMatchRating | null; individualBonuses: IndividualBonusReceipt; skillXpGrants: SkillXpGrant[]; attributeXpGrants: AttributeXpGrant[]; positionMasteryGrants: PositionMasteryGrant[]; conditionChanges: PlayerConditionChange[]; halfTimeChanges: string[] };
 
 type Persisted = {
   money: number;
@@ -1827,6 +1829,7 @@ export class ClubSimulation {
     matchFlow.halfTime.tacticalNote += ` / ${markingImpact.summary} / ${matchCondition.summary}`;
     matchFlow.highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind));
     const injuries = this.createMatchInjuries(matchFlow.highlights, this.week);
+    const stats = this.createMatchStats(playerGoals, opponentGoals, matchAttack, matchDefense, tactics, opponentTactics, matchFlow.highlights, this.week);
     const reward = playerGoals > opponentGoals ? 245000 : playerGoals === opponentGoals ? 105000 : 48000;
     const won = playerGoals > opponentGoals;
     const draw = playerGoals === opponentGoals;
@@ -1861,6 +1864,7 @@ export class ClubSimulation {
       matchDefense,
       matchCondition,
       conditionAfter: this.matchConditionFor(isHome),
+      stats,
       halfTime: matchFlow.halfTime,
       highlights: matchFlow.highlights,
       substitutions: [],
@@ -1973,28 +1977,30 @@ export class ClubSimulation {
       .filter((item): item is { slot: Formation["slots"][number]; player: Player } => item.player !== null && isMarkingDefenderPosition(item.player.position));
     if (!opponentFormation || !ownDefenders.length) return [];
     const remainingDefenders = [...ownDefenders];
-    return opponentTactics.lineup.filter((opponentPlayer) => isMarkableOpponentPosition(opponentPlayer.position)).map((opponentPlayer) => {
+    return opponentTactics.lineup.filter((opponentPlayer) => isMarkableOpponentPosition(opponentPlayer.position)).flatMap((opponentPlayer) => {
       const opponentSlot = opponentFormation.slots.find((slot) => opponentPlayer.id.endsWith(`-${slot.id}`)) ?? opponentFormation.slots[0];
+      // 一人一担当を徹底する。守備担当が尽きた攻撃選手は、対人マッチアップではなくゾーン対応になる。
+      if (!remainingDefenders.length) return [];
       const manualPlayerId = this.currentManualMarkAssignments[opponentPlayer.id];
       const manualIndex = remainingDefenders.findIndex((candidate) => candidate.player.id === manualPlayerId && canMarkOpponent(opponentPlayer.position, candidate.player.position));
-      const pool = remainingDefenders.length ? remainingDefenders : ownDefenders;
-      const bestIndex = manualIndex >= 0 ? manualIndex : pool.reduce((best, candidate, index) => {
+      const bestIndex = manualIndex >= 0 ? manualIndex : remainingDefenders.reduce((best, candidate, index) => {
         const candidateRank = markingDefenderRank(opponentPlayer.position, candidate.player.position) ?? 99;
-        const bestRank = markingDefenderRank(opponentPlayer.position, pool[best].player.position) ?? 99;
+        const bestRank = markingDefenderRank(opponentPlayer.position, remainingDefenders[best].player.position) ?? 99;
         const candidateScore = candidateRank * 10000 + (candidate.slot.x - opponentSlot.x) ** 2 + (candidate.slot.y - opponentSlot.y) ** 2;
-        const bestScore = bestRank * 10000 + (pool[best].slot.x - opponentSlot.x) ** 2 + (pool[best].slot.y - opponentSlot.y) ** 2;
+        const bestScore = bestRank * 10000 + (remainingDefenders[best].slot.x - opponentSlot.x) ** 2 + (remainingDefenders[best].slot.y - opponentSlot.y) ** 2;
         return candidateScore < bestScore ? index : best;
       }, 0);
-      const pairing = pool[bestIndex];
-      const remainingIndex = remainingDefenders.findIndex((candidate) => candidate.player.id === pairing.player.id);
-      if (remainingIndex >= 0) remainingDefenders.splice(remainingIndex, 1);
-      return { opponentPlayer, opponentSlot, player: pairing.player, slot: pairing.slot, manual: pairing.player.id === manualPlayerId };
+      const pairing = remainingDefenders[bestIndex];
+      remainingDefenders.splice(bestIndex, 1);
+      return [{ opponentPlayer, opponentSlot, player: pairing.player, slot: pairing.slot, manual: pairing.player.id === manualPlayerId }];
     });
   }
 
   private markingMatchImpact(opponentTactics: OpponentTacticalAssessment): MarkingMatchImpact {
     const pairings = this.buildMarkingPairings(opponentTactics);
-    if (!pairings.length) return { attackModifier: 0, defenseModifier: 0, grade: "対人拮抗", advantageCount: 0, cautionCount: 0, summary: "MARKING IMPACT 拮抗（攻+0 / 守+0）", reason: "対応できる攻撃選手がいないため、GK・守備選手への個別マーク補正は加えない。" };
+    const markableCount = opponentTactics.lineup.filter((player) => isMarkableOpponentPosition(player.position)).length;
+    const zoneCount = Math.max(0, markableCount - pairings.length);
+    if (!pairings.length) return { attackModifier: 0, defenseModifier: 0, grade: "対人拮抗", advantageCount: 0, cautionCount: 0, summary: `MARKING IMPACT 拮抗（一対一 0人 / ゾーン ${zoneCount}人・攻+0 / 守+0）`, reason: "守備担当が足りないため、相手の攻撃選手はゾーン対応。GK・守備選手への個別マーク補正は加えない。" };
     let advantageCount = 0;
     let cautionCount = 0;
     pairings.forEach(({ opponentPlayer, opponentSlot, player, slot }) => {
@@ -2009,9 +2015,37 @@ export class ClubSimulation {
     const attackModifier = balance >= 3 ? 1 : balance <= -3 ? -1 : 0;
     const defenseModifier = balance >= 2 ? 1 : balance <= -2 ? -1 : 0;
     const grade: MarkingMatchImpact["grade"] = balance >= 2 ? "対人優位" : balance <= -2 ? "対人警戒" : "対人拮抗";
-    const summary = `MARKING IMPACT ${grade}（攻撃選手 ${pairings.length}人 / 有利 ${advantageCount} / 警戒 ${cautionCount}・攻${attackModifier >= 0 ? "+" : ""}${attackModifier} / 守${defenseModifier >= 0 ? "+" : ""}${defenseModifier}）`;
-    const reason = grade === "対人優位" ? "相手の前線・中盤の攻撃選手へ守備担当が適切に付き、局地戦の優位が奪回を後押しする。" : grade === "対人警戒" ? "相手の攻撃選手との対人局面に不利があり、最終ラインのカバー負荷を織り込む。" : "攻撃選手への守備対応は拮抗しており、GK・守備選手は個別マークせず守備ブロックで対応する。";
+    const summary = `MARKING IMPACT ${grade}（一対一 ${pairings.length}人 / ゾーン ${zoneCount}人 / 有利 ${advantageCount} / 警戒 ${cautionCount}・攻${attackModifier >= 0 ? "+" : ""}${attackModifier} / 守${defenseModifier >= 0 ? "+" : ""}${defenseModifier}）`;
+    const zoneNote = zoneCount > 0 ? `守備担当が足りない${zoneCount}人はゾーン対応。` : "全ての対象選手へ一対一の守備担当を配置。";
+    const reason = grade === "対人優位" ? `${zoneNote}相手の前線・中盤の攻撃選手へ守備担当が付き、局地戦の優位が奪回を後押しする。` : grade === "対人警戒" ? `${zoneNote}相手の攻撃選手との対人局面に不利があり、最終ラインのカバー負荷を織り込む。` : `${zoneNote}攻撃選手への守備対応は拮抗しており、GK・守備選手は個別マークせず守備ブロックで対応する。`;
     return { attackModifier, defenseModifier, grade, advantageCount, cautionCount, summary, reason };
+  }
+
+  private createMatchStats(playerGoals: number, opponentGoals: number, matchAttack: number, matchDefense: number, tactics: TacticalAssessment, opponentTactics: OpponentTacticalAssessment, highlights: MatchHighlight[], matchWeek = this.week): MatchStats {
+    const orbitActions = highlights.filter((item) => item.team === "orbit" && item.kind === "action").length;
+    const opponentActions = highlights.filter((item) => item.team === "opponent" && item.kind === "action").length;
+    const orbitPossession = clamp(Math.round(50 + (matchAttack - opponentTactics.attack) * 0.22 + tactics.chemistry * 0.04 + (tactics.playingStyle === "possession" ? 4 : tactics.playingStyle === "direct" ? -2 : 0)), 35, 65);
+    const opponentPossession = 100 - orbitPossession;
+    const orbitShots = clamp(8 + orbitActions + playerGoals * 2 + Math.round((matchAttack - opponentTactics.defense) * 0.18) + Math.round(deterministic(matchWeek + 301) * 3), 5, 24);
+    const opponentShots = clamp(8 + opponentActions + opponentGoals * 2 + Math.round((opponentTactics.attack - matchDefense) * 0.18) + Math.round(deterministic(matchWeek + 307) * 3), 5, 24);
+    const orbitShotsOnTarget = clamp(Math.round(orbitShots * 0.38) + playerGoals, 1, orbitShots);
+    const opponentShotsOnTarget = clamp(Math.round(opponentShots * 0.38) + opponentGoals, 1, opponentShots);
+    const orbitPasses = clamp(Math.round(250 + orbitPossession * 3.7 + tactics.chemistry * 1.7 + matchAttack), 260, 720);
+    const opponentPasses = clamp(Math.round(720 - orbitPossession * 3.1 + opponentTactics.attack), 260, 720);
+    const orbitPassAccuracy = clamp(Math.round(65 + orbitPossession * 0.25 + tactics.chemistry * 0.1), 65, 92);
+    const opponentPassAccuracy = clamp(Math.round(65 + opponentPossession * 0.22 + opponentTactics.attack * 0.08), 64, 91);
+    const orbitCorners = clamp(2 + Math.round(orbitShots * 0.18) + Math.round(deterministic(matchWeek + 313) * 2), 1, 10);
+    const opponentCorners = clamp(2 + Math.round(opponentShots * 0.18) + Math.round(deterministic(matchWeek + 317) * 2), 1, 10);
+    const orbitFouls = clamp(7 + Math.round((100 - orbitPossession) * 0.08) + Math.round(deterministic(matchWeek + 319) * 4), 4, 18);
+    const opponentFouls = clamp(7 + Math.round((100 - opponentPossession) * 0.08) + Math.round(deterministic(matchWeek + 323) * 4), 4, 18);
+    const orbitOffsides = clamp(Math.round(orbitShots / 7) + Math.round(deterministic(matchWeek + 331) * 2), 0, 6);
+    const opponentOffsides = clamp(Math.round(opponentShots / 7) + Math.round(deterministic(matchWeek + 337) * 2), 0, 6);
+    const orbitBigChances = clamp(1 + playerGoals + Math.round(orbitShotsOnTarget * 0.22), 1, 7);
+    const opponentBigChances = clamp(1 + opponentGoals + Math.round(opponentShotsOnTarget * 0.22), 1, 7);
+    return {
+      orbit: { possession: orbitPossession, shots: orbitShots, shotsOnTarget: orbitShotsOnTarget, bigChances: orbitBigChances, corners: orbitCorners, passes: orbitPasses, passAccuracy: orbitPassAccuracy, fouls: orbitFouls, offsides: orbitOffsides, saves: Math.max(0, opponentShotsOnTarget - opponentGoals) },
+      opponent: { possession: opponentPossession, shots: opponentShots, shotsOnTarget: opponentShotsOnTarget, bigChances: opponentBigChances, corners: opponentCorners, passes: opponentPasses, passAccuracy: opponentPassAccuracy, fouls: opponentFouls, offsides: opponentOffsides, saves: Math.max(0, orbitShotsOnTarget - playerGoals) },
+    };
   }
 
   private createMatchFlow(playerGoals: number, opponentGoals: number, opponentName: string, tactics: TacticalAssessment, opponentTactics: OpponentTacticalAssessment, tacticalMatchup: TacticalMatchup, matchCondition: TeamMatchCondition, matchWeek = this.week, fixedHalf?: Pick<HalfTimeReport, "playerGoals" | "opponentGoals">): { halfTime: HalfTimeReport; highlights: MatchHighlight[] } {

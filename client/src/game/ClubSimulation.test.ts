@@ -162,6 +162,7 @@ describe("ClubSimulation match commentary", () => {
     const starterIds = Object.values(simulation.lineupState).filter((id): id is string => Boolean(id));
     const goalkeeper = opponent.lineup.find((player) => player.position === "GK");
     const attacker = opponent.lineup.find((player) => ["CF", "WG", "AM", "SH"].includes(player.position));
+    const secondAttacker = opponent.lineup.find((player) => ["CF", "WG", "AM", "SH"].includes(player.position) && player.id !== attacker?.id);
     const defender = starterIds.map((id) => simulation.rosterPlayers.find((player) => player.id === id)).find((player) => player && ["CB", "SB", "DM", "CM", "SH"].includes(player.position));
 
     expect(goalkeeper).toBeDefined();
@@ -170,6 +171,23 @@ describe("ClubSimulation match commentary", () => {
     expect(simulation.setManualMarkAssignment(goalkeeper!.id, defender!.id).ok).toBe(false);
     expect(simulation.setManualMarkAssignment(attacker!.id, defender!.id).ok).toBe(true);
     expect(simulation.currentManualMarkAssignments[attacker!.id]).toBe(defender!.id);
+    if (secondAttacker) {
+      expect(simulation.setManualMarkAssignment(secondAttacker.id, defender!.id).ok).toBe(true);
+      expect(simulation.currentManualMarkAssignments[attacker!.id]).toBeUndefined();
+      expect(simulation.currentManualMarkAssignments[secondAttacker.id]).toBe(defender!.id);
+    }
+  });
+
+  it("keeps match marking one-to-one and reports zone coverage for surplus attackers", () => {
+    const simulation = new ClubSimulation();
+    const result = simulation.advanceWeek();
+    const assignedDefenders = result.markDuels.map((duel) => duel.playerId);
+    const markedOpponents = result.markDuels.map((duel) => duel.opponent);
+
+    expect(new Set(assignedDefenders).size).toBe(assignedDefenders.length);
+    expect(new Set(markedOpponents).size).toBe(markedOpponents.length);
+    expect(result.markingImpact.summary).toMatch(/一対一/);
+    expect(result.markingImpact.summary).toMatch(/ゾーン/);
   });
 
   it("keeps hidden attribute ceilings above current ability and blocks growth beyond them", () => {
@@ -192,5 +210,32 @@ describe("ClubSimulation match commentary", () => {
     const restored = new ClubSimulation();
     const restoredPlayer = restored.rosterPlayers.find((item) => item.id === player!.id)!;
     expect(restoredPlayer.attributeCeilings?.attack).toBe(current);
+  });
+});
+
+
+describe("Match statistics", () => {
+  beforeEach(() => {
+    const values = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+      clear: () => values.clear(),
+    });
+  });
+
+  it("creates coherent full-time statistics for both teams", () => {
+    const simulation = new ClubSimulation();
+    const result = simulation.advanceWeek();
+    const { orbit, opponent } = result.stats;
+
+    expect(orbit.possession + opponent.possession).toBe(100);
+    expect(orbit.shots).toBeGreaterThanOrEqual(orbit.shotsOnTarget);
+    expect(opponent.shots).toBeGreaterThanOrEqual(opponent.shotsOnTarget);
+    expect(orbit.passAccuracy).toBeGreaterThanOrEqual(0);
+    expect(opponent.passAccuracy).toBeGreaterThanOrEqual(0);
+    expect(orbit.saves).toBeGreaterThanOrEqual(0);
+    expect(opponent.saves).toBeGreaterThanOrEqual(0);
   });
 });
