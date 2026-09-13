@@ -2,7 +2,7 @@
  * Design system: 「タッチライン戦術室」— dense tactical cards and a compact mobile scoreboard keep club health visible at all times.
  */
 import { assets } from "./assets";
-import { ClubSimulation, amPlayStyleOptions, cbPlayStyleOptions, cfPlayStyleOptions, cmPlayStyleOptions, contractOfferOptions, dmPlayStyleOptions, gkPlayStyleOptions, mentalityOptions, playingStyleOptions, sbPlayStyleOptions, sponsorOffers, trainingLoadOptions, trainingOptions, wgPlayStyleOptions, type ConcessionReceipt, type ContractOfferId, type GateReceipt, type MatchHighlight, type MembershipReceipt, type MerchandiseReceipt, type Mentality, type PageId, type PlayingStyle, type RolePlayStyleFit, type RoleStyleOption, type TrainingFocus } from "./ClubSimulation";
+import { ClubSimulation, amPlayStyleOptions, cbPlayStyleOptions, cfPlayStyleOptions, cmPlayStyleOptions, contractOfferOptions, dmPlayStyleOptions, gkPlayStyleOptions, mentalityOptions, playingStyleOptions, sbPlayStyleOptions, sponsorOffers, trainingLoadOptions, trainingOptions, wgPlayStyleOptions, type ConcessionReceipt, type ContractOfferId, type GateReceipt, type MatchHighlight, type MembershipReceipt, type MerchandiseReceipt, type Mentality, type PageId, type PlayingStyle, type TrainingFocus } from "./ClubSimulation";
 import { canMarkOpponent, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, opponentSeeds, playerAssessmentFor, playerSkillCatalog, positionLabel, recruit, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type DMPlayStyle, type GKPlayStyle, type OpponentPlayer, type Player, type PlayerSkillId, type SBPlayStyle, type Slot, type WGPlayStyle } from "./data";
 
 const navItems: Array<{ id: PageId; icon: string; label: string }> = [
@@ -47,7 +47,6 @@ export class GameUI {
   private opponentPlayerDetailId: string | null = null;
   private manualMarkSourceId: string | null = null;
   private draggingMarkSourceId: string | null = null;
-  private radarMorph: { playerId: string; role: RolePlayStyleFit["role"]; values: number[] } | null = null;
   private rosterSort: RosterSort = "position";
   private rosterSalaryFilter: SalaryFilter = "all";
   private rosterContractFilter: ContractFilter = "all";
@@ -208,7 +207,7 @@ export class GameUI {
       case "set-skill-training-target": { const result = this.simulation.setSkillTrainingTarget(target.dataset.skillPlayer ?? "", target.dataset.skillTarget as PlayerSkillId); this.toast = result.text; this.render(); break; }
       case "set-youth-skill-training-target": { const result = this.simulation.setYouthSkillTrainingTarget(target.dataset.youthSkillPlayer ?? "", target.dataset.youthSkillTarget as PlayerSkillId); this.toast = result.text; this.render(); break; }
       case "assign-scout-staff": { const result = this.simulation.assignScoutStaff(target.dataset.scoutStaff ?? ""); this.toast = result.text; this.render(); break; }
-      case "set-role-play-style": { const role = target.dataset.roleKind as "cf" | "wg" | "am" | "cm" | "dm" | "cb" | "sb" | "gk"; const player = this.simulation.rosterPlayers.find((item) => item.id === target.dataset.rolePlayer); const current = player ? role === "cf" ? this.simulation.cfPlayStyleFor(player) : role === "wg" ? this.simulation.wgPlayStyleFor(player) : role === "am" ? this.simulation.amPlayStyleFor(player) : role === "cm" ? this.simulation.cmPlayStyleFor(player) : role === "dm" ? this.simulation.dmPlayStyleFor(player) : role === "cb" ? this.simulation.cbPlayStyleFor(player) : role === "sb" ? this.simulation.sbPlayStyleFor(player) : this.simulation.gkPlayStyleFor(player) : null; if (player && current) this.radarMorph = { playerId: player.id, role, values: this.roleFitRadarValues(this.simulation.rolePlayStyleFit(player, role, current)) }; const playStyle = target.dataset.roleStyle ?? ""; const result = role === "cf" ? this.simulation.setCfPlayStyle(target.dataset.rolePlayer ?? "", playStyle as CFPlayStyle) : role === "wg" ? this.simulation.setWgPlayStyle(target.dataset.rolePlayer ?? "", playStyle as WGPlayStyle) : role === "am" ? this.simulation.setAmPlayStyle(target.dataset.rolePlayer ?? "", playStyle as AMPlayStyle) : role === "cm" ? this.simulation.setCmPlayStyle(target.dataset.rolePlayer ?? "", playStyle as CMPlayStyle) : role === "dm" ? this.simulation.setDmPlayStyle(target.dataset.rolePlayer ?? "", playStyle as DMPlayStyle) : role === "cb" ? this.simulation.setCbPlayStyle(target.dataset.rolePlayer ?? "", playStyle as CBPlayStyle) : role === "sb" ? this.simulation.setSbPlayStyle(target.dataset.rolePlayer ?? "", playStyle as SBPlayStyle) : this.simulation.setGkPlayStyle(target.dataset.rolePlayer ?? "", playStyle as GKPlayStyle); if (!result.ok) this.radarMorph = null; this.toast = result.text; this.render(); break; }
+      case "set-role-play-style": { const role = target.dataset.roleKind as "cf" | "wg" | "am" | "cm" | "dm" | "cb" | "sb" | "gk"; const playStyle = target.dataset.roleStyle ?? ""; const result = role === "cf" ? this.simulation.setCfPlayStyle(target.dataset.rolePlayer ?? "", playStyle as CFPlayStyle) : role === "wg" ? this.simulation.setWgPlayStyle(target.dataset.rolePlayer ?? "", playStyle as WGPlayStyle) : role === "am" ? this.simulation.setAmPlayStyle(target.dataset.rolePlayer ?? "", playStyle as AMPlayStyle) : role === "cm" ? this.simulation.setCmPlayStyle(target.dataset.rolePlayer ?? "", playStyle as CMPlayStyle) : role === "dm" ? this.simulation.setDmPlayStyle(target.dataset.rolePlayer ?? "", playStyle as DMPlayStyle) : role === "cb" ? this.simulation.setCbPlayStyle(target.dataset.rolePlayer ?? "", playStyle as CBPlayStyle) : role === "sb" ? this.simulation.setSbPlayStyle(target.dataset.rolePlayer ?? "", playStyle as SBPlayStyle) : this.simulation.setGkPlayStyle(target.dataset.rolePlayer ?? "", playStyle as GKPlayStyle); this.toast = result.text; this.render(); break; }
       case "develop-youth": { const result = this.simulation.developYouth(); this.toast = result.text; this.render(); break; }
       case "promote-youth": { const result = this.simulation.promoteYouth(target.dataset.youth ?? ""); this.toast = result.text; this.render(); break; }
       case "set-market-preference": { const result = this.simulation.setMarketPreferredPosition(target.dataset.marketPosition as Player["position"]); this.toast = result.text; this.render(); break; }
@@ -499,7 +498,6 @@ export class GameUI {
     this.decorateScoutStaffDeployment();
     this.restoreScrollPosition(scrollPosition);
     this.restoreLiveHighlightScroll();
-    this.animateRoleRadar();
   }
 
   private renderPage(score: ReturnType<ClubSimulation["score"]>, selected: Player | null) {
@@ -888,68 +886,6 @@ export class GameUI {
     `;
   }
 
-  private roleFitRadarValues(fit: RolePlayStyleFit) {
-    return [fit.abilityScore, fit.active ? 100 : 18, fit.formationBonus ? 100 : fit.active ? 54 : 18, Math.min(100, fit.attackBoost * 50), Math.min(100, fit.defenseBoost * 50)];
-  }
-
-  private animateRoleRadar() {
-    const radar = this.root.querySelector<HTMLElement>(".role-fit-radar.is-morph-candidate");
-    const morph = this.radarMorph;
-    this.radarMorph = null;
-    if (!radar || !morph || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const from = (radar.dataset.radarFrom ?? "").split(",").map(Number);
-    const target = (radar.dataset.radarTarget ?? "").split(",").map(Number);
-    const polygon = radar.querySelector<SVGPolygonElement>(".radar-value");
-    const dots = Array.from(radar.querySelectorAll<SVGCircleElement>(".radar-dot"));
-    if (!polygon || from.length !== 5 || target.length !== 5 || from.some(Number.isNaN) || target.some(Number.isNaN)) return;
-    const point = (value: number, index: number) => {
-      const angle = -Math.PI / 2 + (Math.PI * 2 * index) / 5;
-      const distance = 43 * (value / 100);
-      return { x: 66 + Math.cos(angle) * distance, y: 66 + Math.sin(angle) * distance };
-    };
-    const draw = (values: number[]) => {
-      const points = values.map((value, index) => point(value, index));
-      polygon.setAttribute("points", points.map((item) => `${item.x.toFixed(1)},${item.y.toFixed(1)}`).join(" "));
-      dots.forEach((dot, index) => { dot.setAttribute("cx", points[index].x.toFixed(1)); dot.setAttribute("cy", points[index].y.toFixed(1)); });
-    };
-    radar.classList.add("is-morphing");
-    draw(from);
-    const startedAt = performance.now();
-    const duration = 460;
-    const tick = (now: number) => {
-      const progress = Math.min(1, (now - startedAt) / duration);
-      const eased = 1 - Math.pow(1 - progress, 4);
-      draw(from.map((value, index) => value + (target[index] - value) * eased));
-      if (progress < 1) window.requestAnimationFrame(tick);
-      else { draw(target); radar.classList.remove("is-morphing"); }
-    };
-    window.requestAnimationFrame(tick);
-  }
-
-  private roleFitRadar(fit: RolePlayStyleFit, option: RoleStyleOption) {
-    const playingStyle = this.simulation.currentPlayingStyle;
-    const styledAttack = option.attackBonus + (playingStyle === "direct" ? option.directBonus : playingStyle === "possession" ? option.possessionBonus : option.pressBonus);
-    const values = this.roleFitRadarValues(fit);
-    const dimensions = [
-      { label: "能力", value: values[0], detail: `${fit.abilityScore}/100` },
-      { label: "起用", value: values[1], detail: fit.active ? "対応枠" : "待機" },
-      { label: "配置", value: values[2], detail: fit.formationBonus ? "好相性" : fit.active ? "通常" : "未起用" },
-      { label: "攻伸", value: values[3], detail: `+${fit.attackBoost}` },
-      { label: "守伸", value: values[4], detail: `+${fit.defenseBoost}` },
-    ];
-    const center = 66;
-    const radius = 43;
-    const point = (value: number, index: number, scale = 1) => {
-      const angle = -Math.PI / 2 + (Math.PI * 2 * index) / dimensions.length;
-      const distance = radius * scale * (value / 100);
-      return `${(center + Math.cos(angle) * distance).toFixed(1)},${(center + Math.sin(angle) * distance).toFixed(1)}`;
-    };
-    const outline = (scale: number) => dimensions.map((_, index) => point(100, index, scale)).join(" ");
-    const plot = dimensions.map((dimension, index) => point(dimension.value, index)).join(" ");
-    const fromValues = this.radarMorph?.playerId === fit.playerId && this.radarMorph.role === fit.role ? this.radarMorph.values : null;
-    return `<section class="role-fit-radar ${fit.grade === "待機" ? "is-idle" : ""} ${fromValues ? "is-morph-candidate" : ""}" data-radar-from="${fromValues?.join(",") ?? ""}" data-radar-target="${values.join(",")}" aria-label="${fit.style}の役割適合マップ"><div class="role-fit-radar-head"><span>ROLE SYNERGY MAP</span><b>${fit.grade} <small>${styledAttack > 0 || option.defenseBonus > 0 ? `基礎効果 攻${signed(styledAttack)} / 守${signed(option.defenseBonus)}` : "基礎効果なし"}</small></b></div><div class="role-fit-radar-plot"><svg viewBox="0 0 132 132" role="img" aria-label="能力、起用、配置、攻撃伸長、守備伸長のレーダーチャート"><g class="radar-grid">${[.25, .5, .75, 1].map((scale) => `<polygon points="${outline(scale)}"></polygon>`).join("")}</g><g class="radar-axis">${dimensions.map((_, index) => `<line x1="${center}" y1="${center}" x2="${point(100, index)}"></line>`).join("")}</g><polygon class="radar-value" points="${plot}"></polygon>${dimensions.map((dimension, index) => { const [x, y] = point(dimension.value, index).split(","); return `<circle class="radar-dot" cx="${x}" cy="${y}" r="2.3"></circle>`; }).join("")}</svg></div><ul class="role-fit-radar-legend">${dimensions.map((dimension) => `<li><span>${dimension.label}</span><b>${dimension.detail}</b></li>`).join("")}</ul><p>${fit.active ? "五角形が外側へ広がるほど、その役割を現在の編成で活かせます。" : "対応するポジションへ配置すると、起用・配置・攻守伸長の軸が有効になります。"}</p></section>`;
-  }
-
   private rolePlayStyleControl(player: Player, role: "cf" | "wg" | "am" | "cm" | "dm" | "cb" | "sb" | "gk") {
     const playingStyle = this.simulation.currentPlayingStyle;
     const config = role === "cf"
@@ -969,7 +905,7 @@ export class GameUI {
                   : { label: "GK PLAY STYLE", number: "01", current: this.simulation.gkPlayStyleFor(player), options: gkPlayStyleOptions, note: "ゴール前補正" };
     if (!config.current) return "";
     const currentFit = this.simulation.rolePlayStyleFit(player, role, config.current);
-    return `<section class="cf-style-control role-${role}" data-role-number="${config.number}"><div class="cf-style-head"><span>${config.label}</span><b>${config.current.label}</b></div><p>${config.current.copy}</p><div class="role-fit-readout ${currentFit.grade === "伸長大" ? "is-major" : currentFit.grade === "伸長" ? "is-growing" : ""}"><span>ROLE FIT / ${currentFit.grade}</span><b>適合能力 ${currentFit.abilityScore}　伸長 攻${signed(currentFit.attackBoost)} / 守${signed(currentFit.defenseBoost)}</b><small>${currentFit.reason}</small></div>${this.roleFitRadar(currentFit, config.current)}<div class="cf-style-options">${config.options.map((option) => { const fit = this.simulation.rolePlayStyleFit(player, role, option); const attackBonus = option.attackBonus + (playingStyle === "direct" ? option.directBonus : playingStyle === "possession" ? option.possessionBonus : option.pressBonus) + fit.attackBoost; const defenseBonus = option.defenseBonus + fit.defenseBoost; return `<button type="button" data-action="set-role-play-style" data-role-kind="${role}" data-role-player="${player.id}" data-role-style="${option.id}" class="${config.current?.id === option.id ? "is-selected" : ""}"><strong>${option.label}</strong><small>${option.copy}</small><em>攻 ${signed(attackBonus)} / 守 ${signed(defenseBonus)}${fit.totalBoost ? `<mark>適合 +${fit.totalBoost}</mark>` : ""}</em></button>`; }).join("")}</div><small class="cf-style-footnote">現在のチームプレースタイル「${this.simulation.score().tactics.playingStyleLabel}」と、${this.simulation.formation.label}での起用位置・能力を加味した${config.note}です。</small></section>`;
+    return `<section class="cf-style-control role-${role}" data-role-number="${config.number}"><div class="cf-style-head"><span>${config.label}</span><b>${config.current.label}</b></div><p>${config.current.copy}</p><div class="role-fit-readout ${currentFit.grade === "伸長大" ? "is-major" : currentFit.grade === "伸長" ? "is-growing" : ""}"><span>ROLE FIT / ${currentFit.grade}</span><b>適合能力 ${currentFit.abilityScore}　伸長 攻${signed(currentFit.attackBoost)} / 守${signed(currentFit.defenseBoost)}</b><small>${currentFit.reason}</small></div><div class="cf-style-options">${config.options.map((option) => { const fit = this.simulation.rolePlayStyleFit(player, role, option); const attackBonus = option.attackBonus + (playingStyle === "direct" ? option.directBonus : playingStyle === "possession" ? option.possessionBonus : option.pressBonus) + fit.attackBoost; const defenseBonus = option.defenseBonus + fit.defenseBoost; return `<button type="button" data-action="set-role-play-style" data-role-kind="${role}" data-role-player="${player.id}" data-role-style="${option.id}" class="${config.current?.id === option.id ? "is-selected" : ""}"><strong>${option.label}</strong><small>${option.copy}</small><em>攻 ${signed(attackBonus)} / 守 ${signed(defenseBonus)}${fit.totalBoost ? `<mark>適合 +${fit.totalBoost}</mark>` : ""}</em></button>`; }).join("")}</div><small class="cf-style-footnote">現在のチームプレースタイル「${this.simulation.score().tactics.playingStyleLabel}」と、${this.simulation.formation.label}での起用位置・能力を加味した${config.note}です。</small></section>`;
   }
 
   private playerDetailPanel() {
