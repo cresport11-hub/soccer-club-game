@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ClubSimulation } from "./ClubSimulation";
-import { commonGivenNamePool, commonSurnamePool, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, youthIntakes, youthProspects } from "./data";
+import { commonGivenNamePool, commonSurnamePool, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, playerAssessmentFor, youthIntakes, youthProspects } from "./data";
 
 describe("ClubSimulation match commentary", () => {
   beforeEach(() => {
@@ -39,6 +39,16 @@ describe("ClubSimulation match commentary", () => {
     expect(orbitGoals.length).toBe(result.playerGoals);
     expect(opponentGoals.length).toBe(result.opponentGoals);
     expect(secondHalfGoals.length).toBe(result.playerGoals + result.opponentGoals - firstHalfGoals.length);
+  });
+
+  it("generates ability-based scouting assessments for selected market candidates", () => {
+    const attacking = { ...marketRecruits[0], attack: 82, dribble: 78, pass: 50, shoot: 86, defense: 28, tackle: 24, block: 22, interception: 20 };
+    const defending = { ...marketRecruits[0], attack: 30, dribble: 34, pass: 48, shoot: 22, defense: 84, tackle: 82, block: 86, interception: 80 };
+    const attackingAssessment = playerAssessmentFor(attacking);
+    const defendingAssessment = playerAssessmentFor(defending);
+    expect(attackingAssessment).not.toBe(defendingAssessment);
+    expect(attackingAssessment.length).toBeGreaterThan(20);
+    expect(defendingAssessment.length).toBeGreaterThan(20);
   });
 
   it("switches the market dossier and negotiation target when a candidate is selected", () => {

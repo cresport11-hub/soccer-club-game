@@ -448,3 +448,71 @@ export const youthIntakes: Player[] = [
   { id: "yi5", name: "葉山 颯太", position: "AM", secondary: "CM", amPlayStyle: "shadow-striker", attack: 54, dribble: 55, pass: 61, shoot: 43, defense: 33, tackle: 28, block: 25, interception: 40, fatigue: 0, age: 16, salary: 1900000, contractYears: 3, level: 1, ceiling: 10, chemistry: "edge", skills: ["vision"], skillXp: { vision: 21, linkman: 28 }, skillTrainingTarget: "linkman", youthSkillTendency: { archetype: "間の創造者", headline: "ラストパスと前線接続を両立するAM", primarySkill: "vision", developmentSkill: "linkman", recommendedFocus: "passing", growthPace: "じっくり", coachNote: "パス＆組立でリンクマンを開放。AMで判断を磨き、CFとの接続役へ伸ばす。" } },
   { id: "yi6", name: "古賀 侑真", position: "CB", secondary: "SB", attack: 32, dribble: 37, pass: 44, shoot: 22, defense: 60, tackle: 62, block: 64, interception: 56, fatigue: 0, age: 17, salary: 1800000, contractYears: 3, level: 1, ceiling: 8, chemistry: "steady", skills: ["aerial-wall"], skillXp: { "aerial-wall": 24, "duel-master": 35 }, skillTrainingTarget: "duel-master", youthSkillTendency: { archetype: "対空の番人", headline: "空中戦を軸に対人強度を足すCB", primarySkill: "aerial-wall", developmentSkill: "duel-master", recommendedFocus: "defending", growthPace: "標準", coachNote: "守備組織で対人強度を100 XPへ。中央を基準に、SBの守備固めにも備える。" } },
 ];
+
+const playerAssessmentPatterns: Record<string, string[]> = {
+  finishing: [
+    "シュートの精度が際立つフィニッシャー。少ない好機でもゴールへ結びつける力がある。",
+    "ゴール前での落ち着きとシュート技術が魅力。決定機を任せられる得点源。",
+    "一瞬の隙を逃さないフィニッシュが武器。前線に置けば得点の匂いを作り出す。",
+  ],
+  dribbling: [
+    "ドリブルで局面を動かせる突破型。狭いスペースでも前進のきっかけを作る。",
+    "一対一の仕掛けに強く、相手の守備陣形を崩せるサイドアタッカー。",
+    "足元の技術と運ぶ力が目を引く。停滞した攻撃に変化を加えられる選手。",
+  ],
+  passing: [
+    "パスの質と視野に優れたゲームメーカー。味方を前向きに動かす配球ができる。",
+    "ボールを失わずに攻撃を組み立てる司令塔。中盤のテンポを整える存在。",
+    "前線への道筋を見つけるパサー。ポゼッション型の戦術で価値が高まる。",
+  ],
+  attack: [
+    "攻撃への関与が多く、ゴールに向かう姿勢が強いアタッカー。",
+    "前線で違いを生み出す攻撃型。周囲との連携から決定機を増やせる。",
+    "攻撃の出力が高く、試合の流れを変える推進力を持った選手。",
+  ],
+  tackling: [
+    "タックルの強さと守備の粘りが持ち味。相手の前進を正面から止められる。",
+    "ボール奪取のタイミングに優れた守備職人。中盤の強度を引き上げる。",
+    "対人守備で頼りになるファイター。競り合いの多い試合ほど存在感を出す。",
+  ],
+  blocking: [
+    "ブロックへの反応が速く、危険なシュートコースを消せる守備者。",
+    "身体を張った守備が安定している。最終ラインの最後の壁として計算できる。",
+    "ゴール前の危険察知に優れたストッパー。堅守を支える仕事人。",
+  ],
+  interception: [
+    "パスカットの読みが鋭く、相手の攻撃の芽を早い段階で摘み取る。",
+    "相手の次のプレーを予測できるインターセプター。守備から攻撃へつなげられる。",
+    "危険なコースを読む力が高い守備者。組織的な守備で真価を発揮する。",
+  ],
+  defense: [
+    "守備全体の安定感が高く、ポジションを崩さずチームを支えられる。",
+    "守備意識と対応力のバランスが良い万能型。複数の守備局面に対応できる。",
+    "守備の基礎が堅く、試合終盤でも集中を保てる信頼型の選手。",
+  ],
+  balance: [
+    "攻守の能力がまとまったバランス型。起用法を選ばず、戦力の底上げに向く。",
+    "突出した弱点が少なく、チームの要求に柔軟に応えられる実戦派。",
+    "攻撃と守備の両面で計算できる総合型。長いシーズンを支える層になれる。",
+  ],
+};
+
+/** 移籍候補の現在能力構成から、詳細画面用の選手評を決定論的に生成する。上限値などの隠し情報は参照しない。 */
+export const playerAssessmentFor = (player: Player): string => {
+  const scores: Array<[keyof typeof playerAssessmentPatterns, number]> = [
+    ["finishing", player.shoot],
+    ["dribbling", player.dribble],
+    ["passing", player.pass],
+    ["attack", player.attack],
+    ["tackling", player.tackle],
+    ["blocking", player.block],
+    ["interception", player.interception],
+    ["defense", player.defense],
+  ];
+  const top = scores.sort((a, b) => b[1] - a[1])[0];
+  const attackAverage = Math.round((player.attack + player.dribble + player.pass + player.shoot) / 4);
+  const defenseAverage = Math.round((player.defense + player.tackle + player.block + player.interception) / 4);
+  const profile: keyof typeof playerAssessmentPatterns = Math.abs(attackAverage - defenseAverage) <= 5 ? "balance" : top[0];
+  const variant = (player.attack + player.defense + player.pass + player.age + player.level) % 3;
+  return playerAssessmentPatterns[profile][variant];
+};
