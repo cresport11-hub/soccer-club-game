@@ -99,6 +99,8 @@ export type TacticalAssessment = {
   attackModifier: number;
   defenseModifier: number;
 };
+export type TeamPowerRadarKey = "attack" | "defense" | "midfield" | "chemistry" | "tacticalAdaptation" | "stability";
+export type TeamPowerRadar = { attack: number; defense: number; midfield: number; chemistry: number; tacticalAdaptation: number; stability: number; overall: number; strengthKey: TeamPowerRadarKey; weaknessKey: TeamPowerRadarKey };
 export type OpponentTacticalAssessment = { clubId: string; club: string; color: string; formationId: string; formationLabel: string; mentality: Mentality; mentalityLabel: string; playingStyle: PlayingStyle; playingStyleLabel: string; trait: string; note: string; cohesion: number; attack: number; defense: number; total: number; roles: string[]; lineup: OpponentPlayer[]; skillAttack: number; skillDefense: number; skillSummary: string; skillDetails: PlayerSkillActivation[] };
 export type TacticalMatchup = { label: string; playerAttackModifier: number; playerDefenseModifier: number; opponentAttackModifier: number; opponentDefenseModifier: number; note: string };
 export type ScoutTacticalFit = { score: number; grade: "戦術の核" | "高適合" | "起用可能" | "調整が必要"; formation: number; mentality: number; playingStyle: number; chemistry: number; formationLabel: string; mentalityLabel: string; playingStyleLabel: string; strengths: string[]; concern: string };
@@ -1063,6 +1065,35 @@ export class ClubSimulation {
     const averageCondition = Math.round(selected.reduce((sum, player) => sum + this.conditionFor(player), 0) / selected.length);
     const readiness = Math.round((100 - selected.reduce((sum, player) => sum + player.fatigue, 0) / selected.length) * .62 + averageCondition * .23 + systemRate * .15);
     return { total: Math.round((attack + defense) / 2), attack, defense, readiness, systemRate, tactics };
+  }
+
+  teamPowerRadar(): TeamPowerRadar {
+    const score = this.score();
+    const selected = this.startingPlayers().filter((player) => this.injuryWeeksFor(player.id) === 0);
+    if (!selected.length) return { attack: 0, defense: 0, midfield: 0, chemistry: 0, tacticalAdaptation: 0, stability: 0, overall: 0, strengthKey: "attack", weaknessKey: "attack" };
+    const average = (players: Player[], getter: (player: Player) => number) => players.length ? players.reduce((sum, player) => sum + getter(player), 0) / players.length : 0;
+    const midfielders = selected.filter((player) => ["DM", "CM", "AM", "SH"].includes(player.position));
+    const midfield = clamp(Math.round(average(midfielders.length ? midfielders : selected, (player) => {
+      const base = player.pass * .55 + player.attack * .2 + player.defense * .25;
+      return base * (this.systemEffectivenessFor(player).rate / 100) * (1 - player.fatigue / 180) + this.conditionStatusFor(player).modifier * .45;
+    })), 0, 99);
+    const bench = this.roster.filter((player) => !Object.values(this.lineupState).includes(player.id) && this.injuryWeeksFor(player.id) === 0);
+    const benchQuality = bench.length ? clamp(Math.round(average(bench.slice().sort((a, b) => this.playerPower(b) - this.playerPower(a)).slice(0, 5), (player) => this.playerPower(player))), 0, 99) : 0;
+    const averageFatigue = average(selected, (player) => player.fatigue);
+    const averageCondition = average(selected, (player) => this.conditionFor(player));
+    const stability = clamp(Math.round((100 - averageFatigue) * .52 + averageCondition * .34 + benchQuality * .14), 0, 99);
+    const values: Record<TeamPowerRadarKey, number> = {
+      attack: score.attack,
+      defense: score.defense,
+      midfield,
+      chemistry: clamp(Math.round(score.tactics.chemistry), 0, 99),
+      tacticalAdaptation: clamp(Math.round(score.systemRate), 0, 99),
+      stability,
+    };
+    const keys = Object.keys(values) as TeamPowerRadarKey[];
+    const strengthKey = keys.reduce((best, key) => values[key] > values[best] ? key : best, keys[0]);
+    const weaknessKey = keys.reduce((worst, key) => values[key] < values[worst] ? key : worst, keys[0]);
+    return { ...values, overall: Math.round(keys.reduce((sum, key) => sum + values[key], 0) / keys.length), strengthKey, weaknessKey };
   }
 
   setMentality(mentality: Mentality) {

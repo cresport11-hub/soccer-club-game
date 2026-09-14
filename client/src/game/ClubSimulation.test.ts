@@ -289,3 +289,38 @@ describe("Match statistics", () => {
     expect(opponent.saves).toBeGreaterThanOrEqual(0);
   });
 });
+
+
+describe("Team power radar", () => {
+  beforeEach(() => {
+    const values = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+      clear: () => values.clear(),
+    });
+  });
+
+  it("builds six bounded axes and reacts to squad condition", () => {
+    const simulation = new ClubSimulation();
+    simulation.autoLineup();
+    const radar = simulation.teamPowerRadar();
+    const keys = ["attack", "defense", "midfield", "chemistry", "tacticalAdaptation", "stability"] as const;
+    keys.forEach((key) => {
+      expect(radar[key]).toBeGreaterThanOrEqual(0);
+      expect(radar[key]).toBeLessThanOrEqual(99);
+    });
+    expect(radar.overall).toBeGreaterThanOrEqual(0);
+    expect(radar.overall).toBeLessThanOrEqual(99);
+    expect(keys).toContain(radar.strengthKey);
+    expect(keys).toContain(radar.weaknessKey);
+
+    const beforeStability = radar.stability;
+    simulation.rosterPlayers.filter((player) => Object.values(simulation.lineupState).includes(player.id)).forEach((player) => {
+      player.fatigue = 90;
+      player.condition = 35;
+    });
+    expect(simulation.teamPowerRadar().stability).toBeLessThan(beforeStability);
+  });
+});

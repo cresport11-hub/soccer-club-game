@@ -339,3 +339,104 @@ button { font: inherit; }
   .system-fit-pill { margin-top:4px; }
   .development-mini-system { padding:8px; }
 }
+
+/* Team power radar: a compact tactical profile that sits above MATCH READINESS. */
+.team-power-card { display:grid; gap:10px; border-top:2px solid var(--lime); background:repeating-linear-gradient(135deg,transparent 0,transparent 12px,rgba(217,255,74,.025) 13px,transparent 14px),linear-gradient(135deg,rgba(16,59,35,.9),rgba(3,24,13,.95)); }
+.team-power-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding-bottom:7px; border-bottom:1px solid rgba(217,255,74,.18); }
+.team-power-head h3 { margin:5px 0 0; color:#f0faed; font:900 16px/1.2 "Zen Kaku Gothic New",sans-serif; }
+.team-power-head h3 small { color:#9fb9a5; font:700 9px/1 "Noto Sans JP",sans-serif; }
+.team-power-head > strong { color:var(--lime); font-size:28px; line-height:.9; text-align:right; }
+.team-power-head > strong small { display:block; margin-top:4px; color:#9fb9a5; font-size:7px; letter-spacing:.12em; }
+.team-power-chart-wrap { display:grid; place-items:center; min-height:214px; padding:0 4px; }
+.team-power-radar { width:min(100%,280px); height:auto; overflow:visible; }
+.team-power-grid polygon { fill:none; stroke:rgba(198,245,202,.17); stroke-width:1; }
+.team-power-grid polygon:last-child { stroke:rgba(217,255,74,.3); }
+.team-power-radar line { stroke:rgba(198,245,202,.16); stroke-width:1; }
+.team-power-area { fill:rgba(217,255,74,.23); stroke:var(--lime); stroke-width:2.5; vector-effect:non-scaling-stroke; transition:points 220ms cubic-bezier(.77,0,.175,1); }
+.team-power-radar text { fill:#c9dec9; font:800 9px "Noto Sans JP",sans-serif; }
+.team-power-radar text.is-strong { fill:var(--lime); }
+.team-power-radar text.is-weak { fill:var(--gold); }
+.team-power-legend { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; }
+.team-power-legend > div { display:flex; align-items:center; justify-content:space-between; gap:7px; min-height:27px; padding:0 8px; border:1px solid rgba(198,245,202,.14); background:rgba(2,17,9,.44); }
+.team-power-legend span { color:#aac6ad; font-size:8px; }
+.team-power-legend b { color:#eaf5e7; font-size:11px; }
+.team-power-legend b.is-strong { color:var(--lime); }
+.team-power-legend b.is-weak { color:var(--gold); }
+.team-power-diagnosis { display:flex; flex-wrap:wrap; align-items:center; gap:5px 9px; margin:0; padding-top:8px; border-top:1px solid rgba(198,245,202,.12); color:#b8d3bb; font-size:8px; line-height:1.5; }
+.team-power-diagnosis b { color:var(--lime); font-size:7px; letter-spacing:.12em; }
+.team-power-diagnosis > strong { color:var(--lime); font-size:10px; }
+.team-power-diagnosis span { color:#9fb9a5; }
+.team-power-diagnosis span strong { color:var(--gold); }
+@media (max-width:600px) { .team-power-card { gap:8px; padding:11px; }.team-power-chart-wrap { min-height:205px; }.team-power-radar { width:min(100%,265px); }.team-power-legend > div { min-height:30px; }.team-power-diagnosis { font-size:8px; } }
+@media (prefers-reduced-motion: reduce) { .team-power-area { transition:none; } }
+
+/* Information compression: tactical plan keeps the primary decision surface compact. */
+.tactical-plan-card { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; padding:16px 18px; }
+.tactical-plan-header { display:flex; align-items:center; justify-content:space-between; gap:18px; }
+.tactical-plan-header h3 { margin:5px 0 3px; color:#effbea; font-size:17px; }
+.tactical-plan-header p { margin:0; color:#9fbba3; font-size:9px; }
+.tactical-plan-metrics { display:flex; gap:8px; }
+.tactical-plan-metrics span { display:grid; min-width:54px; padding:6px 8px; border:1px solid rgba(106,215,255,.28); background:rgba(3,23,13,.54); text-align:center; }
+.tactical-plan-metrics b { color:#6ad7ff; font-size:17px; line-height:1; }
+.tactical-plan-metrics small { margin-top:3px; color:#a9c5ac; font-size:8px; }
+.tactical-plan-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
+.tactical-plan-summary span { display:block; padding:7px 8px; border:1px solid rgba(198,245,202,.13); color:#dcebdc; background:rgba(2,18,9,.38); font-size:9px; }
+.tactical-plan-summary b { display:block; margin-bottom:2px; color:#91b89a; font-size:7px; letter-spacing:.12em; }
+.tactical-plan-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.advanced-tactics-details { border-top:1px solid rgba(198,245,202,.14); padding-top:8px; }
+.advanced-tactics-details summary { display:flex; align-items:center; gap:9px; min-height:31px; cursor:pointer; list-style:none; color:#c7ddc8; font-size:10px; }
+.advanced-tactics-details summary::-webkit-details-marker { display:none; }
+.advanced-tactics-details summary span { color:var(--lime); font-weight:900; }
+.advanced-tactics-details summary small { flex:1; color:#8fae96; font-size:8px; }
+.advanced-tactics-details summary b { display:grid; place-items:center; width:20px; height:20px; border:1px solid rgba(217,255,74,.35); color:var(--lime); font-size:13px; transition:transform .18s ease; }
+.advanced-tactics-details[open] summary b { transform:rotate(45deg); }
+.advanced-tactics-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; padding-top:9px; }
+.advanced-tactics-grid > div { min-width:0; }
+.advanced-tactics-grid .system-readiness-console,.advanced-tactics-grid .role-fit-console,.advanced-tactics-grid .skill-console,.advanced-tactics-grid .side-link-console,.advanced-tactics-grid .midfield-press-console { grid-column:auto; }
+.opponent-dossier:not(:has(.opponent-xi)) { padding-bottom:14px; }
+@media (max-width:700px) {
+  .tactical-plan-card { gap:10px; padding:13px; }
+  .tactical-plan-header { align-items:flex-start; gap:9px; }
+  .tactical-plan-header h3 { font-size:14px; }
+  .tactical-plan-metrics { gap:4px; }
+  .tactical-plan-metrics span { min-width:46px; padding:5px; }
+  .tactical-plan-metrics b { font-size:14px; }
+  .tactical-plan-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .tactical-plan-controls { grid-template-columns:1fr; gap:10px; }
+  .advanced-tactics-grid { grid-template-columns:1fr; }
+  .advanced-tactics-grid .system-readiness-console,.advanced-tactics-grid .role-fit-console,.advanced-tactics-grid .skill-console,.advanced-tactics-grid .side-link-console,.advanced-tactics-grid .midfield-press-console { grid-column:1; }
+}
+
+/* Home information compression: keep finance and popularity readable at a glance. */
+.home-pulse-card { min-height:223px; }
+.home-pulse-head { display:flex; align-items:start; justify-content:space-between; gap:12px; }
+.home-pulse-head h3 { margin-top:5px; }
+.home-pulse-head p { margin:4px 0 0; color:#9eb9a2; font-size:9px; }
+.fan-score-compact { display:grid; align-items:end; text-align:right; }
+.fan-score-compact strong { color:var(--lime); font-size:27px; line-height:.9; }
+.fan-score-compact strong small { margin-left:2px; font-size:12px; }
+.fan-score-compact em { margin-top:4px; color:#b7d5b8; font-size:9px; font-style:normal; }
+.home-pulse-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin-top:13px; }
+.home-pulse-summary span { min-width:0; padding:7px 8px; border:1px solid rgba(198,245,202,.13); background:rgba(2,18,9,.38); }
+.home-pulse-summary i { display:block; color:#8da992; font-size:7px; font-style:normal; letter-spacing:.08em; }
+.home-pulse-summary b { display:block; overflow:hidden; margin-top:4px; color:#e8f6e5; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+.home-pulse-card .fan-bar { margin-top:11px; }
+.home-pulse-details { margin-top:12px; border-top:1px solid rgba(198,245,202,.14); padding-top:7px; }
+.home-pulse-details summary { display:flex; align-items:center; gap:8px; min-height:28px; cursor:pointer; list-style:none; color:#c7ddc8; font-size:9px; }
+.home-pulse-details summary::-webkit-details-marker { display:none; }
+.home-pulse-details summary span { color:var(--lime); font-weight:900; }
+.home-pulse-details summary small { flex:1; color:#8fae96; font-size:8px; }
+.home-pulse-details summary b { display:grid; place-items:center; width:19px; height:19px; border:1px solid rgba(217,255,74,.35); color:var(--lime); font-size:13px; transition:transform .18s ease; }
+.home-pulse-details[open] summary b { transform:rotate(45deg); }
+.home-pulse-details .supporter-commerce { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin-top:8px; }
+.home-pulse-details .supporter-commerce > span { min-width:0; padding:7px 8px; border:1px solid rgba(198,245,202,.11); background:rgba(2,18,9,.28); }
+.home-pulse-details .supporter-commerce i { color:#8da992; font-size:7px; font-style:normal; letter-spacing:.08em; }
+.home-pulse-details .supporter-commerce b { display:block; margin-top:3px; color:#e8f6e5; font-size:11px; }
+.home-pulse-details .supporter-commerce small { display:block; margin-top:2px; overflow:hidden; color:#9db89f; font-size:8px; text-overflow:ellipsis; white-space:nowrap; }
+.home-pulse-link { width:100%; min-height:30px; margin-top:8px; border:1px solid rgba(217,255,74,.28); color:var(--lime); background:rgba(217,255,74,.06); font-size:9px; font-weight:900; text-align:left; }
+.home-pulse-link b { float:right; padding-right:8px; font-size:14px; }
+@media (max-width:600px) {
+  .home-pulse-card { min-height:0; }
+  .home-pulse-summary b { font-size:10px; }
+  .home-pulse-details .supporter-commerce { grid-template-columns:1fr 1fr; }
+}

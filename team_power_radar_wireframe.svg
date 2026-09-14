@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <style>
+    .bg{fill:#06150d}.panel{fill:#0b2a19;stroke:#315b3b;stroke-width:2}.panel2{fill:#103b23;stroke:#4c753f;stroke-width:2}.lime{fill:#d9ff4a}.muted{fill:#9fb9a5}.white{fill:#eaf5e7}.gold{fill:#f5c955}.blue{fill:#8de5ff}.label{font:700 16px 'Noto Sans JP',sans-serif}.small{font:500 12px 'Noto Sans JP',sans-serif}.tiny{font:700 10px 'Noto Sans JP',sans-serif;letter-spacing:2px}.outline{fill:none;stroke:#42674b;stroke-width:1}.radargrid{fill:none;stroke:#41684a;stroke-width:1}.radar{fill:#d9ff4a;fill-opacity:.22;stroke:#d9ff4a;stroke-width:3}.bar{fill:#d9ff4a}.bar2{fill:#8de5ff}.bar3{fill:#f5c955}.phone{fill:#02100a;stroke:#789c5f;stroke-width:4}.desktop{fill:#03170d;stroke:#789c5f;stroke-width:3}
+  </style>
+  <rect class="bg" width="1440" height="900"/>
+  <text x="48" y="48" class="lime" font-size="24" font-family="Noto Sans JP" font-weight="900">タッチライン戦術室｜チーム力レーダー UIワイヤーフレーム</text>
+  <text x="48" y="75" class="muted" font-size="13" font-family="Noto Sans JP">6項目：攻撃・守備・中盤・連携・戦術適応・安定性｜既存の深いグリーン／ライム／アイスブルーを継承</text>
+
+  <!-- mobile frame -->
+  <rect x="70" y="115" width="370" height="730" rx="24" class="phone"/>
+  <rect x="87" y="138" width="336" height="52" class="panel"/>
+  <text x="103" y="160" class="tiny lime">TOUCHLINE</text><text x="103" y="180" class="label white">オービット東京</text>
+  <text x="331" y="160" class="small gold">6位</text><text x="322" y="179" class="small muted">¥3.2M</text>
+  <rect x="87" y="207" width="336" height="45" class="panel2"/><text x="103" y="234" class="label white">スタメンを組む</text><text x="325" y="234" class="small lime">4-3-3</text>
+  <rect x="87" y="269" width="336" height="300" class="panel"/>
+  <text x="104" y="294" class="tiny lime">TEAM PROFILE</text><text x="104" y="315" class="small muted">現在システム 4-3-3</text>
+  <polygon points="255,348 305,385 286,445 224,445 205,385" class="radargrid"/>
+  <polygon points="255,368 286,391 276,427 235,431 220,389" class="radar"/>
+  <line x1="255" y1="348" x2="255" y2="455" class="outline"/><line x1="205" y1="385" x2="305" y2="385" class="outline"/><line x1="224" y1="445" x2="286" y2="325" class="outline"/><line x1="286" y1="445" x2="224" y2="325" class="outline"/>
+  <text x="242" y="325" class="tiny lime">適応83</text><text x="310" y="383" class="tiny white">守備68</text><text x="281" y="465" class="tiny white">安定66</text><text x="185" y="465" class="tiny white">連携79</text><text x="174" y="383" class="tiny white">攻撃72</text><text x="241" y="478" class="tiny white">中盤75</text>
+  <text x="104" y="524" class="small gold">TEAM PROFILE 76</text><text x="306" y="524" class="small muted">タップで詳細</text>
+  <rect x="104" y="535" width="93" height="5" class="bar"/><rect x="205" y="535" width="93" height="5" class="bar2"/><rect x="306" y="535" width="93" height="5" class="bar3"/>
+  <rect x="87" y="585" width="336" height="115" class="panel"/><text x="104" y="610" class="tiny blue">CURRENT READ</text><text x="104" y="635" class="label white">強み：戦術適応 83</text><text x="104" y="658" class="small muted">4-3-3の習熟と選手理解が高い</text><text x="104" y="682" class="label gold">課題：安定性 66</text>
+  <rect x="87" y="716" width="336" height="73" class="panel2"/><text x="104" y="741" class="tiny lime">MATCH READINESS</text><text x="104" y="766" class="label white">TEAM RATING 68</text><text x="297" y="766" class="small muted">発揮率83%</text>
+  <text x="105" y="820" class="tiny muted">モバイル：グラフ→診断→既存戦力カードの順</text>
+
+  <!-- desktop frame -->
+  <rect x="500" y="115" width="870" height="730" rx="8" class="desktop"/>
+  <rect x="500" y="115" width="150" height="730" class="panel"/><text x="522" y="153" class="tiny lime">CLUBHOUSE</text>
+  <text x="522" y="197" class="label lime">⌂ ホーム</text><text x="522" y="239" class="label white">◫ スタメン</text><text x="522" y="281" class="label muted">◎ チーム</text><text x="522" y="323" class="label muted">◈ 成績</text><text x="522" y="365" class="label muted">▤ リーグ</text><text x="522" y="407" class="label muted">↗ 練習</text>
+  <text x="674" y="159" class="tiny lime">DASHBOARD / STARTING XI</text><text x="674" y="195" class="label white" font-size="25">スタメンを組む</text><text x="1198" y="195" class="small lime">次節へ ▶</text>
+  <rect x="674" y="222" width="660" height="38" class="panel2"/><text x="692" y="246" class="small white">4-4-2</text><text x="783" y="246" class="small lime">4-3-3 選択中</text><text x="908" y="246" class="small white">4-5-1</text><text x="1008" y="246" class="small white">3-4-3</text><text x="1108" y="246" class="small white">3-6-1</text><text x="1212" y="246" class="small white">5-3-2</text>
+  <rect x="674" y="284" width="395" height="355" class="panel"/><text x="695" y="310" class="tiny lime">TEAM PROFILE</text><text x="695" y="333" class="small muted">現在システム 4-3-3　　TEAM PROFILE 76</text>
+  <polygon points="870,370 938,420 912,500 828,500 802,420" class="radargrid"/><polygon points="870,392 912,425 900,475 844,481 820,423" class="radar"/>
+  <line x1="870" y1="370" x2="870" y2="515" class="outline"/><line x1="802" y1="420" x2="938" y2="420" class="outline"/><line x1="828" y1="500" x2="912" y2="340" class="outline"/><line x1="912" y1="500" x2="828" y2="340" class="outline"/>
+  <text x="845" y="342" class="tiny lime">戦術適応83</text><text x="945" y="417" class="tiny white">守備68</text><text x="910" y="528" class="tiny white">安定性66</text><text x="774" y="528" class="tiny white">連携79</text><text x="764" y="417" class="tiny white">攻撃72</text><text x="850" y="540" class="tiny white">中盤75</text>
+  <rect x="695" y="568" width="100" height="24" class="panel2"/><text x="705" y="585" class="small white">攻撃 72</text><rect x="805" y="568" width="100" height="24" class="panel2"/><text x="815" y="585" class="small white">守備 68</text><rect x="915" y="568" width="100" height="24" class="panel2"/><text x="925" y="585" class="small white">中盤 75</text><rect x="695" y="600" width="100" height="24" class="panel2"/><text x="705" y="617" class="small white">連携 79</text><rect x="805" y="600" width="100" height="24" class="panel2"/><text x="815" y="617" class="small lime">適応 83</text><rect x="915" y="600" width="100" height="24" class="panel2"/><text x="925" y="617" class="small gold">安定 66</text>
+  <rect x="1088" y="284" width="246" height="171" class="panel"/><text x="1108" y="311" class="tiny blue">MATCH READINESS</text><text x="1108" y="350" class="label white" font-size="27">68</text><text x="1160" y="349" class="small muted">TEAM RATING</text><text x="1108" y="386" class="small white">攻撃 68　守備 67</text><text x="1108" y="410" class="small lime">システム発揮率 83%</text><text x="1108" y="434" class="small gold">最終補正 攻+26 / 守+19</text>
+  <rect x="1088" y="475" width="246" height="164" class="panel2"/><text x="1108" y="502" class="tiny lime">CURRENT READ</text><text x="1108" y="535" class="label white">強み</text><text x="1160" y="535" class="small lime">戦術適応 83</text><text x="1108" y="565" class="label white">課題</text><text x="1160" y="565" class="small gold">安定性 66</text><text x="1108" y="601" class="small muted">次の行動：練習で疲労を整える</text><rect x="1108" y="615" width="120" height="17" class="lime"/><text x="1120" y="627" class="tiny" fill="#10220f">練習画面を見る</text>
+  <rect x="674" y="664" width="660" height="116" class="panel"/><text x="695" y="692" class="tiny gold">TACTICAL BOARD / ROLE SYNERGY / BENCH</text><text x="695" y="728" class="small muted">レーダーの下には既存の役割連携・スキル連動・スタメン候補を継続表示</text><text x="695" y="758" class="small white">フォーメーション変更 → レーダー面と診断文を180〜240msで更新</text>
+  <text x="510" y="875" class="tiny muted">DESKTOP：レーダー＋MATCH READINESSを横並び。MOBILE：レーダーを最上段にして診断を縦積み。</text>
+</svg>
