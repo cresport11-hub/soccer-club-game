@@ -451,8 +451,8 @@
 
 ## GitHub同期：固定チーム力レーダー
 
-- [ ] 固定チーム力レーダーの最新ソースとWebDev公開状態をGitHub同期先と照合する
-- [ ] 半透明・右上固定レーダーのソースとGitHub Pages生成物をmainへpushする
-- [ ] GitHub Actions成功後、公開URLで固定レーダーを確認する
+- [x] 固定チーム力レーダーの最新ソースとWebDev公開状態をGitHub同期先と照合する
+- [x] 半透明・右上固定レーダーのソースとGitHub Pages生成物をmainへpushする
+- [x] GitHub Actions成功後、公開URLで固定レーダーを確認する
 
 *2026-09-15*
