@@ -50,7 +50,6 @@ export class GameUI {
   private rosterSort: RosterSort = "position";
   private rosterSalaryFilter: SalaryFilter = "all";
   private rosterContractFilter: ContractFilter = "all";
-  private lineupPositionFilter: Player["position"] | "all" = "all";
 
   constructor(private readonly simulation: ClubSimulation) {
     this.root.className = "game-ui";
@@ -96,14 +95,13 @@ export class GameUI {
   }
 
   private handleClick = (event: MouseEvent) => {
-    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action], [data-nav], [data-mobile-nav], [data-player], [data-player-detail], [data-close-player-detail], [data-opponent-player], [data-mark-source], [data-mark-clear], [data-slot], [data-formation], [data-mentality], [data-style], [data-half-mentality], [data-half-style], [data-half-out], [data-half-in], [data-half-remove], [data-roster-sort], [data-roster-salary-filter], [data-roster-contract-filter], [data-lineup-position-filter]");
+    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action], [data-nav], [data-mobile-nav], [data-player], [data-player-detail], [data-close-player-detail], [data-opponent-player], [data-mark-source], [data-mark-clear], [data-slot], [data-formation], [data-mentality], [data-style], [data-half-mentality], [data-half-style], [data-half-out], [data-half-in], [data-half-remove], [data-roster-sort], [data-roster-salary-filter], [data-roster-contract-filter]");
     if (!target) return;
     if (target.dataset.mobileNav !== undefined) { this.mobileNavOpen = !this.mobileNavOpen; this.render(); return; }
     if (target.dataset.nav) { this.page = target.dataset.nav as PageId; this.mobileNavOpen = false; this.playerDetailId = null; this.opponentScoutOpen = false; this.opponentPlayerDetailId = null; this.manualMarkSourceId = null; this.toast = ""; this.render(); return; }
     if (target.dataset.rosterSort) { this.rosterSort = target.dataset.rosterSort as RosterSort; this.toast = "選手一覧の並び順を更新しました。"; this.render(); return; }
     if (target.dataset.rosterSalaryFilter) { this.rosterSalaryFilter = target.dataset.rosterSalaryFilter as SalaryFilter; this.toast = "年俸条件を更新しました。"; this.render(); return; }
     if (target.dataset.rosterContractFilter) { this.rosterContractFilter = target.dataset.rosterContractFilter as ContractFilter; this.toast = "契約年数の条件を更新しました。"; this.render(); return; }
-    if (target.dataset.lineupPositionFilter) { this.lineupPositionFilter = target.dataset.lineupPositionFilter as Player["position"] | "all"; this.toast = this.lineupPositionFilter === "all" ? "スタメン候補の絞り込みを解除しました。" : `${this.lineupPositionFilter}の主適性・副適性候補を表示します。`; this.render(); return; }
     if (target.dataset.playerDetail) { this.playerDetailId = target.dataset.playerDetail; this.render(); return; }
     if (target.dataset.closePlayerDetail !== undefined) { this.playerDetailId = null; this.render(); return; }
     if (target.dataset.markSource) {
@@ -817,8 +815,7 @@ export class GameUI {
   private lineupPage(score: ReturnType<ClubSimulation["score"]>, selected: Player | null) {
     const slots = this.simulation.formation.slots;
     const roster = this.simulation.rosterPlayers;
-    const positionFilters: Array<{ id: Player["position"] | "all"; label: string }> = [{ id: "all", label: "全ポジション" }, { id: "GK", label: "GK" }, { id: "CB", label: "CB" }, { id: "SB", label: "SB" }, { id: "DM", label: "DH" }, { id: "CM", label: "CH" }, { id: "SH", label: "SH" }, { id: "AM", label: "OH" }, { id: "WG", label: "WG" }, { id: "CF", label: "CF" }];
-    const visibleRoster = this.lineupPositionFilter === "all" ? roster : roster.filter((player) => player.position === this.lineupPositionFilter || player.secondary === this.lineupPositionFilter);
+    const visibleRoster = roster;
     const tactics = score.tactics;
     const selectedSlot = selected ? slots.find((slot) => this.simulation.playerForSlot(slot.id)?.id === selected.id) : null;
     const starterIds = new Set(Object.values(this.simulation.lineupState).filter((playerId): playerId is string => Boolean(playerId)));
@@ -855,11 +852,11 @@ export class GameUI {
         </article>
         <aside class="lineup-aside">${this.teamPowerRadarCard()}</aside>
       </section>
-      <section class="bench-section"><div class="section-label"><span>BENCH & SQUAD</span><b>${selectedSlot ? `候補 / 主 ${primaryReplacementCount}・副 ${secondaryReplacementCount}` : `${visibleRoster.length} / ${roster.length} PLAYERS`}</b></div><div class="candidate-filter"><span>POSITION FILTER</span><div>${positionFilters.map((filter) => `<button type="button" data-lineup-position-filter="${filter.id}" class="${this.lineupPositionFilter === filter.id ? "is-selected" : ""}">${filter.label}</button>`).join("")}</div><p>主適性・副適性のどちらかに一致する選手を表示します。</p></div><div class="player-grid">${visibleRoster.length ? visibleRoster.map((player) => this.playerCard(player, selected?.id === player.id, replacementHints.get(player.id), this.lineupPositionFilter)).join("") : `<div class="roster-filter-empty">このポジションに該当する選手はいません。</div>`}</div></section>
+      <section class="bench-section"><div class="section-label"><span>BENCH & SQUAD</span><b>${selectedSlot ? `候補 / 主 ${primaryReplacementCount}・副 ${secondaryReplacementCount}` : `${visibleRoster.length} / ${roster.length} PLAYERS`}</b></div><div class="player-grid">${visibleRoster.length ? visibleRoster.map((player) => this.playerCard(player, selected?.id === player.id, replacementHints.get(player.id))).join("") : `<div class="roster-filter-empty">このポジションに該当する選手はいません。</div>`}</div></section>
     `;
   }
 
-  private playerCard(player: Player, isSelected: boolean, replacementHint?: "primary" | "secondary", positionFilter: Player["position"] | "all" = "all") {
+  private playerCard(player: Player, isSelected: boolean, replacementHint?: "primary" | "secondary") {
     const isStarter = Object.values(this.simulation.lineupState).includes(player.id);
     const ability = player.position === "GK" ? `GK ${player.gk}　OF ${player.attack}` : `OF ${player.attack}　DF ${player.defense}`;
     const injuryWeeks = this.simulation.injuryWeeksFor(player.id);
@@ -868,8 +865,7 @@ export class GameUI {
     const system = this.simulation.systemEffectivenessFor(player);
     const fatiguePill = injuryWeeks ? `<span class="condition-pill injured">負傷 / ${injuryWeeks}週</span>` : `<span class="condition-pill ${player.fatigue >= 80 ? "danger" : player.fatigue >= 60 ? "warning" : "ready"}">疲労 ${player.fatigue}</span>`;
     const playerConditionPill = `<span class="condition-pill player-condition ${conditionStatus.tone}">状態 ${conditionStatus.label} ${conditionStatus.value}</span>`;
-    const filterFit = positionFilter !== "all" ? player.position === positionFilter ? `<span class="position-fit primary">主適性 / ${positionLabel(positionFilter)}</span>` : player.secondary === positionFilter ? `<span class="position-fit secondary">副適性 / ${positionLabel(positionFilter)}</span>` : "" : "";
-    return `<button data-player="${player.id}" class="squad-card ${isSelected ? "is-selected" : ""} ${replacementHint ? `is-replacement-${replacementHint}` : ""} ${isStarter ? "is-starter" : ""} ${injuryWeeks ? "is-injured" : ""}" ${injuryWeeks ? "disabled" : ""}><div><span class="pos-tag">${positionLabel(player.position)}</span><span class="chemistry-dot ${player.chemistry}"></span></div><h4>${player.name}</h4><p>${player.secondary ? `${positionLabel(player.position)} / ${positionLabel(player.secondary)}` : positionLabel(player.position)}　Lv.${player.level}/${player.ceiling}</p><div class="card-stat"><b>${ability}</b><span>疲 ${player.fatigue}</span></div><span class="system-fit-pill ${system.rate >= 95 ? "is-high" : system.rate < 80 ? "is-low" : ""}">システム ${system.rate}%</span>${skill ? `<span class="player-skill-chip ${skill.active ? "is-active" : ""}">${skill.short}</span>` : ""}${fatiguePill}${playerConditionPill}${replacementHint ? `<span class="replacement-fit ${replacementHint}">${replacementHint === "primary" ? "主適性 / 優先" : "副適性 / 候補"}</span>` : ""}${filterFit}${isStarter ? "<em>STARTING XI</em>" : ""}</button>`;
+    return `<button data-player="${player.id}" class="squad-card ${isSelected ? "is-selected" : ""} ${replacementHint ? `is-replacement-${replacementHint}` : ""} ${isStarter ? "is-starter" : ""} ${injuryWeeks ? "is-injured" : ""}" ${injuryWeeks ? "disabled" : ""}><div><span class="pos-tag">${positionLabel(player.position)}</span><span class="chemistry-dot ${player.chemistry}"></span></div><h4>${player.name}</h4><p>${player.secondary ? `${positionLabel(player.position)} / ${positionLabel(player.secondary)}` : positionLabel(player.position)}　Lv.${player.level}/${player.ceiling}</p><div class="card-stat"><b>${ability}</b><span>疲 ${player.fatigue}</span></div><span class="system-fit-pill ${system.rate >= 95 ? "is-high" : system.rate < 80 ? "is-low" : ""}">システム ${system.rate}%</span>${skill ? `<span class="player-skill-chip ${skill.active ? "is-active" : ""}">${skill.short}</span>` : ""}${fatiguePill}${playerConditionPill}${replacementHint ? `<span class="replacement-fit ${replacementHint}">${replacementHint === "primary" ? "主適性 / 優先" : "副適性 / 候補"}</span>` : ""}${isStarter ? "<em>STARTING XI</em>" : ""}</button>`;
   }
 
   private organizedRosterPlayers() {

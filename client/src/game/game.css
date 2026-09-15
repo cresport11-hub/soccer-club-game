@@ -484,3 +484,20 @@ button { font: inherit; }
   .team-power-card.is-floating .team-power-radar { width: min(100%, 150px); }
   .team-power-card.is-floating .team-power-radar text { font-size: 8px; }
 }
+
+
+/* Lineup substitutions: every squad card shares one target size, with the skill kept in the upper-right corner. */
+.bench-section .player-grid { grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); grid-auto-rows: 154px; }
+.bench-section .squad-card,
+.bench-section .squad-card.is-starter { min-height: 154px; height: 154px; padding: 12px; }
+.bench-section .squad-card > div:first-child { padding-right: 44px; }
+.bench-section .squad-card > div:first-child .chemistry-dot { position: absolute; top: 35px; right: 10px; }
+.bench-section .squad-card h4 { margin-top: 18px; padding-right: 48px; }
+.bench-section .squad-card > .player-skill-chip { position: absolute; top: 9px; right: 10px; max-width: calc(100% - 72px); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 600px) {
+  .bench-section .player-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 154px; }
+  .bench-section .squad-card,
+  .bench-section .squad-card.is-starter { min-height: 154px; height: 154px; padding: 11px 10px; }
+  .bench-section .squad-card h4 { margin-top: 18px; padding-right: 40px; font-size: 12px; }
+  .bench-section .squad-card > .player-skill-chip { right: 8px; max-width: calc(100% - 62px); font-size: 6px; }
+}
