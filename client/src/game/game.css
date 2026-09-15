@@ -440,3 +440,60 @@ button { font: inherit; }
   .home-pulse-summary b { font-size:10px; }
   .home-pulse-details .supporter-commerce { grid-template-columns:1fr 1fr; }
 }
+
+
+/* Floating team power radar: keep the graph visible while the manager changes formation and starters. */
+.lineup-layout { grid-template-columns: minmax(0, 1fr); }
+.lineup-aside { display: contents; }
+.team-power-card.is-floating {
+  position: fixed;
+  top: 98px;
+  right: 18px;
+  z-index: 8;
+  width: min(232px, calc(100vw - 36px));
+  max-height: calc(100svh - 116px);
+  overflow: auto;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid rgba(217,255,74,.48);
+  border-top: 2px solid var(--lime);
+  background: linear-gradient(135deg, rgba(7,35,20,.82), rgba(2,16,10,.72));
+  box-shadow: 0 12px 28px rgba(0,0,0,.32), inset 0 0 0 1px rgba(106,215,255,.08);
+  backdrop-filter: blur(12px);
+  opacity: .9;
+  pointer-events: none;
+}
+.team-power-card.is-floating:hover,
+.team-power-card.is-floating:focus-within { opacity: .98; }
+.team-power-card.is-floating .team-power-head { padding-bottom: 5px; }
+.team-power-card.is-floating .team-power-head h3 { font-size: 13px; }
+.team-power-card.is-floating .team-power-head > strong { font-size: 22px; }
+.team-power-card.is-floating .team-power-chart-wrap { min-height: 164px; padding: 0; }
+.team-power-card.is-floating .team-power-radar { width: min(100%, 194px); }
+.team-power-card.is-floating .team-power-legend { gap: 3px; }
+.team-power-card.is-floating .team-power-legend > div { min-height: 23px; padding: 0 6px; background: rgba(2,17,9,.3); }
+.team-power-card.is-floating .team-power-legend span { font-size: 7px; }
+.team-power-card.is-floating .team-power-legend b { font-size: 10px; }
+@media (max-width: 900px) {
+  .team-power-card.is-floating { top: 154px; right: 12px; width: min(210px, calc(100vw - 24px)); }
+}
+@media (max-width: 600px) {
+  .lineup-aside { display: contents; }
+  .team-power-card.is-floating {
+    top: 138px;
+    right: 8px;
+    width: min(172px, calc(100vw - 16px));
+    max-height: calc(100svh - 150px);
+    padding: 8px;
+    opacity: .86;
+  }
+  .team-power-card.is-floating .team-power-head h3 { font-size: 12px; }
+  .team-power-card.is-floating .team-power-head h3 small { font-size: 7px; }
+  .team-power-card.is-floating .team-power-head > strong { font-size: 19px; }
+  .team-power-card.is-floating .team-power-chart-wrap { min-height: 132px; }
+  .team-power-card.is-floating .team-power-radar { width: min(100%, 150px); }
+  .team-power-card.is-floating .team-power-radar text { font-size: 8px; }
+  .team-power-card.is-floating .team-power-legend > div { min-height: 21px; padding: 0 5px; }
+  .team-power-card.is-floating .team-power-legend span { font-size: 6.5px; }
+  .team-power-card.is-floating .team-power-legend b { font-size: 9px; }
+}
