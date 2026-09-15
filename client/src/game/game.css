@@ -356,12 +356,6 @@ button { font: inherit; }
 .team-power-radar text { fill:#c9dec9; font:800 9px "Noto Sans JP",sans-serif; }
 .team-power-radar text.is-strong { fill:var(--lime); }
 .team-power-radar text.is-weak { fill:var(--gold); }
-.team-power-legend { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; }
-.team-power-legend > div { display:flex; align-items:center; justify-content:space-between; gap:7px; min-height:27px; padding:0 8px; border:1px solid rgba(198,245,202,.14); background:rgba(2,17,9,.44); }
-.team-power-legend span { color:#aac6ad; font-size:8px; }
-.team-power-legend b { color:#eaf5e7; font-size:11px; }
-.team-power-legend b.is-strong { color:var(--lime); }
-.team-power-legend b.is-weak { color:var(--gold); }
 .team-power-diagnosis { display:flex; flex-wrap:wrap; align-items:center; gap:5px 9px; margin:0; padding-top:8px; border-top:1px solid rgba(198,245,202,.12); color:#b8d3bb; font-size:8px; line-height:1.5; }
 .team-power-diagnosis b { color:var(--lime); font-size:7px; letter-spacing:.12em; }
 .team-power-diagnosis > strong { color:var(--lime); font-size:10px; }
@@ -470,10 +464,6 @@ button { font: inherit; }
 .team-power-card.is-floating .team-power-head > strong { font-size: 22px; }
 .team-power-card.is-floating .team-power-chart-wrap { min-height: 164px; padding: 0; }
 .team-power-card.is-floating .team-power-radar { width: min(100%, 194px); }
-.team-power-card.is-floating .team-power-legend { gap: 3px; }
-.team-power-card.is-floating .team-power-legend > div { min-height: 23px; padding: 0 6px; background: rgba(2,17,9,.3); }
-.team-power-card.is-floating .team-power-legend span { font-size: 7px; }
-.team-power-card.is-floating .team-power-legend b { font-size: 10px; }
 @media (max-width: 900px) {
   .team-power-card.is-floating { top: 154px; right: 12px; width: min(210px, calc(100vw - 24px)); }
 }
@@ -493,7 +483,4 @@ button { font: inherit; }
   .team-power-card.is-floating .team-power-chart-wrap { min-height: 132px; }
   .team-power-card.is-floating .team-power-radar { width: min(100%, 150px); }
   .team-power-card.is-floating .team-power-radar text { font-size: 8px; }
-  .team-power-card.is-floating .team-power-legend > div { min-height: 21px; padding: 0 5px; }
-  .team-power-card.is-floating .team-power-legend span { font-size: 6.5px; }
-  .team-power-card.is-floating .team-power-legend b { font-size: 9px; }
 }
