@@ -542,3 +542,7 @@ button { font: inherit; }
   .team-power-card.is-floating.is-collapsed { min-width: 104px; }
   .team-power-toggle-collapsed { height: 30px; padding: 0 9px; }
 }
+
+
+/* The floating card is click-through by design; only its visibility control must receive taps. */
+.team-power-card.is-floating .team-power-toggle { pointer-events: auto; touch-action: manipulation; }
