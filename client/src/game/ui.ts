@@ -50,6 +50,7 @@ export class GameUI {
   private rosterSort: RosterSort = "position";
   private rosterSalaryFilter: SalaryFilter = "all";
   private rosterContractFilter: ContractFilter = "all";
+  private teamPowerRadarVisible = window.localStorage.getItem("touchline-team-power-visible") !== "0";
 
   constructor(private readonly simulation: ClubSimulation) {
     this.root.className = "game-ui";
@@ -95,9 +96,15 @@ export class GameUI {
   }
 
   private handleClick = (event: MouseEvent) => {
-    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action], [data-nav], [data-mobile-nav], [data-player], [data-player-detail], [data-close-player-detail], [data-opponent-player], [data-mark-source], [data-mark-clear], [data-slot], [data-formation], [data-mentality], [data-style], [data-half-mentality], [data-half-style], [data-half-out], [data-half-in], [data-half-remove], [data-roster-sort], [data-roster-salary-filter], [data-roster-contract-filter]");
+    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action], [data-nav], [data-mobile-nav], [data-team-power-toggle], [data-player], [data-player-detail], [data-close-player-detail], [data-opponent-player], [data-mark-source], [data-mark-clear], [data-slot], [data-formation], [data-mentality], [data-style], [data-half-mentality], [data-half-style], [data-half-out], [data-half-in], [data-half-remove], [data-roster-sort], [data-roster-salary-filter], [data-roster-contract-filter]");
     if (!target) return;
     if (target.dataset.mobileNav !== undefined) { this.mobileNavOpen = !this.mobileNavOpen; this.render(); return; }
+    if (target.dataset.teamPowerToggle !== undefined) {
+      this.teamPowerRadarVisible = !this.teamPowerRadarVisible;
+      window.localStorage.setItem("touchline-team-power-visible", this.teamPowerRadarVisible ? "1" : "0");
+      this.render();
+      return;
+    }
     if (target.dataset.nav) { this.page = target.dataset.nav as PageId; this.mobileNavOpen = false; this.playerDetailId = null; this.opponentScoutOpen = false; this.opponentPlayerDetailId = null; this.manualMarkSourceId = null; this.toast = ""; this.render(); return; }
     if (target.dataset.rosterSort) { this.rosterSort = target.dataset.rosterSort as RosterSort; this.toast = "選手一覧の並び順を更新しました。"; this.render(); return; }
     if (target.dataset.rosterSalaryFilter) { this.rosterSalaryFilter = target.dataset.rosterSalaryFilter as SalaryFilter; this.toast = "年俸条件を更新しました。"; this.render(); return; }
@@ -809,7 +816,8 @@ export class GameUI {
       return { ...item, value: radar[item.key], x, y };
     });
     const aria = values.map((item) => `${item.label}${item.value}`).join("、");
-    return `<article class="tactical-card team-power-card is-floating" aria-label="チーム力レーダー"><div class="team-power-head"><div><span class="card-kicker">TEAM POWER</span><h3>チーム力 <small>6項目</small></h3></div><strong>${radar.overall}<small>AVG</small></strong></div><div class="team-power-chart-wrap"><svg class="team-power-radar" viewBox="0 0 260 220" role="img" aria-label="チーム力 ${aria}"><g class="team-power-grid">${[20, 40, 60, 80, 100].map((level) => `<polygon points="${polygon(level)}"></polygon>`).join("")}</g>${items.map((_, index) => `<line x1="130" y1="102" x2="${point(index, 100).split(",")[0]}" y2="${point(index, 100).split(",")[1]}"></line>`).join("")}<polygon class="team-power-area" points="${values.map((item, index) => point(index, item.value)).join(" ")}"></polygon>${values.map((item) => `<text x="${item.x.toFixed(1)}" y="${item.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" class="${item.value >= 80 ? "is-strong" : item.value < 60 ? "is-weak" : ""}">${item.short} ${item.value}</text>`).join("")}</svg></div></article>`;
+    if (!this.teamPowerRadarVisible) return `<article class="tactical-card team-power-card is-floating is-collapsed" aria-label="チーム力レーダー（非表示中）"><button type="button" class="team-power-toggle team-power-toggle-collapsed" data-team-power-toggle aria-pressed="false" aria-label="チーム力グラフを表示"><span>TEAM POWER</span><b>表示</b></button></article>`;
+    return `<article class="tactical-card team-power-card is-floating" aria-label="チーム力レーダー"><div class="team-power-head"><div><span class="card-kicker">TEAM POWER</span><h3>チーム力 <small>6項目</small></h3></div><strong>${radar.overall}<small>AVG</small></strong><button type="button" class="team-power-toggle" data-team-power-toggle aria-pressed="true" aria-label="チーム力グラフを非表示">−</button></div><div class="team-power-chart-wrap"><svg class="team-power-radar" viewBox="0 0 260 220" role="img" aria-label="チーム力 ${aria}"><g class="team-power-grid">${[20, 40, 60, 80, 100].map((level) => `<polygon points="${polygon(level)}"></polygon>`).join("")}</g>${items.map((_, index) => `<line x1="130" y1="102" x2="${point(index, 100).split(",")[0]}" y2="${point(index, 100).split(",")[1]}"></line>`).join("")}<polygon class="team-power-area" points="${values.map((item, index) => point(index, item.value)).join(" ")}"></polygon>${values.map((item) => `<text x="${item.x.toFixed(1)}" y="${item.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" class="${item.value >= 80 ? "is-strong" : item.value < 60 ? "is-weak" : ""}">${item.short} ${item.value}</text>`).join("")}</svg></div></article>`;
   }
 
   private lineupPage(score: ReturnType<ClubSimulation["score"]>, selected: Player | null) {
