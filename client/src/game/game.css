@@ -546,3 +546,19 @@ button { font: inherit; }
 
 /* The floating card is click-through by design; only its visibility control must receive taps. */
 .team-power-card.is-floating .team-power-toggle { pointer-events: auto; touch-action: manipulation; }
+
+
+/* TEAM POWER graph enlargement: use the full inner card width while keeping all labels inside the viewBox. */
+.team-power-card.is-floating .team-power-chart-wrap {
+  min-height: 184px;
+  width: 100%;
+}
+.team-power-card.is-floating .team-power-radar {
+  width: 100%;
+  max-width: none;
+  height: auto;
+}
+@media (max-width: 600px) {
+  .team-power-card.is-floating .team-power-chart-wrap { min-height: 150px; }
+  .team-power-card.is-floating .team-power-radar { width: 100%; }
+}

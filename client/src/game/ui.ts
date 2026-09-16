@@ -793,15 +793,15 @@ export class GameUI {
   private teamPowerRadarCard() {
     const radar = this.simulation.teamPowerRadar();
     const items: Array<{ key: keyof Pick<typeof radar, "attack" | "defense" | "midfield" | "chemistry" | "tacticalAdaptation" | "stability">; label: string; short: string }> = [
-      { key: "attack", label: "攻撃", short: "攻" },
-      { key: "defense", label: "守備", short: "守" },
-      { key: "midfield", label: "中盤", short: "中" },
-      { key: "chemistry", label: "連携", short: "連" },
-      { key: "tacticalAdaptation", label: "戦術適応", short: "適" },
-      { key: "stability", label: "安定性", short: "安" },
+      { key: "attack", label: "攻撃力", short: "攻撃力" },
+      { key: "defense", label: "守備力", short: "守備力" },
+      { key: "midfield", label: "中盤", short: "中盤" },
+      { key: "chemistry", label: "連携", short: "連携" },
+      { key: "tacticalAdaptation", label: "システム", short: "システム" },
+      { key: "stability", label: "安定性", short: "安定性" },
     ];
-    const center = { x: 130, y: 102 };
-    const radius = 62;
+    const center = { x: 130, y: 110 };
+    const radius = 78;
     const point = (index: number, value: number, scale = radius) => {
       const angle = -Math.PI / 2 + index * Math.PI / 3;
       const distance = scale * value / 100;
@@ -810,7 +810,7 @@ export class GameUI {
     const polygon = (value: number) => items.map((_, index) => point(index, value)).join(" ");
     const values = items.map((item, index) => {
       const angle = -Math.PI / 2 + index * Math.PI / 3;
-      const labelRadius = 82;
+      const labelRadius = 101;
       const x = center.x + Math.cos(angle) * labelRadius;
       const y = center.y + Math.sin(angle) * labelRadius;
       return { ...item, value: radar[item.key], x, y };
