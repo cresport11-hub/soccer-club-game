@@ -501,3 +501,29 @@ button { font: inherit; }
   .bench-section .squad-card h4 { margin-top: 18px; padding-right: 40px; font-size: 12px; }
   .bench-section .squad-card > .player-skill-chip { right: 8px; max-width: calc(100% - 62px); font-size: 6px; }
 }
+
+
+/* Match the bench cards to the field player tokens exactly for faster visual substitution scanning. */
+.bench-section .player-grid { grid-template-columns: repeat(auto-fill, 78px); grid-auto-rows: 70px; gap: 8px; align-items: start; }
+.bench-section .squad-card,
+.bench-section .squad-card.is-starter { box-sizing: border-box; width: 78px; min-width: 78px; max-width: 78px; height: 70px; min-height: 70px; padding: 5px; border-radius: 0; display: grid; grid-template-rows: 12px 1fr auto; gap: 1px; overflow: hidden; }
+.bench-section .squad-card > div:first-child { min-height: 12px; height: 12px; padding-right: 0; }
+.bench-section .squad-card > div:first-child .chemistry-dot { top: 4px; right: 4px; width: 5px; height: 5px; }
+.bench-section .squad-card .pos-tag { font-size: 8px; line-height: 1; }
+.bench-section .squad-card h4 { min-width: 0; max-width: 100%; margin: 0; padding: 0; align-self: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 8px; line-height: 1.1; }
+.bench-section .squad-card p { display: none; }
+.bench-section .squad-card .card-stat { min-width: 0; display: flex; align-items: center; gap: 2px; overflow: hidden; font-size: 7px; line-height: 1; white-space: nowrap; }
+.bench-section .squad-card .card-stat b { overflow: hidden; text-overflow: ellipsis; font-size: 7px; }
+.bench-section .squad-card .card-stat span { display: none; }
+.bench-section .squad-card .system-fit-pill,
+.bench-section .squad-card .condition-pill,
+.bench-section .squad-card .replacement-fit,
+.bench-section .squad-card > em { display: none; }
+.bench-section .squad-card > .player-skill-chip { position: absolute; top: 4px; right: 4px; max-width: 31px; margin: 0; padding: 1px 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 5px; line-height: 1.1; }
+@media (max-width: 600px) {
+  .bench-section .player-grid { grid-template-columns: repeat(auto-fill, 78px); grid-auto-rows: 70px; gap: 8px; }
+  .bench-section .squad-card,
+  .bench-section .squad-card.is-starter { width: 78px; min-width: 78px; max-width: 78px; height: 70px; min-height: 70px; padding: 5px; }
+  .bench-section .squad-card h4 { font-size: 8px; }
+  .bench-section .squad-card > .player-skill-chip { top: 4px; right: 4px; max-width: 31px; font-size: 5px; }
+}
