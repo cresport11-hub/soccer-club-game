@@ -562,3 +562,10 @@ button { font: inherit; }
   .team-power-card.is-floating .team-power-chart-wrap { min-height: 150px; }
   .team-power-card.is-floating .team-power-radar { width: 100%; }
 }
+.auto-criteria { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; padding:8px 10px; border:1px solid rgba(106,215,255,.22); background:rgba(5,24,15,.5); }
+.auto-criteria > span { color:#9fc2a4; font-size:9px; font-weight:800; letter-spacing:.12em; white-space:nowrap; }
+.auto-criteria > div { display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; }
+.criteria-chip { min-height:28px; padding:0 9px; color:#b6d0b8; border:1px solid rgba(217,255,74,.28); background:rgba(8,38,22,.7); font-size:10px; font-weight:800; cursor:pointer; }
+.criteria-chip.is-active { color:#071509; border-color:var(--lime); background:var(--lime); }
+.criteria-chip:active { transform:scale(.97); }
+@media (max-width:600px) { .auto-criteria { align-items:flex-start; flex-direction:column; }.auto-criteria > div { justify-content:flex-start; width:100%; }.criteria-chip { flex:1; min-width:0; } }

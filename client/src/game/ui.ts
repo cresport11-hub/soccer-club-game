@@ -2,7 +2,7 @@
  * Design system: 「タッチライン戦術室」— dense tactical cards and a compact mobile scoreboard keep club health visible at all times.
  */
 import { assets } from "./assets";
-import { ClubSimulation, amPlayStyleOptions, cbPlayStyleOptions, cfPlayStyleOptions, cmPlayStyleOptions, contractOfferOptions, dmPlayStyleOptions, gkPlayStyleOptions, mentalityOptions, playingStyleOptions, sbPlayStyleOptions, sponsorOffers, trainingLoadOptions, trainingOptions, wgPlayStyleOptions, type ConcessionReceipt, type ContractOfferId, type GateReceipt, type MatchHighlight, type MembershipReceipt, type MerchandiseReceipt, type Mentality, type PageId, type PlayingStyle, type TrainingFocus } from "./ClubSimulation";
+import { ClubSimulation, amPlayStyleOptions, cbPlayStyleOptions, cfPlayStyleOptions, cmPlayStyleOptions, contractOfferOptions, dmPlayStyleOptions, gkPlayStyleOptions, mentalityOptions, playingStyleOptions, sbPlayStyleOptions, sponsorOffers, trainingLoadOptions, trainingOptions, wgPlayStyleOptions, type AutoLineupCriteria, type ConcessionReceipt, type ContractOfferId, type GateReceipt, type MatchHighlight, type MembershipReceipt, type MerchandiseReceipt, type Mentality, type PageId, type PlayingStyle, type TrainingFocus } from "./ClubSimulation";
 import { canMarkOpponent, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, opponentSeeds, playerAssessmentFor, playerSkillCatalog, positionLabel, recruit, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type DMPlayStyle, type GKPlayStyle, type OpponentPlayer, type Player, type PlayerSkillId, type SBPlayStyle, type Slot, type WGPlayStyle } from "./data";
 
 const navItems: Array<{ id: PageId; icon: string; label: string }> = [
@@ -96,12 +96,18 @@ export class GameUI {
   }
 
   private handleClick = (event: MouseEvent) => {
-    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action], [data-nav], [data-mobile-nav], [data-team-power-toggle], [data-player], [data-player-detail], [data-close-player-detail], [data-opponent-player], [data-mark-source], [data-mark-clear], [data-slot], [data-formation], [data-mentality], [data-style], [data-half-mentality], [data-half-style], [data-half-out], [data-half-in], [data-half-remove], [data-roster-sort], [data-roster-salary-filter], [data-roster-contract-filter]");
+    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action], [data-nav], [data-mobile-nav], [data-team-power-toggle], [data-auto-criteria], [data-player], [data-player-detail], [data-close-player-detail], [data-opponent-player], [data-mark-source], [data-mark-clear], [data-slot], [data-formation], [data-mentality], [data-style], [data-half-mentality], [data-half-style], [data-half-out], [data-half-in], [data-half-remove], [data-roster-sort], [data-roster-salary-filter], [data-roster-contract-filter]");
     if (!target) return;
     if (target.dataset.mobileNav !== undefined) { this.mobileNavOpen = !this.mobileNavOpen; this.render(); return; }
     if (target.dataset.teamPowerToggle !== undefined) {
       this.teamPowerRadarVisible = !this.teamPowerRadarVisible;
       window.localStorage.setItem("touchline-team-power-visible", this.teamPowerRadarVisible ? "1" : "0");
+      this.render();
+      return;
+    }
+    if (target.dataset.autoCriteria) {
+      this.simulation.setAutoLineupCriteria(target.dataset.autoCriteria as AutoLineupCriteria);
+      this.toast = `オート編成の評価基準を「${target.textContent?.trim() ?? "選択"}」に設定しました。`;
       this.render();
       return;
     }
@@ -206,7 +212,7 @@ export class GameUI {
         this.startLiveCommentary("second-half");
         break;
       }
-      case "auto": this.simulation.autoLineup(); this.toast = "最適な11人を戦術ボードへ配置しました。"; this.render(); break;
+      case "auto": this.simulation.autoLineup(); this.toast = "選択した評価基準で最適な11人を戦術ボードへ配置しました。"; this.render(); break;
       case "train": { const result = this.simulation.train(target.dataset.training as TrainingFocus); this.toast = result.text; this.render(); break; }
       case "set-training-load": { const result = this.simulation.setTrainingLoad(target.dataset.trainingPlayer ?? "", target.dataset.trainingLoad as "recovery" | "light" | "standard" | "high"); this.toast = result.text; this.render(); break; }
       case "set-skill-training-target": { const result = this.simulation.setSkillTrainingTarget(target.dataset.skillPlayer ?? "", target.dataset.skillTarget as PlayerSkillId); this.toast = result.text; this.render(); break; }
@@ -851,7 +857,7 @@ export class GameUI {
       </section>
       ${this.opponentDossier()}
       <section class="lineup-layout">
-        <article class="tactical-card pitch-panel"><div class="panel-top"><div><span class="card-kicker">TACTICAL BOARD</span><h3>${this.simulation.formation.label} <small>${this.simulation.formation.description}</small></h3></div><button data-action="auto" class="mini-action">⚡ オート編成</button></div>
+        <article class="tactical-card pitch-panel"><div class="panel-top"><div><span class="card-kicker">TACTICAL BOARD</span><h3>${this.simulation.formation.label} <small>${this.simulation.formation.description}</small></h3></div><button data-action="auto" class="mini-action">⚡ オート編成</button></div><div class="auto-criteria"><span>評価基準</span><div>${([{"id":"attack","label":"攻撃重視"},{"id":"defense","label":"守備重視"},{"id":"fit","label":"適性重視"}] as Array<{id: AutoLineupCriteria; label: string}>).map((option) => `<button type="button" data-auto-criteria="${option.id}" class="criteria-chip ${this.simulation.autoLineupCriteriaValue === option.id ? "is-active" : ""}">${option.label}</button>`).join("")}</div></div>
           <p class="auto-lineup-note"><b>AUTO SELECT</b> ポジション適性・能力・疲労度・コンディション・現在システムでの発揮率を総合評価します。</p>
           <div class="tactics-pitch" style="background-image:linear-gradient(rgba(4,31,18,.23),rgba(4,31,18,.23)),url('${assets.tacticsBoard}')">
             ${slots.map((slot) => { const player = this.simulation.playerForSlot(slot.id); const fit = player ? this.simulation.playerIsFit(player, slot.id) : true; const injuryWeeks = player ? this.simulation.injuryWeeksFor(player.id) : 0; const conditionStatus = player ? this.simulation.conditionStatusFor(player) : null; const system = player ? this.simulation.systemEffectivenessFor(player) : null; const fatigueState = injuryWeeks ? "is-injured" : player && player.fatigue >= 80 ? "is-danger" : player && player.fatigue >= 60 ? "is-warning" : ""; const isSwapSource = player?.id === selected?.id; return `<button data-slot="${slot.id}" class="player-token ${player ? "is-filled" : ""} ${isSwapSource ? "is-swap-source" : ""} ${!fit ? "is-offrole" : ""} ${fatigueState} ${conditionStatus ? `condition-${conditionStatus.tone}` : ""}" style="left:${slot.x}%;top:${slot.y}%"><i>${positionLabel(slot.label)}</i>${player ? `<strong>${compactSurname(player.name)}</strong><small>${injuryWeeks ? `離脱 ${injuryWeeks}週` : player.position === "GK" ? `GK ${player.gk} / 発揮${system?.rate}% / 疲${player.fatigue}` : `${player.attack}/${player.defense} / 発揮${system?.rate}% / 疲${player.fatigue}`}</small>` : `<strong>空き</strong><small>配置</small>`}</button>`; }).join("")}

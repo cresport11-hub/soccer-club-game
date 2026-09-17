@@ -101,6 +101,7 @@ export type TacticalAssessment = {
 };
 export type TeamPowerRadarKey = "attack" | "defense" | "midfield" | "chemistry" | "tacticalAdaptation" | "stability";
 export type TeamPowerRadar = { attack: number; defense: number; midfield: number; chemistry: number; tacticalAdaptation: number; stability: number; overall: number; strengthKey: TeamPowerRadarKey; weaknessKey: TeamPowerRadarKey };
+export type AutoLineupCriteria = "attack" | "defense" | "fit";
 export type OpponentTacticalAssessment = { clubId: string; club: string; color: string; formationId: string; formationLabel: string; mentality: Mentality; mentalityLabel: string; playingStyle: PlayingStyle; playingStyleLabel: string; trait: string; note: string; cohesion: number; attack: number; defense: number; total: number; roles: string[]; lineup: OpponentPlayer[]; skillAttack: number; skillDefense: number; skillSummary: string; skillDetails: PlayerSkillActivation[] };
 export type TacticalMatchup = { label: string; playerAttackModifier: number; playerDefenseModifier: number; opponentAttackModifier: number; opponentDefenseModifier: number; note: string };
 export type ScoutTacticalFit = { score: number; grade: "戦術の核" | "高適合" | "起用可能" | "調整が必要"; formation: number; mentality: number; playingStyle: number; chemistry: number; formationLabel: string; mentalityLabel: string; playingStyleLabel: string; strengths: string[]; concern: string };
@@ -195,6 +196,7 @@ type Persisted = {
   cashTrail?: number[];
   mentality?: Mentality;
   playingStyle?: PlayingStyle;
+  autoLineupCriteria?: AutoLineupCriteria;
   injuries?: Record<string, number>;
   recruitNegotiation?: RecruitNegotiation;
   saleOffers?: SaleOffer[];
@@ -411,6 +413,7 @@ export class ClubSimulation {
   private assignedScoutId = "scout-forward";
   private mentality: Mentality = "balanced";
   private playingStyle: PlayingStyle = "possession";
+  private autoLineupCriteria: AutoLineupCriteria = "fit";
   private ledger: FinanceEntry[] = [{ week: 0, label: "開幕運転資金", category: "繰越資金", amount: 3200000, kind: "income", note: "クラブの初期運転資金" }];
   private cashTrail = [3200000];
   private injuries: Record<string, number> = {};
@@ -508,6 +511,7 @@ export class ClubSimulation {
   get selectedPlayer() { return this.roster.find((player) => player.id === this.selectedPlayerId) ?? null; }
   get seasonProgress() { return Math.round((this.week / 19) * 100); }
   get completedWeeks() { return this.week; }
+  get autoLineupCriteriaValue() { return this.autoLineupCriteria; }
   get annualSalary() { return this.roster.reduce((sum, player) => sum + player.salary, 0); }
   get weeklySalary() { return Math.round(this.annualSalary / 52); }
   get teamWinBonus() { return this.roster.reduce((sum, player) => sum + (player.winBonus ?? 0), 0); }
@@ -1128,6 +1132,12 @@ export class ClubSimulation {
     this.persist();
   }
 
+  setAutoLineupCriteria(criteria: AutoLineupCriteria) {
+    if (!["attack", "defense", "fit"].includes(criteria)) return;
+    this.autoLineupCriteria = criteria;
+    this.persist();
+  }
+
   cfPlayStyleFor(player: Player) {
     if (!isCfEligible(player)) return null;
     return cfPlayStyleOptions.find((option) => option.id === player.cfPlayStyle) ?? cfPlayStyleOptions[0];
@@ -1395,21 +1405,24 @@ export class ClubSimulation {
     return true;
   }
 
-  private autoLineupScore(player: Player, slotId: string) {
+  private autoLineupScore(player: Player, slotId: string, criteria: AutoLineupCriteria) {
     const slot = this.formation.slots.find((item) => item.id === slotId);
     const primaryFit = Boolean(slot?.allowed.includes(player.position));
     const secondaryFit = Boolean(!primaryFit && player.secondary && slot?.allowed.includes(player.secondary));
     const fatiguePenalty = player.fatigue * .28 + (player.fatigue >= 80 ? 8 : player.fatigue >= 60 ? 3 : 0);
-    return this.playerPower(player, slot?.label ?? player.position) + (primaryFit ? 8 : secondaryFit ? 2 : 0) - fatiguePenalty;
+    const fitBonus = primaryFit ? 14 : secondaryFit ? 6 : 0;
+    const ability = criteria === "attack" ? this.attackPower(player) : criteria === "defense" ? this.defensePower(player) : this.playerPower(player, slot?.label ?? player.position);
+    return ability + (criteria === "fit" ? fitBonus : (primaryFit ? 5 : secondaryFit ? 2 : 0)) - fatiguePenalty;
   }
 
-  autoLineup() {
+  autoLineup(criteria: AutoLineupCriteria = this.autoLineupCriteria) {
+    this.autoLineupCriteria = criteria;
     const remaining = [...this.roster].filter((player) => this.injuryWeeksFor(player.id) === 0);
     const next: Record<string, string | null> = {};
     for (const slot of this.formation.slots) {
       const candidates = remaining.filter((player) => this.playerIsFit(player, slot.id));
       const pool = candidates.length ? candidates : remaining;
-      const player = [...pool].sort((a, b) => this.autoLineupScore(b, slot.id) - this.autoLineupScore(a, slot.id))[0];
+      const player = [...pool].sort((a, b) => this.autoLineupScore(b, slot.id, criteria) - this.autoLineupScore(a, slot.id, criteria))[0];
       if (player) {
         const index = remaining.findIndex((item) => item.id === player.id);
         if (index >= 0) remaining.splice(index, 1);
@@ -2822,7 +2835,7 @@ export class ClubSimulation {
   }
 
   private persist() {
-    const saved: Persisted = { money: this.money, fame: this.fame, week: this.week, clubName: this.clubName, formationId: this.formationId, lineup: this.lineup, players: this.roster, rows: this.rows, logs: this.logs, recruited: this.recruited, sponsor: this.sponsor, cup: this.cup, popularity: this.popularity, teamMorale: this.teamMorale, recentMatchForm: this.recentMatchForm, concessionLevel: this.concessionLevel, scoutLevel: this.scoutLevel, trainingFacilityLevel: this.trainingFacilityLevel, trainingSessionsThisWeek: this.trainingSessionsThisWeek, youthIntakeCursor: this.youthIntakeCursor, ledger: this.ledger, cashTrail: this.cashTrail, mentality: this.mentality, playingStyle: this.playingStyle, injuries: this.injuries, recruitNegotiation: this.recruitNegotiation, saleOffers: this.saleOffers, trainingHistory: this.trainingHistory, lastTrainingWeek: this.lastTrainingWeek, marketSignedIds: this.marketSignedIds, marketCandidateIds: this.marketCandidateIds, marketPreferredPositions: this.marketPreferredPositions, marketCandidateCycle: this.marketCandidateCycle, marketSelectedCandidateId: this.selectedMarketCandidateId, marketUpdateNotice: this.pendingMarketUpdateNotice, youthPlayers: this.youthPlayers, seasonStats: this.seasonStats, manualMarkAssignments: this.manualMarkAssignments };
+    const saved: Persisted = { money: this.money, fame: this.fame, week: this.week, clubName: this.clubName, formationId: this.formationId, lineup: this.lineup, players: this.roster, rows: this.rows, logs: this.logs, recruited: this.recruited, sponsor: this.sponsor, cup: this.cup, popularity: this.popularity, teamMorale: this.teamMorale, recentMatchForm: this.recentMatchForm, concessionLevel: this.concessionLevel, scoutLevel: this.scoutLevel, trainingFacilityLevel: this.trainingFacilityLevel, trainingSessionsThisWeek: this.trainingSessionsThisWeek, youthIntakeCursor: this.youthIntakeCursor, ledger: this.ledger, cashTrail: this.cashTrail, mentality: this.mentality, playingStyle: this.playingStyle, autoLineupCriteria: this.autoLineupCriteria, injuries: this.injuries, recruitNegotiation: this.recruitNegotiation, saleOffers: this.saleOffers, trainingHistory: this.trainingHistory, lastTrainingWeek: this.lastTrainingWeek, marketSignedIds: this.marketSignedIds, marketCandidateIds: this.marketCandidateIds, marketPreferredPositions: this.marketPreferredPositions, marketCandidateCycle: this.marketCandidateCycle, marketSelectedCandidateId: this.selectedMarketCandidateId, marketUpdateNotice: this.pendingMarketUpdateNotice, youthPlayers: this.youthPlayers, seasonStats: this.seasonStats, manualMarkAssignments: this.manualMarkAssignments };
     saved.assignedScoutId = this.assignedScoutId;
     try { localStorage.setItem(storageKey, JSON.stringify(saved)); } catch { /* Private mode or storage restrictions must not block gameplay. */ }
   }
@@ -2834,7 +2847,7 @@ export class ClubSimulation {
       const parsed = JSON.parse(raw) as Persisted;
       if (!this.hasUsableSave(parsed)) throw new Error("Invalid save data");
       this.money = parsed.money; this.fame = parsed.fame; this.week = parsed.week; this.clubName = normalizeClubName(parsed.clubName); this.formationId = parsed.formationId; this.lineup = parsed.lineup; this.roster = this.hydrateOpeningRoster(parsed.players, parsed.week); this.rows = parsed.rows.map((row) => row.id === userClub.id ? { ...row, name: this.clubName } : row); this.logs = parsed.logs; this.recruited = parsed.recruited;
-      this.sponsor = parsed.sponsor ?? null; this.cup = parsed.cup ?? initialCup(); this.popularity = parsed.popularity ?? 42; this.teamMorale = clamp(Math.round(finiteOr(parsed.teamMorale, 58)), 0, 100); this.recentMatchForm = Array.isArray(parsed.recentMatchForm) ? parsed.recentMatchForm.filter((entry): entry is RecentMatchForm => !!entry && ["W", "D", "L"].includes(entry.outcome) && Number.isFinite(entry.margin) && (entry.competition === "リーグ" || entry.competition === "カップ")).slice(0, 5).map((entry) => ({ outcome: entry.outcome, margin: clamp(Math.round(entry.margin), -5, 5), competition: entry.competition })) : []; this.concessionLevel = clamp(parsed.concessionLevel ?? 1, 1, concessionLevels.length); this.scoutLevel = clamp(parsed.scoutLevel ?? 1, 1, scoutLevels.length); this.assignedScoutId = scoutStaff.some((staff) => staff.id === parsed.assignedScoutId) ? parsed.assignedScoutId! : "scout-forward"; this.trainingFacilityLevel = clamp(parsed.trainingFacilityLevel ?? 1, 1, trainingFacilityLevels.length); this.trainingSessionsThisWeek = Math.max(0, Math.round(finiteOr(parsed.trainingSessionsThisWeek, 0))); this.youthIntakeCursor = Math.max(0, Math.round(finiteOr(parsed.youthIntakeCursor, 0))); this.lastTrainingWeek = typeof parsed.lastTrainingWeek === "number" && Number.isFinite(parsed.lastTrainingWeek) && parsed.lastTrainingWeek >= 0 ? Math.round(parsed.lastTrainingWeek) : null; this.mentality = mentalityOptions.some((item) => item.id === parsed.mentality) ? parsed.mentality! : "balanced"; this.playingStyle = playingStyleOptions.some((item) => item.id === parsed.playingStyle) ? parsed.playingStyle! : "possession"; this.injuries = parsed.injuries ?? Object.fromEntries(this.roster.filter((player) => (player.injuryWeeks ?? 0) > 0).map((player) => [player.id, player.injuryWeeks!])); this.ledger = parsed.ledger?.length ? parsed.ledger : [{ week: parsed.week, label: "既存シーズン繰越", category: "繰越資金", amount: parsed.money, kind: "income", note: "財務ダッシュボード導入前の残高" }]; this.cashTrail = parsed.cashTrail?.length ? parsed.cashTrail : [parsed.money]; this.marketSignedIds = this.hydrateMarketSignedIds(parsed.marketSignedIds, parsed.recruited); this.marketPreferredPositions = Array.isArray(parsed.marketPreferredPositions) ? Array.from(new Set(parsed.marketPreferredPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)))) : []; this.marketCandidateIds = Array.isArray(parsed.marketCandidateIds) ? Array.from(new Set(parsed.marketCandidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)))) : []; this.marketCandidateCycle = Math.max(0, Math.round(finiteOr(parsed.marketCandidateCycle, -1)));     this.selectedMarketCandidateId = typeof parsed.marketSelectedCandidateId === "string" && this.marketCandidateIds.includes(parsed.marketSelectedCandidateId) ? parsed.marketSelectedCandidateId : this.marketCandidateIds[0] ?? null;
+      this.sponsor = parsed.sponsor ?? null; this.cup = parsed.cup ?? initialCup(); this.popularity = parsed.popularity ?? 42; this.teamMorale = clamp(Math.round(finiteOr(parsed.teamMorale, 58)), 0, 100); this.recentMatchForm = Array.isArray(parsed.recentMatchForm) ? parsed.recentMatchForm.filter((entry): entry is RecentMatchForm => !!entry && ["W", "D", "L"].includes(entry.outcome) && Number.isFinite(entry.margin) && (entry.competition === "リーグ" || entry.competition === "カップ")).slice(0, 5).map((entry) => ({ outcome: entry.outcome, margin: clamp(Math.round(entry.margin), -5, 5), competition: entry.competition })) : []; this.concessionLevel = clamp(parsed.concessionLevel ?? 1, 1, concessionLevels.length); this.scoutLevel = clamp(parsed.scoutLevel ?? 1, 1, scoutLevels.length); this.assignedScoutId = scoutStaff.some((staff) => staff.id === parsed.assignedScoutId) ? parsed.assignedScoutId! : "scout-forward"; this.trainingFacilityLevel = clamp(parsed.trainingFacilityLevel ?? 1, 1, trainingFacilityLevels.length); this.trainingSessionsThisWeek = Math.max(0, Math.round(finiteOr(parsed.trainingSessionsThisWeek, 0))); this.youthIntakeCursor = Math.max(0, Math.round(finiteOr(parsed.youthIntakeCursor, 0))); this.lastTrainingWeek = typeof parsed.lastTrainingWeek === "number" && Number.isFinite(parsed.lastTrainingWeek) && parsed.lastTrainingWeek >= 0 ? Math.round(parsed.lastTrainingWeek) : null; this.mentality = mentalityOptions.some((item) => item.id === parsed.mentality) ? parsed.mentality! : "balanced"; this.playingStyle = playingStyleOptions.some((item) => item.id === parsed.playingStyle) ? parsed.playingStyle! : "possession"; this.autoLineupCriteria = ["attack", "defense", "fit"].includes(parsed.autoLineupCriteria ?? "") ? parsed.autoLineupCriteria! : "fit"; this.injuries = parsed.injuries ?? Object.fromEntries(this.roster.filter((player) => (player.injuryWeeks ?? 0) > 0).map((player) => [player.id, player.injuryWeeks!])); this.ledger = parsed.ledger?.length ? parsed.ledger : [{ week: parsed.week, label: "既存シーズン繰越", category: "繰越資金", amount: parsed.money, kind: "income", note: "財務ダッシュボード導入前の残高" }]; this.cashTrail = parsed.cashTrail?.length ? parsed.cashTrail : [parsed.money]; this.marketSignedIds = this.hydrateMarketSignedIds(parsed.marketSignedIds, parsed.recruited); this.marketPreferredPositions = Array.isArray(parsed.marketPreferredPositions) ? Array.from(new Set(parsed.marketPreferredPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)))) : []; this.marketCandidateIds = Array.isArray(parsed.marketCandidateIds) ? Array.from(new Set(parsed.marketCandidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)))) : []; this.marketCandidateCycle = Math.max(0, Math.round(finiteOr(parsed.marketCandidateCycle, -1)));     this.selectedMarketCandidateId = typeof parsed.marketSelectedCandidateId === "string" && this.marketCandidateIds.includes(parsed.marketSelectedCandidateId) ? parsed.marketSelectedCandidateId : this.marketCandidateIds[0] ?? null;
     const savedMarketNotice = parsed.marketUpdateNotice; this.pendingMarketUpdateNotice = savedMarketNotice && Number.isFinite(savedMarketNotice.week) && Array.isArray(savedMarketNotice.candidateIds) ? { week: Math.max(0, Math.round(savedMarketNotice.week)), candidateIds: savedMarketNotice.candidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)), requestedPositions: Array.isArray(savedMarketNotice.requestedPositions) ? savedMarketNotice.requestedPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)) : [] } : null; this.recruitNegotiation = this.hydrateRecruitNegotiation(parsed.recruitNegotiation, parsed.recruited); this.saleOffers = this.hydrateSaleOffers(parsed.saleOffers); this.trainingHistory = this.hydrateTrainingHistory(parsed.trainingHistory); this.youthPlayers = this.hydrateYouthPlayers(parsed.youthPlayers); this.seasonStats = this.hydrateSeasonStats(parsed.seasonStats); this.manualMarkAssignments = Object.fromEntries(Object.entries(parsed.manualMarkAssignments ?? {}).filter(([, playerId]) => typeof playerId === "string" && this.roster.some((player) => player.id === playerId)));
     } catch {
       try { localStorage.removeItem(storageKey); } catch { /* Storage may be disabled; the initial state remains usable. */ }

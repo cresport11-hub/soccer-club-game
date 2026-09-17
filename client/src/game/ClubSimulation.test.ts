@@ -337,4 +337,16 @@ describe("Team power radar", () => {
     expect(threeSixOne.midfield).toBeGreaterThan(fourThreeThree.midfield);
     expect(threeSixOne.attack).toBeLessThan(fourThreeThree.attack);
   });
+
+  it("switches and persists auto lineup evaluation criteria", () => {
+    const simulation = new ClubSimulation();
+    expect(simulation.autoLineupCriteriaValue).toBe("fit");
+    simulation.setAutoLineupCriteria("attack");
+    simulation.autoLineup();
+    expect(simulation.autoLineupCriteriaValue).toBe("attack");
+    simulation.setAutoLineupCriteria("defense");
+    simulation.autoLineup();
+    expect(simulation.autoLineupCriteriaValue).toBe("defense");
+    expect(new ClubSimulation().autoLineupCriteriaValue).toBe("defense");
+  });
 });
