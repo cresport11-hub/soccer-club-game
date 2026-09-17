@@ -1365,7 +1365,6 @@ export class ClubSimulation {
     this.formationId = formationId;
     this.lineup = Object.fromEntries(next.slots.map((slot) => [slot.id, null]));
     this.selectedPlayerId = null;
-    this.autoLineup();
     this.manualMarkAssignments = {};
     this.persist();
   }
@@ -1848,7 +1847,6 @@ export class ClubSimulation {
     if (this.selectedPlayerId === player.id) this.selectedPlayerId = null;
     this.saleOffers = this.saleOffers.filter((item) => item.id !== offerId);
     this.fame = Math.max(0, this.fame - 2);
-    this.autoLineup();
     this.logs.unshift(`${player.name}を${offer.clubName}へ売却。移籍金 ${offer.proposedFee.toLocaleString()}円を受領し、編成を再調整した。`);
     this.persist();
     return { ok: true, text: `${player.name}を売却し、${offer.proposedFee.toLocaleString()}円を受領しました。` };

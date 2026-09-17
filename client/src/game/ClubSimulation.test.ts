@@ -327,8 +327,11 @@ describe("Team power radar", () => {
   it("reflects unit thickness when comparing 4-3-3 and 3-6-1", () => {
     const simulation = new ClubSimulation();
     simulation.setFormation("4-3-3");
+    expect(Object.values(simulation.lineupState).filter(Boolean)).toHaveLength(0);
+    simulation.autoLineup();
     const fourThreeThree = simulation.teamPowerRadar();
     simulation.setFormation("3-6-1");
+    simulation.autoLineup();
     const threeSixOne = simulation.teamPowerRadar();
 
     expect(threeSixOne.midfield).toBeGreaterThan(fourThreeThree.midfield);
