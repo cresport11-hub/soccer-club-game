@@ -823,10 +823,10 @@ export class GameUI {
   private lineupPage(score: ReturnType<ClubSimulation["score"]>, selected: Player | null) {
     const slots = this.simulation.formation.slots;
     const roster = this.simulation.rosterPlayers;
-    const visibleRoster = roster;
+    const starterIds = new Set(Object.values(this.simulation.lineupState).filter((playerId): playerId is string => Boolean(playerId)));
+    const visibleRoster = roster.filter((player) => !starterIds.has(player.id));
     const tactics = score.tactics;
     const selectedSlot = selected ? slots.find((slot) => this.simulation.playerForSlot(slot.id)?.id === selected.id) : null;
-    const starterIds = new Set(Object.values(this.simulation.lineupState).filter((playerId): playerId is string => Boolean(playerId)));
     const replacementHints = new Map<string, "primary" | "secondary">();
     if (selectedSlot) {
       roster.filter((player) => !starterIds.has(player.id) && this.simulation.injuryWeeksFor(player.id) === 0).forEach((player) => {
@@ -860,7 +860,7 @@ export class GameUI {
         </article>
         <aside class="lineup-aside">${this.teamPowerRadarCard()}</aside>
       </section>
-      <section class="bench-section"><div class="section-label"><span>BENCH & SQUAD</span><b>${selectedSlot ? `候補 / 主 ${primaryReplacementCount}・副 ${secondaryReplacementCount}` : `${visibleRoster.length} / ${roster.length} PLAYERS`}</b></div><div class="player-grid">${visibleRoster.length ? visibleRoster.map((player) => this.playerCard(player, selected?.id === player.id, replacementHints.get(player.id))).join("") : `<div class="roster-filter-empty">このポジションに該当する選手はいません。</div>`}</div></section>
+      <section class="bench-section"><div class="section-label"><span>BENCH & SQUAD</span><b>${selectedSlot ? `候補 / 主 ${primaryReplacementCount}・副 ${secondaryReplacementCount}` : `${visibleRoster.length} / ${roster.length} BENCH PLAYERS`}</b></div><div class="player-grid">${visibleRoster.length ? visibleRoster.map((player) => this.playerCard(player, selected?.id === player.id, replacementHints.get(player.id))).join("") : `<div class="roster-filter-empty">ベンチ候補はいません。スタメン以外の選手がここに表示されます。</div>`}</div></section>
     `;
   }
 

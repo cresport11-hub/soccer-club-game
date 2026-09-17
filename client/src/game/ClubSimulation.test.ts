@@ -323,4 +323,15 @@ describe("Team power radar", () => {
     });
     expect(simulation.teamPowerRadar().stability).toBeLessThan(beforeStability);
   });
+
+  it("reflects unit thickness when comparing 4-3-3 and 3-6-1", () => {
+    const simulation = new ClubSimulation();
+    simulation.setFormation("4-3-3");
+    const fourThreeThree = simulation.teamPowerRadar();
+    simulation.setFormation("3-6-1");
+    const threeSixOne = simulation.teamPowerRadar();
+
+    expect(threeSixOne.midfield).toBeGreaterThan(fourThreeThree.midfield);
+    expect(threeSixOne.attack).toBeLessThan(fourThreeThree.attack);
+  });
 });

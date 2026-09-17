@@ -1071,20 +1071,40 @@ export class ClubSimulation {
     const score = this.score();
     const selected = this.startingPlayers().filter((player) => this.injuryWeeksFor(player.id) === 0);
     if (!selected.length) return { attack: 0, defense: 0, midfield: 0, chemistry: 0, tacticalAdaptation: 0, stability: 0, overall: 0, strengthKey: "attack", weaknessKey: "attack" };
-    const average = (players: Player[], getter: (player: Player) => number) => players.length ? players.reduce((sum, player) => sum + getter(player), 0) / players.length : 0;
-    const midfielders = selected.filter((player) => ["DM", "CM", "AM", "SH"].includes(player.position));
-    const midfield = clamp(Math.round(average(midfielders.length ? midfielders : selected, (player) => {
-      const base = player.pass * .55 + player.attack * .2 + player.defense * .25;
-      return base * (this.systemEffectivenessFor(player).rate / 100) * (1 - player.fatigue / 180) + this.conditionStatusFor(player).modifier * .45;
-    })), 0, 99);
+    const average = <T,>(items: T[], getter: (item: T) => number) => items.length ? items.reduce((sum, item) => sum + getter(item), 0) / items.length : 0;
+    const occupied = this.formation.slots.map((slot) => ({ slot, player: this.playerForSlot(slot.id) })).filter((item): item is { slot: Formation["slots"][number]; player: Player } => item.player !== null && this.injuryWeeksFor(item.player.id) === 0);
+    const unit = (kind: "attack" | "midfield" | "defense") => occupied.filter(({ slot }) => kind === "attack" ? ["CF", "WG"].includes(slot.label) : kind === "midfield" ? ["DM", "CM", "AM", "SH"].includes(slot.label) : ["GK", "CB", "SB"].includes(slot.label));
+    const fitValue = (slot: Formation["slots"][number], player: Player) => {
+      if (slot.allowed.includes(player.position)) return 1;
+      if (player.secondary && slot.allowed.includes(player.secondary)) return .92;
+      return .82;
+    };
+    const adjustedValue = (entry: { slot: Formation["slots"][number]; player: Player }, kind: "attack" | "midfield" | "defense") => {
+      const { player } = entry;
+      const base = kind === "attack" ? this.attackPower(player) : kind === "defense" ? this.defensePower(player) : player.pass * .55 + player.attack * .2 + player.defense * .25;
+      return base * fitValue(entry.slot, player) * (this.systemEffectivenessFor(player).rate / 100) * (1 - player.fatigue / 180) + this.conditionStatusFor(player).modifier * (kind === "midfield" ? .45 : .3);
+    };
+    const unitPower = (kind: "attack" | "midfield" | "defense", baseline: number) => {
+      const members = unit(kind);
+      if (!members.length) return 0;
+      // Averages preserve player quality; the square-root thickness factor adds
+      // a meaningful but deliberately diminishing return for extra slots.
+      const thickness = 1 + .2 * (Math.sqrt(members.length / baseline) - 1);
+      const roleLink = members.length >= baseline ? 2 : 0;
+      const formationLink = kind === "midfield" && this.formation.id === "3-6-1" ? 4 : kind === "attack" && this.formation.id === "4-3-3" ? 3 : kind === "defense" && this.formation.id === "5-4-1" ? 3 : 0;
+      return clamp(Math.round(average(members, (entry) => adjustedValue(entry, kind)) * thickness + roleLink + formationLink), 0, 99);
+    };
+    const attack = unitPower("attack", 3);
+    const midfield = unitPower("midfield", 4);
+    const defense = unitPower("defense", 4);
     const bench = this.roster.filter((player) => !Object.values(this.lineupState).includes(player.id) && this.injuryWeeksFor(player.id) === 0);
     const benchQuality = bench.length ? clamp(Math.round(average(bench.slice().sort((a, b) => this.playerPower(b) - this.playerPower(a)).slice(0, 5), (player) => this.playerPower(player))), 0, 99) : 0;
     const averageFatigue = average(selected, (player) => player.fatigue);
     const averageCondition = average(selected, (player) => this.conditionFor(player));
     const stability = clamp(Math.round((100 - averageFatigue) * .52 + averageCondition * .34 + benchQuality * .14), 0, 99);
     const values: Record<TeamPowerRadarKey, number> = {
-      attack: score.attack,
-      defense: score.defense,
+      attack,
+      defense,
       midfield,
       chemistry: clamp(Math.round(score.tactics.chemistry), 0, 99),
       tacticalAdaptation: clamp(Math.round(score.systemRate), 0, 99),
