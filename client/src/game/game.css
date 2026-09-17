@@ -460,6 +460,8 @@ button { font: inherit; }
 .team-power-card.is-floating:hover,
 .team-power-card.is-floating:focus-within { opacity: .98; }
 .team-power-card.is-floating .team-power-head { padding-bottom: 5px; }
+.team-power-card.is-floating .team-power-head { pointer-events: auto; cursor: grab; touch-action: none; user-select: none; }
+.team-power-card.is-floating.is-dragging .team-power-head { cursor: grabbing; }
 .team-power-card.is-floating .team-power-head h3 { font-size: 13px; }
 .team-power-card.is-floating .team-power-head > strong { font-size: 22px; }
 .team-power-card.is-floating .team-power-chart-wrap { min-height: 164px; padding: 0; }

@@ -51,6 +51,13 @@ export class GameUI {
   private rosterSalaryFilter: SalaryFilter = "all";
   private rosterContractFilter: ContractFilter = "all";
   private teamPowerRadarVisible = window.localStorage.getItem("touchline-team-power-visible") !== "0";
+  private teamPowerPosition: { left: number; top: number } | null = (() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem("touchline-team-power-position") ?? "null") as { left?: unknown; top?: unknown } | null;
+      return saved && Number.isFinite(saved.left) && Number.isFinite(saved.top) ? { left: Number(saved.left), top: Number(saved.top) } : null;
+    } catch { return null; }
+  })();
+  private teamPowerDrag: { offsetX: number; offsetY: number } | null = null;
 
   constructor(private readonly simulation: ClubSimulation) {
     this.root.className = "game-ui";
@@ -60,6 +67,10 @@ export class GameUI {
     this.root.addEventListener("dragover", this.handleMarkDragOver);
     this.root.addEventListener("drop", this.handleMarkDrop);
     this.root.addEventListener("dragend", this.handleMarkDragEnd);
+    this.root.addEventListener("pointerdown", this.handleTeamPowerPointerDown);
+    this.root.addEventListener("pointermove", this.handleTeamPowerPointerMove);
+    this.root.addEventListener("pointerup", this.handleTeamPowerPointerUp);
+    this.root.addEventListener("pointercancel", this.handleTeamPowerPointerUp);
     const params = new URLSearchParams(window.location.search);
     const previewRoster = Number(params.get("preview-roster"));
     if (import.meta.env.DEV && [30, 31, 32].includes(previewRoster) && this.simulation.rosterPlayers.length < previewRoster) {
@@ -92,8 +103,48 @@ export class GameUI {
     this.root.removeEventListener("dragover", this.handleMarkDragOver);
     this.root.removeEventListener("drop", this.handleMarkDrop);
     this.root.removeEventListener("dragend", this.handleMarkDragEnd);
+    this.root.removeEventListener("pointerdown", this.handleTeamPowerPointerDown);
+    this.root.removeEventListener("pointermove", this.handleTeamPowerPointerMove);
+    this.root.removeEventListener("pointerup", this.handleTeamPowerPointerUp);
+    this.root.removeEventListener("pointercancel", this.handleTeamPowerPointerUp);
     this.root.remove();
   }
+
+  private handleTeamPowerPointerDown = (event: PointerEvent) => {
+    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-team-power-drag]");
+    if (!target || (event.target as HTMLElement).closest("button")) return;
+    const card = target.closest<HTMLElement>(".team-power-card");
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const left = this.teamPowerPosition?.left ?? rect.left;
+    const top = this.teamPowerPosition?.top ?? rect.top;
+    this.teamPowerPosition = { left, top };
+    this.teamPowerDrag = { offsetX: event.clientX - left, offsetY: event.clientY - top };
+    target.setPointerCapture?.(event.pointerId);
+    card.classList.add("is-dragging");
+    event.preventDefault();
+  };
+
+  private handleTeamPowerPointerMove = (event: PointerEvent) => {
+    if (!this.teamPowerDrag) return;
+    const card = this.root.querySelector<HTMLElement>(".team-power-card");
+    if (!card) return;
+    const width = card.offsetWidth;
+    const height = card.offsetHeight;
+    const left = Math.max(6, Math.min(window.innerWidth - width - 6, event.clientX - this.teamPowerDrag.offsetX));
+    const top = Math.max(6, Math.min(window.innerHeight - height - 6, event.clientY - this.teamPowerDrag.offsetY));
+    this.teamPowerPosition = { left, top };
+    card.style.left = `${left}px`;
+    card.style.top = `${top}px`;
+    card.style.right = "auto";
+  };
+
+  private handleTeamPowerPointerUp = () => {
+    if (!this.teamPowerDrag) return;
+    this.teamPowerDrag = null;
+    try { window.localStorage.setItem("touchline-team-power-position", JSON.stringify(this.teamPowerPosition)); } catch { /* Storage may be disabled. */ }
+    this.root.querySelector<HTMLElement>(".team-power-card")?.classList.remove("is-dragging");
+  };
 
   private handleClick = (event: MouseEvent) => {
     const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action], [data-nav], [data-mobile-nav], [data-team-power-toggle], [data-auto-criteria], [data-player], [data-player-detail], [data-close-player-detail], [data-opponent-player], [data-mark-source], [data-mark-clear], [data-slot], [data-formation], [data-mentality], [data-style], [data-half-mentality], [data-half-style], [data-half-out], [data-half-in], [data-half-remove], [data-roster-sort], [data-roster-salary-filter], [data-roster-contract-filter]");
@@ -822,8 +873,9 @@ export class GameUI {
       return { ...item, value: radar[item.key], x, y };
     });
     const aria = values.map((item) => `${item.label}${item.value}`).join("、");
-    if (!this.teamPowerRadarVisible) return `<article class="tactical-card team-power-card is-floating is-collapsed" aria-label="チーム力レーダー（非表示中）"><button type="button" class="team-power-toggle team-power-toggle-collapsed" data-team-power-toggle aria-pressed="false" aria-label="チーム力グラフを表示"><span>TEAM POWER</span><b>表示</b></button></article>`;
-    return `<article class="tactical-card team-power-card is-floating" aria-label="チーム力レーダー"><div class="team-power-head"><div><span class="card-kicker">TEAM POWER</span><h3>チーム力 <small>6項目</small></h3></div><strong>${radar.overall}<small>AVG</small></strong><button type="button" class="team-power-toggle" data-team-power-toggle aria-pressed="true" aria-label="チーム力グラフを非表示">−</button></div><div class="team-power-chart-wrap"><svg class="team-power-radar" viewBox="0 0 260 220" role="img" aria-label="チーム力 ${aria}"><g class="team-power-grid">${[20, 40, 60, 80, 100].map((level) => `<polygon points="${polygon(level)}"></polygon>`).join("")}</g>${items.map((_, index) => `<line x1="130" y1="102" x2="${point(index, 100).split(",")[0]}" y2="${point(index, 100).split(",")[1]}"></line>`).join("")}<polygon class="team-power-area" points="${values.map((item, index) => point(index, item.value)).join(" ")}"></polygon>${values.map((item) => `<text x="${item.x.toFixed(1)}" y="${item.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" class="${item.value >= 80 ? "is-strong" : item.value < 60 ? "is-weak" : ""}">${item.short} ${item.value}</text>`).join("")}</svg></div></article>`;
+    const positionStyle = this.teamPowerPosition ? ` style="left:${this.teamPowerPosition.left}px;top:${this.teamPowerPosition.top}px;right:auto"` : "";
+    if (!this.teamPowerRadarVisible) return `<article class="tactical-card team-power-card is-floating is-collapsed"${positionStyle} aria-label="チーム力レーダー（非表示中）"><button type="button" class="team-power-toggle team-power-toggle-collapsed" data-team-power-toggle aria-pressed="false" aria-label="チーム力グラフを表示"><span>TEAM POWER</span><b>表示</b></button></article>`;
+    return `<article class="tactical-card team-power-card is-floating"${positionStyle} aria-label="チーム力レーダー"><div class="team-power-head" data-team-power-drag title="ドラッグして移動"><div><span class="card-kicker">TEAM POWER</span><h3>チーム力 <small>6項目</small></h3></div><strong>${radar.overall}<small>AVG</small></strong><button type="button" class="team-power-toggle" data-team-power-toggle aria-pressed="true" aria-label="チーム力グラフを非表示">−</button></div><div class="team-power-chart-wrap"><svg class="team-power-radar" viewBox="0 0 260 220" role="img" aria-label="チーム力 ${aria}"><g class="team-power-grid">${[20, 40, 60, 80, 100].map((level) => `<polygon points="${polygon(level)}"></polygon>`).join("")}</g>${items.map((_, index) => `<line x1="130" y1="102" x2="${point(index, 100).split(",")[0]}" y2="${point(index, 100).split(",")[1]}"></line>`).join("")}<polygon class="team-power-area" points="${values.map((item, index) => point(index, item.value)).join(" ")}"></polygon>${values.map((item) => `<text x="${item.x.toFixed(1)}" y="${item.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" class="${item.value >= 80 ? "is-strong" : item.value < 60 ? "is-weak" : ""}">${item.short} ${item.value}</text>`).join("")}</svg></div></article>`;
   }
 
   private lineupPage(score: ReturnType<ClubSimulation["score"]>, selected: Player | null) {
