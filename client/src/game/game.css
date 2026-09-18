@@ -576,3 +576,17 @@ button { font: inherit; }
 .highlight-item.sequence { border-left-color: #6ad7ff; background: linear-gradient(90deg, rgba(106,215,255,.13), rgba(5,29,16,.52)); }
 .highlight-item.sequence > span { color: #8de5ff; }
 .highlight-item.sequence p::before { content: "連続攻防　"; color: #8de5ff; font-weight: 800; }
+
+/* Slightly larger player-card numbers for at-a-glance readability. */
+.player-token small { font-size: 9px; }
+.squad-card p { font-size: 10px; }
+.squad-card .card-stat { font-size: 10px; }
+.bench-section .squad-card .card-stat { font-size: 8px; }
+.bench-section .squad-card .card-stat b { font-size: 8px; }
+@media (max-width: 600px) {
+  .player-token small { font-size: 9px; }
+  .squad-card p { font-size: 10px; }
+  .squad-card .card-stat { font-size: 10px; }
+  .bench-section .squad-card .card-stat { font-size: 8px; }
+  .bench-section .squad-card .card-stat b { font-size: 8px; }
+}
