@@ -1181,7 +1181,7 @@ export class GameUI {
   private highlightsTimeline(highlights: NonNullable<ReturnType<ClubSimulation["advanceWeek"]>>["highlights"], throughHalf: boolean, visibleCount?: number) {
     const visible = highlights.filter((item) => throughHalf ? item.minute <= 45 : item.minute > 45 && item.kind !== "fulltime");
     const shown = visibleCount === undefined ? visible : visible.slice(0, visibleCount);
-    const line = (item: MatchHighlight) => `<article class="highlight-item ${item.team} ${item.kind}"><b>${String(item.minute).padStart(2, "0")}′</b><span>${item.kind === "goal" ? "GOAL" : item.kind === "action" ? "PLAY" : item.kind === "injury" ? "MED" : item.kind === "tactic" ? "PLAN" : item.kind === "halftime" ? "HT" : "•"}</span><p>${item.text}</p></article>`;
+    const line = (item: MatchHighlight) => `<article class="highlight-item ${item.team} ${item.kind}"><b>${String(item.minute).padStart(2, "0")}′</b><span>${item.kind === "goal" ? "GOAL" : item.kind === "sequence" ? "RALLY" : item.kind === "action" ? "PLAY" : item.kind === "injury" ? "MED" : item.kind === "tactic" ? "PLAN" : item.kind === "halftime" ? "HT" : "•"}</span><p>${item.text}</p></article>`;
     return `<section class="highlight-timeline ${visibleCount === undefined ? "" : "is-live"}" aria-live="polite">${visibleCount === undefined ? shown.map(line).join("") : `<small>LIVE FEED / ${visibleCount} of ${visible.length}</small>${shown.map(line).join("")}`}</section>`;
   }
 

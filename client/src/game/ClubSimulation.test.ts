@@ -21,9 +21,9 @@ describe("ClubSimulation match commentary", () => {
     const sequenceLines = result.highlights.filter((item) => /即座に反撃|奪い返してカウンター|一気に前進/.test(item.text));
 
     expect(firstHalf.length).toBeGreaterThanOrEqual(8);
-    expect(firstHalf.length).toBeLessThanOrEqual(12);
+    expect(firstHalf.length).toBeLessThanOrEqual(16);
     expect(secondHalf.length).toBeGreaterThanOrEqual(8);
-    expect(secondHalf.length).toBeLessThanOrEqual(12);
+    expect(secondHalf.length).toBeLessThanOrEqual(16);
     expect(sequenceLines.length).toBeGreaterThanOrEqual(2);
   });
 

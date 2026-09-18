@@ -571,3 +571,8 @@ button { font: inherit; }
 .criteria-chip.is-active { color:#071509; border-color:var(--lime); background:var(--lime); }
 .criteria-chip:active { transform:scale(.97); }
 @media (max-width:600px) { .auto-criteria { align-items:flex-start; flex-direction:column; }.auto-criteria > div { justify-content:flex-start; width:100%; }.criteria-chip { flex:1; min-width:0; } }
+
+/* Consecutive attack sequences are visually grouped as a live RALLY. */
+.highlight-item.sequence { border-left-color: #6ad7ff; background: linear-gradient(90deg, rgba(106,215,255,.13), rgba(5,29,16,.52)); }
+.highlight-item.sequence > span { color: #8de5ff; }
+.highlight-item.sequence p::before { content: "連続攻防　"; color: #8de5ff; font-weight: 800; }

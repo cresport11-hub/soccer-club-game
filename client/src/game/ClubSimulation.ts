@@ -174,7 +174,7 @@ export type MarkingMatchImpact = { attackModifier: number; defenseModifier: numb
 export type IndividualBonusEntry = { playerId: string; player: string; appearance: number; goals: number; amount: number };
 export type IndividualBonusReceipt = { total: number; entries: IndividualBonusEntry[] };
 export type PlayerSeasonStat = { playerId: string; player: string; position: string; appearances: number; starts: number; goals: number; assists: number; ratingTotal: number; ratingCount: number; mvpAwards: number };
-export type MatchHighlight = { minute: number; kind: "kickoff" | "action" | "goal" | "tactic" | "substitution" | "injury" | "halftime" | "fulltime"; team: "orbit" | "opponent" | "neutral"; text: string; scorer?: string; assistant?: string };
+export type MatchHighlight = { minute: number; kind: "kickoff" | "action" | "sequence" | "goal" | "tactic" | "substitution" | "injury" | "halftime" | "fulltime"; team: "orbit" | "opponent" | "neutral"; text: string; scorer?: string; assistant?: string };
 export type HalfTimeReport = { playerGoals: number; opponentGoals: number; message: string; tacticalNote: string; recommendation: string };
 export type MatchStatsTeam = { possession: number; shots: number; shotsOnTarget: number; bigChances: number; corners: number; passes: number; passAccuracy: number; fouls: number; offsides: number; saves: number };
 export type MatchStats = { orbit: MatchStatsTeam; opponent: MatchStatsTeam };
@@ -2334,6 +2334,7 @@ export class ClubSimulation {
         const max = firstHalf ? 44 : 89;
         const firstMinute = allocateMinute(base, min, max, matchWeek * 43 + 501 + sequenceIndex);
         const counterMinute = allocateMinute(counterBase, min, max, matchWeek * 43 + 511 + sequenceIndex);
+        const thirdMinute = allocateMinute(counterBase + 3, min, max, matchWeek * 43 + 521 + sequenceIndex);
         const orbitCreator = orbitAttackers[(sequenceIndex + 2) % orbitAttackers.length];
         const orbitFinisher = orbitAttackers[(sequenceIndex + 3) % orbitAttackers.length];
         const opponentCreator = opponentAttackers[(sequenceIndex + 2) % opponentAttackers.length];
@@ -2341,7 +2342,7 @@ export class ClubSimulation {
         const orbitFirst = deterministic(matchWeek * 47 + 521 + sequenceIndex) >= .5;
         sequenceHighlights.push({
           minute: firstMinute,
-          kind: "action",
+          kind: "sequence",
           team: orbitFirst ? "orbit" : "opponent",
           text: orbitFirst
             ? `${orbitCreator.name}が縦へ仕掛け、${orbitFinisher.name}がゴール前へ飛び込む。シュートは相手GKの反応に阻まれた！`
@@ -2349,11 +2350,19 @@ export class ClubSimulation {
         });
         sequenceHighlights.push({
           minute: counterMinute,
-          kind: "action",
+          kind: "sequence",
           team: orbitFirst ? "opponent" : "orbit",
           text: orbitFirst
             ? `${opponentName}がこぼれ球から即座に反撃。${opponentCreator.name}の折り返しを${ownDefender}が体を張ってクリアした！`
             : `${orbitCreator.name}が奪い返してカウンター。${orbitFinisher.name}のシュートはわずかに枠を外れた！`,
+        });
+        sequenceHighlights.push({
+          minute: thirdMinute,
+          kind: "sequence",
+          team: orbitFirst ? "orbit" : "opponent",
+          text: orbitFirst
+            ? `${orbitCreator.name}がこぼれ球を拾ってもう一度前進。${orbitFinisher.name}が折り返し、相手の守備ブロックが最後の一歩で防いだ！`
+            : `${opponentName}の${opponentCreator.name}が再び攻め込む。${opponentFinisher.name}のシュートコースを${ownDefender}が滑り込みで消した！`,
         });
       });
     }
