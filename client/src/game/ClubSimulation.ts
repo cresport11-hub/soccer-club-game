@@ -2283,6 +2283,18 @@ export class ClubSimulation {
         `${orbitCreator.name}が素早いリスタートから前を向き、${orbitFinisher.name}へ浮き球のパス。胸で収めた${orbitFinisher.name}の一撃はGKの正面！`,
         `${orbitCreator.name}が中央をドリブルで運び、${orbitFinisher.name}とパスを交換。ペナルティエリア手前からのシュートは、わずかにポストの外！`,
         `${orbitCreator.name}のFKがゴール前へ落ちる。${orbitFinisher.name}が混戦で押し込もうとするが、GKが間一髪でキャッチした！`,
+        `${orbitCreator.name}が相手のパスを読み切って奪取。すぐさま${orbitFinisher.name}へ縦につなぎ、速攻のシュートまで持ち込んだ！`,
+        `${orbitCreator.name}がボールを失うも、${orbitFinisher.name}と連動して即時奪回。二次攻撃からのクロスは惜しくも味方に合わない！`,
+        `${orbitCreator.name}が中盤で奪って前を向く。${orbitFinisher.name}が一気に裏へ走り、GKとの一対一を迎えたが最後のタッチが伸びた！`,
+        `${orbitCreator.name}の縦パスを相手がカット。しかし${orbitFinisher.name}がすぐに寄せて奪い返し、低い折り返しをゴール前へ送った！`,
+        `${orbitCreator.name}が守備から攻撃へ素早く切り替え、${orbitFinisher.name}へ展開。右足の一撃は相手DFの足に当たりコースが変わった！`,
+        `${orbitCreator.name}が自陣深くでボールを回収し、${orbitFinisher.name}の動き出しへ長いパス。カウンターは相手の帰陣に阻まれた！`,
+        `${orbitCreator.name}が前から激しく追い込み、${orbitFinisher.name}がこぼれ球を拾う。素早いシュートはGKが反応して弾き出した！`,
+        `${orbitCreator.name}が攻め上がった直後にボールを失うが、${orbitFinisher.name}が中央を閉じて速攻を止めた。守備から再び前進する！`,
+        `${orbitCreator.name}と${orbitFinisher.name}が短いパスを重ねてプレスをかわす。最後は逆サイドへ大きく展開し、決定機を作った！`,
+        `${orbitCreator.name}が相手の攻撃をインターセプト。${orbitFinisher.name}が前線で受けて一気に加速するが、シュートは枠の外へ！`,
+        `${orbitCreator.name}がカウンターの起点となる鋭い奪取。${orbitFinisher.name}の折り返しに走り込んだ味方のシュートはブロックされた！`,
+        `${orbitCreator.name}が失った直後に激しく追い、味方全体が押し上げる。${orbitFinisher.name}のミドルはGKの正面に飛んだ！`,
       ];
       const opponentPlays = [
         `${opponentName}の${opponentCreator.name}がサイドを抜け出してクロス。${opponentFinisher.name}が合わせるが、${ownGoalkeeper}が横っ飛びで防いだ！`,
@@ -2297,6 +2309,18 @@ export class ClubSimulation {
         `${opponentName}の${opponentCreator.name}が素早いリスタートで前を向き、${opponentFinisher.name}へ浮き球のパス。胸で収めた${opponentFinisher.name}の一撃を${ownGoalkeeper}が正面で抑えた！`,
         `${opponentName}の${opponentCreator.name}が中央をドリブルで運び、${opponentFinisher.name}とパスを交換。ペナルティエリア手前からのシュートは、ポストの外へ外れた！`,
         `${opponentName}の${opponentCreator.name}のFKがゴール前へ落ちる。${opponentFinisher.name}が混戦で押し込もうとするが、${ownGoalkeeper}が間一髪でキャッチした！`,
+        `${opponentName}の${opponentCreator.name}が中盤で奪って即座に縦へ。${opponentFinisher.name}が裏へ抜け出すが、${ownDefender}が懸命に追いついた！`,
+        `${opponentName}の${opponentCreator.name}がボールを失うも、すぐに前線から奪い返す。${opponentFinisher.name}の速いシュートは${ownGoalkeeper}がセーブ！`,
+        `${opponentName}の${opponentCreator.name}が相手の攻撃を止めて前進。${opponentFinisher.name}へ一気に預けるが、ラストパスを${ownDefender}が読んだ！`,
+        `${opponentName}の${opponentCreator.name}が高い位置で奪取し、${opponentFinisher.name}がペナルティエリアへ侵入。角度のないシュートはサイドネット！`,
+        `${opponentName}の${opponentCreator.name}が縦へ急加速。${opponentFinisher.name}の折り返しを${ownDefender}が戻りながらクリアした！`,
+        `${opponentName}の${opponentCreator.name}が自陣から素早く持ち出し、${opponentFinisher.name}へロングパス。${ownGoalkeeper}が飛び出して収めた！`,
+        `${opponentName}の${opponentCreator.name}が前から追い込んでボールを奪う。${opponentFinisher.name}の決定機は${ownGoalkeeper}の正面！`,
+        `${opponentName}の${opponentCreator.name}が攻撃参加した直後に失い、${ownDefender}が奪い返す。こちらの速攻へ切り替わった！`,
+        `${opponentName}の${opponentCreator.name}と${opponentFinisher.name}がプレスを連続でかわす。最後は中央を閉じられ、攻撃が後退した！`,
+        `${opponentName}の${opponentCreator.name}がインターセプトから前を向く。${opponentFinisher.name}の一撃は、${ownDefender}が足を伸ばして阻止！`,
+        `${opponentName}の${opponentCreator.name}が奪ってから一気に人数をかける。${opponentFinisher.name}のヘディングはわずかに枠を越えた！`,
+        `${opponentName}の${opponentCreator.name}が失った直後に再び寄せて主導権を取り戻す。${opponentFinisher.name}のミドルは${ownGoalkeeper}が弾いた！`,
       ];
       const playIndex = index % orbitPlays.length;
       return { minute, kind: "action" as const, team: orbitAction ? "orbit" as const : "opponent" as const, text: orbitAction ? orbitPlays[playIndex] : opponentPlays[playIndex] };
