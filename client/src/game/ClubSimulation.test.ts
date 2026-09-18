@@ -306,7 +306,7 @@ describe("Team power radar", () => {
     const simulation = new ClubSimulation();
     simulation.autoLineup();
     const radar = simulation.teamPowerRadar();
-    const keys = ["attack", "defense", "midfield", "chemistry", "tacticalAdaptation", "stability"] as const;
+    const keys = ["attack", "defense", "midfield", "chemistry", "tacticalAdaptation", "transition"] as const;
     keys.forEach((key) => {
       expect(radar[key]).toBeGreaterThanOrEqual(0);
       expect(radar[key]).toBeLessThanOrEqual(99);
@@ -316,12 +316,12 @@ describe("Team power radar", () => {
     expect(keys).toContain(radar.strengthKey);
     expect(keys).toContain(radar.weaknessKey);
 
-    const beforeStability = radar.stability;
+    const beforeTransition = radar.transition;
     simulation.rosterPlayers.filter((player) => Object.values(simulation.lineupState).includes(player.id)).forEach((player) => {
       player.fatigue = 90;
       player.condition = 35;
     });
-    expect(simulation.teamPowerRadar().stability).toBeLessThan(beforeStability);
+    expect(simulation.teamPowerRadar().transition).toBeLessThan(beforeTransition);
   });
 
   it("reflects unit thickness when comparing 4-3-3 and 3-6-1", () => {

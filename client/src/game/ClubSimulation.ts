@@ -98,9 +98,11 @@ export type TacticalAssessment = {
   skillDetails: PlayerSkillActivation[];
   attackModifier: number;
   defenseModifier: number;
+  transitionAttack: number;
+  transitionDefense: number;
 };
-export type TeamPowerRadarKey = "attack" | "defense" | "midfield" | "chemistry" | "tacticalAdaptation" | "stability";
-export type TeamPowerRadar = { attack: number; defense: number; midfield: number; chemistry: number; tacticalAdaptation: number; stability: number; overall: number; strengthKey: TeamPowerRadarKey; weaknessKey: TeamPowerRadarKey };
+export type TeamPowerRadarKey = "attack" | "defense" | "midfield" | "chemistry" | "tacticalAdaptation" | "transition";
+export type TeamPowerRadar = { attack: number; defense: number; midfield: number; chemistry: number; tacticalAdaptation: number; transition: number; overall: number; strengthKey: TeamPowerRadarKey; weaknessKey: TeamPowerRadarKey };
 export type AutoLineupCriteria = "attack" | "defense" | "fit";
 export type OpponentTacticalAssessment = { clubId: string; club: string; color: string; formationId: string; formationLabel: string; mentality: Mentality; mentalityLabel: string; playingStyle: PlayingStyle; playingStyleLabel: string; trait: string; note: string; cohesion: number; attack: number; defense: number; total: number; roles: string[]; lineup: OpponentPlayer[]; skillAttack: number; skillDefense: number; skillSummary: string; skillDetails: PlayerSkillActivation[] };
 export type TacticalMatchup = { label: string; playerAttackModifier: number; playerDefenseModifier: number; opponentAttackModifier: number; opponentDefenseModifier: number; note: string };
@@ -1055,6 +1057,24 @@ export class ClubSimulation {
     return { label, playerAttackModifier, playerDefenseModifier, opponentAttackModifier, opponentDefenseModifier, note };
   }
 
+  private transitionAssessment(selected: Player[]) {
+    const occupied = this.formation.slots.map((slot) => ({ slot, player: this.playerForSlot(slot.id) })).filter((item): item is { slot: Formation["slots"][number]; player: Player } => Boolean(item.player) && selected.some((player) => player.id === item.player?.id));
+    const average = (values: number[]) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+    const attackPlayers = occupied.filter(({ slot }) => ["CF", "WG", "AM", "SH", "CM"].includes(slot.label));
+    const defensePlayers = occupied.filter(({ slot }) => ["CB", "SB", "DM", "CM", "SH", "GK"].includes(slot.label));
+    const attack = average(attackPlayers.map(({ player }) => player.pass * .3 + player.dribble * .25 + player.attack * .2 + player.shoot * .1 + (player.systemUnderstanding ?? 50) * .15));
+    const defense = average(defensePlayers.map(({ player }) => player.tackle * .3 + player.interception * .25 + player.defense * .2 + (player.systemUnderstanding ?? 50) * .15 + (player.condition ?? 70) * .1));
+    const styleAttack = this.playingStyle === "direct" ? 7 : this.playingStyle === "possession" ? 2 : 0;
+    const styleDefense = this.playingStyle === "press" ? 8 : this.playingStyle === "possession" ? 2 : 0;
+    const mentalityAttack = this.mentality === "attacking" ? 5 : this.mentality === "defensive" ? -3 : 0;
+    const mentalityDefense = this.mentality === "defensive" ? 5 : this.mentality === "attacking" ? -4 : 0;
+    const formationAttack = ["4-3-3", "3-4-3"].includes(this.formation.id) ? 4 : this.formation.id === "3-6-1" ? -1 : 0;
+    const formationDefense = this.formation.id === "3-6-1" ? 7 : ["5-4-1", "5-3-2"].includes(this.formation.id) ? 5 : 0;
+    const fatiguePenalty = selected.length ? average(selected.map((player) => player.fatigue)) * .18 : 18;
+    const chemistryBonus = selected.length ? Math.round(selected.reduce((sum, player) => sum + (player.chemistry === "spark" ? 3 : player.chemistry === "steady" ? 2 : 0), 0) / selected.length) : 0;
+    return { attack: clamp(Math.round(attack + styleAttack + mentalityAttack + formationAttack + chemistryBonus - fatiguePenalty), 0, 99), defense: clamp(Math.round(defense + styleDefense + mentalityDefense + formationDefense + chemistryBonus - fatiguePenalty), 0, 99) };
+  }
+
   score() {
     const selected = this.startingPlayers().filter((player) => this.injuryWeeksFor(player.id) === 0);
     const tactics = this.tacticalAssessment(selected);
@@ -1074,7 +1094,7 @@ export class ClubSimulation {
   teamPowerRadar(): TeamPowerRadar {
     const score = this.score();
     const selected = this.startingPlayers().filter((player) => this.injuryWeeksFor(player.id) === 0);
-    if (!selected.length) return { attack: 0, defense: 0, midfield: 0, chemistry: 0, tacticalAdaptation: 0, stability: 0, overall: 0, strengthKey: "attack", weaknessKey: "attack" };
+    if (!selected.length) return { attack: 0, defense: 0, midfield: 0, chemistry: 0, tacticalAdaptation: 0, transition: 0, overall: 0, strengthKey: "attack", weaknessKey: "attack" };
     const average = <T,>(items: T[], getter: (item: T) => number) => items.length ? items.reduce((sum, item) => sum + getter(item), 0) / items.length : 0;
     const occupied = this.formation.slots.map((slot) => ({ slot, player: this.playerForSlot(slot.id) })).filter((item): item is { slot: Formation["slots"][number]; player: Player } => item.player !== null && this.injuryWeeksFor(item.player.id) === 0);
     const unit = (kind: "attack" | "midfield" | "defense") => occupied.filter(({ slot }) => kind === "attack" ? ["CF", "WG"].includes(slot.label) : kind === "midfield" ? ["DM", "CM", "AM", "SH"].includes(slot.label) : ["GK", "CB", "SB"].includes(slot.label));
@@ -1103,16 +1123,14 @@ export class ClubSimulation {
     const defense = unitPower("defense", 4);
     const bench = this.roster.filter((player) => !Object.values(this.lineupState).includes(player.id) && this.injuryWeeksFor(player.id) === 0);
     const benchQuality = bench.length ? clamp(Math.round(average(bench.slice().sort((a, b) => this.playerPower(b) - this.playerPower(a)).slice(0, 5), (player) => this.playerPower(player))), 0, 99) : 0;
-    const averageFatigue = average(selected, (player) => player.fatigue);
-    const averageCondition = average(selected, (player) => this.conditionFor(player));
-    const stability = clamp(Math.round((100 - averageFatigue) * .52 + averageCondition * .34 + benchQuality * .14), 0, 99);
+    const transition = clamp(Math.round((score.tactics.transitionAttack + score.tactics.transitionDefense) / 2 + benchQuality * .08), 0, 99);
     const values: Record<TeamPowerRadarKey, number> = {
       attack,
       defense,
       midfield,
       chemistry: clamp(Math.round(score.tactics.chemistry), 0, 99),
       tacticalAdaptation: clamp(Math.round(score.systemRate), 0, 99),
-      stability,
+      transition,
     };
     const keys = Object.keys(values) as TeamPowerRadarKey[];
     const strengthKey = keys.reduce((best, key) => values[key] > values[best] ? key : best, keys[0]);
@@ -2758,6 +2776,7 @@ export class ClubSimulation {
     const gkRoleAttack = gkRoles.reduce((sum, item) => sum + roleBonus(item.option), 0);
     const gkRoleDefense = gkRoles.reduce((sum, item) => sum + item.option.defenseBonus, 0);
     const gkRoleSummary = gkRoles.length ? `GK役割: ${gkRoles.map((item) => `${item.player.name}=${item.option.label}`).join(" / ")}` : "GK役割: 設定なし";
+    const transition = this.transitionAssessment(selected);
     return {
       formationLabel: this.formation.label, formationTrait: formationIdentity.trait, formationNote: formationIdentity.note,
       mentality: mentality.id, mentalityLabel: mentality.label, playingStyle: style.id, playingStyleLabel: style.label,
@@ -2777,8 +2796,9 @@ export class ClubSimulation {
       sideLinkAttack, sideLinkDefense, sideLinkSummary, sideLinkDetails,
       midfieldPressAttack, midfieldPressDefense, midfieldPressSummary, midfieldPressReason, midfieldPressDetail,
       skillAttack, skillDefense, skillSummary, skillDetails,
-      attackModifier: formationIdentity.attack + mentality.attack + style.attack + chemistryBonus + cfRoleAttack + wgRoleAttack + amRoleAttack + cmRoleAttack + dmRoleAttack + cbRoleAttack + sbRoleAttack + gkRoleAttack + roleFitAttack + sideLinkAttack + midfieldPressAttack + skillAttack,
-      defenseModifier: formationIdentity.defense + mentality.defense + style.defense + chemistryBonus + cfRoleDefense + wgRoleDefense + amRoleDefense + cmRoleDefense + dmRoleDefense + cbRoleDefense + sbRoleDefense + gkRoleDefense + roleFitDefense + sideLinkDefense + midfieldPressDefense + skillDefense,
+      transitionAttack: transition.attack, transitionDefense: transition.defense,
+      attackModifier: formationIdentity.attack + mentality.attack + style.attack + chemistryBonus + cfRoleAttack + wgRoleAttack + amRoleAttack + cmRoleAttack + dmRoleAttack + cbRoleAttack + sbRoleAttack + gkRoleAttack + roleFitAttack + sideLinkAttack + midfieldPressAttack + skillAttack + Math.round((transition.attack - 60) / 25),
+      defenseModifier: formationIdentity.defense + mentality.defense + style.defense + chemistryBonus + cfRoleDefense + wgRoleDefense + amRoleDefense + cmRoleDefense + dmRoleDefense + cbRoleDefense + sbRoleDefense + gkRoleDefense + roleFitDefense + sideLinkDefense + midfieldPressDefense + skillDefense + Math.round((transition.defense - 60) / 25),
     };
   }
 
