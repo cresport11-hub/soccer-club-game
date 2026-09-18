@@ -522,6 +522,21 @@ export class ClubSimulation {
   get teamPosition() { return this.leagueRows.findIndex((row) => row.id === userClub.id) + 1; }
   get currentOpponent() { return opponentSeeds[this.week % opponentSeeds.length]; }
   get currentOpponentTactics() { return this.opponentTacticalAssessment(this.currentOpponent.id); }
+  opponentTeamPowerRadar(): TeamPowerRadar {
+    const tactics = this.currentOpponentTactics;
+    const midfieldCount = tactics.lineup.filter((player) => ["DM", "CM", "AM", "SH"].includes(player.position)).length;
+    const defensiveCount = tactics.lineup.filter((player) => ["GK", "CB", "SB"].includes(player.position)).length;
+    const midfield = clamp(Math.round(42 + midfieldCount * 7 + tactics.cohesion * .18), 0, 99);
+    const chemistry = clamp(Math.round(tactics.cohesion), 0, 99);
+    const tacticalAdaptation = clamp(Math.round(66 + (tactics.formationId === "3-6-1" ? 8 : tactics.formationId === "4-3-3" ? 5 : 2) + tactics.cohesion * .12), 0, 99);
+    const transition = clamp(Math.round((tactics.attack + tactics.defense) / 2 + (tactics.playingStyle === "direct" ? 7 : tactics.playingStyle === "press" ? 5 : 1) + (defensiveCount >= 5 ? 2 : 0)), 0, 99);
+    const values = { attack: tactics.attack, defense: tactics.defense, midfield, chemistry, tacticalAdaptation, transition };
+    const keys = Object.keys(values) as TeamPowerRadarKey[];
+    const overall = Math.round(keys.reduce((sum, key) => sum + values[key], 0) / keys.length);
+    const strengthKey = keys.reduce((best, key) => values[key] > values[best] ? key : best, keys[0]);
+    const weaknessKey = keys.reduce((worst, key) => values[key] < values[worst] ? key : worst, keys[0]);
+    return { ...values, overall, strengthKey, weaknessKey };
+  }
   get currentTacticalMatchup() { return this.tacticalMatchup(this.score().tactics, this.currentOpponentTactics); }
   get nextMatchCondition() { return this.matchConditionFor(this.isHomeWeek()); }
   get teamMoraleValue() { return this.teamMorale; }

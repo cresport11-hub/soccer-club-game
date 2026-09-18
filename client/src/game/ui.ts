@@ -849,6 +849,7 @@ export class GameUI {
 
   private teamPowerRadarCard() {
     const radar = this.simulation.teamPowerRadar();
+    const opponentRadar = this.simulation.opponentTeamPowerRadar();
     const items: Array<{ key: keyof Pick<typeof radar, "attack" | "defense" | "midfield" | "chemistry" | "tacticalAdaptation" | "transition">; label: string; short: string }> = [
       { key: "attack", label: "攻撃力", short: "攻撃力" },
       { key: "defense", label: "守備力", short: "守備力" },
@@ -872,10 +873,17 @@ export class GameUI {
       const y = center.y + Math.sin(angle) * labelRadius;
       return { ...item, value: radar[item.key], x, y };
     });
-    const aria = values.map((item) => `${item.label}${item.value}`).join("、");
+    const opponentValues = items.map((item, index) => {
+      const angle = -Math.PI / 2 + index * Math.PI / 3;
+      const labelRadius = 101;
+      const x = center.x + Math.cos(angle) * labelRadius;
+      const y = center.y + Math.sin(angle) * labelRadius;
+      return { ...item, value: opponentRadar[item.key], x, y };
+    });
+    const aria = values.map((item, index) => `${item.label} 自軍${item.value} 相手${opponentValues[index].value}`).join("、");
     const positionStyle = this.teamPowerPosition ? ` style="left:${this.teamPowerPosition.left}px;top:${this.teamPowerPosition.top}px;right:auto"` : "";
     if (!this.teamPowerRadarVisible) return `<article class="tactical-card team-power-card is-floating is-collapsed"${positionStyle} aria-label="チーム力レーダー（非表示中）"><button type="button" class="team-power-toggle team-power-toggle-collapsed" data-team-power-toggle aria-pressed="false" aria-label="チーム力グラフを表示"><span>TEAM POWER</span><b>表示</b></button></article>`;
-    return `<article class="tactical-card team-power-card is-floating"${positionStyle} aria-label="チーム力レーダー"><div class="team-power-head" data-team-power-drag title="ドラッグして移動"><div><span class="card-kicker">TEAM POWER</span><h3>チーム力 <small>6項目</small></h3></div><strong>${radar.overall}<small>AVG</small></strong><button type="button" class="team-power-toggle" data-team-power-toggle aria-pressed="true" aria-label="チーム力グラフを非表示">−</button></div><div class="team-power-chart-wrap"><svg class="team-power-radar" viewBox="0 0 260 220" role="img" aria-label="チーム力 ${aria}"><g class="team-power-grid">${[20, 40, 60, 80, 100].map((level) => `<polygon points="${polygon(level)}"></polygon>`).join("")}</g>${items.map((_, index) => `<line x1="130" y1="102" x2="${point(index, 100).split(",")[0]}" y2="${point(index, 100).split(",")[1]}"></line>`).join("")}<polygon class="team-power-area" points="${values.map((item, index) => point(index, item.value)).join(" ")}"></polygon>${values.map((item) => `<text x="${item.x.toFixed(1)}" y="${item.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" class="${item.value >= 80 ? "is-strong" : item.value < 60 ? "is-weak" : ""}">${item.short} ${item.value}</text>`).join("")}</svg></div></article>`;
+    return `<article class="tactical-card team-power-card is-floating"${positionStyle} aria-label="チーム力レーダー"><div class="team-power-head" data-team-power-drag title="ドラッグして移動"><div><span class="card-kicker">TEAM POWER</span><h3>チーム力 <small>6項目</small></h3></div><strong>${radar.overall}<small>AVG</small></strong><button type="button" class="team-power-toggle" data-team-power-toggle aria-pressed="true" aria-label="チーム力グラフを非表示">−</button></div><div class="team-power-legend"><span><i class="team-power-legend-own"></i>自軍 ${radar.overall}</span><span><i class="team-power-legend-opponent"></i>${escapeHtml(this.simulation.currentOpponent.name)} ${opponentRadar.overall}</span></div><div class="team-power-chart-wrap"><svg class="team-power-radar" viewBox="0 0 260 220" role="img" aria-label="チーム力 ${aria}"><g class="team-power-grid">${[20, 40, 60, 80, 100].map((level) => `<polygon points="${polygon(level)}"></polygon>`).join("")}</g>${items.map((_, index) => `<line x1="130" y1="102" x2="${point(index, 100).split(",")[0]}" y2="${point(index, 100).split(",")[1]}"></line>`).join("")}<polygon class="team-power-area team-power-area-own" points="${values.map((item, index) => point(index, item.value)).join(" ")}"></polygon><polygon class="team-power-area team-power-area-opponent" points="${opponentValues.map((item, index) => point(index, item.value)).join(" ")}"></polygon>${values.map((item, index) => `<text x="${item.x.toFixed(1)}" y="${(item.y - 4).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" class="${item.value >= 80 ? "is-strong" : item.value < 60 ? "is-weak" : ""}">${item.short} <tspan class="team-power-value-own">${item.value}</tspan></text><text x="${opponentValues[index].x.toFixed(1)}" y="${(opponentValues[index].y + 6).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" class="team-power-value-opponent">${opponentValues[index].value}</text>`).join("")}</svg></div></article>`;
   }
 
   private lineupPage(score: ReturnType<ClubSimulation["score"]>, selected: Player | null) {

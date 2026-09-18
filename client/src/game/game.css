@@ -590,3 +590,15 @@ button { font: inherit; }
   .bench-section .squad-card .card-stat { font-size: 8px; }
   .bench-section .squad-card .card-stat b { font-size: 8px; }
 }
+
+/* Team power comparison: lime is the club, cyan is the current opponent. */
+.team-power-legend { display:flex; flex-wrap:wrap; gap:6px 10px; margin:0 0 4px; color:#b8ceb9; font-size:7px; letter-spacing:.04em; }
+.team-power-legend span { display:inline-flex; align-items:center; gap:4px; }
+.team-power-legend i { display:inline-block; width:7px; height:7px; border-radius:50%; }
+.team-power-legend-own { background:var(--lime); box-shadow:0 0 5px rgba(217,255,74,.55); }
+.team-power-legend-opponent { background:#6ad7ff; box-shadow:0 0 5px rgba(106,215,255,.55); }
+.team-power-area-own { fill:rgba(217,255,74,.18); stroke:var(--lime); stroke-width:2; }
+.team-power-area-opponent { fill:rgba(106,215,255,.12); stroke:#6ad7ff; stroke-width:2; stroke-dasharray:4 3; }
+.team-power-value-own { fill:var(--lime); font-weight:900; }
+.team-power-value-opponent { fill:#8de5ff; font-size:8px; font-weight:900; }
+@media (max-width:600px) { .team-power-legend { font-size:6px; gap:4px 7px; }.team-power-legend i { width:6px; height:6px; }.team-power-value-opponent { font-size:7px; } }
