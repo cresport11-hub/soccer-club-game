@@ -496,7 +496,7 @@ export class GameUI {
       }
       this.finishLiveCommentary();
       this.render();
-    }, 2000);
+    }, 3000);
   }
 
   private captureScrollPosition() {
