@@ -2445,7 +2445,19 @@ export class ClubSimulation {
       const subbedOn = subbedOnIds.has(player.id);
       const base = player.position === "GK" ? (player.gk ?? 50) : (this.attackPower(player) + this.defensePower(player)) / 2;
       const rating = clamp(Math.round((6.0 + (base - 55) / 32 + goals * 1.45 + assists * .8 - (player.fatigue >= 85 ? .65 : 0) - (injured ? 1.3 : 0) - (subbedOn ? .2 : 0)) * 10) / 10, 4.5, 10);
-      const note = injured ? "負傷により途中離脱" : goals ? "決定力で試合を動かした" : assists ? "最後のパスでチャンスを演出" : player.fatigue >= 85 ? "高い疲労下で奮闘" : subbedOn ? "途中出場で流れを変えた" : "チームの戦術を遂行";
+      const commentGroups = injured
+        ? ["負傷により途中離脱", "アクシデントまで守備で粘った", "痛みを抱えながら役割を果たした"]
+        : goals
+          ? ["決定力で試合を動かした", "ゴール前の一瞬を逃さなかった", "得点でチームに勢いをもたらした", "勝負どころで結果を残した"]
+          : assists
+            ? ["最後のパスでチャンスを演出", "味方を生かす配球が光った", "決定機を生むラストパスを通した"]
+            : player.fatigue >= 85
+              ? ["高い疲労下で奮闘", "終盤まで足を止めずに走った", "苦しい時間帯を集中力で支えた"]
+              : subbedOn
+                ? ["途中出場で流れを変えた", "交代直後から強度を上げた", "限られた時間で存在感を示した"]
+                : ["チームの戦術を遂行", "安定した判断で持ち場を守った", "味方との距離感を保ち続けた", "攻守の切り替えを素早く行った", "ボールのない場面で味方を助けた", "局面に応じた立ち位置で貢献した", "無理をせず確実なプレーを選んだ", "相手の狙いを読んで対応した", "中盤と前線をつなぐ動きを見せた", "守備から攻撃への一歩目を支えた", "終始コンパクトなプレーを続けた", "要所でチームのリズムを整えた", "ポジションの役割を忠実に遂行した", "味方のカバーリングで組織を支えた", "冷静なプレー選択で試合を落ち着かせた", "前向きな姿勢で局面に関わった", "チームの狙いを理解した動きだった", "球際で粘り強く競り合った", "次のプレーを予測して準備していた", "攻守両面で堅実に役割を果たした"];
+      const commentSeed = Array.from(player.id).reduce((sum, character) => sum + character.charCodeAt(0), 0) + Math.round(rating * 10);
+      const note = commentGroups[commentSeed % commentGroups.length];
       return { playerId: player.id, player: player.name, position: player.position, rating, goals, assists, started, subbedOn, injured, note };
     }).sort((a, b) => b.rating - a.rating || b.goals - a.goals || b.assists - a.assists);
   }

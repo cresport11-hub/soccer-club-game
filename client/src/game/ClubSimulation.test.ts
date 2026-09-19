@@ -288,6 +288,13 @@ describe("Match statistics", () => {
     expect(orbit.saves).toBeGreaterThanOrEqual(0);
     expect(opponent.saves).toBeGreaterThanOrEqual(0);
   });
+
+  it("reports ratings for every player who appeared", () => {
+    const simulation = new ClubSimulation();
+    const result = simulation.advanceWeek();
+    expect(result.playerRatings).toHaveLength(11);
+    expect(result.playerRatings.every((rating) => rating.playerId && rating.note.length > 0)).toBe(true);
+  });
 });
 
 
