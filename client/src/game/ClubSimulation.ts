@@ -2421,12 +2421,21 @@ export class ClubSimulation {
   }
 
   private createMatchInjuries(highlights: MatchHighlight[], matchWeek: number): MatchInjury[] {
-    const candidates = this.startingPlayers().filter((player) => this.injuryWeeksFor(player.id) === 0 && player.fatigue >= 72).sort((a, b) => b.fatigue - a.fatigue);
+    const candidates = this.startingPlayers().filter((player) => this.injuryWeeksFor(player.id) === 0 && player.fatigue >= 58).sort((a, b) => {
+      const riskScore = (player: Player) => player.fatigue + (100 - this.conditionFor(player)) * .45 + this.trainingLoadFor(player).riskAdjustment * 2;
+      return riskScore(b) - riskScore(a);
+    });
     const candidate = candidates[0];
-    if (!candidate || deterministic(matchWeek * 29 + candidate.fatigue) < .56) return [];
+    if (!candidate) return [];
+    const fatigueRisk = Math.max(0, candidate.fatigue - 55) * .008;
+    const conditionRisk = Math.max(0, 62 - this.conditionFor(candidate)) * .003;
+    const loadRisk = Math.max(0, this.trainingLoadFor(candidate).riskAdjustment) * .012;
+    const styleRisk = this.playingStyle === "press" ? .045 : this.playingStyle === "direct" ? .025 : 0;
+    const injuryChance = clamp(.05 + fatigueRisk + conditionRisk + loadRisk + styleRisk, .05, .38);
+    if (deterministic(matchWeek * 29 + candidate.fatigue + Math.round(this.conditionFor(candidate) * 3)) >= injuryChance) return [];
     const minute = clamp(Math.round(24 + deterministic(matchWeek * 31 + candidate.attack) * 56), 22, 84);
-    const weeks = candidate.fatigue >= 90 ? 2 : 1;
-    const detail = weeks > 1 ? "強い張りを訴え、数週間の離脱見込み。" : "打撲のため、大事を取って交代が必要。";
+    const weeks = candidate.fatigue >= 90 || this.conditionFor(candidate) <= 40 ? 2 : 1;
+    const detail = weeks > 1 ? "強い張りを訴え、数週間の離脱見込み。" : "疲労の蓄積から軽い負傷。大事を取って交代が必要。";
     const injury: MatchInjury = { playerId: candidate.id, player: candidate.name, minute, weeks, detail };
     highlights.push({ minute, kind: "injury", team: "orbit", text: `${candidate.name}が負傷。${detail}` });
     highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind));
