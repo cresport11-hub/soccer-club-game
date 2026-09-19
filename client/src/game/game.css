@@ -602,3 +602,11 @@ button { font: inherit; }
 .team-power-value-own { fill:var(--lime); font-weight:900; }
 .team-power-value-opponent { fill:#8de5ff; font-size:8px; font-weight:900; }
 @media (max-width:600px) { .team-power-legend { font-size:6px; gap:4px 7px; }.team-power-legend i { width:6px; height:6px; }.team-power-value-opponent { font-size:7px; } }
+
+/* Starting XI cards: top line is OF/DF, bottom line is system understanding/fatigue. */
+.player-token .player-token-stats { display:grid; gap:1px; color:#d8ead8; font-size:8px; line-height:1.15; white-space:nowrap; }
+.player-token .player-token-stats span { display:block; }
+.player-token .player-token-stats span + span { color:#a9d3b0; }
+@media (max-width:600px) {
+  .player-token .player-token-stats { font-size:7px; }
+}
