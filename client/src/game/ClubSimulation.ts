@@ -524,13 +524,28 @@ export class ClubSimulation {
   get currentOpponentTactics() { return this.opponentTacticalAssessment(this.currentOpponent.id); }
   opponentTeamPowerRadar(): TeamPowerRadar {
     const tactics = this.currentOpponentTactics;
-    const midfieldCount = tactics.lineup.filter((player) => ["DM", "CM", "AM", "SH"].includes(player.position)).length;
-    const defensiveCount = tactics.lineup.filter((player) => ["GK", "CB", "SB"].includes(player.position)).length;
-    const midfield = clamp(Math.round(42 + midfieldCount * 7 + tactics.cohesion * .18), 0, 99);
+    const formation = formations.find((item) => item.id === tactics.formationId) ?? formations[1];
+    const entries = tactics.lineup.map((player) => ({ player, slot: formation.slots.find((slot) => player.id.endsWith(`-${slot.id}`)) ?? formation.slots[0] }));
+    const average = (values: number[]) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+    const unit = (kind: "attack" | "midfield" | "defense") => entries.filter(({ slot }) => kind === "attack" ? ["CF", "WG"].includes(slot.label) : kind === "midfield" ? ["DM", "CM", "AM", "SH"].includes(slot.label) : ["GK", "CB", "SB"].includes(slot.label));
+    const power = (kind: "attack" | "midfield" | "defense", baseline: number) => {
+      const members = unit(kind);
+      if (!members.length) return 0;
+      const value = members.map(({ player }) => kind === "attack" ? player.attack * .56 + player.pass * .28 + (player.position === "CF" || player.position === "WG" ? 5 : 0) : kind === "defense" ? player.position === "GK" ? (player.gk ?? player.defense) : player.defense * .62 + player.tackle * .22 + player.interception * .16 : player.pass * .55 + player.attack * .2 + player.defense * .25);
+      const thickness = 1 + .2 * (Math.sqrt(members.length / baseline) - 1);
+      const roleLink = members.length >= baseline ? 2 : 0;
+      const formationLink = kind === "midfield" && tactics.formationId === "3-6-1" ? 4 : kind === "attack" && tactics.formationId === "4-3-3" ? 3 : kind === "defense" && tactics.formationId === "5-4-1" ? 3 : 0;
+      return clamp(Math.round(average(value) * thickness + roleLink + formationLink), 0, 99);
+    };
+    const attack = power("attack", 3);
+    const midfield = power("midfield", 4);
+    const defense = power("defense", 4);
     const chemistry = clamp(Math.round(tactics.cohesion), 0, 99);
-    const tacticalAdaptation = clamp(Math.round(66 + (tactics.formationId === "3-6-1" ? 8 : tactics.formationId === "4-3-3" ? 5 : 2) + tactics.cohesion * .12), 0, 99);
-    const transition = clamp(Math.round((tactics.attack + tactics.defense) / 2 + (tactics.playingStyle === "direct" ? 7 : tactics.playingStyle === "press" ? 5 : 1) + (defensiveCount >= 5 ? 2 : 0)), 0, 99);
-    const values = { attack: tactics.attack, defense: tactics.defense, midfield, chemistry, tacticalAdaptation, transition };
+    const tacticalAdaptation = clamp(Math.round(tactics.cohesion * .55 + average(tactics.lineup.map((player) => (player.pass + player.interception) / 2)) * .45 + (tactics.formationId === "3-6-1" ? 3 : 0)), 0, 99);
+    const transitionBase = average(tactics.lineup.map((player) => player.pass * .3 + player.attack * .2 + player.defense * .2 + player.tackle * .15 + player.interception * .15));
+    const transitionStyle = tactics.playingStyle === "direct" ? 7 : tactics.playingStyle === "press" ? 5 : 1;
+    const transition = clamp(Math.round(transitionBase + transitionStyle + (unit("midfield").length >= 5 ? 2 : 0)), 0, 99);
+    const values = { attack, defense, midfield, chemistry, tacticalAdaptation, transition };
     const keys = Object.keys(values) as TeamPowerRadarKey[];
     const overall = Math.round(keys.reduce((sum, key) => sum + values[key], 0) / keys.length);
     const strengthKey = keys.reduce((best, key) => values[key] > values[best] ? key : best, keys[0]);
