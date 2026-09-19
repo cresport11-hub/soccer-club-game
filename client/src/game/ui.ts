@@ -423,36 +423,53 @@ export class GameUI {
     } catch { /* Audio remains unavailable until browser policy allows playback. */ }
   }
 
-  private playGoalCrowd() {
+  private playGoalCrowd(team: MatchHighlight["team"]) {
     const context = this.crowdAudio;
     if (!context || context.state !== "running") return;
     const now = context.currentTime;
+    const isOwnGoal = team === "orbit";
     const output = context.createGain();
     output.gain.setValueAtTime(0.0001, now);
-    output.gain.exponentialRampToValueAtTime(0.095, now + 0.05);
-    output.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+    output.gain.exponentialRampToValueAtTime(isOwnGoal ? 0.14 : 0.045, now + (isOwnGoal ? 0.05 : 0.08));
+    output.gain.exponentialRampToValueAtTime(0.0001, now + (isOwnGoal ? 1.05 : 0.72));
     output.connect(context.destination);
-    const crowd = context.createBuffer(1, Math.floor(context.sampleRate * 0.88), context.sampleRate);
+    const crowd = context.createBuffer(1, Math.floor(context.sampleRate * (isOwnGoal ? 1.02 : 0.68)), context.sampleRate);
     const samples = crowd.getChannelData(0);
-    for (let index = 0; index < samples.length; index += 1) samples[index] = (Math.random() * 2 - 1) * (1 - index / samples.length);
+    for (let index = 0; index < samples.length; index += 1) {
+      const envelope = 1 - index / samples.length;
+      samples[index] = (Math.random() * 2 - 1) * envelope * (isOwnGoal ? 1 : 0.62);
+    }
     const crowdSource = context.createBufferSource();
     const lowPass = context.createBiquadFilter();
     lowPass.type = "lowpass";
-    lowPass.frequency.setValueAtTime(1750, now);
+    lowPass.frequency.setValueAtTime(isOwnGoal ? 2200 : 850, now);
     crowdSource.buffer = crowd;
     crowdSource.connect(lowPass).connect(output);
     crowdSource.start(now);
     const sting = context.createOscillator();
     const stingGain = context.createGain();
-    sting.type = "sawtooth";
-    sting.frequency.setValueAtTime(392, now);
-    sting.frequency.exponentialRampToValueAtTime(784, now + 0.22);
+    sting.type = isOwnGoal ? "sawtooth" : "sine";
+    sting.frequency.setValueAtTime(isOwnGoal ? 392 : 220, now);
+    sting.frequency.exponentialRampToValueAtTime(isOwnGoal ? 784 : 138, now + (isOwnGoal ? 0.22 : 0.42));
     stingGain.gain.setValueAtTime(0.0001, now);
-    stingGain.gain.exponentialRampToValueAtTime(0.032, now + 0.03);
-    stingGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.46);
+    stingGain.gain.exponentialRampToValueAtTime(isOwnGoal ? 0.045 : 0.022, now + (isOwnGoal ? 0.03 : 0.08));
+    stingGain.gain.exponentialRampToValueAtTime(0.0001, now + (isOwnGoal ? 0.5 : 0.56));
     sting.connect(stingGain).connect(context.destination);
     sting.start(now);
-    sting.stop(now + 0.48);
+    sting.stop(now + (isOwnGoal ? 0.52 : 0.6));
+    if (!isOwnGoal) {
+      const oh = context.createOscillator();
+      const ohGain = context.createGain();
+      oh.type = "triangle";
+      oh.frequency.setValueAtTime(165, now + 0.04);
+      oh.frequency.exponentialRampToValueAtTime(110, now + 0.52);
+      ohGain.gain.setValueAtTime(0.0001, now + 0.04);
+      ohGain.gain.exponentialRampToValueAtTime(0.018, now + 0.12);
+      ohGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.62);
+      oh.connect(ohGain).connect(context.destination);
+      oh.start(now + 0.04);
+      oh.stop(now + 0.64);
+    }
   }
 
   private stopGoalCelebration() {
@@ -464,7 +481,7 @@ export class GameUI {
   private triggerGoalCelebration(item: MatchHighlight) {
     this.stopGoalCelebration();
     this.goalCelebration = item;
-    this.playGoalCrowd();
+    this.playGoalCrowd(item.team);
     this.goalCelebrationTimer = window.setTimeout(() => {
       this.goalCelebration = null;
       this.goalCelebrationTimer = null;
