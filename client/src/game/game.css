@@ -610,3 +610,7 @@ button { font: inherit; }
 @media (max-width:600px) {
   .player-token .player-token-stats { font-size:7px; }
 }
+
+/* Bench cards mirror the Starting XI stat layout. */
+.squad-card .card-stat { display:grid; gap:1px; justify-content:initial; line-height:1.15; }
+.squad-card .card-stat b, .squad-card .card-stat span { display:block; }

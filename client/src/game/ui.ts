@@ -968,14 +968,13 @@ export class GameUI {
 
   private playerCard(player: Player, isSelected: boolean, replacementHint?: "primary" | "secondary") {
     const isStarter = Object.values(this.simulation.lineupState).includes(player.id);
-    const ability = player.position === "GK" ? `GK ${player.gk}　OF ${player.attack}` : `OF ${player.attack}　DF ${player.defense}`;
     const injuryWeeks = this.simulation.injuryWeeksFor(player.id);
     const skill = this.simulation.playerSkillStatus(player)[0];
     const conditionStatus = this.simulation.conditionStatusFor(player);
     const system = this.simulation.systemEffectivenessFor(player);
     const fatiguePill = injuryWeeks ? `<span class="condition-pill injured">負傷 / ${injuryWeeks}週</span>` : `<span class="condition-pill ${player.fatigue >= 80 ? "danger" : player.fatigue >= 60 ? "warning" : "ready"}">疲労 ${player.fatigue}</span>`;
     const playerConditionPill = `<span class="condition-pill player-condition ${conditionStatus.tone}">状態 ${conditionStatus.label} ${conditionStatus.value}</span>`;
-    return `<button data-player="${player.id}" class="squad-card ${isSelected ? "is-selected" : ""} ${replacementHint ? `is-replacement-${replacementHint}` : ""} ${isStarter ? "is-starter" : ""} ${injuryWeeks ? "is-injured" : ""}" ${injuryWeeks ? "disabled" : ""}><div><span class="pos-tag">${positionLabel(player.position)}</span></div><h4>${player.name}</h4><p>${player.secondary ? `${positionLabel(player.position)} / ${positionLabel(player.secondary)}` : positionLabel(player.position)}　Lv.${player.level}/${player.ceiling}</p><div class="card-stat"><b>${ability}</b><span>疲 ${player.fatigue}</span></div><span class="system-fit-pill ${system.rate >= 95 ? "is-high" : system.rate < 80 ? "is-low" : ""}">システム ${system.rate}%</span>${skill ? `<span class="player-skill-chip ${skill.active ? "is-active" : ""}">${skill.short}</span>` : ""}${fatiguePill}${playerConditionPill}${replacementHint ? `<span class="replacement-fit ${replacementHint}">${replacementHint === "primary" ? "主適性 / 優先" : "副適性 / 候補"}</span>` : ""}${isStarter ? "<em>STARTING XI</em>" : ""}</button>`;
+    return `<button data-player="${player.id}" class="squad-card ${isSelected ? "is-selected" : ""} ${replacementHint ? `is-replacement-${replacementHint}` : ""} ${isStarter ? "is-starter" : ""} ${injuryWeeks ? "is-injured" : ""}" ${injuryWeeks ? "disabled" : ""}><div><span class="pos-tag">${positionLabel(player.position)}</span></div><h4>${player.name}</h4><p>${player.secondary ? `${positionLabel(player.position)} / ${positionLabel(player.secondary)}` : positionLabel(player.position)}　Lv.${player.level}/${player.ceiling}</p><div class="card-stat"><b>OF${player.attack}/DF${player.defense}</b><span>シ${system.rate}%/疲${player.fatigue}</span></div>${skill ? `<span class="player-skill-chip ${skill.active ? "is-active" : ""}">${skill.short}</span>` : ""}${fatiguePill}${playerConditionPill}${replacementHint ? `<span class="replacement-fit ${replacementHint}">${replacementHint === "primary" ? "主適性 / 優先" : "副適性 / 候補"}</span>` : ""}${isStarter ? "<em>STARTING XI</em>" : ""}</button>`;
   }
 
   private organizedRosterPlayers() {
