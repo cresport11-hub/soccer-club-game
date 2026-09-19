@@ -29,7 +29,25 @@ export class GameUI {
   private root = document.createElement("div");
   private page: PageId = "home";
   private toast = "";
+  private toastTimer: number | null = null;
   private modal = false;
+
+  private showToast(message: string) {
+    if (this.toastTimer !== null) window.clearTimeout(this.toastTimer);
+    this.toast = message;
+    this.toastTimer = window.setTimeout(() => {
+      this.toast = "";
+      this.toastTimer = null;
+      this.render();
+    }, 3000);
+  }
+
+  private clearToast() {
+    if (this.toastTimer !== null) window.clearTimeout(this.toastTimer);
+    this.toastTimer = null;
+    this.toast = "";
+  }
+
   private matchStage: "halftime" | "fulltime" = "fulltime";
   private halfTimeMentality: Mentality | null = null;
   private halfTimeStyle: PlayingStyle | null = null;
@@ -97,6 +115,7 @@ export class GameUI {
   dispose() {
     this.stopLiveCommentary();
     this.stopGoalCelebration();
+    this.clearToast();
     void this.crowdAudio?.close();
     this.root.removeEventListener("click", this.handleClick);
     this.root.removeEventListener("dragstart", this.handleMarkDragStart);
@@ -158,34 +177,34 @@ export class GameUI {
     }
     if (target.dataset.autoCriteria) {
       this.simulation.setAutoLineupCriteria(target.dataset.autoCriteria as AutoLineupCriteria);
-      this.toast = `オート編成の評価基準を「${target.textContent?.trim() ?? "選択"}」に設定しました。`;
+      this.showToast(`オート編成の評価基準を「${target.textContent?.trim() ?? "選択"}」に設定しました。`);
       this.render();
       return;
     }
-    if (target.dataset.nav) { this.page = target.dataset.nav as PageId; this.mobileNavOpen = false; this.playerDetailId = null; this.opponentScoutOpen = false; this.opponentPlayerDetailId = null; this.manualMarkSourceId = null; this.toast = ""; this.render(); return; }
-    if (target.dataset.rosterSort) { this.rosterSort = target.dataset.rosterSort as RosterSort; this.toast = "選手一覧の並び順を更新しました。"; this.render(); return; }
-    if (target.dataset.rosterSalaryFilter) { this.rosterSalaryFilter = target.dataset.rosterSalaryFilter as SalaryFilter; this.toast = "年俸条件を更新しました。"; this.render(); return; }
-    if (target.dataset.rosterContractFilter) { this.rosterContractFilter = target.dataset.rosterContractFilter as ContractFilter; this.toast = "契約年数の条件を更新しました。"; this.render(); return; }
+    if (target.dataset.nav) { this.page = target.dataset.nav as PageId; this.mobileNavOpen = false; this.playerDetailId = null; this.opponentScoutOpen = false; this.opponentPlayerDetailId = null; this.manualMarkSourceId = null; this.clearToast(); this.render(); return; }
+    if (target.dataset.rosterSort) { this.rosterSort = target.dataset.rosterSort as RosterSort; this.showToast("選手一覧の並び順を更新しました。"); this.render(); return; }
+    if (target.dataset.rosterSalaryFilter) { this.rosterSalaryFilter = target.dataset.rosterSalaryFilter as SalaryFilter; this.showToast("年俸条件を更新しました。"); this.render(); return; }
+    if (target.dataset.rosterContractFilter) { this.rosterContractFilter = target.dataset.rosterContractFilter as ContractFilter; this.showToast("契約年数の条件を更新しました。"); this.render(); return; }
     if (target.dataset.playerDetail) { this.playerDetailId = target.dataset.playerDetail; this.render(); return; }
     if (target.dataset.closePlayerDetail !== undefined) { this.playerDetailId = null; this.render(); return; }
     if (target.dataset.markSource) {
       const source = this.simulation.rosterPlayers.find((player) => player.id === target.dataset.markSource);
       this.manualMarkSourceId = this.manualMarkSourceId === target.dataset.markSource ? null : target.dataset.markSource;
-      this.toast = this.manualMarkSourceId && source ? `${source.name}を選択中。相手選手へドロップ、またはタップして担当を指定します。` : "担当選手の選択を解除しました。";
+      this.showToast(this.manualMarkSourceId && source ? `${source.name}を選択中。相手選手へドロップ、またはタップして担当を指定します。` : "担当選手の選択を解除しました。");
       this.render();
       return;
     }
     if (target.dataset.markClear !== undefined) {
       this.simulation.clearManualMarkAssignments();
       this.manualMarkSourceId = null;
-      this.toast = "手動のマーク指定を解除し、近接ポジションの自動判定へ戻しました。";
+      this.showToast("手動のマーク指定を解除し、近接ポジションの自動判定へ戻しました。");
       this.render();
       return;
     }
     if (target.dataset.opponentPlayer) {
       if (this.manualMarkSourceId) {
         const result = this.simulation.setManualMarkAssignment(target.dataset.opponentPlayer, this.manualMarkSourceId);
-        this.toast = result.text;
+        this.showToast(result.text);
         if (result.ok) this.manualMarkSourceId = null;
         this.render();
         return;
@@ -202,7 +221,7 @@ export class GameUI {
       if (selected && selectedSlot && selected.id !== incomingId && !incomingIsStarter) {
         this.simulation.selectPlayer(incomingId);
         const swapped = this.simulation.assignSelected(selectedSlot);
-        this.toast = swapped ? `${selected.name}に代えて${incomingId === selected.id ? selected.name : this.simulation.rosterPlayers.find((player) => player.id === incomingId)?.name ?? "選手"}を起用しました。` : "交代対象を配置できませんでした。";
+        this.showToast(swapped ? `${selected.name}に代えて${incomingId === selected.id ? selected.name : this.simulation.rosterPlayers.find((player) => player.id === incomingId)?.name ?? "選手"}を起用しました。` : "交代対象を配置できませんでした。");
       } else {
         this.simulation.selectPlayer(incomingId);
       }
@@ -215,20 +234,20 @@ export class GameUI {
       const selected = this.simulation.selectedPlayer;
       if (!selected && slotPlayer) {
         this.simulation.selectPlayer(slotPlayer.id);
-        this.toast = `${slotPlayer.name}を交代対象として選択しました。ベンチ選手を選ぶと交代します。`;
+        this.showToast(`${slotPlayer.name}を交代対象として選択しました。ベンチ選手を選ぶと交代します。`);
       } else if (selected && slotPlayer?.id === selected.id) {
         this.simulation.selectPlayer(selected.id);
-        this.toast = "交代対象の選択を解除しました。";
+        this.showToast("交代対象の選択を解除しました。");
       } else {
         const assigned = this.simulation.assignSelected(slotId);
-        if (assigned && selected) this.toast = `${selected.name}を${slotPlayer ? `${slotPlayer.name}に代えて` : "空き枠へ"}配置しました。`;
+        if (assigned && selected) this.showToast(`${selected.name}を${slotPlayer ? `${slotPlayer.name}に代えて` : "空き枠へ"}配置しました。`);
       }
       this.render();
       return;
     }
     if (target.dataset.formation) { this.simulation.setFormation(target.dataset.formation); this.render(); return; }
-    if (target.dataset.mentality) { this.simulation.setMentality(target.dataset.mentality as Mentality); this.toast = `${this.simulation.score().tactics.mentalityLabel}へ攻守意識を変更しました。`; this.render(); return; }
-    if (target.dataset.style) { this.simulation.setPlayingStyle(target.dataset.style as PlayingStyle); this.toast = `${this.simulation.score().tactics.playingStyleLabel}を試合プランへ設定しました。`; this.render(); return; }
+    if (target.dataset.mentality) { this.simulation.setMentality(target.dataset.mentality as Mentality); this.showToast(`${this.simulation.score().tactics.mentalityLabel}へ攻守意識を変更しました。`); this.render(); return; }
+    if (target.dataset.style) { this.simulation.setPlayingStyle(target.dataset.style as PlayingStyle); this.showToast(`${this.simulation.score().tactics.playingStyleLabel}を試合プランへ設定しました。`); this.render(); return; }
     if (target.dataset.halfMentality) { this.halfTimeMentality = target.dataset.halfMentality as Mentality; this.render(); return; }
     if (target.dataset.halfStyle) { this.halfTimeStyle = target.dataset.halfStyle as PlayingStyle; this.render(); return; }
     if (target.dataset.halfOut) { this.halfTimePendingOut = target.dataset.halfOut; this.render(); return; }
@@ -248,53 +267,53 @@ export class GameUI {
       case "open-opponent-scout": this.opponentScoutOpen = true; this.playerDetailId = null; this.opponentPlayerDetailId = null; this.manualMarkSourceId = null; this.render(); break;
       case "close-opponent-scout": this.opponentScoutOpen = false; this.opponentPlayerDetailId = null; this.manualMarkSourceId = null; this.render(); break;
       case "close-opponent-player": this.opponentPlayerDetailId = null; this.render(); break;
-      case "close-modal": { this.stopLiveCommentary(); this.stopGoalCelebration(); this.modal = false; this.matchStage = "fulltime"; this.resetHalfTimeControls(); const marketNotice = this.simulation.marketUpdateNotice; if (marketNotice) this.toast = `新着候補 ${marketNotice.candidates.length}名が市場に届きました。${marketNotice.requestedPositions.length ? `希望ポジション（${marketNotice.requestedPositions.map(positionLabel).join(" / ")}）に限定済みです。` : "移籍市場で確認してください。"}`; this.render(); break; }
+      case "close-modal": { this.stopLiveCommentary(); this.stopGoalCelebration(); this.modal = false; this.matchStage = "fulltime"; this.resetHalfTimeControls(); const marketNotice = this.simulation.marketUpdateNotice; if (marketNotice) this.showToast(`新着候補 ${marketNotice.candidates.length}名が市場に届きました。${marketNotice.requestedPositions.length ? `希望ポジション（${marketNotice.requestedPositions.map(positionLabel).join(" / ")}）に限定済みです。` : "移籍市場で確認してください。"}`); this.render(); break; }
       case "skip-commentary": this.finishLiveCommentary(); this.render(); break;
       case "continue-half": {
         const result = this.simulation.lastResult;
         if (!result) break;
-        if (this.commentaryPhase === "first-half") { this.toast = "実況の受信が完了すると、後半を開始できます。"; this.render(); break; }
+        if (this.commentaryPhase === "first-half") { this.showToast("実況の受信が完了すると、後半を開始できます。"); this.render(); break; }
         const urgentInjury = result.injuries.find((injury) => injury.minute <= 45 && !this.halfTimeChanges.some((change) => change.outPlayerId === injury.playerId));
-        if (urgentInjury) { this.toast = `${urgentInjury.player}の負傷交代を先に完了してください。`; this.render(); break; }
+        if (urgentInjury) { this.showToast(`${urgentInjury.player}の負傷交代を先に完了してください。`); this.render(); break; }
         const update = this.simulation.applyHalfTimePlan(this.halfTimeMentality ?? result.tactics.mentality, this.halfTimeStyle ?? result.tactics.playingStyle, this.halfTimeChanges);
-        this.toast = update.text;
+        this.showToast(update.text);
         this.matchStage = "fulltime";
         this.resetHalfTimeControls();
         this.startLiveCommentary("second-half");
         break;
       }
-      case "auto": this.simulation.autoLineup(); this.toast = "選択した評価基準で最適な11人を戦術ボードへ配置しました。"; this.render(); break;
-      case "train": { const result = this.simulation.train(target.dataset.training as TrainingFocus); this.toast = result.text; this.render(); break; }
-      case "set-training-load": { const result = this.simulation.setTrainingLoad(target.dataset.trainingPlayer ?? "", target.dataset.trainingLoad as "recovery" | "light" | "standard" | "high"); this.toast = result.text; this.render(); break; }
-      case "set-skill-training-target": { const result = this.simulation.setSkillTrainingTarget(target.dataset.skillPlayer ?? "", target.dataset.skillTarget as PlayerSkillId); this.toast = result.text; this.render(); break; }
-      case "set-youth-skill-training-target": { const result = this.simulation.setYouthSkillTrainingTarget(target.dataset.youthSkillPlayer ?? "", target.dataset.youthSkillTarget as PlayerSkillId); this.toast = result.text; this.render(); break; }
-      case "assign-scout-staff": { const result = this.simulation.assignScoutStaff(target.dataset.scoutStaff ?? ""); this.toast = result.text; this.render(); break; }
-      case "set-role-play-style": { const role = target.dataset.roleKind as "cf" | "wg" | "am" | "cm" | "dm" | "cb" | "sb" | "gk"; const playStyle = target.dataset.roleStyle ?? ""; const result = role === "cf" ? this.simulation.setCfPlayStyle(target.dataset.rolePlayer ?? "", playStyle as CFPlayStyle) : role === "wg" ? this.simulation.setWgPlayStyle(target.dataset.rolePlayer ?? "", playStyle as WGPlayStyle) : role === "am" ? this.simulation.setAmPlayStyle(target.dataset.rolePlayer ?? "", playStyle as AMPlayStyle) : role === "cm" ? this.simulation.setCmPlayStyle(target.dataset.rolePlayer ?? "", playStyle as CMPlayStyle) : role === "dm" ? this.simulation.setDmPlayStyle(target.dataset.rolePlayer ?? "", playStyle as DMPlayStyle) : role === "cb" ? this.simulation.setCbPlayStyle(target.dataset.rolePlayer ?? "", playStyle as CBPlayStyle) : role === "sb" ? this.simulation.setSbPlayStyle(target.dataset.rolePlayer ?? "", playStyle as SBPlayStyle) : this.simulation.setGkPlayStyle(target.dataset.rolePlayer ?? "", playStyle as GKPlayStyle); this.toast = result.text; this.render(); break; }
-      case "develop-youth": { const result = this.simulation.developYouth(); this.toast = result.text; this.render(); break; }
-      case "promote-youth": { const result = this.simulation.promoteYouth(target.dataset.youth ?? ""); this.toast = result.text; this.render(); break; }
-      case "set-market-preference": { const result = this.simulation.setMarketPreferredPosition(target.dataset.marketPosition as Player["position"]); this.toast = result.text; this.render(); break; }
-      case "clear-market-preferences": { const result = this.simulation.clearMarketPreferredPositions(); this.toast = result.text; this.render(); break; }
-      case "dismiss-market-update": { this.simulation.dismissMarketUpdateNotice(); this.toast = "新着候補の通知を確認しました。"; this.render(); break; }
+      case "auto": this.simulation.autoLineup(); this.showToast("選択した評価基準で最適な11人を戦術ボードへ配置しました。"); this.render(); break;
+      case "train": { const result = this.simulation.train(target.dataset.training as TrainingFocus); this.showToast(result.text); this.render(); break; }
+      case "set-training-load": { const result = this.simulation.setTrainingLoad(target.dataset.trainingPlayer ?? "", target.dataset.trainingLoad as "recovery" | "light" | "standard" | "high"); this.showToast(result.text); this.render(); break; }
+      case "set-skill-training-target": { const result = this.simulation.setSkillTrainingTarget(target.dataset.skillPlayer ?? "", target.dataset.skillTarget as PlayerSkillId); this.showToast(result.text); this.render(); break; }
+      case "set-youth-skill-training-target": { const result = this.simulation.setYouthSkillTrainingTarget(target.dataset.youthSkillPlayer ?? "", target.dataset.youthSkillTarget as PlayerSkillId); this.showToast(result.text); this.render(); break; }
+      case "assign-scout-staff": { const result = this.simulation.assignScoutStaff(target.dataset.scoutStaff ?? ""); this.showToast(result.text); this.render(); break; }
+      case "set-role-play-style": { const role = target.dataset.roleKind as "cf" | "wg" | "am" | "cm" | "dm" | "cb" | "sb" | "gk"; const playStyle = target.dataset.roleStyle ?? ""; const result = role === "cf" ? this.simulation.setCfPlayStyle(target.dataset.rolePlayer ?? "", playStyle as CFPlayStyle) : role === "wg" ? this.simulation.setWgPlayStyle(target.dataset.rolePlayer ?? "", playStyle as WGPlayStyle) : role === "am" ? this.simulation.setAmPlayStyle(target.dataset.rolePlayer ?? "", playStyle as AMPlayStyle) : role === "cm" ? this.simulation.setCmPlayStyle(target.dataset.rolePlayer ?? "", playStyle as CMPlayStyle) : role === "dm" ? this.simulation.setDmPlayStyle(target.dataset.rolePlayer ?? "", playStyle as DMPlayStyle) : role === "cb" ? this.simulation.setCbPlayStyle(target.dataset.rolePlayer ?? "", playStyle as CBPlayStyle) : role === "sb" ? this.simulation.setSbPlayStyle(target.dataset.rolePlayer ?? "", playStyle as SBPlayStyle) : this.simulation.setGkPlayStyle(target.dataset.rolePlayer ?? "", playStyle as GKPlayStyle); this.showToast(result.text); this.render(); break; }
+      case "develop-youth": { const result = this.simulation.developYouth(); this.showToast(result.text); this.render(); break; }
+      case "promote-youth": { const result = this.simulation.promoteYouth(target.dataset.youth ?? ""); this.showToast(result.text); this.render(); break; }
+      case "set-market-preference": { const result = this.simulation.setMarketPreferredPosition(target.dataset.marketPosition as Player["position"]); this.showToast(result.text); this.render(); break; }
+      case "clear-market-preferences": { const result = this.simulation.clearMarketPreferredPositions(); this.showToast(result.text); this.render(); break; }
+      case "dismiss-market-update": { this.simulation.dismissMarketUpdateNotice(); this.showToast("新着候補の通知を確認しました。"); this.render(); break; }
       case "select-market-candidate": {
         const result = this.simulation.selectMarketCandidate(target.dataset.marketCandidate ?? "");
-        this.toast = result.text;
+        this.showToast(result.text);
         this.page = "market";
         this.render();
         break;
       }
-      case "negotiate-recruit": { const result = this.simulation.negotiateRecruit(); this.toast = result.text; this.render(); break; }
-      case "recruit": { const result = this.simulation.signRecruit(); this.toast = result.text; this.render(); break; }
-      case "respond-sale": { const result = this.simulation.respondToSaleOffer(target.dataset.saleOffer ?? "", target.dataset.saleDecision === "accept"); this.toast = result.text; this.render(); break; }
-      case "renew-contract": { const result = this.simulation.renewContract(target.dataset.contract ?? "", target.dataset.contractOffer as ContractOfferId); this.toast = result.text; this.render(); break; }
-      case "sign-sponsor": { const result = this.simulation.signSponsor(target.dataset.sponsor ?? ""); this.toast = result.text; this.render(); break; }
-      case "upgrade-concession": { const result = this.simulation.upgradeConcession(); this.toast = result.text; this.render(); break; }
-      case "upgrade-scout": { const result = this.simulation.upgradeScoutNetwork(); this.toast = result.text; this.render(); break; }
-      case "upgrade-training": { const result = this.simulation.upgradeTrainingFacility(); this.toast = result.text; this.render(); break; }
-      case "save": this.toast = "クラブデータをこのブラウザに保存しました。"; this.render(); break;
+      case "negotiate-recruit": { const result = this.simulation.negotiateRecruit(); this.showToast(result.text); this.render(); break; }
+      case "recruit": { const result = this.simulation.signRecruit(); this.showToast(result.text); this.render(); break; }
+      case "respond-sale": { const result = this.simulation.respondToSaleOffer(target.dataset.saleOffer ?? "", target.dataset.saleDecision === "accept"); this.showToast(result.text); this.render(); break; }
+      case "renew-contract": { const result = this.simulation.renewContract(target.dataset.contract ?? "", target.dataset.contractOffer as ContractOfferId); this.showToast(result.text); this.render(); break; }
+      case "sign-sponsor": { const result = this.simulation.signSponsor(target.dataset.sponsor ?? ""); this.showToast(result.text); this.render(); break; }
+      case "upgrade-concession": { const result = this.simulation.upgradeConcession(); this.showToast(result.text); this.render(); break; }
+      case "upgrade-scout": { const result = this.simulation.upgradeScoutNetwork(); this.showToast(result.text); this.render(); break; }
+      case "upgrade-training": { const result = this.simulation.upgradeTrainingFacility(); this.showToast(result.text); this.render(); break; }
+      case "save": this.showToast("クラブデータをこのブラウザに保存しました。"); this.render(); break;
       case "save-club-name": {
         const input = this.root.querySelector<HTMLInputElement>("[data-club-name-input]");
         const result = this.simulation.setClubName(input?.value ?? "");
-        this.toast = result.text;
+        this.showToast(result.text);
         this.render();
         break;
       }
@@ -307,7 +326,7 @@ export class GameUI {
         this.modal = false;
         this.matchStage = "fulltime";
         this.resetHalfTimeControls();
-        this.toast = "ゲームを初期状態へリセットしました。";
+        this.showToast("ゲームを初期状態へリセットしました。");
         this.render();
         break;
       }
@@ -343,7 +362,7 @@ export class GameUI {
     this.draggingMarkSourceId = null;
     this.manualMarkSourceId = null;
     this.root.classList.remove("is-mark-dragging");
-    this.toast = result.text;
+    this.showToast(result.text);
     this.render();
   };
 
