@@ -370,4 +370,13 @@ describe("Team power radar", () => {
       expect(simulation.formation.slots.filter((slot) => ["DM", "CM", "AM", "SH"].includes(slot.label)).map((slot) => slot.label)).toEqual(expect.arrayContaining(midfield));
     });
   });
+  it("keeps the diamond OH and DH on the central vertical axis", () => {
+    const simulation = new ClubSimulation();
+    simulation.setFormation("4-4-2-diamond");
+    const oh = simulation.formation.slots.find((slot) => slot.id === "oh");
+    const dh = simulation.formation.slots.find((slot) => slot.id === "dm");
+    expect(oh?.x).toBe(50);
+    expect(dh?.x).toBe(50);
+    expect(dh?.y).toBeGreaterThan(oh?.y ?? 0);
+  });
 });

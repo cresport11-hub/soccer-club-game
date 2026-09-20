@@ -257,7 +257,7 @@ export const formations: Formation[] = [
     slots: [
       field("gk", "GK", 50, 91, ["GK"]),
       field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB"]), field("rcb", "CB", 62, 80, ["CB", "SB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
-      field("dm", "DM", 50, 64, ["DM", "CM", "CB"]), field("lcm", "CM", 31, 52, ["CM", "DM", "AM"]), field("rcm", "CM", 69, 52, ["CM", "DM", "AM"]), field("oh", "AM", 50, 38, ["AM", "CM", "CF", "WG"]),
+      field("dm", "DM", 50, 66, ["DM", "CM", "CB"]), field("lcm", "CM", 31, 52, ["CM", "DM", "AM"]), field("rcm", "CM", 69, 52, ["CM", "DM", "AM"]), field("oh", "AM", 50, 34, ["AM", "CM", "CF", "WG"]),
       field("lst", "CF", 38, 24, ["CF", "AM", "WG"]), field("rst", "CF", 62, 24, ["CF", "AM", "WG"]),
     ],
   },
