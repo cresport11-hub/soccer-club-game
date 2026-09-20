@@ -614,3 +614,21 @@ button { font: inherit; }
 /* Bench cards mirror the Starting XI stat layout. */
 .squad-card .card-stat { display:grid; gap:1px; justify-content:initial; line-height:1.15; }
 .squad-card .card-stat b, .squad-card .card-stat span { display:block; }
+
+/* Base formation first, then the selected formation's structure presets. */
+.formation-structure-menu { display:flex; align-items:center; justify-content:space-between; gap:16px; max-width:1440px; margin:-7px auto 16px; padding:12px 14px; border:1px solid rgba(217,255,74,.28); background:rgba(8,38,20,.72); }
+.formation-structure-menu > div:first-child { display:grid; gap:4px; min-width:160px; }
+.formation-structure-menu > div:first-child small { color:#9eba9f; font-size:10px; line-height:1.45; }
+.formation-structure-options { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:7px; }
+.formation-structure-chip { min-width:125px; padding:8px 10px; border:1px solid rgba(188,227,190,.18); color:#a9c4ab; background:rgba(3,22,12,.58); text-align:left; }
+.formation-structure-chip b, .formation-structure-chip span { display:block; }
+.formation-structure-chip b { color:#e1eee1; font-size:11px; }
+.formation-structure-chip span { margin-top:3px; color:#8da992; font-size:9px; }
+.formation-structure-chip.is-selected { border-color:var(--lime); background:rgba(217,255,74,.12); }
+.formation-structure-chip.is-selected b { color:var(--lime); }
+@media (max-width:700px) {
+  .formation-structure-menu { display:block; margin-top:-8px; padding:10px; }
+  .formation-structure-menu > div:first-child { margin-bottom:9px; }
+  .formation-structure-options { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); justify-content:stretch; }
+  .formation-structure-chip { min-width:0; }
+}

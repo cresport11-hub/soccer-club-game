@@ -942,9 +942,15 @@ export class GameUI {
     const roleFitLeaders = tactics.roleFitDetails.filter((item) => item.totalBoost > 0).sort((a, b) => b.totalBoost - a.totalBoost).slice(0, 3).map((item) => `${item.player} ${item.style} +${item.totalBoost}`).join("　/　");
     const sideLinkLeaders = tactics.sideLinkDetails.map((item) => `${item.side} ${item.widePlayer}×${item.backPlayer} ${item.grade}`).join("　/　");
     const skillLeaders = tactics.skillDetails.filter((skill) => skill.active).map((skill) => `${skill.player} ${skill.short}`).join("　/　");
+    const baseFormationIds = ["4-4-2", "4-3-3", "4-5-1", "3-4-3", "3-5-2", "3-6-1", "5-4-1", "5-3-2"];
+    const selectedFormationId = this.simulation.formation.id;
+    const selectedBaseFormationId = selectedFormationId.startsWith("4-4-2-") ? "4-4-2" : selectedFormationId;
+    const baseFormations = baseFormationIds.map((id) => formations.find((formation) => formation.id === id)).filter((formation): formation is typeof formations[number] => Boolean(formation));
+    const fourFourTwoStructures = formations.filter((formation) => formation.id.startsWith("4-4-2-"));
+    const formationMenu = `<section class="formation-switcher">${baseFormations.map((formation) => `<button data-formation="${formation.id}" class="formation-chip ${selectedBaseFormationId === formation.id ? "is-selected" : ""}"><b>${formation.label}</b><span>${formation.description}</span></button>`).join("")}</section>${selectedBaseFormationId === "4-4-2" ? `<section class="formation-structure-menu"><div><span class="card-kicker">4-4-2 MIDFIELD STRUCTURE</span><small>構成を選択すると、ピッチ上の配置も切り替わります。</small></div><div class="formation-structure-options"><button data-formation="4-4-2" class="formation-structure-chip ${selectedFormationId === "4-4-2" ? "is-selected" : ""}"><b>CH2・SH2</b><span>標準型</span></button>${fourFourTwoStructures.map((formation) => { const [structure, label] = formation.description.split("／"); return `<button data-formation="${formation.id}" class="formation-structure-chip ${selectedFormationId === formation.id ? "is-selected" : ""}"><b>${structure}</b><span>${label ?? "構成"}</span></button>`; }).join("")}</div></section>` : ""}`;
     return `
       ${this.pageHeading("MATCHDAY", "スタメンを組む", "選手を選び、戦術ボードのポジションへ配置する。")}
-      <section class="formation-switcher">${formations.map((formation) => `<button data-formation="${formation.id}" class="formation-chip ${this.simulation.formation.id === formation.id ? "is-selected" : ""}"><b>${formation.label}</b><span>${formation.description}</span></button>`).join("")}</section>
+      ${formationMenu}
       <section class="tactical-console tactical-card tactical-plan-card">
         <div class="tactical-plan-header"><div><span class="card-kicker">TACTICAL PLAN</span><h3>${this.simulation.formation.label} / ${tactics.mentalityLabel} / ${tactics.playingStyleLabel}</h3><p>${tactics.formationTrait}</p></div><div class="tactical-plan-metrics"><span><b>${score.systemRate}%</b><small>適応</small></span><span><b>${tactics.chemistry}%</b><small>連携</small></span></div></div>
         <div class="tactical-plan-summary"><span><b>布陣</b>${this.simulation.formation.label}</span><span><b>攻守</b>${tactics.mentalityLabel}</span><span><b>スタイル</b>${tactics.playingStyleLabel}</span><span><b>補正</b>攻 ${signed(tactics.attackModifier)} / 守 ${signed(tactics.defenseModifier)}</span></div>
