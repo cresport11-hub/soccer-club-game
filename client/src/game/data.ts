@@ -218,6 +218,50 @@ export const formations: Formation[] = [
     ],
   },
   {
+    id: "4-4-2-double-pivot",
+    label: "4-4-2",
+    description: "DH2・SH2／ダブルボランチ",
+    slots: [
+      field("gk", "GK", 50, 91, ["GK"]),
+      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB"]), field("rcb", "CB", 62, 80, ["CB", "SB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
+      field("lm", "SH", 17, 51, ["SH", "WG", "AM", "CM"]), field("ldm", "DM", 39, 57, ["DM", "CM", "CB"]), field("rdm", "DM", 61, 57, ["DM", "CM", "CB"]), field("rm", "SH", 83, 51, ["SH", "WG", "AM", "CM"]),
+      field("lst", "CF", 38, 24, ["CF", "AM", "WG"]), field("rst", "CF", 62, 24, ["CF", "AM", "WG"]),
+    ],
+  },
+  {
+    id: "4-4-2-attacking-wide",
+    label: "4-4-2",
+    description: "DH1・OH1・SH2／攻撃的ワイド",
+    slots: [
+      field("gk", "GK", 50, 91, ["GK"]),
+      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB"]), field("rcb", "CB", 62, 80, ["CB", "SB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
+      field("lm", "SH", 17, 51, ["SH", "WG", "AM", "CM"]), field("dm", "DM", 39, 62, ["DM", "CM", "CB"]), field("oh", "AM", 61, 50, ["AM", "CM", "CF", "WG"]), field("rm", "SH", 83, 51, ["SH", "WG", "AM", "CM"]),
+      field("lst", "CF", 38, 24, ["CF", "AM", "WG"]), field("rst", "CF", 62, 24, ["CF", "AM", "WG"]),
+    ],
+  },
+  {
+    id: "4-4-2-central",
+    label: "4-4-2",
+    description: "CH4／中央支配",
+    slots: [
+      field("gk", "GK", 50, 91, ["GK"]),
+      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB"]), field("rcb", "CB", 62, 80, ["CB", "SB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
+      field("lcm-wide", "CM", 17, 51, ["CM", "DM", "AM"]), field("lcm", "CM", 39, 57, ["CM", "DM", "AM"]), field("rcm", "CM", 61, 57, ["CM", "DM", "AM"]), field("rcm-wide", "CM", 83, 51, ["CM", "DM", "AM"]),
+      field("lst", "CF", 38, 24, ["CF", "AM", "WG"]), field("rst", "CF", 62, 24, ["CF", "AM", "WG"]),
+    ],
+  },
+  {
+    id: "4-4-2-diamond",
+    label: "4-4-2",
+    description: "DH1・CH2・OH1／ダイヤモンド",
+    slots: [
+      field("gk", "GK", 50, 91, ["GK"]),
+      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB"]), field("rcb", "CB", 62, 80, ["CB", "SB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
+      field("dm", "DM", 50, 64, ["DM", "CM", "CB"]), field("lcm", "CM", 31, 52, ["CM", "DM", "AM"]), field("rcm", "CM", 69, 52, ["CM", "DM", "AM"]), field("oh", "AM", 50, 38, ["AM", "CM", "CF", "WG"]),
+      field("lst", "CF", 38, 24, ["CF", "AM", "WG"]), field("rst", "CF", 62, 24, ["CF", "AM", "WG"]),
+    ],
+  },
+  {
     id: "4-3-3",
     label: "4-3-3",
     description: "攻撃的バランス",

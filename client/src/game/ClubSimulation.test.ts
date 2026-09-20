@@ -356,4 +356,18 @@ describe("Team power radar", () => {
     expect(simulation.autoLineupCriteriaValue).toBe("defense");
     expect(new ClubSimulation().autoLineupCriteriaValue).toBe("defense");
   });
+  it("supports four alternate midfield structures for 4-4-2", () => {
+    const simulation = new ClubSimulation();
+    const variants = [
+      ["4-4-2-double-pivot", ["DM", "DM"]],
+      ["4-4-2-attacking-wide", ["DM", "AM"]],
+      ["4-4-2-central", ["CM", "CM", "CM", "CM"]],
+      ["4-4-2-diamond", ["DM", "CM", "CM", "AM"]],
+    ] as const;
+    variants.forEach(([formationId, midfield]) => {
+      simulation.setFormation(formationId);
+      expect(simulation.formation.label).toBe("4-4-2");
+      expect(simulation.formation.slots.filter((slot) => ["DM", "CM", "AM", "SH"].includes(slot.label)).map((slot) => slot.label)).toEqual(expect.arrayContaining(midfield));
+    });
+  });
 });

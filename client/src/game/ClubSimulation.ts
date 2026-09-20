@@ -333,6 +333,10 @@ export const contractOfferOptions: ContractOffer[] = [
 
 const formationIdentities: Record<string, { trait: string; note: string; attack: number; defense: number }> = {
   "4-4-2": { trait: "二列の連動", note: "二つのコンパクトなラインで、攻守の受け渡しを安定させる。", attack: 0, defense: 2 },
+  "4-4-2-double-pivot": { trait: "二枚の盾", note: "ダブルボランチで中央を閉じ、両SHから速く前進する。", attack: 0, defense: 4 },
+  "4-4-2-attacking-wide": { trait: "ワイドの崩し", note: "DHが土台を作り、OHと両SHで二トップを押し上げる。", attack: 3, defense: 0 },
+  "4-4-2-central": { trait: "中央支配", note: "4人のCHで中央のパスコースを増やし、保持で主導権を握る。", attack: 2, defense: 1 },
+  "4-4-2-diamond": { trait: "菱形の連結", note: "DH・CH・OHの縦の距離を詰め、二トップへ中央から届ける。", attack: 3, defense: 1 },
   "4-3-3": { trait: "幅と前進", note: "両翼の推進力で、相手守備を横へ広げて攻略する。", attack: 3, defense: 0 },
   "4-5-1": { trait: "中盤の支配", note: "中央の人数を活かし、試合のテンポを握る。", attack: 1, defense: 3 },
   "3-4-3": { trait: "前線プレス", note: "前からの圧力と人数をかけた攻撃で主導権を奪う。", attack: 4, defense: -2 },
@@ -341,6 +345,7 @@ const formationIdentities: Record<string, { trait: string; note: string; attack:
   "5-4-1": { trait: "守備ブロック", note: "最終ラインを厚くし、堅い守備から一撃を狙う。", attack: -2, defense: 5 },
   "5-3-2": { trait: "速攻の出口", note: "5バックの安定を土台に、二人の前線へ素早く届ける。", attack: 1, defense: 4 },
 };
+const is442Variant = (formationId: string) => formationId === "4-4-2" || formationId.startsWith("4-4-2-");
 
 export const sponsorOffers: Sponsor[] = [
   { id: "orbit-credit", name: "ORBIT CREDIT", sector: "地域金融", accent: "#d9ff4a", upFront: 360000, weeklyIncome: 62000, winBonus: 35000, fameRequired: 250, copy: "地域の挑戦を支える金融パートナー。勝利に応じた上乗せ報酬を重視する。" },
@@ -1026,7 +1031,7 @@ export class ClubSimulation {
 
   private roleFormationBonus(role: RoleKind, styleId: string) {
     const formationId = this.formation.id;
-    const hasTwoForwards = ["4-4-2", "3-5-2", "5-3-2"].includes(formationId);
+    const hasTwoForwards = is442Variant(formationId) || ["3-5-2", "5-3-2"].includes(formationId);
     const hasBackThree = ["3-4-3", "3-5-2", "3-6-1", "5-4-1", "5-3-2"].includes(formationId);
     const centralHeavy = ["4-5-1", "3-5-2", "3-6-1"].includes(formationId);
     if (role === "cf") return (styleId === "target" && hasTwoForwards) || (styleId === "runner" && ["4-3-3", "3-4-3"].includes(formationId)) || (styleId === "false-nine" && centralHeavy) ? 1 : 0;
@@ -1035,7 +1040,7 @@ export class ClubSimulation {
     if (role === "cm") return styleId === "deep-playmaker" && centralHeavy ? 1 : styleId === "mezzala" && ["4-3-3", "3-4-3"].includes(formationId) ? 1 : styleId === "box-to-box" && centralHeavy ? 1 : 0;
     if (role === "dm") return styleId === "anchor" && hasBackThree ? 1 : styleId === "regista" && centralHeavy ? 1 : styleId === "destroyer" && formationId === "3-4-3" ? 1 : 0;
     if (role === "cb") return styleId === "cover" && hasBackThree ? 1 : styleId === "ball-playing" && ["4-3-3", "4-5-1"].includes(formationId) ? 1 : styleId === "stopper" && formationId === "3-4-3" ? 1 : 0;
-    if (role === "sb") return styleId === "overlap" && ["3-5-2", "3-6-1", "5-4-1", "5-3-2"].includes(formationId) ? 1 : styleId === "inverted-fullback" && ["4-3-3", "4-5-1", "3-6-1"].includes(formationId) ? 1 : styleId === "defensive-fullback" && ["4-4-2", "3-6-1", "5-4-1"].includes(formationId) ? 1 : 0;
+    if (role === "sb") return styleId === "overlap" && ["3-5-2", "3-6-1", "5-4-1", "5-3-2"].includes(formationId) ? 1 : styleId === "inverted-fullback" && ["4-3-3", "4-5-1", "3-6-1"].includes(formationId) ? 1 : styleId === "defensive-fullback" && (is442Variant(formationId) || ["3-6-1", "5-4-1"].includes(formationId)) ? 1 : 0;
     return styleId === "sweeper-keeper" && ["3-4-3", "3-5-2", "3-6-1"].includes(formationId) ? 1 : styleId === "distributor" && ["4-3-3", "4-5-1", "3-6-1"].includes(formationId) ? 1 : styleId === "shot-stopper" && ["5-4-1", "5-3-2"].includes(formationId) ? 1 : 0;
   }
 
@@ -1049,7 +1054,7 @@ export class ClubSimulation {
     const fieldPlayers = lineup.filter((player) => player.position !== "GK");
     const baseAttack = average(fieldPlayers.map((player) => player.attack * .56 + player.pass * .28 + (player.position === "CF" || player.position === "WG" ? 5 : 0)));
     const baseDefense = average(lineup.map((player) => player.position === "GK" ? (player.gk ?? player.defense) : player.defense * .62 + player.tackle * .22 + player.interception * .16));
-    const formationBonus: Record<string, [number, number]> = { "4-4-2": [0, 0], "4-3-3": [2, 0], "4-5-1": [0, 2], "3-4-3": [3, -1], "3-5-2": [1, 2], "3-6-1": [1, 4], "5-4-1": [-2, 5], "5-3-2": [0, 4] };
+    const formationBonus: Record<string, [number, number]> = { "4-4-2": [0, 0], "4-4-2-double-pivot": [0, 3], "4-4-2-attacking-wide": [3, 0], "4-4-2-central": [2, 1], "4-4-2-diamond": [3, 1], "4-3-3": [2, 0], "4-5-1": [0, 2], "3-4-3": [3, -1], "3-5-2": [1, 2], "3-6-1": [1, 4], "5-4-1": [-2, 5], "5-3-2": [0, 4] };
     const mentalityBonus: Record<Mentality, [number, number]> = { defensive: [-5, 6], balanced: [0, 0], attacking: [6, -5] };
     const styleBonus: Record<PlayingStyle, [number, number]> = { possession: [2, 1], direct: [4, -1], press: [3, -2] };
     const roleAttack = plan.roles.filter((item) => ["裏抜け", "偽9番", "インサイド・ウイング", "タッチライン・ウイング", "メッツァーラ", "オーバーラップ", "シャドーストライカー"].includes(item.role)).length;
@@ -1765,14 +1770,15 @@ export class ClubSimulation {
     const identity = formationIdentities[formation.id] ?? formationIdentities["4-3-3"];
     const mentality = mentalityOptions.find((item) => item.id === this.mentality) ?? mentalityOptions[1];
     const style = playingStyleOptions.find((item) => item.id === this.playingStyle) ?? playingStyleOptions[0];
-    const wideSystem = ["4-3-3", "3-4-3"].includes(formation.id);
-    const centralSystem = ["4-5-1", "3-5-2", "3-6-1"].includes(formation.id);
+    const wideSystem = ["4-3-3", "3-4-3", "4-4-2-attacking-wide"].includes(formation.id);
+    const centralSystem = ["4-5-1", "3-5-2", "3-6-1", "4-4-2-central", "4-4-2-diamond"].includes(formation.id);
     const backFive = ["5-4-1", "5-3-2"].includes(formation.id);
     const twoStrikers = ["4-4-2", "3-5-2", "5-3-2"].includes(formation.id);
     let formationScore = 68;
     if (formation.slots.some((slot) => slot.allowed.includes(candidate.position) || (candidate.secondary && slot.allowed.includes(candidate.secondary)))) formationScore += 11;
     if (wideSystem && ["WG", "SH", "SB"].includes(candidate.position)) formationScore += 9;
     if (centralSystem && ["CM", "AM", "DM"].includes(candidate.position)) formationScore += 9;
+    if (formation.id === "4-4-2-double-pivot" && ["DM", "CM"].includes(candidate.position)) formationScore += 9;
     if (backFive && ["CB", "SB", "DM"].includes(candidate.position)) formationScore += 8;
     if (twoStrikers && candidate.position === "CF") formationScore += 7;
     if (["4-5-1", "3-6-1"].includes(formation.id) && candidate.position === "CF") formationScore -= 4;
