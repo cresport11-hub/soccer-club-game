@@ -96,6 +96,10 @@ export type TacticalAssessment = {
   skillDefense: number;
   skillSummary: string;
   skillDetails: PlayerSkillActivation[];
+  structureAttack: number;
+  structureDefense: number;
+  structureMidfield: number;
+  structureTransition: number;
   attackModifier: number;
   defenseModifier: number;
   transitionAttack: number;
@@ -1105,9 +1109,21 @@ export class ClubSimulation {
     const mentalityDefense = this.mentality === "defensive" ? 5 : this.mentality === "attacking" ? -4 : 0;
     const formationAttack = ["4-3-3", "3-4-3"].includes(this.formation.id) ? 4 : this.formation.id === "3-6-1" ? -1 : 0;
     const formationDefense = this.formation.id === "3-6-1" ? 7 : ["5-4-1", "5-3-2"].includes(this.formation.id) ? 5 : 0;
+    const structureTransition = this.midfieldStructureBonus().transition;
     const fatiguePenalty = selected.length ? average(selected.map((player) => player.fatigue)) * .18 : 18;
     const chemistryBonus = selected.length ? Math.round(selected.reduce((sum, player) => sum + (player.chemistry === "spark" ? 3 : player.chemistry === "steady" ? 2 : 0), 0) / selected.length) : 0;
-    return { attack: clamp(Math.round(attack + styleAttack + mentalityAttack + formationAttack + chemistryBonus - fatiguePenalty), 0, 99), defense: clamp(Math.round(defense + styleDefense + mentalityDefense + formationDefense + chemistryBonus - fatiguePenalty), 0, 99) };
+    return { attack: clamp(Math.round(attack + styleAttack + mentalityAttack + formationAttack + chemistryBonus + structureTransition - fatiguePenalty), 0, 99), defense: clamp(Math.round(defense + styleDefense + mentalityDefense + formationDefense + chemistryBonus + structureTransition - fatiguePenalty), 0, 99) };
+  }
+
+  private midfieldStructureBonus() {
+    const bonuses: Record<string, { attack: number; defense: number; midfield: number; transition: number }> = {
+      "4-4-2": { attack: 1, defense: 1, midfield: 1, transition: 1 },
+      "4-4-2-double-pivot": { attack: 0, defense: 4, midfield: 3, transition: 2 },
+      "4-4-2-attacking-wide": { attack: 4, defense: 0, midfield: 1, transition: 3 },
+      "4-4-2-central": { attack: 2, defense: 1, midfield: 5, transition: 0 },
+      "4-4-2-diamond": { attack: 4, defense: 2, midfield: 4, transition: 3 },
+    };
+    return bonuses[this.formation.id] ?? { attack: 0, defense: 0, midfield: 0, transition: 0 };
   }
 
   score() {
@@ -1153,9 +1169,10 @@ export class ClubSimulation {
       const formationLink = kind === "midfield" && this.formation.id === "3-6-1" ? 4 : kind === "attack" && this.formation.id === "4-3-3" ? 3 : kind === "defense" && this.formation.id === "5-4-1" ? 3 : 0;
       return clamp(Math.round(average(members, (entry) => adjustedValue(entry, kind)) * thickness + roleLink + formationLink), 0, 99);
     };
-    const attack = unitPower("attack", 3);
-    const midfield = unitPower("midfield", 4);
-    const defense = unitPower("defense", 4);
+    const structure = this.midfieldStructureBonus();
+    const attack = clamp(unitPower("attack", 3) + structure.attack, 0, 99);
+    const midfield = clamp(unitPower("midfield", 4) + structure.midfield, 0, 99);
+    const defense = clamp(unitPower("defense", 4) + structure.defense, 0, 99);
     const bench = this.roster.filter((player) => !Object.values(this.lineupState).includes(player.id) && this.injuryWeeksFor(player.id) === 0);
     const benchQuality = bench.length ? clamp(Math.round(average(bench.slice().sort((a, b) => this.playerPower(b) - this.playerPower(a)).slice(0, 5), (player) => this.playerPower(player))), 0, 99) : 0;
     const transition = clamp(Math.round((score.tactics.transitionAttack + score.tactics.transitionDefense) / 2 + benchQuality * .08), 0, 99);
@@ -2867,6 +2884,7 @@ export class ClubSimulation {
     const gkRoleDefense = gkRoles.reduce((sum, item) => sum + item.option.defenseBonus, 0);
     const gkRoleSummary = gkRoles.length ? `GK役割: ${gkRoles.map((item) => `${item.player.name}=${item.option.label}`).join(" / ")}` : "GK役割: 設定なし";
     const transition = this.transitionAssessment(selected);
+    const structure = this.midfieldStructureBonus();
     return {
       formationLabel: this.formation.label, formationTrait: formationIdentity.trait, formationNote: formationIdentity.note,
       mentality: mentality.id, mentalityLabel: mentality.label, playingStyle: style.id, playingStyleLabel: style.label,
@@ -2887,8 +2905,9 @@ export class ClubSimulation {
       midfieldPressAttack, midfieldPressDefense, midfieldPressSummary, midfieldPressReason, midfieldPressDetail,
       skillAttack, skillDefense, skillSummary, skillDetails,
       transitionAttack: transition.attack, transitionDefense: transition.defense,
-      attackModifier: formationIdentity.attack + mentality.attack + style.attack + chemistryBonus + cfRoleAttack + wgRoleAttack + amRoleAttack + cmRoleAttack + dmRoleAttack + cbRoleAttack + sbRoleAttack + gkRoleAttack + roleFitAttack + sideLinkAttack + midfieldPressAttack + skillAttack + Math.round((transition.attack - 60) / 25),
-      defenseModifier: formationIdentity.defense + mentality.defense + style.defense + chemistryBonus + cfRoleDefense + wgRoleDefense + amRoleDefense + cmRoleDefense + dmRoleDefense + cbRoleDefense + sbRoleDefense + gkRoleDefense + roleFitDefense + sideLinkDefense + midfieldPressDefense + skillDefense + Math.round((transition.defense - 60) / 25),
+      structureAttack: structure.attack, structureDefense: structure.defense, structureMidfield: structure.midfield, structureTransition: structure.transition,
+      attackModifier: formationIdentity.attack + mentality.attack + style.attack + chemistryBonus + structure.attack + cfRoleAttack + wgRoleAttack + amRoleAttack + cmRoleAttack + dmRoleAttack + cbRoleAttack + sbRoleAttack + gkRoleAttack + roleFitAttack + sideLinkAttack + midfieldPressAttack + skillAttack + Math.round((transition.attack - 60) / 25),
+      defenseModifier: formationIdentity.defense + mentality.defense + style.defense + chemistryBonus + structure.defense + cfRoleDefense + wgRoleDefense + amRoleDefense + cmRoleDefense + dmRoleDefense + cbRoleDefense + sbRoleDefense + gkRoleDefense + roleFitDefense + sideLinkDefense + midfieldPressDefense + skillDefense + Math.round((transition.defense - 60) / 25),
     };
   }
 

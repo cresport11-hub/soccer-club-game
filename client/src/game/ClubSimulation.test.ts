@@ -379,4 +379,25 @@ describe("Team power radar", () => {
     expect(dh?.x).toBe(50);
     expect(dh?.y).toBeGreaterThan(oh?.y ?? 0);
   });
+  it("applies distinct midfield structure bonuses to radar and match tactics", () => {
+    const simulation = new ClubSimulation();
+    const read = (formationId: string) => {
+      simulation.setFormation(formationId);
+      simulation.autoLineup();
+      const radar = simulation.teamPowerRadar();
+      const tactics = simulation.score().tactics;
+      return { radar, tactics };
+    };
+    const pivot = read("4-4-2-double-pivot");
+    const wide = read("4-4-2-attacking-wide");
+    const central = read("4-4-2-central");
+    const diamond = read("4-4-2-diamond");
+    expect(pivot.tactics.structureDefense).toBe(4);
+    expect(pivot.tactics.structureMidfield).toBe(3);
+    expect(wide.tactics.structureAttack).toBe(4);
+    expect(central.tactics.structureMidfield).toBe(5);
+    expect(diamond.tactics.structureTransition).toBe(3);
+    expect(central.radar.midfield).toBeGreaterThan(pivot.radar.midfield);
+    expect(wide.radar.attack).toBeGreaterThan(pivot.radar.attack);
+  });
 });
