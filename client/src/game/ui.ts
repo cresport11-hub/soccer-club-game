@@ -76,6 +76,9 @@ export class GameUI {
     } catch { return null; }
   })();
   private teamPowerDrag: { offsetX: number; offsetY: number } | null = null;
+  private playerLongPressTimer: number | null = null;
+  private playerLongPressPoint: { x: number; y: number } | null = null;
+  private suppressNextPlayerClick = false;
 
   constructor(private readonly simulation: ClubSimulation) {
     this.root.className = "game-ui";
@@ -89,6 +92,10 @@ export class GameUI {
     this.root.addEventListener("pointermove", this.handleTeamPowerPointerMove);
     this.root.addEventListener("pointerup", this.handleTeamPowerPointerUp);
     this.root.addEventListener("pointercancel", this.handleTeamPowerPointerUp);
+    this.root.addEventListener("pointerdown", this.handlePlayerLongPressDown);
+    this.root.addEventListener("pointermove", this.handlePlayerLongPressMove);
+    this.root.addEventListener("pointerup", this.handlePlayerLongPressUp);
+    this.root.addEventListener("pointercancel", this.handlePlayerLongPressUp);
     const params = new URLSearchParams(window.location.search);
     const previewRoster = Number(params.get("preview-roster"));
     if (import.meta.env.DEV && [30, 31, 32].includes(previewRoster) && this.simulation.rosterPlayers.length < previewRoster) {
@@ -116,6 +123,7 @@ export class GameUI {
     this.stopLiveCommentary();
     this.stopGoalCelebration();
     this.clearToast();
+    this.clearPlayerLongPress();
     void this.crowdAudio?.close();
     this.root.removeEventListener("click", this.handleClick);
     this.root.removeEventListener("dragstart", this.handleMarkDragStart);
@@ -126,8 +134,41 @@ export class GameUI {
     this.root.removeEventListener("pointermove", this.handleTeamPowerPointerMove);
     this.root.removeEventListener("pointerup", this.handleTeamPowerPointerUp);
     this.root.removeEventListener("pointercancel", this.handleTeamPowerPointerUp);
+    this.root.removeEventListener("pointerdown", this.handlePlayerLongPressDown);
+    this.root.removeEventListener("pointermove", this.handlePlayerLongPressMove);
+    this.root.removeEventListener("pointerup", this.handlePlayerLongPressUp);
+    this.root.removeEventListener("pointercancel", this.handlePlayerLongPressUp);
     this.root.remove();
   }
+  private clearPlayerLongPress() {
+    if (this.playerLongPressTimer !== null) window.clearTimeout(this.playerLongPressTimer);
+    this.playerLongPressTimer = null;
+    this.playerLongPressPoint = null;
+  }
+  private playerIdFromCard(target: HTMLElement) {
+    const slotCard = target.closest<HTMLElement>('.player-token[data-slot]');
+    if (slotCard) return this.simulation.playerForSlot(slotCard.dataset.slot ?? "")?.id ?? null;
+    const squadCard = target.closest<HTMLElement>('.squad-card[data-player]');
+    return squadCard?.dataset.player ?? null;
+  }
+  private handlePlayerLongPressDown = (event: PointerEvent) => {
+    const target = event.target as HTMLElement;
+    const playerId = this.playerIdFromCard(target);
+    if (!playerId || event.button !== 0) return;
+    this.clearPlayerLongPress();
+    this.playerLongPressPoint = { x: event.clientX, y: event.clientY };
+    this.playerLongPressTimer = window.setTimeout(() => {
+      this.playerLongPressTimer = null;
+      this.suppressNextPlayerClick = true;
+      this.playerDetailId = playerId;
+      this.render();
+    }, 550);
+  };
+  private handlePlayerLongPressMove = (event: PointerEvent) => {
+    if (!this.playerLongPressPoint) return;
+    if (Math.hypot(event.clientX - this.playerLongPressPoint.x, event.clientY - this.playerLongPressPoint.y) > 10) this.clearPlayerLongPress();
+  };
+  private handlePlayerLongPressUp = () => this.clearPlayerLongPress();
 
   private handleTeamPowerPointerDown = (event: PointerEvent) => {
     const target = (event.target as HTMLElement).closest<HTMLElement>("[data-team-power-drag]");
@@ -168,6 +209,10 @@ export class GameUI {
   private handleClick = (event: MouseEvent) => {
     const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action], [data-nav], [data-mobile-nav], [data-team-power-toggle], [data-auto-criteria], [data-player], [data-player-detail], [data-close-player-detail], [data-opponent-player], [data-mark-source], [data-mark-clear], [data-slot], [data-formation], [data-mentality], [data-style], [data-half-mentality], [data-half-style], [data-half-out], [data-half-in], [data-half-remove], [data-roster-sort], [data-roster-salary-filter], [data-roster-contract-filter]");
     if (!target) return;
+    if (this.suppressNextPlayerClick && (target.matches("[data-slot]") || target.matches("[data-player]"))) {
+      this.suppressNextPlayerClick = false;
+      return;
+    }
     if (target.dataset.mobileNav !== undefined) { this.mobileNavOpen = !this.mobileNavOpen; this.render(); return; }
     if (target.dataset.teamPowerToggle !== undefined) {
       this.teamPowerRadarVisible = !this.teamPowerRadarVisible;

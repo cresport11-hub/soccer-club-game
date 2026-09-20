@@ -632,3 +632,11 @@ button { font: inherit; }
   .formation-structure-options { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); justify-content:stretch; }
   .formation-structure-chip { min-width:0; }
 }
+
+/* Long-press opens the full player profile without changing the existing tap-to-select flow. */
+.player-token,
+.squad-card {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
