@@ -20,6 +20,7 @@ const compactSurname = (name: string) => name.trim().split(/\s+/)[0] || name;
 const signed = (value: number) => `${value >= 0 ? "+" : ""}${value}`;
 type RosterSort = "position" | "ability" | "salary-high" | "salary-low" | "contract-short" | "contract-long";
 const rosterPositionOrder: Record<string, number> = { GK: 0, CB: 1, SB: 2, DM: 3, CM: 4, SH: 5, AM: 6, WG: 7, CF: 8 };
+const benchPositionOrder: Record<string, number> = { CF: 0, WG: 1, SH: 2, AM: 3, CM: 4, DM: 5, SB: 6, CB: 7, GK: 8 };
 type SalaryFilter = "all" | "high" | "low";
 type ContractFilter = "all" | "due" | "short" | "long";
 type MarkTone = "advantage" | "even" | "caution";
@@ -971,7 +972,9 @@ export class GameUI {
     const slots = this.simulation.formation.slots;
     const roster = this.simulation.rosterPlayers;
     const starterIds = new Set(Object.values(this.simulation.lineupState).filter((playerId): playerId is string => Boolean(playerId)));
-    const visibleRoster = roster.filter((player) => !starterIds.has(player.id));
+    const visibleRoster = roster.filter((player) => !starterIds.has(player.id)).sort((a, b) => {
+      return (benchPositionOrder[a.position] ?? 99) - (benchPositionOrder[b.position] ?? 99) || a.name.localeCompare(b.name, "ja");
+    });
     const tactics = score.tactics;
     const selectedSlot = selected ? slots.find((slot) => this.simulation.playerForSlot(slot.id)?.id === selected.id) : null;
     const replacementHints = new Map<string, "primary" | "secondary">();
