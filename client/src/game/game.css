@@ -640,3 +640,21 @@ button { font: inherit; }
   -webkit-user-select: none;
   user-select: none;
 }
+
+
+/* Team roster: compact two-column player cards without condition/fatigue columns. */
+.roster-table .table-head,
+.roster-table .table-row { grid-template-columns: minmax(0, 1fr) minmax(120px, .72fr); }
+.roster-table .player-directory-info,
+.roster-table .player-directory-summary { min-width: 0; }
+.roster-table .player-directory-info { display: grid; gap: 4px; }
+.roster-table .player-directory-role { color: #8fae96; font-size: 9px; line-height: 1.35; }
+.roster-table .player-directory-summary { display: grid; justify-items: end; gap: 4px; text-align: right; }
+.roster-table .player-directory-summary b { color: #d9ff4a; font-size: 12px; }
+.roster-table .player-directory-summary small { color: #a9c3aa; font-size: 10px; }
+@media (max-width: 600px) {
+  .roster-table .table-row { grid-template-columns: minmax(0, 1fr) minmax(104px, .7fr); }
+  .roster-table .player-directory-role { font-size: 8px; }
+  .roster-table .player-directory-summary b { font-size: 10px; }
+  .roster-table .player-directory-summary small { font-size: 9px; }
+}
