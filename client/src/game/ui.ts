@@ -1078,7 +1078,7 @@ export class GameUI {
       : role === "wg"
         ? { label: player.position === "SH" ? "SH PLAY STYLE" : "WG PLAY STYLE", number: "11", current: this.simulation.wgPlayStyleFor(player), options: wgPlayStyleOptions, note: player.position === "SH" ? "サイドハーフ補正" : "サイド補正" }
         : role === "am"
-          ? { label: "AM PLAY STYLE", number: "10", current: this.simulation.amPlayStyleFor(player), options: amPlayStyleOptions, note: "中盤補正" }
+          ? { label: "OH PLAY STYLE", number: "10", current: this.simulation.amPlayStyleFor(player), options: amPlayStyleOptions, note: "中盤補正" }
           : role === "cm"
             ? { label: "CM PLAY STYLE", number: "08", current: this.simulation.cmPlayStyleFor(player), options: cmPlayStyleOptions, note: "中央補正" }
             : role === "dm"
