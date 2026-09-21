@@ -2,7 +2,7 @@
  * Design system: 「タッチライン戦術室」— dense tactical cards and a compact mobile scoreboard keep club health visible at all times.
  */
 import { assets } from "./assets";
-import { ClubSimulation, amPlayStyleOptions, cbPlayStyleOptions, cfPlayStyleOptions, cmPlayStyleOptions, contractOfferOptions, dmPlayStyleOptions, gkPlayStyleOptions, mentalityOptions, playingStyleOptions, sbPlayStyleOptions, sponsorOffers, trainingLoadOptions, trainingOptions, wgPlayStyleOptions, type AutoLineupCriteria, type ConcessionReceipt, type ContractOfferId, type GateReceipt, type MatchHighlight, type MembershipReceipt, type MerchandiseReceipt, type Mentality, type PageId, type PlayingStyle, type TrainingFocus } from "./ClubSimulation";
+import { ClubSimulation, amPlayStyleOptions, cbPlayStyleOptions, cfPlayStyleOptions, cmPlayStyleOptions, contractOfferOptions, dmPlayStyleOptions, formationSelectionOrder, gkPlayStyleOptions, mentalityOptions, playingStyleOptions, sbPlayStyleOptions, sponsorOffers, trainingLoadOptions, trainingOptions, wgPlayStyleOptions, type AutoLineupCriteria, type ConcessionReceipt, type ContractOfferId, type GateReceipt, type MatchHighlight, type MembershipReceipt, type MerchandiseReceipt, type Mentality, type PageId, type PlayingStyle, type TrainingFocus } from "./ClubSimulation";
 import { canMarkOpponent, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, opponentSeeds, playerAssessmentFor, playerSkillCatalog, positionLabel, recruit, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type DMPlayStyle, type GKPlayStyle, type OpponentPlayer, type Player, type PlayerSkillId, type SBPlayStyle, type Slot, type WGPlayStyle } from "./data";
 
 const navItems: Array<{ id: PageId; icon: string; label: string }> = [
@@ -990,7 +990,7 @@ export class GameUI {
     const roleFitLeaders = tactics.roleFitDetails.filter((item) => item.totalBoost > 0).sort((a, b) => b.totalBoost - a.totalBoost).slice(0, 3).map((item) => `${item.player} ${item.style} +${item.totalBoost}`).join("　/　");
     const sideLinkLeaders = tactics.sideLinkDetails.map((item) => `${item.side} ${item.widePlayer}×${item.backPlayer} ${item.grade}`).join("　/　");
     const skillLeaders = tactics.skillDetails.filter((skill) => skill.active).map((skill) => `${skill.player} ${skill.short}`).join("　/　");
-    const baseFormationIds = ["4-4-2", "4-3-3", "4-5-1", "3-4-3", "3-5-2", "3-6-1", "5-4-1", "5-3-2"];
+    const baseFormationIds = formationSelectionOrder;
     const selectedFormationId = this.simulation.formation.id;
     const selectedBaseFormationId = selectedFormationId.startsWith("4-4-2-") ? "4-4-2" : selectedFormationId;
     const baseFormations = baseFormationIds.map((id) => formations.find((formation) => formation.id === id)).filter((formation): formation is typeof formations[number] => Boolean(formation));

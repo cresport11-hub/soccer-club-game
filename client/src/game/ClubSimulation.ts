@@ -351,6 +351,7 @@ const formationIdentities: Record<string, { trait: string; note: string; attack:
 };
 const is442Variant = (formationId: string) => formationId === "4-4-2" || formationId.startsWith("4-4-2-");
 const systemMasteryKey = (formationId: string) => is442Variant(formationId) ? "4-4-2" : formationId;
+export const formationSelectionOrder = ["4-4-2", "4-3-3", "4-5-1", "3-4-3", "3-5-2", "3-6-1", "5-4-1", "5-3-2"] as const;
 
 export const sponsorOffers: Sponsor[] = [
   { id: "orbit-credit", name: "ORBIT CREDIT", sector: "地域金融", accent: "#d9ff4a", upFront: 360000, weeklyIncome: 62000, winBonus: 35000, fameRequired: 250, copy: "地域の挑戦を支える金融パートナー。勝利に応じた上乗せ報酬を重視する。" },
@@ -890,12 +891,13 @@ export class ClubSimulation {
 
   systemMasterySummaryFor(player: Player) {
     const seen = new Set<string>();
-    return formations.filter((formation) => {
+    const orderedFormations = formationSelectionOrder.map((id) => formations.find((formation) => formation.id === id)).filter((formation): formation is typeof formations[number] => Boolean(formation));
+    return orderedFormations.filter((formation) => {
       const key = systemMasteryKey(formation.id);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
-    }).map((formation) => this.systemEffectivenessFor(player, formation.id)).sort((a, b) => b.rate - a.rate || b.mastery - a.mastery);
+    }).map((formation) => this.systemEffectivenessFor(player, formation.id));
   }
 
   private grantSystemExperience(player: Player, formationId: string, masteryAmount: number, understandingAmount: number, source: SystemMasteryGrant["source"]) {
