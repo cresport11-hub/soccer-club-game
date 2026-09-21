@@ -652,6 +652,7 @@ button { font: inherit; }
 .roster-table .player-directory-summary { display: grid; justify-items: end; gap: 4px; text-align: right; }
 .roster-table .player-directory-summary b { color: #d9ff4a; font-size: 12px; }
 .roster-table .player-directory-summary small { color: #a9c3aa; font-size: 10px; }
+.roster-table .player-directory-summary .player-directory-contract { color: #dbe8bd; font-size: 9px; }
 @media (max-width: 600px) {
   .roster-table .table-row { grid-template-columns: minmax(0, 1fr) minmax(104px, .7fr); }
   .roster-table .player-directory-role { font-size: 8px; }
