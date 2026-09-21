@@ -350,6 +350,7 @@ const formationIdentities: Record<string, { trait: string; note: string; attack:
   "5-3-2": { trait: "速攻の出口", note: "5バックの安定を土台に、二人の前線へ素早く届ける。", attack: 1, defense: 4 },
 };
 const is442Variant = (formationId: string) => formationId === "4-4-2" || formationId.startsWith("4-4-2-");
+const systemMasteryKey = (formationId: string) => is442Variant(formationId) ? "4-4-2" : formationId;
 
 export const sponsorOffers: Sponsor[] = [
   { id: "orbit-credit", name: "ORBIT CREDIT", sector: "地域金融", accent: "#d9ff4a", upFront: 360000, weeklyIncome: 62000, winBonus: 35000, fameRequired: 250, copy: "地域の挑戦を支える金融パートナー。勝利に応じた上乗せ報酬を重視する。" },
@@ -866,25 +867,40 @@ export class ClubSimulation {
   }
 
   systemMasteryFor(player: Player, formationId = this.formation.id) {
-    return clamp(Math.round(finiteOr(player.systemMastery?.[formationId], defaultSystemMasteryFor(player, formationId, this.systemUnderstandingFor(player)))), 0, 100);
+    const key = systemMasteryKey(formationId);
+    const saved = player.systemMastery ?? {};
+    const legacyVariantValues = is442Variant(formationId)
+      ? Object.entries(saved).filter(([savedKey]) => is442Variant(savedKey)).map(([, value]) => Number(value)).filter(Number.isFinite)
+      : [];
+    const stored = [saved[key], ...legacyVariantValues].map(Number).filter(Number.isFinite);
+    const fallback = defaultSystemMasteryFor(player, key, this.systemUnderstandingFor(player));
+    return clamp(Math.round(stored.length ? Math.max(...stored) : fallback), 0, 100);
   }
 
   systemEffectivenessFor(player: Player, formationId = this.formation.id): SystemEffectiveness {
     const formation = formations.find((item) => item.id === formationId) ?? this.formation;
+    const masteryFormation = is442Variant(formation.id) ? formations.find((item) => item.id === "4-4-2") ?? formation : formation;
     const understanding = this.systemUnderstandingFor(player);
     const mastery = this.systemMasteryFor(player, formation.id);
     const rate = clamp(Math.round(78 + (understanding - 50) * .18 + (mastery - 40) * .15), 70, 104);
     const grade: SystemEffectiveness["grade"] = rate >= 100 ? "完全適応" : rate >= 95 ? "高適応" : rate >= 88 ? "適応" : rate >= 80 ? "要調整" : "不慣れ";
     const note = rate >= 100 ? "戦術意図を先読みし、基礎能力以上の働きを引き出せる。" : rate >= 95 ? "役割と立ち位置を理解し、ほぼ最大限の能力を発揮する。" : rate >= 88 ? "基本原則を理解し、安定して能力を発揮できる。" : rate >= 80 ? "連係の判断に遅れがあり、能力を出し切れない局面がある。" : "配置と役割への迷いが大きく、持ち味が制限される。";
-    return { formationId: formation.id, formationLabel: formation.label, understanding, mastery, rate, grade, note };
+    return { formationId: systemMasteryKey(formation.id), formationLabel: masteryFormation.label, understanding, mastery, rate, grade, note };
   }
 
   systemMasterySummaryFor(player: Player) {
-    return formations.map((formation) => this.systemEffectivenessFor(player, formation.id)).sort((a, b) => b.rate - a.rate || b.mastery - a.mastery);
+    const seen = new Set<string>();
+    return formations.filter((formation) => {
+      const key = systemMasteryKey(formation.id);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).map((formation) => this.systemEffectivenessFor(player, formation.id)).sort((a, b) => b.rate - a.rate || b.mastery - a.mastery);
   }
 
   private grantSystemExperience(player: Player, formationId: string, masteryAmount: number, understandingAmount: number, source: SystemMasteryGrant["source"]) {
-    const previousMastery = this.systemMasteryFor(player, formationId);
+    const masteryId = systemMasteryKey(formationId);
+    const previousMastery = this.systemMasteryFor(player, masteryId);
     const understanding = this.systemUnderstandingFor(player);
     const learningBonus = understanding >= 80 ? 2 : understanding >= 65 ? 1 : 0;
     const totalMastery = clamp(previousMastery + Math.max(0, Math.round(masteryAmount + learningBonus)), 0, 100);
@@ -892,18 +908,19 @@ export class ClubSimulation {
     const nextUnderstandingXp = clamp(previousUnderstandingXp + Math.max(0, Math.round(understandingAmount)), 0, 999);
     const rawLevelUps = Math.floor(nextUnderstandingXp / 100) - Math.floor(previousUnderstandingXp / 100);
     const understandingLevelUps = Math.min(rawLevelUps, Math.max(0, 99 - understanding));
-    player.systemMastery = { ...(player.systemMastery ?? {}), [formationId]: totalMastery };
+    player.systemMastery = { ...(player.systemMastery ?? {}), [masteryId]: totalMastery };
     player.systemUnderstandingXp = nextUnderstandingXp;
     if (understandingLevelUps) player.systemUnderstanding = this.systemUnderstandingFor(player) + understandingLevelUps;
-    const formation = formations.find((item) => item.id === formationId) ?? this.formation;
-    return { playerId: player.id, player: player.name, formationId, formationLabel: formation.label, masteryXp: totalMastery - previousMastery, totalMastery, understandingXp: nextUnderstandingXp - previousUnderstandingXp, understandingLevelUps, source } satisfies SystemMasteryGrant;
+    const formation = formations.find((item) => item.id === masteryId) ?? this.formation;
+    return { playerId: player.id, player: player.name, formationId: masteryId, formationLabel: formation.label, masteryXp: totalMastery - previousMastery, totalMastery, understandingXp: nextUnderstandingXp - previousUnderstandingXp, understandingLevelUps, source } satisfies SystemMasteryGrant;
   }
 
   private rollbackSystemExperience(grants: SystemMasteryGrant[] = []) {
     grants.forEach((grant) => {
       const player = this.roster.find((item) => item.id === grant.playerId);
       if (!player) return;
-      player.systemMastery = { ...(player.systemMastery ?? {}), [grant.formationId]: Math.max(0, this.systemMasteryFor(player, grant.formationId) - grant.masteryXp) };
+      const masteryId = systemMasteryKey(grant.formationId);
+      player.systemMastery = { ...(player.systemMastery ?? {}), [masteryId]: Math.max(0, this.systemMasteryFor(player, masteryId) - grant.masteryXp) };
       player.systemUnderstandingXp = Math.max(0, Math.round(finiteOr(player.systemUnderstandingXp, 0)) - grant.understandingXp);
       if (grant.understandingLevelUps) player.systemUnderstanding = Math.max(1, this.systemUnderstandingFor(player) - grant.understandingLevelUps);
     });
