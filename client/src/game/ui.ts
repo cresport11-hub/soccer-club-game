@@ -18,8 +18,8 @@ const average = (values: number[]) => values.length ? Math.round(values.reduce((
 const surname = (name: string) => name.trim();
 const compactSurname = (name: string) => name.trim().split(/\s+/)[0] || name;
 const signed = (value: number) => `${value >= 0 ? "+" : ""}${value}`;
-type RosterSort = "position" | "ability" | "salary-high" | "salary-low" | "contract-short" | "contract-long";
-const rosterPositionOrder: Record<string, number> = { GK: 0, CB: 1, SB: 2, DM: 3, CM: 4, SH: 5, AM: 6, WG: 7, CF: 8 };
+type RosterSort = "position" | "contract-short" | "contract-long";
+const rosterPositionOrder: Record<string, number> = { CF: 0, WG: 1, SH: 2, AM: 3, CM: 4, DM: 5, SB: 6, CB: 7, GK: 8 };
 const benchPositionOrder: Record<string, number> = { CF: 0, WG: 1, SH: 2, AM: 3, CM: 4, DM: 5, SB: 6, CB: 7, GK: 8 };
 type SalaryFilter = "all" | "high" | "low";
 type ContractFilter = "all" | "due" | "short" | "long";
@@ -1042,8 +1042,6 @@ export class GameUI {
     return filtered.sort((a, b) => {
       const ability = (player: Player) => player.position === "GK" ? (player.gk ?? 0) + player.attack : player.attack + player.defense;
       if (this.rosterSort === "position") return (rosterPositionOrder[a.position] ?? 99) - (rosterPositionOrder[b.position] ?? 99) || ability(b) - ability(a);
-      if (this.rosterSort === "salary-high") return b.salary - a.salary || ability(b) - ability(a);
-      if (this.rosterSort === "salary-low") return a.salary - b.salary || ability(b) - ability(a);
       if (this.rosterSort === "contract-short") return contractYears(a) - contractYears(b) || b.salary - a.salary;
       if (this.rosterSort === "contract-long") return contractYears(b) - contractYears(a) || b.salary - a.salary;
       return ability(b) - ability(a);
@@ -1057,7 +1055,7 @@ export class GameUI {
     const saleOffers = this.simulation.activeSaleOffers;
     const capacity = this.simulation.rosterCapacityStatus;
     const organizedRoster = this.organizedRosterPlayers();
-    const sortOptions: Array<{ id: RosterSort; label: string }> = [{ id: "position", label: "ポジション順" }, { id: "ability", label: "能力順" }, { id: "salary-high", label: "年俸 高い順" }, { id: "salary-low", label: "年俸 低い順" }, { id: "contract-short", label: "残年数 短い順" }, { id: "contract-long", label: "残年数 長い順" }];
+    const sortOptions: Array<{ id: RosterSort; label: string }> = [{ id: "position", label: "ポジション順" }, { id: "contract-short", label: "残年数 短い順" }, { id: "contract-long", label: "残年数 長い順" }];
     const salaryFilters: Array<{ id: SalaryFilter; label: string }> = [{ id: "all", label: "全年俸" }, { id: "high", label: "1,000万〜" }, { id: "low", label: "〜500万" }];
     const contractFilters: Array<{ id: ContractFilter; label: string }> = [{ id: "all", label: "全契約" }, { id: "due", label: "最終年" }, { id: "short", label: "2年以内" }, { id: "long", label: "3年以上" }];
     const capacityAlert = capacity.warning ? `<section class="roster-capacity-alert tactical-card is-${capacity.tone}"><div><span class="card-kicker">SQUAD CAPACITY ALERT</span><h3>${capacity.full ? "登録上限に到達しています" : `保有枠の残りは ${capacity.remaining} 人です`}</h3><p>${capacity.full ? `${capacity.count} / ${capacity.limit}人です。新規契約とユース昇格を進める前に、売却・契約満了・レンタルなどの整理を行ってください。` : `${capacity.count} / ${capacity.limit}人を保有しています。補強の前に、選手一覧と売却オファーを確認して契約整理の方針を決めましょう。`}</p></div><b>${capacity.full ? "FULL" : `${capacity.remaining} SLOT${capacity.remaining === 1 ? "" : "S"}`}</b></section>` : "";
