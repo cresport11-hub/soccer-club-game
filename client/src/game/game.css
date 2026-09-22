@@ -660,6 +660,19 @@ button { font: inherit; }
   .formation-structure-chip { min-width:0; }
 }
 
+/* Keep the live second-half commentary close to the top of the viewport instead of bottom-aligning the window. */
+.match-overlay:has(.live-match-modal) {
+  align-items: flex-start;
+  padding-top: max(12px, 3vh);
+}
+.live-match-modal {
+  align-self: flex-start;
+  margin-top: 0;
+}
+@media (max-width:600px) {
+  .match-overlay:has(.live-match-modal) { padding-top: 8px; }
+}
+
 /* Long-press opens the full player profile without changing the existing tap-to-select flow. */
 .player-token,
 .squad-card {
