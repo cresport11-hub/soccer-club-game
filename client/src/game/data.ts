@@ -205,7 +205,7 @@ export const playerSkillsFor = (player: Pick<Player, "position" | "skills">) => 
 
 const field = (id: string, label: Position, x: number, y: number, allowed: Position[]): Slot => ({ id, label, x, y, allowed });
 
-export const formations: Formation[] = [
+const formationSeeds: Formation[] = [
   {
     id: "4-4-2",
     label: "4-4-2",
@@ -331,7 +331,34 @@ export const formations: Formation[] = [
       field("lcm", "CM", 28, 55, ["CM", "DM", "AM"]), field("cm", "DM", 50, 60, ["DM", "CM"]), field("rcm", "CM", 72, 55, ["CM", "DM", "AM"]), field("lst", "CF", 38, 25, ["CF", "AM", "WG"]), field("rst", "CF", 62, 25, ["CF", "AM", "WG"]),
     ],
   },
-];
+ ];
+
+const midfieldLabels = new Set<Position>(["DM", "CM", "AM", "SH"]);
+const structureAllowed: Record<Position, Position[]> = {
+  GK: ["GK"], CB: ["CB", "SB"], SB: ["SB", "WG", "SH"], DM: ["DM", "CM", "CB"], CM: ["CM", "DM", "AM"], AM: ["AM", "CM", "CF", "WG"], SH: ["SH", "WG", "AM", "CM", "SB"], WG: ["WG", "SH", "AM", "CF"], CF: ["CF", "AM", "WG"],
+};
+const structurePresets: Record<string, Array<{ suffix: string; description: string; midfield: Position[] }>> = {
+  "4-3-3": [{ suffix: "double-pivot", description: "DH2・CH1／ダブルピボット", midfield: ["DM", "DM", "CM"] }, { suffix: "attacking", description: "CH2・OH1／攻撃型", midfield: ["CM", "CM", "AM"] }],
+  "4-5-1": [{ suffix: "wide", description: "SH2・DH1・CH2／ワイド型", midfield: ["SH", "CM", "DM", "CM", "SH"] }, { suffix: "diamond", description: "OH2・CH2・DH1／中央支配", midfield: ["AM", "CM", "DM", "CM", "AM"] }],
+  "3-4-3": [{ suffix: "double-pivot", description: "SH2・DH2／守備安定", midfield: ["SH", "DM", "DM", "SH"] }, { suffix: "attacking", description: "SH2・OH2／前線連動", midfield: ["SH", "AM", "AM", "SH"] }],
+  "3-5-2": [{ suffix: "flat", description: "CH3／フラット型", midfield: ["CM", "CM", "CM"] }, { suffix: "diamond", description: "DH1・CH1・OH1／ダイヤモンド", midfield: ["CM", "DM", "AM"] }],
+  "3-6-1": [{ suffix: "double-pivot", description: "SH2・DH2／中盤ブロック", midfield: ["SH", "DM", "DM", "SH"] }, { suffix: "attacking", description: "SH2・CH1・OH1／攻撃型", midfield: ["SH", "CM", "AM", "SH"] }],
+  "5-4-1": [{ suffix: "double-pivot", description: "SH2・DH2／守備重視", midfield: ["SH", "DM", "DM", "SH"] }, { suffix: "wide", description: "SH2・CH2／ワイド展開", midfield: ["SH", "CM", "CM", "SH"] }],
+  "5-3-2": [{ suffix: "flat", description: "CH3／中盤安定", midfield: ["CM", "CM", "CM"] }, { suffix: "double-pivot", description: "DH2・CH1／堅守速攻", midfield: ["DM", "DM", "CM"] }],
+};
+const baseFormationIds = new Set(["4-4-2", "4-3-3", "4-5-1", "3-4-3", "3-5-2", "3-6-1", "5-4-1", "5-3-2"]);
+const primaryFormationSeeds = formationSeeds.filter((formation) => baseFormationIds.has(formation.id));
+const existing442Structures = formationSeeds.filter((formation) => formation.id.startsWith("4-4-2-"));
+const createStructure = (base: Formation, preset: (typeof structurePresets[string])[number]): Formation => {
+  let midfieldIndex = 0;
+  return { id: `${base.id}-${preset.suffix}`, label: base.label, description: preset.description, slots: base.slots.map((slot) => {
+    if (!midfieldLabels.has(slot.label)) return { ...slot, allowed: [...slot.allowed] };
+    const label = preset.midfield[midfieldIndex++] ?? slot.label;
+    return { ...slot, label, allowed: structureAllowed[label] };
+  }) };
+};
+export const formations: Formation[] = [...primaryFormationSeeds, ...existing442Structures, ...primaryFormationSeeds.flatMap((base) => (structurePresets[base.id] ?? []).map((preset) => createStructure(base, preset)))];
+export const formationBaseId = (formationId: string) => Array.from(baseFormationIds).find((id) => formationId === id || formationId.startsWith(`${id}-`)) ?? formationId;
 
 export const players: Player[] = [
   { id: "p1", name: "相良 遥斗", position: "CF", secondary: "WG", cfPlayStyle: "runner", attack: 72, dribble: 69, pass: 55, shoot: 78, defense: 25, tackle: 22, block: 20, interception: 27, fatigue: 8, age: 22, salary: 18000000, level: 4, ceiling: 8, chemistry: "spark" },

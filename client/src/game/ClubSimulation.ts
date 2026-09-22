@@ -2,7 +2,7 @@
  * Design system: 「タッチライン戦術室」— game rules remain framework-independent and flow through one state owner.
  * Sponsors fund the season; financial history, matchday commerce, and facility levels evolve through this single state owner.
  */
-import { canMarkOpponent, defaultAttributeCeilingsFor, defaultSystemMasteryFor, defaultSystemUnderstandingFor, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerAttributeKeys, playerAttributeLabels, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, positionLabel, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerAttributeKey, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
+import { canMarkOpponent, defaultAttributeCeilingsFor, defaultSystemMasteryFor, defaultSystemUnderstandingFor, formationBaseId, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerAttributeKeys, playerAttributeLabels, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, positionLabel, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerAttributeKey, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
 
 export type PageId = "home" | "lineup" | "team" | "stats" | "league" | "training" | "market" | "academy" | "facilities" | "sponsors" | "cup" | "finance" | "settings";
 export type Mentality = "defensive" | "balanced" | "attacking";
@@ -349,8 +349,7 @@ const formationIdentities: Record<string, { trait: string; note: string; attack:
   "5-4-1": { trait: "守備ブロック", note: "最終ラインを厚くし、堅い守備から一撃を狙う。", attack: -2, defense: 5 },
   "5-3-2": { trait: "速攻の出口", note: "5バックの安定を土台に、二人の前線へ素早く届ける。", attack: 1, defense: 4 },
 };
-const is442Variant = (formationId: string) => formationId === "4-4-2" || formationId.startsWith("4-4-2-");
-const systemMasteryKey = (formationId: string) => is442Variant(formationId) ? "4-4-2" : formationId;
+const systemMasteryKey = (formationId: string) => formationBaseId(formationId);
 export const formationSelectionOrder = ["4-4-2", "4-3-3", "4-5-1", "3-4-3", "3-5-2", "3-6-1", "5-4-1", "5-3-2"] as const;
 
 export const sponsorOffers: Sponsor[] = [
@@ -870,9 +869,7 @@ export class ClubSimulation {
   systemMasteryFor(player: Player, formationId = this.formation.id) {
     const key = systemMasteryKey(formationId);
     const saved = player.systemMastery ?? {};
-    const legacyVariantValues = is442Variant(formationId)
-      ? Object.entries(saved).filter(([savedKey]) => is442Variant(savedKey)).map(([, value]) => Number(value)).filter(Number.isFinite)
-      : [];
+    const legacyVariantValues = Object.entries(saved).filter(([savedKey]) => formationBaseId(savedKey) === key && savedKey !== key).map(([, value]) => Number(value)).filter(Number.isFinite);
     const stored = [saved[key], ...legacyVariantValues].map(Number).filter(Number.isFinite);
     const fallback = defaultSystemMasteryFor(player, key, this.systemUnderstandingFor(player));
     return clamp(Math.round(stored.length ? Math.max(...stored) : fallback), 0, 100);
@@ -880,7 +877,7 @@ export class ClubSimulation {
 
   systemEffectivenessFor(player: Player, formationId = this.formation.id): SystemEffectiveness {
     const formation = formations.find((item) => item.id === formationId) ?? this.formation;
-    const masteryFormation = is442Variant(formation.id) ? formations.find((item) => item.id === "4-4-2") ?? formation : formation;
+    const masteryFormation = formations.find((item) => item.id === systemMasteryKey(formation.id)) ?? formation;
     const understanding = this.systemUnderstandingFor(player);
     const mastery = this.systemMasteryFor(player, formation.id);
     const rate = clamp(Math.round(78 + (understanding - 50) * .18 + (mastery - 40) * .15), 70, 104);
@@ -1053,8 +1050,8 @@ export class ClubSimulation {
   }
 
   private roleFormationBonus(role: RoleKind, styleId: string) {
-    const formationId = this.formation.id;
-    const hasTwoForwards = is442Variant(formationId) || ["3-5-2", "5-3-2"].includes(formationId);
+    const formationId = formationBaseId(this.formation.id);
+    const hasTwoForwards = ["4-4-2", "3-5-2", "5-3-2"].includes(formationId);
     const hasBackThree = ["3-4-3", "3-5-2", "3-6-1", "5-4-1", "5-3-2"].includes(formationId);
     const centralHeavy = ["4-5-1", "3-5-2", "3-6-1"].includes(formationId);
     if (role === "cf") return (styleId === "target" && hasTwoForwards) || (styleId === "runner" && ["4-3-3", "3-4-3"].includes(formationId)) || (styleId === "false-nine" && centralHeavy) ? 1 : 0;
@@ -1063,7 +1060,7 @@ export class ClubSimulation {
     if (role === "cm") return styleId === "deep-playmaker" && centralHeavy ? 1 : styleId === "mezzala" && ["4-3-3", "3-4-3"].includes(formationId) ? 1 : styleId === "box-to-box" && centralHeavy ? 1 : 0;
     if (role === "dm") return styleId === "anchor" && hasBackThree ? 1 : styleId === "regista" && centralHeavy ? 1 : styleId === "destroyer" && formationId === "3-4-3" ? 1 : 0;
     if (role === "cb") return styleId === "cover" && hasBackThree ? 1 : styleId === "ball-playing" && ["4-3-3", "4-5-1"].includes(formationId) ? 1 : styleId === "stopper" && formationId === "3-4-3" ? 1 : 0;
-    if (role === "sb") return styleId === "overlap" && ["3-5-2", "3-6-1", "5-4-1", "5-3-2"].includes(formationId) ? 1 : styleId === "inverted-fullback" && ["4-3-3", "4-5-1", "3-6-1"].includes(formationId) ? 1 : styleId === "defensive-fullback" && (is442Variant(formationId) || ["3-6-1", "5-4-1"].includes(formationId)) ? 1 : 0;
+    if (role === "sb") return styleId === "overlap" && ["3-5-2", "3-6-1", "5-4-1", "5-3-2"].includes(formationId) ? 1 : styleId === "inverted-fullback" && ["4-3-3", "4-5-1", "3-6-1"].includes(formationId) ? 1 : styleId === "defensive-fullback" && (["4-4-2", "3-6-1", "5-4-1"].includes(formationId)) ? 1 : 0;
     return styleId === "sweeper-keeper" && ["3-4-3", "3-5-2", "3-6-1"].includes(formationId) ? 1 : styleId === "distributor" && ["4-3-3", "4-5-1", "3-6-1"].includes(formationId) ? 1 : styleId === "shot-stopper" && ["5-4-1", "5-3-2"].includes(formationId) ? 1 : 0;
   }
 
@@ -1088,7 +1085,7 @@ export class ClubSimulation {
     const skillAttack = Math.min(4, activeSkills.reduce((sum, skill) => sum + skill.attackBoost, 0));
     const skillDefense = Math.min(4, activeSkills.reduce((sum, skill) => sum + skill.defenseBoost, 0));
     const skillSummary = activeSkills.length ? `相手スキル: ${activeSkills.map((skill) => `${skill.player}=${skill.label}`).join(" / ")}（攻+${skillAttack}/守+${skillDefense}）` : "相手スキル: 発動なし";
-    const [formationAttack, formationDefense] = formationBonus[formation.id] ?? [0, 0];
+    const [formationAttack, formationDefense] = formationBonus[formationBaseId(formation.id)] ?? [0, 0];
     const [mentalityAttack, mentalityDefense] = mentalityBonus[plan.mentality];
     const [styleAttack, styleDefense] = styleBonus[plan.playingStyle];
     const attack = clamp(Math.round(baseAttack + formationAttack + mentalityAttack + styleAttack + plan.attackBias + Math.min(3, roleAttack) + cohesionBonus + skillAttack), 35, 95);
@@ -1126,8 +1123,9 @@ export class ClubSimulation {
     const styleDefense = this.playingStyle === "press" ? 8 : this.playingStyle === "possession" ? 2 : 0;
     const mentalityAttack = this.mentality === "attacking" ? 5 : this.mentality === "defensive" ? -3 : 0;
     const mentalityDefense = this.mentality === "defensive" ? 5 : this.mentality === "attacking" ? -4 : 0;
-    const formationAttack = ["4-3-3", "3-4-3"].includes(this.formation.id) ? 4 : this.formation.id === "3-6-1" ? -1 : 0;
-    const formationDefense = this.formation.id === "3-6-1" ? 7 : ["5-4-1", "5-3-2"].includes(this.formation.id) ? 5 : 0;
+    const baseFormationId = formationBaseId(this.formation.id);
+    const formationAttack = ["4-3-3", "3-4-3"].includes(baseFormationId) ? 4 : baseFormationId === "3-6-1" ? -1 : 0;
+    const formationDefense = baseFormationId === "3-6-1" ? 7 : ["5-4-1", "5-3-2"].includes(baseFormationId) ? 5 : 0;
     const structureTransition = this.midfieldStructureBonus().transition;
     const fatiguePenalty = selected.length ? average(selected.map((player) => player.fatigue)) * .18 : 18;
     const chemistryBonus = selected.length ? Math.round(selected.reduce((sum, player) => sum + (player.chemistry === "spark" ? 3 : player.chemistry === "steady" ? 2 : 0), 0) / selected.length) : 0;
@@ -1142,7 +1140,16 @@ export class ClubSimulation {
       "4-4-2-central": { attack: 2, defense: 1, midfield: 5, transition: 0 },
       "4-4-2-diamond": { attack: 4, defense: 2, midfield: 4, transition: 3 },
     };
-    return bonuses[this.formation.id] ?? { attack: 0, defense: 0, midfield: 0, transition: 0 };
+    const exact = bonuses[this.formation.id];
+    if (exact) return exact;
+    const base = formationBaseId(this.formation.id);
+    const suffix = this.formation.id.slice(base.length + 1);
+    if (suffix === "double-pivot") return { attack: 0, defense: 3, midfield: 3, transition: 2 };
+    if (suffix === "attacking" || suffix === "attacking-wide") return { attack: 4, defense: 0, midfield: 1, transition: 3 };
+    if (suffix === "diamond") return { attack: 3, defense: 1, midfield: 4, transition: 3 };
+    if (suffix === "wide") return { attack: 2, defense: 1, midfield: 2, transition: 2 };
+    if (suffix === "flat") return { attack: 1, defense: 1, midfield: 3, transition: 1 };
+    return bonuses[base] ?? { attack: 0, defense: 0, midfield: 0, transition: 0 };
   }
 
   score() {
@@ -1803,7 +1810,7 @@ export class ClubSimulation {
 
   private scoutTacticalFit(candidate: Player): ScoutTacticalFit {
     const formation = this.formation;
-    const identity = formationIdentities[formation.id] ?? formationIdentities["4-3-3"];
+    const identity = formationIdentities[formationBaseId(formation.id)] ?? formationIdentities["4-3-3"];
     const mentality = mentalityOptions.find((item) => item.id === this.mentality) ?? mentalityOptions[1];
     const style = playingStyleOptions.find((item) => item.id === this.playingStyle) ?? playingStyleOptions[0];
     const wideSystem = ["4-3-3", "3-4-3", "4-4-2-attacking-wide"].includes(formation.id);
@@ -2821,7 +2828,7 @@ export class ClubSimulation {
   }
 
   private tacticalAssessment(selected: Player[]): TacticalAssessment {
-    const formationIdentity = formationIdentities[this.formation.id] ?? formationIdentities["4-3-3"];
+    const formationIdentity = formationIdentities[formationBaseId(this.formation.id)] ?? formationIdentities["4-3-3"];
     const mentality = mentalityOptions.find((item) => item.id === this.mentality) ?? mentalityOptions[1];
     const style = playingStyleOptions.find((item) => item.id === this.playingStyle) ?? playingStyleOptions[0];
     const occupied = this.formation.slots

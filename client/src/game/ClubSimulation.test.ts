@@ -370,6 +370,18 @@ describe("Team power radar", () => {
       expect(simulation.formation.slots.filter((slot) => ["DM", "CM", "AM", "SH"].includes(slot.label)).map((slot) => slot.label)).toEqual(expect.arrayContaining(midfield));
     });
   });
+  it("supports midfield structure presets for every base formation", () => {
+    const simulation = new ClubSimulation();
+    const structures = [["4-3-3", "double-pivot"], ["4-5-1", "wide"], ["3-4-3", "double-pivot"], ["3-5-2", "flat"], ["3-6-1", "double-pivot"], ["5-4-1", "double-pivot"], ["5-3-2", "flat"]] as const;
+    structures.forEach(([baseId, suffix]) => {
+      simulation.setFormation(baseId);
+      expect(simulation.formation.id).toBe(baseId);
+      simulation.setFormation(`${baseId}-${suffix}`);
+      expect(simulation.formation.label).toBe(baseId);
+      expect(simulation.formation.slots.some((slot) => ["DM", "CM", "AM", "SH"].includes(slot.label))).toBe(true);
+      expect(simulation.score().tactics.formationTrait.length).toBeGreaterThan(0);
+    });
+  });
   it("keeps the diamond OH and DH on the central vertical axis", () => {
     const simulation = new ClubSimulation();
     simulation.setFormation("4-4-2-diamond");
