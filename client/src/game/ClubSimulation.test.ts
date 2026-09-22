@@ -334,15 +334,28 @@ describe("Team power radar", () => {
   it("reflects unit thickness when comparing 4-3-3 and 3-6-1", () => {
     const simulation = new ClubSimulation();
     simulation.setFormation("4-3-3");
-    expect(Object.values(simulation.lineupState).filter(Boolean)).toHaveLength(0);
     simulation.autoLineup();
+    const before = new Set(Object.values(simulation.lineupState).filter(Boolean));
     const fourThreeThree = simulation.teamPowerRadar();
     simulation.setFormation("3-6-1");
+    expect(Object.values(simulation.lineupState).filter(Boolean).length).toBeGreaterThan(0);
+    expect([...before].filter((playerId) => Object.values(simulation.lineupState).includes(playerId)).length).toBeGreaterThanOrEqual(8);
     simulation.autoLineup();
     const threeSixOne = simulation.teamPowerRadar();
 
     expect(threeSixOne.midfield).toBeGreaterThan(fourThreeThree.midfield);
     expect(threeSixOne.attack).toBeLessThan(fourThreeThree.attack);
+  });
+
+  it("preserves the starting eleven when switching formations", () => {
+    const simulation = new ClubSimulation();
+    simulation.autoLineup();
+    const before = new Set(Object.values(simulation.lineupState).filter(Boolean));
+    simulation.setFormation("4-5-1");
+    const after = Object.values(simulation.lineupState).filter(Boolean);
+    expect(after).toHaveLength(11);
+    expect(after.every((playerId) => before.has(playerId))).toBe(true);
+    expect(new Set(after).size).toBe(after.length);
   });
 
   it("switches and persists auto lineup evaluation criteria", () => {

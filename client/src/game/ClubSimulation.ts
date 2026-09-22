@@ -1468,8 +1468,39 @@ export class ClubSimulation {
   setFormation(formationId: string) {
     const next = formations.find((formation) => formation.id === formationId);
     if (!next) return;
+    const previousFormation = this.formation;
+    const previousLineup = { ...this.lineup };
+    const previousPlayers = previousFormation.slots
+      .map((slot) => ({ slot, playerId: previousLineup[slot.id] }))
+      .filter((entry): entry is { slot: Formation["slots"][number]; playerId: string } => Boolean(entry.playerId));
+    const nextLineup: Record<string, string | null> = Object.fromEntries(next.slots.map((slot) => [slot.id, null]));
+    const used = new Set<string>();
+    const fits = (slot: Formation["slots"][number], playerId: string) => {
+      const player = this.roster.find((item) => item.id === playerId);
+      return Boolean(player && (slot.allowed.includes(player.position) || (player.secondary && slot.allowed.includes(player.secondary))));
+    };
+    const place = (slot: Formation["slots"][number], playerId: string) => {
+      if (!nextLineup[slot.id] && !used.has(playerId) && fits(slot, playerId)) {
+        nextLineup[slot.id] = playerId;
+        used.add(playerId);
+        return true;
+      }
+      return false;
+    };
+    // Keep players in the same named slot whenever the new formation still has it.
+    previousPlayers.forEach(({ slot, playerId }) => {
+      const sameSlot = next.slots.find((candidate) => candidate.id === slot.id);
+      if (sameSlot) place(sameSlot, playerId);
+    });
+    // Then preserve the rest by position suitability, and only leave a slot empty as a last resort.
+    previousPlayers.forEach(({ slot, playerId }) => {
+      if (used.has(playerId)) return;
+      const matchingSlot = next.slots.find((candidate) => !nextLineup[candidate.id] && candidate.label === slot.label && fits(candidate, playerId))
+        ?? next.slots.find((candidate) => !nextLineup[candidate.id] && fits(candidate, playerId));
+      if (matchingSlot) place(matchingSlot, playerId);
+    });
     this.formationId = formationId;
-    this.lineup = Object.fromEntries(next.slots.map((slot) => [slot.id, null]));
+    this.lineup = nextLineup;
     this.selectedPlayerId = null;
     this.manualMarkAssignments = {};
     this.persist();
