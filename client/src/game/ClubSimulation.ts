@@ -178,7 +178,7 @@ export type MarkingMatchImpact = { attackModifier: number; defenseModifier: numb
 export type IndividualBonusEntry = { playerId: string; player: string; appearance: number; goals: number; amount: number };
 export type IndividualBonusReceipt = { total: number; entries: IndividualBonusEntry[] };
 export type PlayerSeasonStat = { playerId: string; player: string; position: string; appearances: number; starts: number; goals: number; assists: number; ratingTotal: number; ratingCount: number; mvpAwards: number };
-export type MatchHighlight = { minute: number; kind: "kickoff" | "action" | "sequence" | "goal" | "tactic" | "substitution" | "injury" | "halftime" | "fulltime"; team: "orbit" | "opponent" | "neutral"; text: string; scorer?: string; assistant?: string };
+export type MatchHighlight = { minute: number; kind: "kickoff" | "action" | "sequence" | "goal" | "tactic" | "substitution" | "injury" | "card" | "halftime" | "fulltime"; team: "orbit" | "opponent" | "neutral"; text: string; scorer?: string; assistant?: string };
 export type HalfTimeReport = { playerGoals: number; opponentGoals: number; message: string; tacticalNote: string; recommendation: string };
 export type MatchStatsTeam = { possession: number; shots: number; shotsOnTarget: number; bigChances: number; corners: number; passes: number; passAccuracy: number; fouls: number; offsides: number; saves: number };
 export type MatchStats = { orbit: MatchStatsTeam; opponent: MatchStatsTeam };
@@ -2089,6 +2089,8 @@ export class ClubSimulation {
     matchFlow.halfTime.tacticalNote += ` / ${markingImpact.summary} / ${matchCondition.summary}`;
     matchFlow.highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind));
     const injuries = this.createMatchInjuries(matchFlow.highlights, this.week);
+    matchFlow.highlights.push(...this.createMatchCards(this.week, opponentTactics));
+    matchFlow.highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind));
     const stats = this.createMatchStats(playerGoals, opponentGoals, matchAttack, matchDefense, tactics, opponentTactics, matchFlow.highlights, this.week);
     const reward = playerGoals > opponentGoals ? 245000 : playerGoals === opponentGoals ? 105000 : 48000;
     const won = playerGoals > opponentGoals;
@@ -2501,17 +2503,17 @@ export class ClubSimulation {
   }
 
   private createMatchInjuries(highlights: MatchHighlight[], matchWeek: number): MatchInjury[] {
-    const candidates = this.startingPlayers().filter((player) => this.injuryWeeksFor(player.id) === 0 && player.fatigue >= 58).sort((a, b) => {
+    const candidates = this.startingPlayers().filter((player) => this.injuryWeeksFor(player.id) === 0 && player.fatigue >= 45).sort((a, b) => {
       const riskScore = (player: Player) => player.fatigue + (100 - this.conditionFor(player)) * .45 + this.trainingLoadFor(player).riskAdjustment * 2;
       return riskScore(b) - riskScore(a);
     });
     const candidate = candidates[0];
     if (!candidate) return [];
-    const fatigueRisk = Math.max(0, candidate.fatigue - 55) * .008;
+    const fatigueRisk = Math.max(0, candidate.fatigue - 45) * .009;
     const conditionRisk = Math.max(0, 62 - this.conditionFor(candidate)) * .003;
     const loadRisk = Math.max(0, this.trainingLoadFor(candidate).riskAdjustment) * .012;
     const styleRisk = this.playingStyle === "press" ? .045 : this.playingStyle === "direct" ? .025 : 0;
-    const injuryChance = clamp(.05 + fatigueRisk + conditionRisk + loadRisk + styleRisk, .05, .38);
+    const injuryChance = clamp(.10 + fatigueRisk + conditionRisk + loadRisk + styleRisk, .10, .55);
     if (deterministic(matchWeek * 29 + candidate.fatigue + Math.round(this.conditionFor(candidate) * 3)) >= injuryChance) return [];
     const minute = clamp(Math.round(24 + deterministic(matchWeek * 31 + candidate.attack) * 56), 22, 84);
     const weeks = candidate.fatigue >= 90 || this.conditionFor(candidate) <= 40 ? 2 : 1;
@@ -2520,6 +2522,30 @@ export class ClubSimulation {
     highlights.push({ minute, kind: "injury", team: "orbit", text: `${candidate.name}が負傷。${detail}` });
     highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind));
     return [injury];
+  }
+
+  private createMatchCards(matchWeek: number, opponentTactics: OpponentTacticalAssessment): MatchHighlight[] {
+    const orbitPlayers = this.startingPlayers().filter((player) => player.position !== "GK");
+    const opponentPlayers = opponentTactics.lineup.filter((player) => player.position !== "GK");
+    const events: MatchHighlight[] = [];
+    const addCard = (team: "orbit" | "opponent", index: number, red: boolean) => {
+      const players = team === "orbit" ? orbitPlayers : opponentPlayers;
+      const player = players[index % Math.max(players.length, 1)];
+      const name = player?.name ?? (team === "orbit" ? this.clubName : "相手選手");
+      const minute = clamp(Math.round(10 + deterministic(matchWeek * 41 + index * 17 + (team === "orbit" ? 3 : 9)) * 79), 8, 89);
+      const card = red ? "レッドカード" : "イエローカード";
+      const text = team === "orbit"
+        ? `${name}が激しいタックルで${card}。${red ? "退場となり、数的不利に" : "主審から厳重注意を受けた"}。`
+        : `${opponentTactics.formationLabel ? "相手" : "相手チーム"}の${name}が遅れて接触し、${card}。${red ? "退場処分" : "警告を受ける"}。`;
+      events.push({ minute, kind: "card", team, text });
+    };
+    // A normal match usually has one or two cautions; pressing/direct styles raise the intensity.
+    const intensity = this.playingStyle === "press" ? .9 : this.playingStyle === "direct" ? .82 : .7;
+    if (deterministic(matchWeek * 53 + 7) < intensity) addCard("orbit", 0, false);
+    if (deterministic(matchWeek * 53 + 13) < .74) addCard("opponent", 1, false);
+    if (deterministic(matchWeek * 53 + 19) < (this.playingStyle === "press" ? .18 : .08)) addCard("orbit", 2, true);
+    if (deterministic(matchWeek * 53 + 23) < .08) addCard("opponent", 3, true);
+    return events;
   }
 
   private createPlayerRatings(highlights: MatchHighlight[], substitutions: MatchSubstitution[], injuries: MatchInjury[]): PlayerMatchRating[] {

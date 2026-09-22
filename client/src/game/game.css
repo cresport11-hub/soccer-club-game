@@ -653,6 +653,10 @@ button { font: inherit; }
 .formation-structure-chip span { margin-top:3px; color:#8da992; font-size:9px; }
 .formation-structure-chip.is-selected { border-color:var(--lime); background:rgba(217,255,74,.12); }
 .formation-structure-chip.is-selected b { color:var(--lime); }
+.highlight-item.card { border-left-color: #f5c955; background: linear-gradient(90deg, rgba(245,201,85,.14), rgba(5,29,16,.52)); }
+.highlight-item.card > span { color: #f5c955; }
+.highlight-item.card.opponent { border-left-color: #ffad8c; }
+.highlight-item.card.opponent > span { color: #ffad8c; }
 @media (max-width:700px) {
   .formation-structure-menu { display:block; margin-top:-8px; padding:10px; }
   .formation-structure-menu > div:first-child { margin-bottom:9px; }
