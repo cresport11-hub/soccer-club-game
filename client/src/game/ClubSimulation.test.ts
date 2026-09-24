@@ -142,10 +142,13 @@ describe("ClubSimulation match commentary", () => {
     const beforeFatigue = player!.fatigue;
     expect(simulation.conditionStatusFor(player!).label).toBe("標準");
 
-    const training = simulation.train("recovery");
+    simulation.setTrainingLoad(player!.id, "recovery");
+    const beforeXp = player!.attributeXp?.pass ?? 0;
+    const training = simulation.train("passing", player!.id);
     expect(training.ok).toBe(true);
     const afterTraining = simulation.rosterPlayers.find((item) => item.id === player!.id)!;
-    expect(simulation.conditionFor(afterTraining)).toBeGreaterThan(beforeCondition);
+    expect(simulation.conditionFor(afterTraining)).toBe(beforeCondition);
+    expect(afterTraining.attributeXp?.pass ?? 0).toBe(beforeXp);
     expect(afterTraining.fatigue).toBeLessThan(beforeFatigue);
 
     const result = simulation.advanceWeek();
@@ -171,7 +174,8 @@ describe("ClubSimulation match commentary", () => {
     expect(recoveryPlayer).toBeDefined();
     recoveryPlayer!.fatigue = Math.max(40, recoveryPlayer!.fatigue);
     const beforeRecovery = recoveryPlayer!.fatigue;
-    const recoveryResult = recoverySimulation.train("recovery");
+    recoverySimulation.setTrainingLoad(recoveryPlayer!.id, "recovery");
+    const recoveryResult = recoverySimulation.train("passing", recoveryPlayer!.id);
     expect(recoveryResult.ok).toBe(true);
     expect(recoveryResult.text).toMatch(/疲労 -/);
     expect(recoveryPlayer!.fatigue).toBeLessThan(beforeRecovery);
@@ -184,9 +188,10 @@ describe("ClubSimulation match commentary", () => {
     const simulation = new ClubSimulation();
     const player = simulation.rosterPlayers.find((item) => item.position !== "GK" && Object.values(simulation.lineupState).includes(item.id));
     expect(player).toBeDefined();
-    const setFocus = simulation.setTrainingFocus(player!.id, "recovery");
+    const setFocus = simulation.setTrainingFocus(player!.id, "passing");
     expect(setFocus.ok).toBe(true);
-    expect(simulation.trainingFocusFor(player!)).toBe("recovery");
+    simulation.setTrainingLoad(player!.id, "recovery");
+    expect(simulation.trainingFocusFor(player!)).toBe("passing");
     player!.fatigue = 40;
     const before = player!.fatigue;
     const result = simulation.advanceWeek();
@@ -194,7 +199,7 @@ describe("ClubSimulation match commentary", () => {
     expect(player!.fatigue).toBeLessThan(before);
     const restored = new ClubSimulation();
     const restoredPlayer = restored.rosterPlayers.find((item) => item.id === player!.id)!;
-    expect(restored.trainingFocusFor(restoredPlayer)).toBe("recovery");
+    expect(restored.trainingFocusFor(restoredPlayer)).toBe("passing");
   });
 
   it("includes player condition in team readiness and attack strength", () => {

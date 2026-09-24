@@ -1524,14 +1524,14 @@ export class ClubSimulation {
   trainingLoadFor(player: Player) { return trainingLoadOptions.find((option) => option.id === player.trainingLoad) ?? trainingLoadOptions[2]; }
 
   trainingFocusFor(player: Player): TrainingFocus {
-    if (player.trainingFocus && trainingOptions.some((option) => option.id === player.trainingFocus)) return player.trainingFocus as TrainingFocus;
+    if (player.trainingFocus && player.trainingFocus !== "recovery" && trainingOptions.some((option) => option.id === player.trainingFocus)) return player.trainingFocus as TrainingFocus;
     return player.position === "GK" ? "goalkeeping" : player.position === "CF" || player.position === "WG" ? "finishing" : player.position === "CB" || player.position === "SB" ? "defending" : "passing";
   }
 
   setTrainingFocus(playerId: string, focus: TrainingFocus) {
     const player = this.roster.find((item) => item.id === playerId);
     const option = trainingOptions.find((item) => item.id === focus);
-    if (!player || !option) return { ok: false, text: "対象選手または育成メニューを確認できませんでした。" };
+    if (!player || !option || focus === "recovery") return { ok: false, text: "回復は練習強度で設定してください。" };
     player.trainingFocus = option.id;
     this.logs.unshift(`${player.name}の個別育成メニューを「${option.label}」へ設定。`);
     this.persist();
@@ -1660,6 +1660,7 @@ export class ClubSimulation {
     if (!boosted.length) return { ok: false, text: "このメニューの対象選手がいません。編成を確認してください。" };
     const facility = this.trainingFacility;
     const risk = this.trainingRiskReport(focus);
+    const recoveryOnly = this.trainingLoadFor(boosted[0]).id === "recovery";
     if (!automated) {
       this.money -= option.cost;
       this.recordFinance("トレーニング", option.cost, "expense", `${option.label}を実施`, this.currentWeek);
@@ -1673,27 +1674,29 @@ export class ClubSimulation {
     boosted.forEach((player, index) => {
       const load = this.trainingLoadFor(player);
       const growth = (attribute: PlayerAttributeKey, base: number) => {
+        if (recoveryOnly) return;
         const grant = this.grantAttributeXp(player, attribute, Math.max(1, base + facility.growthBonus * 3 + load.growthAdjustment * 2 + (index % 2)), "練習");
         if (grant) attributeXpGrants.push(grant);
       };
-      const fatigue = (base: number) => clamp(player.fatigue + base + (focus === "recovery" ? Math.min(0, load.fatigueAdjustment) : load.fatigueAdjustment), 0, 99);
-      if (focus === "attacking") { growth("attack", 12); growth("dribble", 12); growth("pass", 7); growth("shoot", 11); player.fatigue = fatigue(7); }
-      if (focus === "passing") { growth("attack", 6); growth("pass", 16); growth("dribble", 8); player.fatigue = fatigue(5); }
-      if (focus === "finishing") { growth("attack", 7); growth("shoot", 16); growth("dribble", 8); player.fatigue = fatigue(8); }
-      if (focus === "defending") { growth("defense", 12); growth("tackle", 12); growth("block", 10); growth("interception", 12); player.fatigue = fatigue(7); }
-      if (focus === "goalkeeping") { growth("gk", 16); growth("pass", 8); player.fatigue = fatigue(6); }
-      if (focus === "recovery") player.fatigue = fatigue(-13);
-      const conditionDelta = focus === "recovery" ? 10 : load.id === "high" ? -4 : load.id === "light" ? 3 : 1;
-      player.condition = clamp(this.conditionFor(player) + conditionDelta, 0, 100);
-      if (focus !== "recovery") {
+      const fatigue = (base: number) => clamp(player.fatigue + base + (recoveryOnly ? Math.min(-13, load.fatigueAdjustment - 2) : load.fatigueAdjustment), 0, 99);
+      if (!recoveryOnly && focus === "attacking") { growth("attack", 12); growth("dribble", 12); growth("pass", 7); growth("shoot", 11); player.fatigue = fatigue(7); }
+      if (!recoveryOnly && focus === "passing") { growth("attack", 6); growth("pass", 16); growth("dribble", 8); player.fatigue = fatigue(5); }
+      if (!recoveryOnly && focus === "finishing") { growth("attack", 7); growth("shoot", 16); growth("dribble", 8); player.fatigue = fatigue(8); }
+      if (!recoveryOnly && focus === "defending") { growth("defense", 12); growth("tackle", 12); growth("block", 10); growth("interception", 12); player.fatigue = fatigue(7); }
+      if (!recoveryOnly && focus === "goalkeeping") { growth("gk", 16); growth("pass", 8); player.fatigue = fatigue(6); }
+      if (recoveryOnly) player.fatigue = fatigue(0);
+      if (!recoveryOnly) {
+        const conditionDelta = load.id === "high" ? -4 : load.id === "light" ? 3 : 1;
+        player.condition = clamp(this.conditionFor(player) + conditionDelta, 0, 100);
         const mastery = this.grantPositionMastery(player, this.positionForPlayer(player), 4 + facility.level + Math.max(0, load.growthAdjustment), "練習");
         if (mastery) positionMasteryGrants.push(mastery);
         systemMasteryGrants.push(this.grantSystemExperience(player, this.formation.id, 2 + facility.level + Math.max(0, load.growthAdjustment), 2 + facility.growthBonus, "練習"));
       }
     });
-    const skillXpGrants = focus === "recovery" ? [] : boosted.flatMap((player) => {
+    const skillFocus = focus === "recovery" ? null : focus;
+    const skillXpGrants = recoveryOnly || !skillFocus ? [] : boosted.flatMap((player) => {
       const target = this.skillTrainingTargetFor(player);
-      if (!target || !playerSkillGrowthFocus[target.skillId].includes(focus)) return [];
+      if (!target || !playerSkillGrowthFocus[target.skillId].includes(skillFocus)) return [];
       const load = this.trainingLoadFor(player);
       const amount = 4 + facility.growthBonus + Math.max(0, load.growthAdjustment);
       const grant = this.grantSkillXp(player, target.skillId, amount, "練習");
