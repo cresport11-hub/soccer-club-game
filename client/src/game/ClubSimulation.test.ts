@@ -295,6 +295,14 @@ describe("Match statistics", () => {
     expect(result.playerRatings).toHaveLength(11);
     expect(result.playerRatings.every((rating) => rating.playerId && rating.note.length > 0)).toBe(true);
   });
+
+  it("assigns a deterministic referee strictness profile to each match", () => {
+    const simulation = new ClubSimulation();
+    const result = simulation.advanceWeek();
+    expect(result.refereeStrictness).toBeGreaterThanOrEqual(.78);
+    expect(result.refereeStrictness).toBeLessThanOrEqual(1.28);
+    expect(["寛容", "標準", "厳格"]).toContain(result.refereeLabel);
+  });
 });
 
 

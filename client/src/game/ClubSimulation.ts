@@ -182,7 +182,7 @@ export type MatchHighlight = { minute: number; kind: "kickoff" | "action" | "seq
 export type HalfTimeReport = { playerGoals: number; opponentGoals: number; message: string; tacticalNote: string; recommendation: string };
 export type MatchStatsTeam = { possession: number; shots: number; shotsOnTarget: number; bigChances: number; corners: number; passes: number; passAccuracy: number; fouls: number; offsides: number; saves: number };
 export type MatchStats = { orbit: MatchStatsTeam; opponent: MatchStatsTeam };
-export type MatchResult = { opponent: string; opponentId: string; playerGoals: number; opponentGoals: number; message: string; won: boolean; reward: number; sponsorRevenue: number; cupResult: CupMatchResult | null; gate: GateReceipt; merchandise: MerchandiseReceipt; membership: MembershipReceipt; concession: ConcessionReceipt; totalTicketRevenue: number; totalAttendance: number; totalCommercialRevenue: number; popularityDelta: number; leaguePopularityDelta: number; popularity: number; tactics: TacticalAssessment; opponentTactics: OpponentTacticalAssessment; tacticalMatchup: TacticalMatchup; markingImpact: MarkingMatchImpact; matchAttack: number; matchDefense: number; matchCondition: TeamMatchCondition; conditionAfter: TeamMatchCondition; stats: MatchStats; halfTime: HalfTimeReport; highlights: MatchHighlight[]; substitutions: MatchSubstitution[]; injuries: MatchInjury[]; playerRatings: PlayerMatchRating[]; markDuels: MarkDuelReport[]; mvp: PlayerMatchRating | null; individualBonuses: IndividualBonusReceipt; skillXpGrants: SkillXpGrant[]; attributeXpGrants: AttributeXpGrant[]; positionMasteryGrants: PositionMasteryGrant[]; systemMasteryGrants: SystemMasteryGrant[]; conditionChanges: PlayerConditionChange[]; halfTimeChanges: string[] };
+export type MatchResult = { opponent: string; opponentId: string; playerGoals: number; opponentGoals: number; message: string; won: boolean; reward: number; sponsorRevenue: number; cupResult: CupMatchResult | null; gate: GateReceipt; merchandise: MerchandiseReceipt; membership: MembershipReceipt; concession: ConcessionReceipt; totalTicketRevenue: number; totalAttendance: number; totalCommercialRevenue: number; popularityDelta: number; leaguePopularityDelta: number; popularity: number; tactics: TacticalAssessment; opponentTactics: OpponentTacticalAssessment; tacticalMatchup: TacticalMatchup; markingImpact: MarkingMatchImpact; matchAttack: number; matchDefense: number; matchCondition: TeamMatchCondition; conditionAfter: TeamMatchCondition; stats: MatchStats; halfTime: HalfTimeReport; refereeStrictness: number; refereeLabel: "寛容" | "標準" | "厳格"; highlights: MatchHighlight[]; substitutions: MatchSubstitution[]; injuries: MatchInjury[]; playerRatings: PlayerMatchRating[]; markDuels: MarkDuelReport[]; mvp: PlayerMatchRating | null; individualBonuses: IndividualBonusReceipt; skillXpGrants: SkillXpGrant[]; attributeXpGrants: AttributeXpGrant[]; positionMasteryGrants: PositionMasteryGrant[]; systemMasteryGrants: SystemMasteryGrant[]; conditionChanges: PlayerConditionChange[]; halfTimeChanges: string[] };
 
 type Persisted = {
   money: number;
@@ -2108,6 +2108,7 @@ export class ClubSimulation {
     const injuries = this.createMatchInjuries(matchFlow.highlights, this.week);
     matchFlow.highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind));
     const stats = this.createMatchStats(playerGoals, opponentGoals, matchAttack, matchDefense, tactics, opponentTactics, matchFlow.highlights, this.week);
+    const refereeStrictness = this.refereeStrictnessFor(this.week);
     const reward = playerGoals > opponentGoals ? 245000 : playerGoals === opponentGoals ? 105000 : 48000;
     const won = playerGoals > opponentGoals;
     const draw = playerGoals === opponentGoals;
@@ -2144,6 +2145,8 @@ export class ClubSimulation {
       conditionAfter: this.matchConditionFor(isHome),
       stats,
       halfTime: matchFlow.halfTime,
+      refereeStrictness,
+      refereeLabel: this.refereeLabelFor(refereeStrictness),
       highlights: matchFlow.highlights,
       substitutions: [],
       injuries,
@@ -2547,10 +2550,11 @@ export class ClubSimulation {
     const orbitPlayers = this.startingPlayers().filter((player) => player.position !== "GK");
     const opponentPlayers = opponentTactics.lineup.filter((player) => player.position !== "GK");
     const events: MatchHighlight[] = [];
+    const refereeStrictness = this.refereeStrictnessFor(matchWeek);
     const cardRiskFor = (player: { tackle: number; interception: number; fatigue?: number }, styleBoost = 0) => {
       // Tackling technique and defensive awareness (interception) reduce reckless
       // challenges; fatigue and aggressive tactics increase mistimed contacts.
-      return clamp(.28 + (player.fatigue ?? 0) * .005 + (70 - player.tackle) * .0025 + (70 - player.interception) * .0025 + styleBoost, .08, .9);
+      return clamp((.28 + (player.fatigue ?? 0) * .005 + (70 - player.tackle) * .0025 + (70 - player.interception) * .0025 + styleBoost) * refereeStrictness, .08, .9);
     };
     const addCard = (team: "orbit" | "opponent", index: number, red: boolean) => {
       const players = team === "orbit" ? orbitPlayers : opponentPlayers;
@@ -2575,6 +2579,15 @@ export class ClubSimulation {
     if (ownSecond && deterministic(matchWeek * 53 + 19) < .02 + cardRiskFor(ownSecond, styleBoost) * .16) addCard("orbit", 2, true);
     if (opponentSecond && deterministic(matchWeek * 53 + 23) < .02 + cardRiskFor(opponentSecond) * .1) addCard("opponent", 3, true);
     return events;
+  }
+
+  private refereeStrictnessFor(matchWeek: number) {
+    // Each match receives a deterministic referee profile so replays remain stable.
+    return .78 + deterministic(matchWeek * 71 + 17) * .5;
+  }
+
+  private refereeLabelFor(strictness: number): "寛容" | "標準" | "厳格" {
+    return strictness >= 1.1 ? "厳格" : strictness <= .92 ? "寛容" : "標準";
   }
 
   private redCardPenalty(highlights: MatchHighlight[]) {
