@@ -69,6 +69,10 @@ export type Player = {
   sbPlayStyle?: SBPlayStyle;
   gkPlayStyle?: GKPlayStyle;
   injuryWeeks?: number;
+  /** 累積警告数。2枚で次の公式戦を出場停止にする。 */
+  yellowCards?: number;
+  /** 次の公式戦までの出場停止試合数。 */
+  suspensionMatches?: number;
   age: number;
   salary: number;
   contractYears?: number;

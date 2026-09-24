@@ -703,3 +703,6 @@ button { font: inherit; }
   .roster-table .player-directory-summary b { font-size: 10px; }
   .roster-table .player-directory-summary small { font-size: 9px; }
 }
+
+/* Suspended players remain visible in squad management but cannot be selected for the next official match. */
+.squad-card.is-suspended { border-color: rgba(255, 92, 92, .9); background: rgba(110, 24, 36, .35); }

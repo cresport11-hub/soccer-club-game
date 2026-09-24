@@ -178,7 +178,7 @@ export type MarkingMatchImpact = { attackModifier: number; defenseModifier: numb
 export type IndividualBonusEntry = { playerId: string; player: string; appearance: number; goals: number; amount: number };
 export type IndividualBonusReceipt = { total: number; entries: IndividualBonusEntry[] };
 export type PlayerSeasonStat = { playerId: string; player: string; position: string; appearances: number; starts: number; goals: number; assists: number; ratingTotal: number; ratingCount: number; mvpAwards: number };
-export type MatchHighlight = { minute: number; kind: "kickoff" | "action" | "sequence" | "goal" | "tactic" | "substitution" | "injury" | "card" | "halftime" | "fulltime"; team: "orbit" | "opponent" | "neutral"; text: string; scorer?: string; assistant?: string };
+export type MatchHighlight = { minute: number; kind: "kickoff" | "action" | "sequence" | "goal" | "tactic" | "substitution" | "injury" | "card" | "halftime" | "fulltime"; team: "orbit" | "opponent" | "neutral"; text: string; scorer?: string; assistant?: string; playerId?: string; cardType?: "yellow" | "red" };
 export type HalfTimeReport = { playerGoals: number; opponentGoals: number; message: string; tacticalNote: string; recommendation: string };
 export type MatchStatsTeam = { possession: number; shots: number; shotsOnTarget: number; bigChances: number; corners: number; passes: number; passAccuracy: number; fouls: number; offsides: number; saves: number };
 export type MatchStats = { orbit: MatchStatsTeam; opponent: MatchStatsTeam };
@@ -204,6 +204,8 @@ type Persisted = {
   playingStyle?: PlayingStyle;
   autoLineupCriteria?: AutoLineupCriteria;
   injuries?: Record<string, number>;
+  yellowCards?: Record<string, number>;
+  suspensionMatches?: Record<string, number>;
   recruitNegotiation?: RecruitNegotiation;
   saleOffers?: SaleOffer[];
   trainingHistory?: TrainingHistoryEntry[];
@@ -429,6 +431,8 @@ export class ClubSimulation {
   private ledger: FinanceEntry[] = [{ week: 0, label: "開幕運転資金", category: "繰越資金", amount: 3200000, kind: "income", note: "クラブの初期運転資金" }];
   private cashTrail = [3200000];
   private injuries: Record<string, number> = {};
+  private yellowCards: Record<string, number> = {};
+  private suspensionMatches: Record<string, number> = {};
   private recruitNegotiation = initialRecruitNegotiation();
   private marketSignedIds: string[] = [];
   private marketCandidateIds: string[] = [];
@@ -478,6 +482,8 @@ export class ClubSimulation {
     this.ledger = [{ week: 0, label: "開幕運転資金", category: "繰越資金", amount: 3200000, kind: "income", note: "クラブの初期運転資金" }];
     this.cashTrail = [3200000];
     this.injuries = {};
+    this.yellowCards = {};
+    this.suspensionMatches = {};
     this.marketSignedIds = [];
     this.marketCandidateIds = marketRecruits.map((player) => player.id);
     this.marketPreferredPositions = [];
@@ -694,8 +700,14 @@ export class ClubSimulation {
 
   playerForSlot(slotId: string) {
     const playerId = this.lineup[slotId];
-    return playerId ? this.roster.find((player) => player.id === playerId) ?? null : null;
+    if (!playerId || (this.suspensionMatches[playerId] ?? 0) > 0) return null;
+    return this.roster.find((player) => player.id === playerId) ?? null;
   }
+
+  get playerSuspensions() {
+    return this.roster.filter((player) => (this.suspensionMatches[player.id] ?? 0) > 0).map((player) => ({ playerId: player.id, player: player.name, matches: this.suspensionMatches[player.id] ?? 0 }));
+  }
+  suspensionMatchesFor(playerId: string) { return this.suspensionMatches[playerId] ?? 0; }
 
   playerIsFit(player: Player, slotId: string) {
     const slot = this.formation.slots.find((item) => item.id === slotId);
@@ -1396,8 +1408,9 @@ export class ClubSimulation {
     const tacticalMatchup = this.tacticalMatchup(score.tactics, opponentTactics);
     const markingImpact = this.markingMatchImpact(opponentTactics);
     const matchCondition = this.matchConditionFor(result.gate.isHome);
-    const matchAttack = clamp(score.attack + tacticalMatchup.playerAttackModifier + markingImpact.attackModifier + matchCondition.homeAttack + matchCondition.moraleAttack + matchCondition.momentumAttack, 0, 99);
-    const matchDefense = clamp(score.defense + tacticalMatchup.playerDefenseModifier + markingImpact.defenseModifier + matchCondition.homeDefense + matchCondition.moraleDefense + matchCondition.momentumDefense, 0, 99);
+    const redCardPenalty = this.redCardPenalty(result.highlights);
+    const matchAttack = clamp(score.attack + tacticalMatchup.playerAttackModifier + markingImpact.attackModifier + matchCondition.homeAttack + matchCondition.moraleAttack + matchCondition.momentumAttack - redCardPenalty.attack, 0, 99);
+    const matchDefense = clamp(score.defense + tacticalMatchup.playerDefenseModifier + markingImpact.defenseModifier + matchCondition.homeDefense + matchCondition.moraleDefense + matchCondition.momentumDefense - redCardPenalty.defense, 0, 99);
     const matchWeek = Math.max(0, this.week - 1);
     const playerGoals = Math.max(result.halfTime.playerGoals, clamp(Math.round((matchAttack - (opponentTactics.defense + tacticalMatchup.opponentDefenseModifier) + 18 + deterministic(matchWeek + 4) * 24) / 20), 0, 5));
     const opponentGoals = Math.max(result.halfTime.opponentGoals, clamp(Math.round(((opponentTactics.attack + tacticalMatchup.opponentAttackModifier) - matchDefense + 22 + deterministic(matchWeek + 18) * 20) / 21), 0, 4));
@@ -2069,6 +2082,7 @@ export class ClubSimulation {
   advanceWeek(): MatchResult {
     if (this.week >= 19) this.beginNewSeason();
     const recoveringPlayers = Object.keys(this.injuries);
+    const suspendedAtStart = Object.keys(this.suspensionMatches);
     const opponent = this.currentOpponent;
     const score = this.score();
     const tactics = score.tactics;
@@ -2077,8 +2091,10 @@ export class ClubSimulation {
     const markingImpact = this.markingMatchImpact(opponentTactics);
     const isHome = this.isHomeWeek();
     const matchCondition = this.matchConditionFor(isHome);
-    const matchAttack = clamp(score.attack + tacticalMatchup.playerAttackModifier + markingImpact.attackModifier + matchCondition.homeAttack + matchCondition.moraleAttack + matchCondition.momentumAttack, 0, 99);
-    const matchDefense = clamp(score.defense + tacticalMatchup.playerDefenseModifier + markingImpact.defenseModifier + matchCondition.homeDefense + matchCondition.moraleDefense + matchCondition.momentumDefense, 0, 99);
+    const matchCards = this.createMatchCards(this.week, opponentTactics);
+    const redCardPenalty = this.redCardPenalty(matchCards);
+    const matchAttack = clamp(score.attack + tacticalMatchup.playerAttackModifier + markingImpact.attackModifier + matchCondition.homeAttack + matchCondition.moraleAttack + matchCondition.momentumAttack - redCardPenalty.attack, 0, 99);
+    const matchDefense = clamp(score.defense + tacticalMatchup.playerDefenseModifier + markingImpact.defenseModifier + matchCondition.homeDefense + matchCondition.moraleDefense + matchCondition.momentumDefense - redCardPenalty.defense, 0, 99);
     const gate = this.createGateReceipt("リーグ", isHome, opponent.rating);
     const merchandise = this.createMerchandiseReceipt(gate);
     const membership = this.membershipReceipt();
@@ -2087,9 +2103,9 @@ export class ClubSimulation {
     const opponentGoals = clamp(Math.round(((opponentTactics.attack + tacticalMatchup.opponentAttackModifier) - matchDefense + 22 + deterministic(this.week + 18) * 20) / 21), 0, 4);
     const matchFlow = this.createMatchFlow(playerGoals, opponentGoals, opponent.name, tactics, opponentTactics, tacticalMatchup, matchCondition);
     matchFlow.halfTime.tacticalNote += ` / ${markingImpact.summary} / ${matchCondition.summary}`;
+    matchFlow.highlights.push(...matchCards);
     matchFlow.highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind));
     const injuries = this.createMatchInjuries(matchFlow.highlights, this.week);
-    matchFlow.highlights.push(...this.createMatchCards(this.week, opponentTactics));
     matchFlow.highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind));
     const stats = this.createMatchStats(playerGoals, opponentGoals, matchAttack, matchDefense, tactics, opponentTactics, matchFlow.highlights, this.week);
     const reward = playerGoals > opponentGoals ? 245000 : playerGoals === opponentGoals ? 105000 : 48000;
@@ -2195,11 +2211,13 @@ export class ClubSimulation {
     injuries.forEach((injury) => { this.injuries[injury.playerId] = injury.weeks; const player = this.roster.find((item) => item.id === injury.playerId); if (player) { player.fatigue = 99; player.injuryWeeks = injury.weeks; } });
     this.roster.forEach((player) => { player.fatigue = clamp(player.fatigue + (Object.values(this.lineup).includes(player.id) ? 11 : -7), 0, 99); });
     recoveringPlayers.forEach((playerId) => { if (!this.injuries[playerId]) return; this.injuries[playerId] -= 1; const player = this.roster.find((item) => item.id === playerId); if (this.injuries[playerId] <= 0) { delete this.injuries[playerId]; if (player) delete player.injuryWeeks; } else if (player) player.injuryWeeks = this.injuries[playerId]; });
+    suspendedAtStart.forEach((playerId) => { if (!this.suspensionMatches[playerId]) return; this.suspensionMatches[playerId] -= 1; if (this.suspensionMatches[playerId] <= 0) delete this.suspensionMatches[playerId]; });
     this.week += 1;
     this.saleOffers = this.saleOffers.filter((offer) => offer.expiresWeek >= this.week && this.roster.some((player) => player.id === offer.playerId));
     const marketRefreshLog = this.week % 3 === 0 ? this.refreshMarketCandidates(true) : "";
     this.captureCashPoint();
     result.playerRatings = this.createPlayerRatings(result.highlights, result.substitutions, result.injuries);
+    const cardNotices = this.applyCardDiscipline(result.highlights);
     result.conditionChanges = this.updatePlayerConditions(result.playerRatings, result.injuries, won, draw);
     result.markDuels = this.createMarkDuelReports(result.opponentTactics, result.playerRatings, result.playerGoals, result.opponentGoals);
     result.mvp = result.playerRatings[0] ?? null;
@@ -2228,8 +2246,9 @@ export class ClubSimulation {
     const skillXpLog = result.skillXpGrants.length ? ` スキルXP +${result.skillXpGrants.reduce((sum, grant) => sum + grant.xp, 0)}（${result.skillXpGrants.filter((grant) => grant.learned).map((grant) => `${grant.player}が${grant.label}を習得`).join("、") || "試合経験を蓄積"}）。` : "";
     const conditionLog = result.conditionChanges.length ? ` コンディション ${result.conditionChanges.filter((change) => change.delta > 0).length}名上昇・${result.conditionChanges.filter((change) => change.delta < 0).length}名低下。` : "";
     const medicalLog = injuries.length ? ` 医療報告: ${injuries.map((injury) => `${injury.player}が${injury.weeks}週離脱`).join("、")}。` : "";
+    const cardLog = cardNotices.length ? ` カード処分: ${cardNotices.join("、")}。` : "";
     const cupLog = cupResult ? ` カップ戦 ${cupResult.round} ${cupResult.playerGoals}-${cupResult.opponentGoals}。` : "";
-    this.logs.unshift(`第${this.week}節 ${isHome ? "HOME" : "AWAY"} ${opponent.name}戦 ${playerGoals}-${opponentGoals}。賞金 ${reward.toLocaleString()}円を獲得。${sponsorLog}${gateLog}${goodsLog}${concessionLog}${membershipLog}${salaryLog}${bonusLog}${personalBonusLog}${skillXpLog}${conditionLog}${fanLog}${tacticsLog}${medicalLog}${cupLog}${marketRefreshLog ? ` ${marketRefreshLog}` : ""}`);
+    this.logs.unshift(`第${this.week}節 ${isHome ? "HOME" : "AWAY"} ${opponent.name}戦 ${playerGoals}-${opponentGoals}。賞金 ${reward.toLocaleString()}円を獲得。${sponsorLog}${gateLog}${goodsLog}${concessionLog}${membershipLog}${salaryLog}${bonusLog}${personalBonusLog}${skillXpLog}${conditionLog}${fanLog}${tacticsLog}${medicalLog}${cardLog}${cupLog}${marketRefreshLog ? ` ${marketRefreshLog}` : ""}`);
     this.persist();
     return result;
   }
@@ -2537,7 +2556,7 @@ export class ClubSimulation {
       const text = team === "orbit"
         ? `${name}が激しいタックルで${card}。${red ? "退場となり、数的不利に" : "主審から厳重注意を受けた"}。`
         : `${opponentTactics.formationLabel ? "相手" : "相手チーム"}の${name}が遅れて接触し、${card}。${red ? "退場処分" : "警告を受ける"}。`;
-      events.push({ minute, kind: "card", team, text });
+      events.push({ minute, kind: "card", team, text, playerId: team === "orbit" ? player?.id : undefined, cardType: red ? "red" : "yellow" });
     };
     // A normal match usually has one or two cautions; pressing/direct styles raise the intensity.
     const intensity = this.playingStyle === "press" ? .9 : this.playingStyle === "direct" ? .82 : .7;
@@ -2546,6 +2565,36 @@ export class ClubSimulation {
     if (deterministic(matchWeek * 53 + 19) < (this.playingStyle === "press" ? .18 : .08)) addCard("orbit", 2, true);
     if (deterministic(matchWeek * 53 + 23) < .08) addCard("opponent", 3, true);
     return events;
+  }
+
+  private redCardPenalty(highlights: MatchHighlight[]) {
+    const redCards = highlights.filter((item) => item.kind === "card" && item.team === "orbit" && item.cardType === "red");
+    return { attack: redCards.length * 10, defense: redCards.length * 12 };
+  }
+
+  private applyCardDiscipline(highlights: MatchHighlight[]) {
+    const notices: string[] = [];
+    highlights.filter((item) => item.kind === "card" && item.team === "orbit" && item.playerId).forEach((item) => {
+      const player = this.roster.find((candidate) => candidate.id === item.playerId);
+      if (!player) return;
+      if (item.cardType === "red") {
+        this.suspensionMatches[player.id] = Math.max(this.suspensionMatches[player.id] ?? 0, 1);
+        item.text += " 次の公式戦は出場停止。";
+        notices.push(`${player.name}はレッドカードで次試合出場停止`);
+        return;
+      }
+      const next = (this.yellowCards[player.id] ?? 0) + 1;
+      if (next >= 2) {
+        this.yellowCards[player.id] = 0;
+        this.suspensionMatches[player.id] = Math.max(this.suspensionMatches[player.id] ?? 0, 1);
+        item.text += " 警告累積により次の公式戦は出場停止。";
+        notices.push(`${player.name}は警告累積で次試合出場停止`);
+      } else {
+        this.yellowCards[player.id] = next;
+        item.text += " 警告累積1枚。";
+      }
+    });
+    return notices;
   }
 
   private createPlayerRatings(highlights: MatchHighlight[], substitutions: MatchSubstitution[], injuries: MatchInjury[]): PlayerMatchRating[] {
@@ -3063,7 +3112,7 @@ export class ClubSimulation {
       const parsed = JSON.parse(raw) as Persisted;
       if (!this.hasUsableSave(parsed)) throw new Error("Invalid save data");
       this.money = parsed.money; this.fame = parsed.fame; this.week = parsed.week; this.clubName = normalizeClubName(parsed.clubName); this.formationId = parsed.formationId; this.lineup = parsed.lineup; this.roster = this.hydrateOpeningRoster(parsed.players, parsed.week); this.rows = parsed.rows.map((row) => row.id === userClub.id ? { ...row, name: this.clubName } : row); this.logs = parsed.logs; this.recruited = parsed.recruited;
-      this.sponsor = parsed.sponsor ?? null; this.cup = parsed.cup ?? initialCup(); this.popularity = parsed.popularity ?? 42; this.teamMorale = clamp(Math.round(finiteOr(parsed.teamMorale, 58)), 0, 100); this.recentMatchForm = Array.isArray(parsed.recentMatchForm) ? parsed.recentMatchForm.filter((entry): entry is RecentMatchForm => !!entry && ["W", "D", "L"].includes(entry.outcome) && Number.isFinite(entry.margin) && (entry.competition === "リーグ" || entry.competition === "カップ")).slice(0, 5).map((entry) => ({ outcome: entry.outcome, margin: clamp(Math.round(entry.margin), -5, 5), competition: entry.competition })) : []; this.concessionLevel = clamp(parsed.concessionLevel ?? 1, 1, concessionLevels.length); this.scoutLevel = clamp(parsed.scoutLevel ?? 1, 1, scoutLevels.length); this.assignedScoutId = scoutStaff.some((staff) => staff.id === parsed.assignedScoutId) ? parsed.assignedScoutId! : "scout-forward"; this.trainingFacilityLevel = clamp(parsed.trainingFacilityLevel ?? 1, 1, trainingFacilityLevels.length); this.trainingSessionsThisWeek = Math.max(0, Math.round(finiteOr(parsed.trainingSessionsThisWeek, 0))); this.youthIntakeCursor = Math.max(0, Math.round(finiteOr(parsed.youthIntakeCursor, 0))); this.lastTrainingWeek = typeof parsed.lastTrainingWeek === "number" && Number.isFinite(parsed.lastTrainingWeek) && parsed.lastTrainingWeek >= 0 ? Math.round(parsed.lastTrainingWeek) : null; this.mentality = mentalityOptions.some((item) => item.id === parsed.mentality) ? parsed.mentality! : "balanced"; this.playingStyle = playingStyleOptions.some((item) => item.id === parsed.playingStyle) ? parsed.playingStyle! : "possession"; this.autoLineupCriteria = ["attack", "defense", "fit"].includes(parsed.autoLineupCriteria ?? "") ? parsed.autoLineupCriteria! : "fit"; this.injuries = parsed.injuries ?? Object.fromEntries(this.roster.filter((player) => (player.injuryWeeks ?? 0) > 0).map((player) => [player.id, player.injuryWeeks!])); this.ledger = parsed.ledger?.length ? parsed.ledger : [{ week: parsed.week, label: "既存シーズン繰越", category: "繰越資金", amount: parsed.money, kind: "income", note: "財務ダッシュボード導入前の残高" }]; this.cashTrail = parsed.cashTrail?.length ? parsed.cashTrail : [parsed.money]; this.marketSignedIds = this.hydrateMarketSignedIds(parsed.marketSignedIds, parsed.recruited); this.marketPreferredPositions = Array.isArray(parsed.marketPreferredPositions) ? Array.from(new Set(parsed.marketPreferredPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)))) : []; this.marketCandidateIds = Array.isArray(parsed.marketCandidateIds) ? Array.from(new Set(parsed.marketCandidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)))) : []; this.marketCandidateCycle = Math.max(0, Math.round(finiteOr(parsed.marketCandidateCycle, -1)));     this.selectedMarketCandidateId = typeof parsed.marketSelectedCandidateId === "string" && this.marketCandidateIds.includes(parsed.marketSelectedCandidateId) ? parsed.marketSelectedCandidateId : this.marketCandidateIds[0] ?? null;
+      this.sponsor = parsed.sponsor ?? null; this.cup = parsed.cup ?? initialCup(); this.popularity = parsed.popularity ?? 42; this.teamMorale = clamp(Math.round(finiteOr(parsed.teamMorale, 58)), 0, 100); this.recentMatchForm = Array.isArray(parsed.recentMatchForm) ? parsed.recentMatchForm.filter((entry): entry is RecentMatchForm => !!entry && ["W", "D", "L"].includes(entry.outcome) && Number.isFinite(entry.margin) && (entry.competition === "リーグ" || entry.competition === "カップ")).slice(0, 5).map((entry) => ({ outcome: entry.outcome, margin: clamp(Math.round(entry.margin), -5, 5), competition: entry.competition })) : []; this.concessionLevel = clamp(parsed.concessionLevel ?? 1, 1, concessionLevels.length); this.scoutLevel = clamp(parsed.scoutLevel ?? 1, 1, scoutLevels.length); this.assignedScoutId = scoutStaff.some((staff) => staff.id === parsed.assignedScoutId) ? parsed.assignedScoutId! : "scout-forward"; this.trainingFacilityLevel = clamp(parsed.trainingFacilityLevel ?? 1, 1, trainingFacilityLevels.length); this.trainingSessionsThisWeek = Math.max(0, Math.round(finiteOr(parsed.trainingSessionsThisWeek, 0))); this.youthIntakeCursor = Math.max(0, Math.round(finiteOr(parsed.youthIntakeCursor, 0))); this.lastTrainingWeek = typeof parsed.lastTrainingWeek === "number" && Number.isFinite(parsed.lastTrainingWeek) && parsed.lastTrainingWeek >= 0 ? Math.round(parsed.lastTrainingWeek) : null; this.mentality = mentalityOptions.some((item) => item.id === parsed.mentality) ? parsed.mentality! : "balanced"; this.playingStyle = playingStyleOptions.some((item) => item.id === parsed.playingStyle) ? parsed.playingStyle! : "possession"; this.autoLineupCriteria = ["attack", "defense", "fit"].includes(parsed.autoLineupCriteria ?? "") ? parsed.autoLineupCriteria! : "fit"; this.injuries = parsed.injuries ?? Object.fromEntries(this.roster.filter((player) => (player.injuryWeeks ?? 0) > 0).map((player) => [player.id, player.injuryWeeks!])); this.yellowCards = Object.fromEntries(Object.entries(parsed.yellowCards ?? {}).filter(([id, value]) => this.roster.some((player) => player.id === id) && Number.isFinite(value)).map(([id, value]) => [id, clamp(Math.round(value), 0, 1)])); this.suspensionMatches = Object.fromEntries(Object.entries(parsed.suspensionMatches ?? {}).filter(([id, value]) => this.roster.some((player) => player.id === id) && Number.isFinite(value)).map(([id, value]) => [id, clamp(Math.round(value), 0, 1)])); this.ledger = parsed.ledger?.length ? parsed.ledger : [{ week: parsed.week, label: "既存シーズン繰越", category: "繰越資金", amount: parsed.money, kind: "income", note: "財務ダッシュボード導入前の残高" }]; this.cashTrail = parsed.cashTrail?.length ? parsed.cashTrail : [parsed.money]; this.marketSignedIds = this.hydrateMarketSignedIds(parsed.marketSignedIds, parsed.recruited); this.marketPreferredPositions = Array.isArray(parsed.marketPreferredPositions) ? Array.from(new Set(parsed.marketPreferredPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)))) : []; this.marketCandidateIds = Array.isArray(parsed.marketCandidateIds) ? Array.from(new Set(parsed.marketCandidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)))) : []; this.marketCandidateCycle = Math.max(0, Math.round(finiteOr(parsed.marketCandidateCycle, -1)));     this.selectedMarketCandidateId = typeof parsed.marketSelectedCandidateId === "string" && this.marketCandidateIds.includes(parsed.marketSelectedCandidateId) ? parsed.marketSelectedCandidateId : this.marketCandidateIds[0] ?? null;
     const savedMarketNotice = parsed.marketUpdateNotice; this.pendingMarketUpdateNotice = savedMarketNotice && Number.isFinite(savedMarketNotice.week) && Array.isArray(savedMarketNotice.candidateIds) ? { week: Math.max(0, Math.round(savedMarketNotice.week)), candidateIds: savedMarketNotice.candidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)), requestedPositions: Array.isArray(savedMarketNotice.requestedPositions) ? savedMarketNotice.requestedPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)) : [] } : null; this.recruitNegotiation = this.hydrateRecruitNegotiation(parsed.recruitNegotiation, parsed.recruited); this.saleOffers = this.hydrateSaleOffers(parsed.saleOffers); this.trainingHistory = this.hydrateTrainingHistory(parsed.trainingHistory); this.youthPlayers = this.hydrateYouthPlayers(parsed.youthPlayers); this.seasonStats = this.hydrateSeasonStats(parsed.seasonStats); this.manualMarkAssignments = Object.fromEntries(Object.entries(parsed.manualMarkAssignments ?? {}).filter(([, playerId]) => typeof playerId === "string" && this.roster.some((player) => player.id === playerId)));
     } catch {
       try { localStorage.removeItem(storageKey); } catch { /* Storage may be disabled; the initial state remains usable. */ }
