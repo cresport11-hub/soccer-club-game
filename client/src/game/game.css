@@ -706,3 +706,8 @@ button { font: inherit; }
 
 /* Suspended players remain visible in squad management but cannot be selected for the next official match. */
 .squad-card.is-suspended { border-color: rgba(255, 92, 92, .9); background: rgba(110, 24, 36, .35); }
+
+/* Individual weekly development plan controls. */
+.training-focus-options { display:flex; flex-wrap:wrap; gap:4px; margin-top:7px; }
+.focus-option { border:1px solid rgba(185,255,55,.18); background:rgba(2,18,11,.7); color:#9bb4a2; border-radius:4px; padding:4px 6px; font-size:10px; cursor:pointer; }
+.focus-option.is-selected { background:rgba(195,255,54,.16); border-color:#c8ff3d; color:#d9ff7a; }

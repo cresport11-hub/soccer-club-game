@@ -60,6 +60,7 @@ export type Player = {
   /** 試合当日の状態。疲労とは別に0〜100で管理する。 */
   condition?: number;
   trainingLoad?: TrainingLoad;
+  trainingFocus?: SkillGrowthFocus | "recovery";
   cfPlayStyle?: CFPlayStyle;
   wgPlayStyle?: WGPlayStyle;
   amPlayStyle?: AMPlayStyle;

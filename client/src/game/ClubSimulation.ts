@@ -1523,6 +1523,21 @@ export class ClubSimulation {
 
   trainingLoadFor(player: Player) { return trainingLoadOptions.find((option) => option.id === player.trainingLoad) ?? trainingLoadOptions[2]; }
 
+  trainingFocusFor(player: Player): TrainingFocus {
+    if (player.trainingFocus && trainingOptions.some((option) => option.id === player.trainingFocus)) return player.trainingFocus as TrainingFocus;
+    return player.position === "GK" ? "goalkeeping" : player.position === "CF" || player.position === "WG" ? "finishing" : player.position === "CB" || player.position === "SB" ? "defending" : "passing";
+  }
+
+  setTrainingFocus(playerId: string, focus: TrainingFocus) {
+    const player = this.roster.find((item) => item.id === playerId);
+    const option = trainingOptions.find((item) => item.id === focus);
+    if (!player || !option) return { ok: false, text: "対象選手または育成メニューを確認できませんでした。" };
+    player.trainingFocus = option.id;
+    this.logs.unshift(`${player.name}の個別育成メニューを「${option.label}」へ設定。`);
+    this.persist();
+    return { ok: true, text: `${player.name}を「${option.label}」に設定しました。次節へ進むと自動実行されます。` };
+  }
+
   setTrainingLoad(playerId: string, load: TrainingLoad) {
     const player = this.roster.find((item) => item.id === playerId);
     const option = trainingLoadOptions.find((item) => item.id === load);
@@ -1575,7 +1590,11 @@ export class ClubSimulation {
     this.persist();
   }
 
-  private trainingTargets(focus: TrainingFocus) {
+  private trainingTargets(focus: TrainingFocus, playerId?: string) {
+    if (playerId) {
+      const player = this.roster.find((item) => item.id === playerId);
+      return player && this.injuryWeeksFor(player.id) === 0 ? [player] : [];
+    }
     const starters = this.roster.filter((player) => Object.values(this.lineup).includes(player.id) && this.injuryWeeksFor(player.id) === 0);
     return focus === "goalkeeping" ? this.roster.filter((player) => player.position === "GK" && this.injuryWeeksFor(player.id) === 0) : focus === "recovery" ? starters : starters.filter((player) => player.position !== "GK");
   }
@@ -1633,17 +1652,19 @@ export class ClubSimulation {
     return { ok: true, text: `${upgraded.name} を稼働開始。週${upgraded.weeklySlots}枠、負傷リスク −${upgraded.riskReduction}% を反映します。` };
   }
 
-  train(focus: TrainingFocus = "attacking") {
+  train(focus: TrainingFocus = "attacking", playerId?: string, automated = false) {
     const option = trainingOptions.find((item) => item.id === focus) ?? trainingOptions[0];
-    if (!this.canTrainThisWeek) return { ok: false, text: `今週の練習枠を使い切りました（${this.trainingSessionsUsed}/${this.trainingFacility.weeklySlots}）。次節へ進むと再開できます。` };
-    if (this.money < option.cost) return { ok: false, text: "資金が不足しています。スポンサー収入や次節の賞金を確保しましょう。" };
-    const boosted = this.trainingTargets(focus);
+    if (!automated && !this.canTrainThisWeek) return { ok: false, text: `今週の練習枠を使い切りました（${this.trainingSessionsUsed}/${this.trainingFacility.weeklySlots}）。次節へ進むと再開できます。` };
+    if (!automated && this.money < option.cost) return { ok: false, text: "資金が不足しています。スポンサー収入や次節の賞金を確保しましょう。" };
+    const boosted = this.trainingTargets(focus, playerId);
     if (!boosted.length) return { ok: false, text: "このメニューの対象選手がいません。編成を確認してください。" };
     const facility = this.trainingFacility;
     const risk = this.trainingRiskReport(focus);
-    this.money -= option.cost;
-    this.recordFinance("トレーニング", option.cost, "expense", `${option.label}を実施`, this.currentWeek);
-    this.captureCashPoint();
+    if (!automated) {
+      this.money -= option.cost;
+      this.recordFinance("トレーニング", option.cost, "expense", `${option.label}を実施`, this.currentWeek);
+      this.captureCashPoint();
+    }
     const before = { attack: boosted.reduce((sum, player) => sum + player.attack, 0), defense: boosted.reduce((sum, player) => sum + player.defense, 0), dribble: boosted.reduce((sum, player) => sum + player.dribble, 0), pass: boosted.reduce((sum, player) => sum + player.pass, 0), shoot: boosted.reduce((sum, player) => sum + player.shoot, 0), tackle: boosted.reduce((sum, player) => sum + player.tackle, 0), block: boosted.reduce((sum, player) => sum + player.block, 0), interception: boosted.reduce((sum, player) => sum + player.interception, 0), gk: boosted.reduce((sum, player) => sum + (player.gk ?? 0), 0), fatigue: boosted.reduce((sum, player) => sum + player.fatigue, 0) };
     const beforeCondition = boosted.reduce((sum, player) => sum + this.conditionFor(player), 0);
     const attributeXpGrants: AttributeXpGrant[] = [];
@@ -1696,12 +1717,24 @@ export class ClubSimulation {
     if (trainingInjury) changes.push(`負傷注意 ${trainingInjury.player}`);
     this.trainingHistory.unshift({ week: this.currentWeek, focus, label: option.label, affected: boosted.length, changes, fatigueChange });
     if (this.trainingHistory.length > 16) this.trainingHistory.splice(16);
-    if (this.lastTrainingWeek !== this.week) this.trainingSessionsThisWeek = 0;
-    this.lastTrainingWeek = this.week;
-    this.trainingSessionsThisWeek += 1;
-    this.logs.unshift(trainingInjury ? `${option.label}を実施。${trainingInjury.player}が過負荷で${trainingInjury.weeks}週の離脱。` : `${option.label}を実施。${option.copy}`);
+    if (!automated) {
+      if (this.lastTrainingWeek !== this.week) this.trainingSessionsThisWeek = 0;
+      this.lastTrainingWeek = this.week;
+      this.trainingSessionsThisWeek += 1;
+    }
+    const fatigueSummary = `対象${boosted.length}人の疲労 ${fatigueChange >= 0 ? "+" : ""}${fatigueChange}`;
+    this.logs.unshift(trainingInjury ? `${option.label}を実施。${fatigueSummary}。${trainingInjury.player}が過負荷で${trainingInjury.weeks}週の離脱。` : `${option.label}を実施。${fatigueSummary}。${option.copy}`);
     this.persist();
-    return { ok: true, text: trainingInjury ? `${option.label}を完了しましたが、${trainingInjury.player}が過負荷で離脱しました。` : `${option.label}を完了。残り練習枠は${this.trainingSessionsRemaining}です。` };
+    return { ok: true, text: trainingInjury ? `${option.label}を完了しましたが、${trainingInjury.player}が過負荷で離脱しました。${fatigueSummary}。` : `${option.label}を完了。${fatigueSummary}。${automated ? "" : `残り練習枠は${this.trainingSessionsRemaining}です。`}` };
+  }
+
+  applyIndividualTrainingPlans() {
+    const results = this.roster.filter((player) => this.injuryWeeksFor(player.id) === 0).map((player) => this.train(this.trainingFocusFor(player), player.id, true)).filter((result) => result.ok);
+    if (!results.length) return { ok: false, text: "自動育成の対象選手がいません。" };
+    const summary = `個別育成プランを${results.length}人に自動実行しました。`;
+    this.logs.unshift(summary);
+    this.persist();
+    return { ok: true, text: summary };
   }
 
   developYouth() {
@@ -2081,6 +2114,7 @@ export class ClubSimulation {
 
   advanceWeek(): MatchResult {
     if (this.week >= 19) this.beginNewSeason();
+    this.applyIndividualTrainingPlans();
     const recoveringPlayers = Object.keys(this.injuries);
     const suspendedAtStart = Object.keys(this.suspensionMatches);
     const opponent = this.currentOpponent;
@@ -3211,6 +3245,7 @@ export class ClubSimulation {
       block: finiteOr(saved.block, reference?.block ?? defense),
       interception: finiteOr(saved.interception, reference?.interception ?? defense),
       trainingLoad: trainingLoadOptions.some((option) => option.id === saved.trainingLoad) ? saved.trainingLoad : "standard",
+      trainingFocus: trainingOptions.some((option) => option.id === saved.trainingFocus) ? saved.trainingFocus : undefined,
       contractYears: clamp(Math.round(finiteOr(saved.contractYears, reference ? defaultContractYears(reference) : defaultContractYears(saved))), 1, 3),
       winBonus: Math.max(0, finiteOr(saved.winBonus, 0)),
       appearanceBonus: Math.max(0, finiteOr(saved.appearanceBonus, 0)),
