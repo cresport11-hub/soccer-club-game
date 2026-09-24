@@ -2547,6 +2547,11 @@ export class ClubSimulation {
     const orbitPlayers = this.startingPlayers().filter((player) => player.position !== "GK");
     const opponentPlayers = opponentTactics.lineup.filter((player) => player.position !== "GK");
     const events: MatchHighlight[] = [];
+    const cardRiskFor = (player: { tackle: number; interception: number; fatigue?: number }, styleBoost = 0) => {
+      // Tackling technique and defensive awareness (interception) reduce reckless
+      // challenges; fatigue and aggressive tactics increase mistimed contacts.
+      return clamp(.28 + (player.fatigue ?? 0) * .005 + (70 - player.tackle) * .0025 + (70 - player.interception) * .0025 + styleBoost, .08, .9);
+    };
     const addCard = (team: "orbit" | "opponent", index: number, red: boolean) => {
       const players = team === "orbit" ? orbitPlayers : opponentPlayers;
       const player = players[index % Math.max(players.length, 1)];
@@ -2558,12 +2563,17 @@ export class ClubSimulation {
         : `${opponentTactics.formationLabel ? "相手" : "相手チーム"}の${name}が遅れて接触し、${card}。${red ? "退場処分" : "警告を受ける"}。`;
       events.push({ minute, kind: "card", team, text, playerId: team === "orbit" ? player?.id : undefined, cardType: red ? "red" : "yellow" });
     };
-    // A normal match usually has one or two cautions; pressing/direct styles raise the intensity.
-    const intensity = this.playingStyle === "press" ? .9 : this.playingStyle === "direct" ? .82 : .7;
-    if (deterministic(matchWeek * 53 + 7) < intensity) addCard("orbit", 0, false);
-    if (deterministic(matchWeek * 53 + 13) < .74) addCard("opponent", 1, false);
-    if (deterministic(matchWeek * 53 + 19) < (this.playingStyle === "press" ? .18 : .08)) addCard("orbit", 2, true);
-    if (deterministic(matchWeek * 53 + 23) < .08) addCard("opponent", 3, true);
+    // A normal match has a chance of one or two cautions. Individual ability and
+    // match load now matter more than a single team-wide fixed probability.
+    const styleBoost = this.playingStyle === "press" ? .1 : this.playingStyle === "direct" ? .05 : 0;
+    const ownFirst = orbitPlayers[0];
+    const ownSecond = orbitPlayers[2];
+    const opponentFirst = opponentPlayers[1];
+    const opponentSecond = opponentPlayers[3];
+    if (ownFirst && deterministic(matchWeek * 53 + 7) < cardRiskFor(ownFirst, styleBoost)) addCard("orbit", 0, false);
+    if (opponentFirst && deterministic(matchWeek * 53 + 13) < cardRiskFor(opponentFirst)) addCard("opponent", 1, false);
+    if (ownSecond && deterministic(matchWeek * 53 + 19) < .02 + cardRiskFor(ownSecond, styleBoost) * .16) addCard("orbit", 2, true);
+    if (opponentSecond && deterministic(matchWeek * 53 + 23) < .02 + cardRiskFor(opponentSecond) * .1) addCard("opponent", 3, true);
     return events;
   }
 
