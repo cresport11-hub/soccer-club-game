@@ -113,7 +113,7 @@ export type TacticalMatchup = { label: string; playerAttackModifier: number; pla
 export type ScoutTacticalFit = { score: number; grade: "戦術の核" | "高適合" | "起用可能" | "調整が必要"; formation: number; mentality: number; playingStyle: number; chemistry: number; formationLabel: string; mentalityLabel: string; playingStyleLabel: string; strengths: string[]; concern: string };
 export type RecruitmentPriority = { position: Player["position"]; score: number; grade: "最優先" | "高" | "中" | "低"; demand: number; coverage: number; available: number; averagePower: number; injuryCount: number; fatigueRisk: number; contractRisk: number; ageRisk: number; reasons: string[] };
 export type MarketCandidateComparison = { player: Player; tacticalFit: ScoutTacticalFit; recruitmentPriority: RecruitmentPriority; openingFee: number; annualImpact: number; status: "閲覧中" | "市場候補" };
-export type MarketUpdateNotice = { week: number; candidateIds: string[]; requestedPositions: Player["position"][] };
+export type MarketUpdateNotice = { week: number; candidateIds: string[]; requestedPositions: Player["position"][]; saleOfferIds?: string[] };
 export type ContractAlert = { player: Player; positionPriority: RecruitmentPriority; renewalFee: number; years: number; urgency: "至急" | "要判断"; note: string };
 
 export type LeagueRow = {
@@ -389,11 +389,7 @@ const normalizeClubName = (value: unknown, fallback = userClub.name) => {
 };
 const transferFeeFor = (candidate: Player, baseMultiplier: number) => Math.round(candidate.salary * baseMultiplier * nationalityProfileFor(candidate.nationality).transferFeeMultiplier);
 const initialRecruitNegotiation = (candidate: Player = marketRecruits[0]): RecruitNegotiation => ({ candidateId: candidate.id, stage: "scouting", openingOffer: transferFeeFor(candidate, .82), counterOffer: transferFeeFor(candidate, .95), agreedFee: null });
-const initialSaleOffers = (): SaleOffer[] => [
-  { id: "sale-p3", playerId: "p3", clubName: "アズール福岡", proposedFee: 11800000, expiresWeek: 19 },
-  { id: "sale-p9", playerId: "p9", clubName: "オーロラ横浜", proposedFee: 13200000, expiresWeek: 19 },
-  { id: "sale-p16", playerId: "p16", clubName: "フォージ埼玉", proposedFee: 8600000, expiresWeek: 19 },
-];
+const initialSaleOffers = (): SaleOffer[] => [];
 const initialSeasonStats = (roster: Player[]): PlayerSeasonStat[] => roster.map((player) => ({ playerId: player.id, player: player.name, position: player.position, appearances: 0, starts: 0, goals: 0, assists: 0, ratingTotal: 0, ratingCount: 0, mvpAwards: 0 }));
 
 function baseRows(): LeagueRow[] {
@@ -615,7 +611,10 @@ export class ClubSimulation {
       .map((id) => marketRecruits.find((player) => player.id === id))
       .filter((player): player is Player => player !== undefined)
       .map((player) => this.scoutCandidate(player));
-    return { ...this.pendingMarketUpdateNotice, candidates };
+    const saleOffers = (this.pendingMarketUpdateNotice.saleOfferIds ?? [])
+      .map((id) => this.saleOffers.find((offer) => offer.id === id))
+      .filter((offer): offer is SaleOffer => offer !== undefined);
+    return { ...this.pendingMarketUpdateNotice, saleOfferIds: saleOffers.map((offer) => offer.id), candidates, saleOffers };
   }
   get contractAlerts() { return this.buildContractAlerts(); }
   get recruitmentPriorities() { return this.recruitmentPriorityBoard(); }
@@ -1880,16 +1879,33 @@ export class ClubSimulation {
     this.recruitNegotiation = candidate ? initialRecruitNegotiation(candidate) : initialRecruitNegotiation();
   }
 
+  private refreshSaleOffers() {
+    const eligible = this.roster.filter((player) => (player.contractYears ?? defaultContractYears(player)) >= 1);
+    const receivesOffer = eligible.length > 0 && deterministic(this.week * 97 + 17) >= 0.48;
+    if (!receivesOffer) {
+      this.saleOffers = [];
+      return [];
+    }
+    const player = eligible[Math.floor(deterministic(this.week * 97 + 23) * eligible.length) % eligible.length];
+    const clubs = ["アズール福岡", "オーロラ横浜", "フォージ埼玉", "ノーススター札幌", "リバーサイド神戸"];
+    const club = clubs[Math.floor(deterministic(this.week * 97 + 31) * clubs.length) % clubs.length];
+    const proposedFee = Math.max(1000000, Math.round(player.salary * (1.35 + deterministic(this.week * 97 + 41) * 0.7)));
+    const offer: SaleOffer = { id: `sale-w${this.week}-${player.id}`, playerId: player.id, clubName: club, proposedFee, expiresWeek: this.week + 3 };
+    this.saleOffers = [offer];
+    return [offer];
+  }
+
   private refreshMarketCandidates(notify = false) {
     this.marketCandidateCycle = this.week;
     this.marketCandidateIds = this.buildMarketCandidateIds();
     const candidate = this.marketCandidates[0];
     this.selectedMarketCandidateId = candidate?.id ?? null;
     this.recruitNegotiation = candidate ? initialRecruitNegotiation(candidate) : initialRecruitNegotiation();
-    if (notify) this.pendingMarketUpdateNotice = { week: this.week, candidateIds: [...this.marketCandidateIds], requestedPositions: [...this.marketPreferredPositions] };
+    const saleOffers = this.refreshSaleOffers();
+    if (notify) this.pendingMarketUpdateNotice = { week: this.week, candidateIds: [...this.marketCandidateIds], requestedPositions: [...this.marketPreferredPositions], saleOfferIds: saleOffers.map((offer) => offer.id) };
     return this.marketPreferredPositions.length
-      ? `希望ポジション（${this.marketPreferredPositions.join(" / ")}）に限定して${this.marketCandidateIds.length}名の市場候補を更新。`
-      : `${this.marketCandidateIds.length}名の市場候補を更新。`;
+      ? `希望ポジション（${this.marketPreferredPositions.join(" / ")}）に限定して${this.marketCandidateIds.length}名の市場候補を更新。売却オファー${saleOffers.length ? "1件" : "なし"}。`
+      : `${this.marketCandidateIds.length}名の市場候補を更新。売却オファー${saleOffers.length ? "1件" : "なし"}。`;
   }
 
   private scoutCandidate(candidate: Player): Player {

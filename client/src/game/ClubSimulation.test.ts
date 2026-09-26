@@ -484,6 +484,7 @@ describe("Team power radar", () => {
   });
 });
 
+
 describe("Youth academy sessions", () => {
   beforeEach(() => {
     const values = new Map<string, string>();
@@ -508,5 +509,34 @@ describe("Youth academy sessions", () => {
     simulation.advanceWeek();
     expect(simulation.youthTrainingUsedThisWeek).toBe(false);
     expect(simulation.developYouth().ok).toBe(true);
+  });
+});
+
+describe("Transfer market refresh", () => {
+  beforeEach(() => {
+    const values = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+      clear: () => values.clear(),
+    });
+  });
+
+  it("refreshes sale offers with the scouting market every three weeks", () => {
+    const simulation = new ClubSimulation();
+    expect(simulation.activeSaleOffers).toHaveLength(0);
+
+    simulation.advanceWeek();
+    expect(simulation.marketUpdateNotice).toBeNull();
+    simulation.advanceWeek();
+    expect(simulation.marketUpdateNotice).toBeNull();
+
+    simulation.advanceWeek();
+    const notice = simulation.marketUpdateNotice;
+    expect(notice).not.toBeNull();
+    expect(simulation.activeSaleOffers.length).toBeLessThanOrEqual(1);
+    expect(notice?.saleOffers?.length ?? 0).toBeLessThanOrEqual(1);
+    expect(notice?.saleOfferIds ?? []).toEqual((notice?.saleOffers ?? []).map((offer) => offer.id));
   });
 });
