@@ -540,3 +540,33 @@ describe("Transfer market refresh", () => {
     expect(notice?.saleOfferIds ?? []).toEqual((notice?.saleOffers ?? []).map((offer) => offer.id));
   });
 });
+
+describe("Recruit negotiation choices", () => {
+  beforeEach(() => {
+    const values = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+      clear: () => values.clear(),
+    });
+  });
+
+  it("offers low, fair, and high amounts and exposes hold conditions", () => {
+    const lowSimulation = new ClubSimulation();
+    const low = lowSimulation.negotiateRecruit("low");
+    expect(lowSimulation.currentRecruitNegotiation?.offerTier).toBe("low");
+    expect(["pending", "agreed", "failed"]).toContain(lowSimulation.currentRecruitNegotiation?.stage);
+    expect(low.text).toBeTruthy();
+
+    localStorage.clear();
+    const highSimulation = new ClubSimulation();
+    const high = highSimulation.negotiateRecruit("high");
+    expect(highSimulation.currentRecruitNegotiation?.offerTier).toBe("high");
+    expect(["pending", "agreed", "failed"]).toContain(highSimulation.currentRecruitNegotiation?.stage);
+    if (highSimulation.currentRecruitNegotiation?.stage === "pending") {
+      expect(highSimulation.currentRecruitNegotiation.holdReason).toBeTruthy();
+      expect(highSimulation.acceptRecruitHold().ok).toBe(true);
+    }
+  });
+});

@@ -32,7 +32,8 @@ export type SystemMasteryGrant = { playerId: string; player: string; formationId
 export type SystemEffectiveness = { formationId: string; formationLabel: string; understanding: number; mastery: number; rate: number; grade: "完全適応" | "高適応" | "適応" | "要調整" | "不慣れ"; note: string };
 export type PlayerConditionStatus = { value: number; label: "好調" | "標準" | "不調"; tone: "good" | "normal" | "bad"; modifier: number; note: string };
 export type PlayerConditionChange = { playerId: string; player: string; from: number; to: number; delta: number; label: PlayerConditionStatus["label"] };
-export type RecruitNegotiation = { candidateId: string; stage: "scouting" | "countered" | "agreed"; openingOffer: number; counterOffer: number; agreedFee: number | null };
+export type RecruitOfferTier = "low" | "fair" | "high";
+export type RecruitNegotiation = { candidateId: string; stage: "scouting" | "pending" | "agreed" | "failed"; openingOffer: number; counterOffer: number; agreedFee: number | null; offerTier?: RecruitOfferTier; proposedSalary?: number; contractYears?: number; appearanceGuarantee?: boolean; performanceBonus?: number; attempts?: number; holdReason?: string };
 export type SaleOffer = { id: string; playerId: string; clubName: string; proposedFee: number; expiresWeek: number };
 export type ContractOfferId = "retention" | "balanced" | "ambitious";
 export type ContractOffer = { id: ContractOfferId; label: string; copy: string; salaryIncrease: number; winBonus: number; appearanceBonus: number; goalBonus: number; signingRate: number };
@@ -388,7 +389,7 @@ const normalizeClubName = (value: unknown, fallback = userClub.name) => {
   return normalized || fallback;
 };
 const transferFeeFor = (candidate: Player, baseMultiplier: number) => Math.round(candidate.salary * baseMultiplier * nationalityProfileFor(candidate.nationality).transferFeeMultiplier);
-const initialRecruitNegotiation = (candidate: Player = marketRecruits[0]): RecruitNegotiation => ({ candidateId: candidate.id, stage: "scouting", openingOffer: transferFeeFor(candidate, .82), counterOffer: transferFeeFor(candidate, .95), agreedFee: null });
+const initialRecruitNegotiation = (candidate: Player = marketRecruits[0]): RecruitNegotiation => ({ candidateId: candidate.id, stage: "scouting", openingOffer: transferFeeFor(candidate, .78), counterOffer: transferFeeFor(candidate, .95), agreedFee: null, offerTier: undefined, proposedSalary: candidate.salary, contractYears: 3, appearanceGuarantee: false, performanceBonus: 0, attempts: 0 });
 const initialSaleOffers = (): SaleOffer[] => [];
 const initialSeasonStats = (roster: Player[]): PlayerSeasonStat[] => roster.map((player) => ({ playerId: player.id, player: player.name, position: player.position, appearances: 0, starts: 0, goals: 0, assists: 0, ratingTotal: 0, ratingCount: 0, mvpAwards: 0 }));
 
@@ -2013,22 +2014,62 @@ export class ClubSimulation {
     }).sort((a, b) => (a.urgency === "至急" ? -1 : 1) - (b.urgency === "至急" ? -1 : 1) || b.positionPriority.score - a.positionPriority.score || b.player.level - a.player.level);
   }
 
-  negotiateRecruit() {
+  negotiateRecruit(tier: RecruitOfferTier = "fair") {
     const candidate = this.ensureCurrentRecruitNegotiation();
     if (!candidate) return { ok: false, text: "今季に提示できる候補は全員と契約済みです。" };
-    if (this.recruitNegotiation.stage === "scouting") {
-      this.recruitNegotiation = { ...this.recruitNegotiation, stage: "countered" };
-      this.logs.unshift(`${candidate.name}へ移籍金 ${this.recruitNegotiation.openingOffer.toLocaleString()}円を提示。相手クラブは ${this.recruitNegotiation.counterOffer.toLocaleString()}円を要求した。`);
+    if (this.recruitNegotiation.stage === "pending") return { ok: false, text: "契約保留中です。追加条件を受け入れるか、条件を調整してください。" };
+    if (this.recruitNegotiation.stage === "agreed") return { ok: false, text: "契約条件は合意済みです。契約を締結してください。" };
+    if (this.recruitNegotiation.stage === "failed") return { ok: false, text: "この候補との交渉は終了しています。" };
+    const multipliers: Record<RecruitOfferTier, number> = { low: .78, fair: .95, high: 1.12 };
+    const amount = transferFeeFor(candidate, multipliers[tier]);
+    const attempts = (this.recruitNegotiation.attempts ?? 0) + 1;
+    const roll = deterministic(candidate.salary + this.week * 43 + attempts * 17 + tier.length * 11);
+    const failRate = tier === "low" ? .45 : tier === "fair" ? .15 : .03;
+    const holdRate = tier === "low" ? .40 : tier === "fair" ? .40 : .12;
+    const terms = { proposedSalary: Math.round(candidate.salary * (tier === "low" ? 1.08 : tier === "fair" ? 1.04 : 1)), contractYears: tier === "low" ? 3 : tier === "fair" ? 3 : 2, appearanceGuarantee: tier !== "high", performanceBonus: tier === "low" ? 500000 : tier === "fair" ? 300000 : 150000 };
+    const base = { ...this.recruitNegotiation, offerTier: tier, openingOffer: amount, counterOffer: amount, attempts, ...terms };
+    if (roll < failRate) {
+      this.recruitNegotiation = { ...base, stage: "failed", agreedFee: null, holdReason: "提示額が選手・クラブの評価に届きませんでした。" };
+      this.logs.unshift(`${candidate.name}への${tier === "low" ? "低い" : tier === "fair" ? "妥当な" : "高めの"}提示は条件が合わず、交渉終了。`);
       this.persist();
-      return { ok: true, text: `先方から ${this.recruitNegotiation.counterOffer.toLocaleString()}円の対案が届きました。` };
+      return { ok: false, text: "条件面で評価が合わず、交渉はここで終了しました。" };
     }
-    if (this.recruitNegotiation.stage === "countered") {
-      this.recruitNegotiation = { ...this.recruitNegotiation, stage: "agreed", agreedFee: this.recruitNegotiation.counterOffer };
-      this.logs.unshift(`${candidate.name}の移籍金 ${this.recruitNegotiation.counterOffer.toLocaleString()}円でクラブ間合意。本人との契約を締結できます。`);
+    if (roll < failRate + holdRate) {
+      this.recruitNegotiation = { ...base, stage: "pending", agreedFee: null, holdReason: tier === "low" ? "移籍金に加えて年俸と出場機会の保証を求めています。" : tier === "fair" ? "年俸と契約条件をクラブ内で検討しています。" : "選手本人の最終確認を待っています。" };
+      this.logs.unshift(`${candidate.name}の契約交渉は保留。追加条件：${this.recruitNegotiation.holdReason}`);
       this.persist();
-      return { ok: true, text: "クラブ間で移籍金に合意しました。契約締結へ進めます。" };
+      return { ok: true, text: `契約保留：${this.recruitNegotiation.holdReason}` };
     }
-    return { ok: false, text: "移籍金はすでに合意済みです。契約を締結してください。" };
+    this.recruitNegotiation = { ...base, stage: "agreed", agreedFee: amount, holdReason: undefined };
+    this.logs.unshift(`${candidate.name}へ${amount.toLocaleString()}円を提示し、契約条件で合意。`);
+    this.persist();
+    return { ok: true, text: "契約条件がまとまりました。契約締結へ進めます。" };
+  }
+
+  acceptRecruitHold() {
+    const candidate = this.ensureCurrentRecruitNegotiation();
+    if (!candidate || this.recruitNegotiation.stage !== "pending") return { ok: false, text: "受け入れ可能な保留条件がありません。" };
+    this.recruitNegotiation = { ...this.recruitNegotiation, stage: "agreed", agreedFee: this.recruitNegotiation.counterOffer };
+    this.logs.unshift(`${candidate.name}の追加条件を受け入れ、契約条件に合意。`);
+    this.persist();
+    return { ok: true, text: "追加条件を受け入れました。契約締結へ進めます。" };
+  }
+
+  adjustRecruitHold() {
+    const candidate = this.ensureCurrentRecruitNegotiation();
+    if (!candidate || this.recruitNegotiation.stage !== "pending") return { ok: false, text: "調整できる保留条件がありません。" };
+    if ((this.recruitNegotiation.attempts ?? 0) >= 3) return this.withdrawRecruitNegotiation();
+    const nextAmount = Math.round(this.recruitNegotiation.counterOffer * 1.07);
+    this.recruitNegotiation = { ...this.recruitNegotiation, stage: "agreed", agreedFee: nextAmount, counterOffer: nextAmount, proposedSalary: Math.round((this.recruitNegotiation.proposedSalary ?? candidate.salary) * 1.03), attempts: (this.recruitNegotiation.attempts ?? 0) + 1, holdReason: undefined };
+    this.logs.unshift(`${candidate.name}へ追加条件を調整して再提示。移籍金 ${nextAmount.toLocaleString()}円で最終合意。`);
+    this.persist();
+    return { ok: true, text: `条件を調整し、${nextAmount.toLocaleString()}円で合意しました。` };
+  }
+
+  withdrawRecruitNegotiation() {
+    this.recruitNegotiation = { ...this.recruitNegotiation, stage: "failed", agreedFee: null, holdReason: undefined };
+    this.persist();
+    return { ok: true, text: "今回は交渉から撤退しました。" };
   }
 
   signRecruit() {
@@ -2042,14 +2083,16 @@ export class ClubSimulation {
     this.money -= fee;
     this.recordFinance("移籍", fee, "expense", `${candidate.name}の移籍金`, this.currentWeek);
     this.captureCashPoint();
-    this.roster.push(this.hydratePlayer({ ...candidate, contractYears: 3, trainingLoad: "standard" }));
+    const agreedSalary = this.recruitNegotiation.proposedSalary ?? candidate.salary;
+    const agreedYears = this.recruitNegotiation.contractYears ?? 3;
+    this.roster.push(this.hydratePlayer({ ...candidate, salary: agreedSalary, contractYears: agreedYears, appearanceBonus: this.recruitNegotiation.appearanceGuarantee ? 300000 : 0, goalBonus: this.recruitNegotiation.performanceBonus ?? 0, trainingLoad: "standard" }));
     this.ensureSeasonStat(candidate);
     this.marketSignedIds.push(candidate.id);
     this.recruited = this.recruited || candidate.id === recruit.id;
     this.fame += 18;
-    this.logs.unshift(`市場から${candidate.name}を獲得。移籍金 ${fee.toLocaleString()}円、年俸 ${candidate.salary.toLocaleString()}円で3年契約を締結した。`);
+    this.logs.unshift(`市場から${candidate.name}を獲得。移籍金 ${fee.toLocaleString()}円、年俸 ${agreedSalary.toLocaleString()}円で${agreedYears}年契約を締結した。`);
     this.persist();
-    return { ok: true, text: `${candidate.name}と3年契約を締結しました。市場候補は次のサイクルで入れ替わります。` };
+    return { ok: true, text: `${candidate.name}と${agreedYears}年契約を締結しました。市場候補は次のサイクルで入れ替わります。` };
   }
 
   respondToSaleOffer(offerId: string, accept: boolean) {
@@ -3304,10 +3347,11 @@ export class ClubSimulation {
   private hydrateRecruitNegotiation(saved: RecruitNegotiation | undefined, recruited: boolean): RecruitNegotiation {
     const candidate = this.currentMarketCandidate;
     if (!candidate) return initialRecruitNegotiation();
-    if (!saved || !["scouting", "countered", "agreed"].includes(saved.stage) || (saved.candidateId && saved.candidateId !== candidate.id)) return initialRecruitNegotiation(candidate);
-    const openingOffer = finiteOr(saved.openingOffer, transferFeeFor(candidate, .82));
+    if (!saved || !["scouting", "pending", "agreed", "failed", "countered"].includes(saved.stage) || (saved.candidateId && saved.candidateId !== candidate.id)) return initialRecruitNegotiation(candidate);
+    const openingOffer = finiteOr(saved.openingOffer, transferFeeFor(candidate, .78));
     const counterOffer = finiteOr(saved.counterOffer, transferFeeFor(candidate, .95));
-    return { candidateId: candidate.id, stage: saved.stage, openingOffer, counterOffer, agreedFee: saved.stage === "agreed" ? finiteOr(saved.agreedFee, counterOffer) : null };
+    const stage = (saved as { stage?: string }).stage === "countered" ? "pending" : saved.stage;
+    return { candidateId: candidate.id, stage, openingOffer, counterOffer, agreedFee: stage === "agreed" ? finiteOr(saved.agreedFee, counterOffer) : null, offerTier: saved.offerTier, proposedSalary: finiteOr(saved.proposedSalary, candidate.salary), contractYears: Math.max(1, Math.round(finiteOr(saved.contractYears, 3))), appearanceGuarantee: Boolean(saved.appearanceGuarantee), performanceBonus: Math.max(0, Math.round(finiteOr(saved.performanceBonus, 0))), attempts: Math.max(0, Math.round(finiteOr(saved.attempts, 0))), holdReason: typeof saved.holdReason === "string" ? saved.holdReason : undefined };
   }
 
   private hydrateMarketSignedIds(saved: string[] | undefined, recruited: boolean) {
