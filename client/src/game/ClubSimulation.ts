@@ -2646,7 +2646,7 @@ export class ClubSimulation {
 
   private createMatchInjuries(highlights: MatchHighlight[], matchWeek: number): MatchInjury[] {
     const candidates = this.startingPlayers().filter((player) => this.injuryWeeksFor(player.id) === 0 && player.fatigue >= 45).sort((a, b) => {
-      const riskScore = (player: Player) => player.fatigue + (100 - this.conditionFor(player)) * .45 + this.trainingLoadFor(player).riskAdjustment * 2;
+      const riskScore = (player: Player) => player.fatigue + (100 - this.conditionFor(player)) * .45 + this.trainingLoadFor(player).riskAdjustment * 2 + Math.max(0, player.age - 29) * 1.4;
       return riskScore(b) - riskScore(a);
     });
     const candidate = candidates[0];
@@ -2654,8 +2654,9 @@ export class ClubSimulation {
     const fatigueRisk = Math.max(0, candidate.fatigue - 45) * .009;
     const conditionRisk = Math.max(0, 62 - this.conditionFor(candidate)) * .003;
     const loadRisk = Math.max(0, this.trainingLoadFor(candidate).riskAdjustment) * .012;
+    const ageRisk = Math.max(0, candidate.age - 29) * .012;
     const styleRisk = this.playingStyle === "press" ? .045 : this.playingStyle === "direct" ? .025 : 0;
-    const injuryChance = clamp(.10 + fatigueRisk + conditionRisk + loadRisk + styleRisk, .10, .55);
+    const injuryChance = clamp(.10 + fatigueRisk + conditionRisk + loadRisk + ageRisk + styleRisk, .10, .55);
     if (deterministic(matchWeek * 29 + candidate.fatigue + Math.round(this.conditionFor(candidate) * 3)) >= injuryChance) return [];
     const minute = clamp(Math.round(24 + deterministic(matchWeek * 31 + candidate.attack) * 56), 22, 84);
     const weeks = candidate.fatigue >= 90 || this.conditionFor(candidate) <= 40 ? 2 : 1;
@@ -2998,11 +2999,38 @@ export class ClubSimulation {
     this.lastResult = null;
     this.saleOffers = initialSaleOffers();
     this.refreshMarketCandidates();
+    const ageingNotes = this.applyAgeingDecline();
     this.roster.forEach((player) => { player.contractYears = Math.max(1, (player.contractYears ?? defaultContractYears(player)) - 1); });
     const contractDue = this.contractDuePlayers.length;
     const newcomers = this.replenishYouthPlayers();
     this.seasonStats = initialSeasonStats(this.roster);
-    this.logs.unshift(`シーズン終了。リーグ${finalPosition}位、順位報奨金 ${seasonBonus.toLocaleString()}円。${contractDue ? `${contractDue}名が契約最終年です。` : ""}${newcomers.length ? `ユースへ${newcomers.join("、")}が加入。` : ""}新たなスポンサー契約とカップ戦が始まる。`);
+    this.logs.unshift(`シーズン終了。リーグ${finalPosition}位、順位報奨金 ${seasonBonus.toLocaleString()}円。${ageingNotes.length ? `${ageingNotes.join(" / ")}。` : ""}${contractDue ? `${contractDue}名が契約最終年です。` : ""}${newcomers.length ? `ユースへ${newcomers.join("、")}が加入。` : ""}新たなスポンサー契約とカップ戦が始まる。`);
+  }
+
+  private applyAgeingDecline() {
+    const notes: string[] = [];
+    const attributes = playerAttributeKeys;
+    this.roster.forEach((player) => {
+      player.age = Math.min(40, Math.max(16, player.age + 1));
+      const decline = player.age >= 36 ? 3 : player.age >= 33 ? 2 : player.age >= 30 ? 1 : 0;
+      if (!decline) return;
+      const updated: Partial<Record<PlayerAttributeKey, number>> = {};
+      attributes.forEach((attribute) => {
+        const current = attribute === "gk" ? player.gk : player[attribute];
+        if (current === undefined) return;
+        const next = Math.max(1, Math.round(current) - (attribute === "gk" ? (player.age >= 35 ? decline : Math.max(0, decline - 1)) : decline));
+        updated[attribute] = next;
+        if (attribute === "gk") player.gk = next;
+        else player[attribute] = next;
+      });
+      player.attributeCeilings = Object.fromEntries(attributes.map((attribute) => {
+        const current = updated[attribute] ?? (attribute === "gk" ? player.gk : player[attribute]) ?? 0;
+        const prior = player.attributeCeilings?.[attribute] ?? current;
+        return [attribute, Math.max(Math.round(current), Math.round(prior) - decline)];
+      })) as Partial<Record<PlayerAttributeKey, number>>;
+      notes.push(`${player.name} ${player.age}歳：能力衰退 ${decline}`);
+    });
+    return notes.slice(0, 4);
   }
 
   private replenishYouthPlayers() {

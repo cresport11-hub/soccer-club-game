@@ -610,4 +610,24 @@ describe("Squad age balance", () => {
     const restored = new ClubSimulation();
     expect(restored.rosterPlayers.find((player) => player.id === "p13")?.gk).toBe(firstVeteranGk);
   });
+
+  it("ages the squad at the season boundary and declines veteran attributes", () => {
+    localStorage.clear();
+    const simulation = new ClubSimulation();
+    const veteran = simulation.rosterPlayers.find((player) => player.id === "p13")!;
+    veteran.age = 35;
+    veteran.gk = 99;
+    veteran.attributeXp = { ...(veteran.attributeXp ?? {}), gk: 999 };
+    veteran.attributeCeilings = { ...(veteran.attributeCeilings ?? {}), gk: 99 };
+    const beforeAge = veteran.age;
+    const beforeGk = veteran.gk;
+
+    for (let index = 0; index < 20; index += 1) simulation.advanceWeek();
+
+    const aged = simulation.rosterPlayers.find((player) => player.id === "p13")!;
+    expect(aged.age).toBe(beforeAge + 1);
+    expect(aged.gk).toBeLessThan(beforeGk!);
+    expect(aged.attributeCeilings?.gk).toBeLessThanOrEqual(99);
+    expect(simulation.logs.some((log) => log.includes("能力衰退"))).toBe(true);
+  });
 });
