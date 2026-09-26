@@ -2,6 +2,10 @@
  * Design system: 「タッチライン戦術室」— data is compact, legible, and designed for a tactical board UI.
  */
 export type Position = "GK" | "CB" | "SB" | "DM" | "CM" | "AM" | "SH" | "WG" | "CF";
+export type NationalityCode = "JP" | "BR" | "KR" | "ES" | "DE" | "FR" | "AR";
+export const foreignPlayerLimit = 3;
+export const nationalityLabels: Record<NationalityCode, string> = { JP: "日本", BR: "ブラジル", KR: "韓国", ES: "スペイン", DE: "ドイツ", FR: "フランス", AR: "アルゼンチン" };
+export const isForeignPlayer = (player: { nationality?: NationalityCode }) => (player.nationality ?? "JP") !== "JP";
 export const positionLabels: Record<Position, string> = { GK: "GK", CB: "CB", SB: "SB", DM: "DH", CM: "CH", AM: "OH", SH: "SH", WG: "WG", CF: "CF" };
 
 /** 実戦の守備対応に合わせたマーク対象と担当優先順位。GK・CB・SBは個別マークせず、守備ブロックで対応する。 */
@@ -28,6 +32,17 @@ export type TrainingLoad = "recovery" | "light" | "standard" | "high";
 export type PlayerAttributeKey = "attack" | "dribble" | "pass" | "shoot" | "defense" | "tackle" | "block" | "interception" | "gk";
 export const playerAttributeKeys: PlayerAttributeKey[] = ["attack", "dribble", "pass", "shoot", "defense", "tackle", "block", "interception", "gk"];
 export const playerAttributeLabels: Record<PlayerAttributeKey, string> = { attack: "OF", dribble: "ドリブル", pass: "パス", shoot: "シュート", defense: "DF", tackle: "タックル", block: "ブロック", interception: "パスカット", gk: "GK" };
+export type NationalityProfile = { label: string; abilityBoosts: Partial<Record<PlayerAttributeKey, number>>; transferFeeMultiplier: number; note: string };
+export const nationalityProfiles: Record<NationalityCode, NationalityProfile> = {
+  JP: { label: "日本", abilityBoosts: {}, transferFeeMultiplier: 1, note: "国内基準" },
+  BR: { label: "ブラジル", abilityBoosts: { attack: 3, dribble: 5, pass: 2, shoot: 2, defense: -1 }, transferFeeMultiplier: 1.12, note: "個人技と突破力に優れる" },
+  KR: { label: "韓国", abilityBoosts: { attack: 1, defense: 3, tackle: 4, interception: 3 }, transferFeeMultiplier: 1.06, note: "運動量と守備強度に優れる" },
+  ES: { label: "スペイン", abilityBoosts: { pass: 5, dribble: 2, attack: 2, interception: 1 }, transferFeeMultiplier: 1.1, note: "パスワークと判断力に優れる" },
+  DE: { label: "ドイツ", abilityBoosts: { defense: 4, block: 4, pass: 2, attack: 1 }, transferFeeMultiplier: 1.14, note: "組織守備と対人強度に優れる" },
+  FR: { label: "フランス", abilityBoosts: { attack: 3, defense: 2, dribble: 3, shoot: 2 }, transferFeeMultiplier: 1.16, note: "フィジカルと攻守の総合力に優れる" },
+  AR: { label: "アルゼンチン", abilityBoosts: { attack: 3, dribble: 4, shoot: 4, pass: 2, defense: -2 }, transferFeeMultiplier: 1.14, note: "創造性とフィニッシュに優れる" },
+};
+export const nationalityProfileFor = (nationality?: NationalityCode) => nationalityProfiles[nationality ?? "JP"];
 export type SkillGrowthFocus = "attacking" | "passing" | "finishing" | "defending" | "goalkeeping";
 export type PlayerSkillId = "finisher" | "linkman" | "cut-in" | "cross-master" | "vision" | "engine" | "switcher" | "ball-hunter" | "overlap" | "duel-master" | "aerial-wall" | "interceptor" | "sweeper" | "one-on-one" | "tempo-controller" | "recovery-run" | "regista-scan" | "touchline-drive" | "aerial-target";
 export type PlayerSkillDefinition = { id: PlayerSkillId; label: string; short: string; description: string; positions: Position[]; focus: "attack" | "defense" | "pass" | "tackle" | "interception" | "gk"; minimum: number; styles?: Array<"possession" | "direct" | "press">; attackBoost: number; defenseBoost: number; highlight: string };
@@ -45,6 +60,8 @@ export type GKPlayStyle = "shot-stopper" | "sweeper-keeper" | "distributor";
 export type Player = {
   id: string;
   name: string;
+  /** 未設定は既存セーブ互換のため日本国籍として扱う。 */
+  nationality?: NationalityCode;
   position: Position;
   secondary?: Position;
   attack: number;
@@ -520,15 +537,15 @@ export function opponentSquadFor(clubId: string): OpponentPlayer[] {
 }
 
 export const marketRecruits: Player[] = [
-  { id: "r1", name: "東雲 怜司", position: "SH", secondary: "AM", wgPlayStyle: "inverted", amPlayStyle: "playmaker", attack: 74, dribble: 76, pass: 78, shoot: 70, defense: 44, tackle: 37, block: 41, interception: 53, fatigue: 0, age: 20, salary: 22000000, contractYears: 3, level: 5, ceiling: 10, chemistry: "spark" },
+  { id: "r1", name: "東雲 怜司", nationality: "BR", position: "SH", secondary: "AM", wgPlayStyle: "inverted", amPlayStyle: "playmaker", attack: 74, dribble: 76, pass: 78, shoot: 70, defense: 44, tackle: 37, block: 41, interception: 53, fatigue: 0, age: 20, salary: 22000000, contractYears: 3, level: 5, ceiling: 10, chemistry: "spark" },
   { id: "r2", name: "篠崎 直人", position: "CB", secondary: "SB", cbPlayStyle: "ball-playing", sbPlayStyle: "inverted-fullback", attack: 46, dribble: 48, pass: 61, shoot: 34, defense: 76, tackle: 77, block: 80, interception: 72, fatigue: 0, age: 25, salary: 15400000, contractYears: 3, level: 5, ceiling: 7, chemistry: "steady" },
   { id: "r3", name: "皆本 律希", position: "GK", gkPlayStyle: "distributor", gk: 73, attack: 17, dribble: 18, pass: 55, shoot: 10, defense: 25, tackle: 18, block: 29, interception: 37, fatigue: 0, age: 21, salary: 9200000, contractYears: 3, level: 4, ceiling: 9, chemistry: "edge" },
-  { id: "r4", name: "志摩 湊斗", position: "CF", secondary: "WG", cfPlayStyle: "runner", attack: 71, dribble: 74, pass: 58, shoot: 76, defense: 31, tackle: 27, block: 24, interception: 35, fatigue: 0, age: 19, salary: 11800000, contractYears: 3, level: 4, ceiling: 10, chemistry: "spark" },
+  { id: "r4", name: "志摩 湊斗", nationality: "ES", position: "CF", secondary: "WG", cfPlayStyle: "runner", attack: 71, dribble: 74, pass: 58, shoot: 76, defense: 31, tackle: 27, block: 24, interception: 35, fatigue: 0, age: 19, salary: 11800000, contractYears: 3, level: 4, ceiling: 10, chemistry: "spark" },
   { id: "r5", name: "本多 朔也", position: "DM", secondary: "CB", dmPlayStyle: "anchor", cbPlayStyle: "stopper", attack: 48, dribble: 50, pass: 69, shoot: 41, defense: 72, tackle: 74, block: 70, interception: 76, fatigue: 0, age: 24, salary: 16800000, contractYears: 3, level: 5, ceiling: 8, chemistry: "steady" },
   { id: "r6", name: "日向 透真", position: "CM", secondary: "DM", cmPlayStyle: "box-to-box", dmPlayStyle: "regista", attack: 65, dribble: 67, pass: 74, shoot: 58, defense: 63, tackle: 61, block: 55, interception: 64, fatigue: 0, age: 23, salary: 17600000, contractYears: 3, level: 5, ceiling: 9, chemistry: "edge" },
   { id: "r7", name: "天城 陸斗", position: "AM", secondary: "SH", amPlayStyle: "playmaker", wgPlayStyle: "touchline", attack: 72, dribble: 73, pass: 79, shoot: 64, defense: 39, tackle: 34, block: 31, interception: 48, fatigue: 0, age: 22, salary: 21400000, contractYears: 3, level: 5, ceiling: 9, chemistry: "spark" },
   { id: "r8", name: "有沢 航平", position: "SB", secondary: "SH", sbPlayStyle: "overlap", wgPlayStyle: "wide-worker", attack: 59, dribble: 63, pass: 68, shoot: 45, defense: 67, tackle: 69, block: 60, interception: 62, fatigue: 0, age: 22, salary: 13900000, contractYears: 3, level: 4, ceiling: 9, chemistry: "spark" },
-  { id: "r9", name: "鷹野 玲央", position: "WG", secondary: "CF", wgPlayStyle: "inverted", cfPlayStyle: "false-nine", attack: 75, dribble: 81, pass: 66, shoot: 72, defense: 34, tackle: 30, block: 27, interception: 38, fatigue: 0, age: 20, salary: 19800000, contractYears: 3, level: 5, ceiling: 10, chemistry: "edge" },
+  { id: "r9", name: "鷹野 玲央", nationality: "AR", position: "WG", secondary: "CF", wgPlayStyle: "inverted", cfPlayStyle: "false-nine", attack: 75, dribble: 81, pass: 66, shoot: 72, defense: 34, tackle: 30, block: 27, interception: 38, fatigue: 0, age: 20, salary: 19800000, contractYears: 3, level: 5, ceiling: 10, chemistry: "edge" },
 ];
 
 export const recruit = marketRecruits[0];

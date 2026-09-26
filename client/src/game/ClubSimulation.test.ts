@@ -483,3 +483,30 @@ describe("Team power radar", () => {
     expect(wide.radar.attack).toBeGreaterThan(pivot.radar.attack);
   });
 });
+
+describe("Youth academy sessions", () => {
+  beforeEach(() => {
+    const values = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+      clear: () => values.clear(),
+    });
+  });
+
+  it("allows one youth development session per week and unlocks it next week", () => {
+    const simulation = new ClubSimulation();
+    const first = simulation.developYouth();
+    expect(first.ok).toBe(true);
+    expect(simulation.youthTrainingUsedThisWeek).toBe(true);
+
+    const duplicate = simulation.developYouth();
+    expect(duplicate.ok).toBe(false);
+    expect(duplicate.text).toContain("今週のユース育成セッションは実施済み");
+
+    simulation.advanceWeek();
+    expect(simulation.youthTrainingUsedThisWeek).toBe(false);
+    expect(simulation.developYouth().ok).toBe(true);
+  });
+});

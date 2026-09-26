@@ -2,7 +2,7 @@
  * Design system: 「タッチライン戦術室」— game rules remain framework-independent and flow through one state owner.
  * Sponsors fund the season; financial history, matchday commerce, and facility levels evolve through this single state owner.
  */
-import { canMarkOpponent, defaultAttributeCeilingsFor, defaultSystemMasteryFor, defaultSystemUnderstandingFor, formationBaseId, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerAttributeKeys, playerAttributeLabels, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, positionLabel, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerAttributeKey, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
+import { canMarkOpponent, defaultAttributeCeilingsFor, defaultSystemMasteryFor, defaultSystemUnderstandingFor, formationBaseId, formations, foreignPlayerLimit, isForeignPlayer, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, nationalityLabels, nationalityProfileFor, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerAttributeKeys, playerAttributeLabels, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, positionLabel, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type NationalityCode, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerAttributeKey, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
 
 export type PageId = "home" | "lineup" | "team" | "stats" | "league" | "training" | "market" | "academy" | "facilities" | "sponsors" | "cup" | "finance" | "settings";
 export type Mentality = "defensive" | "balanced" | "attacking";
@@ -210,6 +210,7 @@ type Persisted = {
   saleOffers?: SaleOffer[];
   trainingHistory?: TrainingHistoryEntry[];
   lastTrainingWeek?: number | null;
+  lastYouthTrainingWeek?: number | null;
   trainingSessionsThisWeek?: number;
   trainingFacilityLevel?: number;
   marketSignedIds?: string[];
@@ -386,7 +387,8 @@ const normalizeClubName = (value: unknown, fallback = userClub.name) => {
   const normalized = value.trim().replace(/\s+/g, " ").replace(/[<>]/g, "").slice(0, 24);
   return normalized || fallback;
 };
-const initialRecruitNegotiation = (candidate: Player = marketRecruits[0]): RecruitNegotiation => ({ candidateId: candidate.id, stage: "scouting", openingOffer: Math.round(candidate.salary * .82), counterOffer: Math.round(candidate.salary * .95), agreedFee: null });
+const transferFeeFor = (candidate: Player, baseMultiplier: number) => Math.round(candidate.salary * baseMultiplier * nationalityProfileFor(candidate.nationality).transferFeeMultiplier);
+const initialRecruitNegotiation = (candidate: Player = marketRecruits[0]): RecruitNegotiation => ({ candidateId: candidate.id, stage: "scouting", openingOffer: transferFeeFor(candidate, .82), counterOffer: transferFeeFor(candidate, .95), agreedFee: null });
 const initialSaleOffers = (): SaleOffer[] => [
   { id: "sale-p3", playerId: "p3", clubName: "アズール福岡", proposedFee: 11800000, expiresWeek: 19 },
   { id: "sale-p9", playerId: "p9", clubName: "オーロラ横浜", proposedFee: 13200000, expiresWeek: 19 },
@@ -446,6 +448,7 @@ export class ClubSimulation {
   private trainingHistory: TrainingHistoryEntry[] = [];
   private lastTrainingWeek: number | null = null;
   private trainingSessionsThisWeek = 0;
+  private lastYouthTrainingWeek: number | null = null;
   private trainingFacilityLevel = 1;
   private seasonStats: PlayerSeasonStat[] = initialSeasonStats(copyPlayers());
   private manualMarkAssignments: Record<string, string> = {};
@@ -498,6 +501,7 @@ export class ClubSimulation {
     this.trainingHistory = [];
     this.lastTrainingWeek = null;
     this.trainingSessionsThisWeek = 0;
+    this.lastYouthTrainingWeek = null;
     this.trainingFacilityLevel = 1;
     this.seasonStats = initialSeasonStats(this.roster);
     this.manualMarkAssignments = {};
@@ -518,6 +522,16 @@ export class ClubSimulation {
   get formation(): Formation { return formations.find((formation) => formation.id === this.formationId) ?? formations[0]; }
   get rosterPlayers() { return this.roster; }
   get rosterLimit() { return ROSTER_LIMIT; }
+  get foreignPlayerLimit() { return foreignPlayerLimit; }
+  get foreignPlayers() { return this.roster.filter((player) => isForeignPlayer(player)); }
+  get foreignPlayerCount() { return this.foreignPlayers.length; }
+  foreignPlayerStatusFor(player: Pick<Player, "nationality">) {
+    const nationality = player.nationality ?? "JP";
+    return { nationality, label: nationalityLabels[nationality], foreign: nationality !== "JP" };
+  }
+  canRegisterPlayer(player: Pick<Player, "nationality">) {
+    return !isForeignPlayer(player) || this.foreignPlayerCount < foreignPlayerLimit;
+  }
   get rosterCapacityStatus() {
     const count = this.roster.length;
     const remaining = Math.max(0, ROSTER_LIMIT - count);
@@ -610,6 +624,7 @@ export class ClubSimulation {
   get marketRefreshIn() { return 3 - (this.week % 3) || 3; }
   get youthAcademyPlayers() { return this.youthPlayers; }
   get youthTrainingCost() { return 65000; }
+  get youthTrainingUsedThisWeek() { return this.lastYouthTrainingWeek === this.week; }
   get youthIntakeForecast() { return Math.max(0, 3 - this.youthPlayers.length); }
   get activeSaleOffers() { return this.saleOffers.filter((offer) => this.roster.some((player) => player.id === offer.playerId)); }
 
@@ -1741,9 +1756,11 @@ export class ClubSimulation {
   }
 
   developYouth() {
+    if (this.lastYouthTrainingWeek === this.week) return { ok: false, text: `今週のユース育成セッションは実施済みです。次週まで待ちましょう。` };
     if (!this.youthPlayers.length) return { ok: false, text: "育成中のユース選手はいません。次のスカウトサイクルを待ちましょう。" };
     const cost = this.youthTrainingCost;
     if (this.money < cost) return { ok: false, text: "ユースセッションの費用を確保できません。資金計画を確認してください。" };
+    this.lastYouthTrainingWeek = this.week;
     this.money -= cost;
     this.recordFinance("育成", cost, "expense", `ユース育成セッション ${this.youthPlayers.length}名`, this.currentWeek);
     const attributeXpGrants: AttributeXpGrant[] = [];
@@ -1878,8 +1895,10 @@ export class ClubSimulation {
   private scoutCandidate(candidate: Player): Player {
     const facility = this.scoutFacility;
     const boost = facility.ratingBoost;
+    const nationality = nationalityProfileFor(candidate.nationality);
     const boosted = (value: number) => clamp(value + boost, 0, 99);
-    const values: Partial<Record<PlayerAttributeKey, number>> = { attack: boosted(candidate.attack), dribble: boosted(candidate.dribble), pass: boosted(candidate.pass), shoot: boosted(candidate.shoot), defense: boosted(candidate.defense), tackle: boosted(candidate.tackle), block: boosted(candidate.block), interception: boosted(candidate.interception), gk: candidate.gk === undefined ? undefined : boosted(candidate.gk) };
+    const nationalityBoosted = (attribute: PlayerAttributeKey, value: number) => clamp(boosted(value) + (nationality.abilityBoosts[attribute] ?? 0), 0, 99);
+    const values: Partial<Record<PlayerAttributeKey, number>> = { attack: nationalityBoosted("attack", candidate.attack), dribble: nationalityBoosted("dribble", candidate.dribble), pass: nationalityBoosted("pass", candidate.pass), shoot: nationalityBoosted("shoot", candidate.shoot), defense: nationalityBoosted("defense", candidate.defense), tackle: nationalityBoosted("tackle", candidate.tackle), block: nationalityBoosted("block", candidate.block), interception: nationalityBoosted("interception", candidate.interception), gk: candidate.gk === undefined ? undefined : nationalityBoosted("gk", candidate.gk) };
     const baseCeilings = { ...defaultAttributeCeilingsFor(candidate), ...(candidate.attributeCeilings ?? {}) };
     const attributeCeilings = Object.fromEntries(playerAttributeKeys.map((attribute) => {
       const current = values[attribute] ?? 0;
@@ -1962,7 +1981,7 @@ export class ClubSimulation {
       const scouted = this.scoutCandidate(player);
       const priority = priorities.filter((item) => item.position === scouted.position || item.position === scouted.secondary).sort((a, b) => b.score - a.score)[0] ?? priorities.at(-1)!;
       const status: MarketCandidateComparison["status"] = scouted.id === currentId ? "閲覧中" : "市場候補";
-      return { player: scouted, tacticalFit: this.scoutTacticalFit(scouted), recruitmentPriority: priority, openingFee: Math.round(scouted.salary * .82), annualImpact: scouted.salary, status };
+      return { player: scouted, tacticalFit: this.scoutTacticalFit(scouted), recruitmentPriority: priority, openingFee: transferFeeFor(scouted, .82), annualImpact: scouted.salary, status };
     }).sort((a, b) => b.recruitmentPriority.score - a.recruitmentPriority.score || b.tacticalFit.score - a.tacticalFit.score || a.openingFee - b.openingFee);
   }
 
@@ -2001,6 +2020,7 @@ export class ClubSimulation {
     if (!candidate) return { ok: false, text: "今季に提示できる候補は全員と契約済みです。" };
     if (this.recruitNegotiation.stage !== "agreed" || !this.recruitNegotiation.agreedFee) return { ok: false, text: "まず移籍金交渉を完了し、クラブ間合意を取り付けてください。" };
     if (this.roster.length >= ROSTER_LIMIT) return { ok: false, text: `トップ登録が${ROSTER_LIMIT}人に達しています。売却または契約整理を進めてください。` };
+    if (!this.canRegisterPlayer(candidate)) return { ok: false, text: `外国人枠が上限（${foreignPlayerLimit}人）に達しています。先に外国籍選手を整理してください。` };
     const fee = this.recruitNegotiation.agreedFee;
     if (this.money < fee) return { ok: false, text: "移籍金が不足しています。資金を確保してから契約しましょう。" };
     this.money -= fee;
@@ -3160,7 +3180,7 @@ export class ClubSimulation {
   }
 
   private persist() {
-    const saved: Persisted = { money: this.money, fame: this.fame, week: this.week, clubName: this.clubName, formationId: this.formationId, lineup: this.lineup, players: this.roster, rows: this.rows, logs: this.logs, recruited: this.recruited, sponsor: this.sponsor, cup: this.cup, popularity: this.popularity, teamMorale: this.teamMorale, recentMatchForm: this.recentMatchForm, concessionLevel: this.concessionLevel, scoutLevel: this.scoutLevel, trainingFacilityLevel: this.trainingFacilityLevel, trainingSessionsThisWeek: this.trainingSessionsThisWeek, youthIntakeCursor: this.youthIntakeCursor, ledger: this.ledger, cashTrail: this.cashTrail, mentality: this.mentality, playingStyle: this.playingStyle, autoLineupCriteria: this.autoLineupCriteria, injuries: this.injuries, recruitNegotiation: this.recruitNegotiation, saleOffers: this.saleOffers, trainingHistory: this.trainingHistory, lastTrainingWeek: this.lastTrainingWeek, marketSignedIds: this.marketSignedIds, marketCandidateIds: this.marketCandidateIds, marketPreferredPositions: this.marketPreferredPositions, marketCandidateCycle: this.marketCandidateCycle, marketSelectedCandidateId: this.selectedMarketCandidateId, marketUpdateNotice: this.pendingMarketUpdateNotice, youthPlayers: this.youthPlayers, seasonStats: this.seasonStats, manualMarkAssignments: this.manualMarkAssignments };
+    const saved: Persisted = { money: this.money, fame: this.fame, week: this.week, clubName: this.clubName, formationId: this.formationId, lineup: this.lineup, players: this.roster, rows: this.rows, logs: this.logs, recruited: this.recruited, sponsor: this.sponsor, cup: this.cup, popularity: this.popularity, teamMorale: this.teamMorale, recentMatchForm: this.recentMatchForm, concessionLevel: this.concessionLevel, scoutLevel: this.scoutLevel, trainingFacilityLevel: this.trainingFacilityLevel, trainingSessionsThisWeek: this.trainingSessionsThisWeek, youthIntakeCursor: this.youthIntakeCursor, ledger: this.ledger, cashTrail: this.cashTrail, mentality: this.mentality, playingStyle: this.playingStyle, autoLineupCriteria: this.autoLineupCriteria, injuries: this.injuries, recruitNegotiation: this.recruitNegotiation, saleOffers: this.saleOffers, trainingHistory: this.trainingHistory, lastTrainingWeek: this.lastTrainingWeek, lastYouthTrainingWeek: this.lastYouthTrainingWeek, marketSignedIds: this.marketSignedIds, marketCandidateIds: this.marketCandidateIds, marketPreferredPositions: this.marketPreferredPositions, marketCandidateCycle: this.marketCandidateCycle, marketSelectedCandidateId: this.selectedMarketCandidateId, marketUpdateNotice: this.pendingMarketUpdateNotice, youthPlayers: this.youthPlayers, seasonStats: this.seasonStats, manualMarkAssignments: this.manualMarkAssignments };
     saved.assignedScoutId = this.assignedScoutId;
     try { localStorage.setItem(storageKey, JSON.stringify(saved)); } catch { /* Private mode or storage restrictions must not block gameplay. */ }
   }
@@ -3172,7 +3192,7 @@ export class ClubSimulation {
       const parsed = JSON.parse(raw) as Persisted;
       if (!this.hasUsableSave(parsed)) throw new Error("Invalid save data");
       this.money = parsed.money; this.fame = parsed.fame; this.week = parsed.week; this.clubName = normalizeClubName(parsed.clubName); this.formationId = parsed.formationId; this.lineup = parsed.lineup; this.roster = this.hydrateOpeningRoster(parsed.players, parsed.week); this.rows = parsed.rows.map((row) => row.id === userClub.id ? { ...row, name: this.clubName } : row); this.logs = parsed.logs; this.recruited = parsed.recruited;
-      this.sponsor = parsed.sponsor ?? null; this.cup = parsed.cup ?? initialCup(); this.popularity = parsed.popularity ?? 42; this.teamMorale = clamp(Math.round(finiteOr(parsed.teamMorale, 58)), 0, 100); this.recentMatchForm = Array.isArray(parsed.recentMatchForm) ? parsed.recentMatchForm.filter((entry): entry is RecentMatchForm => !!entry && ["W", "D", "L"].includes(entry.outcome) && Number.isFinite(entry.margin) && (entry.competition === "リーグ" || entry.competition === "カップ")).slice(0, 5).map((entry) => ({ outcome: entry.outcome, margin: clamp(Math.round(entry.margin), -5, 5), competition: entry.competition })) : []; this.concessionLevel = clamp(parsed.concessionLevel ?? 1, 1, concessionLevels.length); this.scoutLevel = clamp(parsed.scoutLevel ?? 1, 1, scoutLevels.length); this.assignedScoutId = scoutStaff.some((staff) => staff.id === parsed.assignedScoutId) ? parsed.assignedScoutId! : "scout-forward"; this.trainingFacilityLevel = clamp(parsed.trainingFacilityLevel ?? 1, 1, trainingFacilityLevels.length); this.trainingSessionsThisWeek = Math.max(0, Math.round(finiteOr(parsed.trainingSessionsThisWeek, 0))); this.youthIntakeCursor = Math.max(0, Math.round(finiteOr(parsed.youthIntakeCursor, 0))); this.lastTrainingWeek = typeof parsed.lastTrainingWeek === "number" && Number.isFinite(parsed.lastTrainingWeek) && parsed.lastTrainingWeek >= 0 ? Math.round(parsed.lastTrainingWeek) : null; this.mentality = mentalityOptions.some((item) => item.id === parsed.mentality) ? parsed.mentality! : "balanced"; this.playingStyle = playingStyleOptions.some((item) => item.id === parsed.playingStyle) ? parsed.playingStyle! : "possession"; this.autoLineupCriteria = ["attack", "defense", "fit"].includes(parsed.autoLineupCriteria ?? "") ? parsed.autoLineupCriteria! : "fit"; this.injuries = parsed.injuries ?? Object.fromEntries(this.roster.filter((player) => (player.injuryWeeks ?? 0) > 0).map((player) => [player.id, player.injuryWeeks!])); this.yellowCards = Object.fromEntries(Object.entries(parsed.yellowCards ?? {}).filter(([id, value]) => this.roster.some((player) => player.id === id) && Number.isFinite(value)).map(([id, value]) => [id, clamp(Math.round(value), 0, 1)])); this.suspensionMatches = Object.fromEntries(Object.entries(parsed.suspensionMatches ?? {}).filter(([id, value]) => this.roster.some((player) => player.id === id) && Number.isFinite(value)).map(([id, value]) => [id, clamp(Math.round(value), 0, 1)])); this.ledger = parsed.ledger?.length ? parsed.ledger : [{ week: parsed.week, label: "既存シーズン繰越", category: "繰越資金", amount: parsed.money, kind: "income", note: "財務ダッシュボード導入前の残高" }]; this.cashTrail = parsed.cashTrail?.length ? parsed.cashTrail : [parsed.money]; this.marketSignedIds = this.hydrateMarketSignedIds(parsed.marketSignedIds, parsed.recruited); this.marketPreferredPositions = Array.isArray(parsed.marketPreferredPositions) ? Array.from(new Set(parsed.marketPreferredPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)))) : []; this.marketCandidateIds = Array.isArray(parsed.marketCandidateIds) ? Array.from(new Set(parsed.marketCandidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)))) : []; this.marketCandidateCycle = Math.max(0, Math.round(finiteOr(parsed.marketCandidateCycle, -1)));     this.selectedMarketCandidateId = typeof parsed.marketSelectedCandidateId === "string" && this.marketCandidateIds.includes(parsed.marketSelectedCandidateId) ? parsed.marketSelectedCandidateId : this.marketCandidateIds[0] ?? null;
+      this.sponsor = parsed.sponsor ?? null; this.cup = parsed.cup ?? initialCup(); this.popularity = parsed.popularity ?? 42; this.teamMorale = clamp(Math.round(finiteOr(parsed.teamMorale, 58)), 0, 100); this.recentMatchForm = Array.isArray(parsed.recentMatchForm) ? parsed.recentMatchForm.filter((entry): entry is RecentMatchForm => !!entry && ["W", "D", "L"].includes(entry.outcome) && Number.isFinite(entry.margin) && (entry.competition === "リーグ" || entry.competition === "カップ")).slice(0, 5).map((entry) => ({ outcome: entry.outcome, margin: clamp(Math.round(entry.margin), -5, 5), competition: entry.competition })) : []; this.concessionLevel = clamp(parsed.concessionLevel ?? 1, 1, concessionLevels.length); this.scoutLevel = clamp(parsed.scoutLevel ?? 1, 1, scoutLevels.length); this.assignedScoutId = scoutStaff.some((staff) => staff.id === parsed.assignedScoutId) ? parsed.assignedScoutId! : "scout-forward"; this.trainingFacilityLevel = clamp(parsed.trainingFacilityLevel ?? 1, 1, trainingFacilityLevels.length); this.trainingSessionsThisWeek = Math.max(0, Math.round(finiteOr(parsed.trainingSessionsThisWeek, 0))); this.youthIntakeCursor = Math.max(0, Math.round(finiteOr(parsed.youthIntakeCursor, 0))); this.lastTrainingWeek = typeof parsed.lastTrainingWeek === "number" && Number.isFinite(parsed.lastTrainingWeek) && parsed.lastTrainingWeek >= 0 ? Math.round(parsed.lastTrainingWeek) : null; this.lastYouthTrainingWeek = typeof parsed.lastYouthTrainingWeek === "number" && Number.isFinite(parsed.lastYouthTrainingWeek) && parsed.lastYouthTrainingWeek >= 0 ? Math.round(parsed.lastYouthTrainingWeek) : null; this.mentality = mentalityOptions.some((item) => item.id === parsed.mentality) ? parsed.mentality! : "balanced"; this.playingStyle = playingStyleOptions.some((item) => item.id === parsed.playingStyle) ? parsed.playingStyle! : "possession"; this.autoLineupCriteria = ["attack", "defense", "fit"].includes(parsed.autoLineupCriteria ?? "") ? parsed.autoLineupCriteria! : "fit"; this.injuries = parsed.injuries ?? Object.fromEntries(this.roster.filter((player) => (player.injuryWeeks ?? 0) > 0).map((player) => [player.id, player.injuryWeeks!])); this.yellowCards = Object.fromEntries(Object.entries(parsed.yellowCards ?? {}).filter(([id, value]) => this.roster.some((player) => player.id === id) && Number.isFinite(value)).map(([id, value]) => [id, clamp(Math.round(value), 0, 1)])); this.suspensionMatches = Object.fromEntries(Object.entries(parsed.suspensionMatches ?? {}).filter(([id, value]) => this.roster.some((player) => player.id === id) && Number.isFinite(value)).map(([id, value]) => [id, clamp(Math.round(value), 0, 1)])); this.ledger = parsed.ledger?.length ? parsed.ledger : [{ week: parsed.week, label: "既存シーズン繰越", category: "繰越資金", amount: parsed.money, kind: "income", note: "財務ダッシュボード導入前の残高" }]; this.cashTrail = parsed.cashTrail?.length ? parsed.cashTrail : [parsed.money]; this.marketSignedIds = this.hydrateMarketSignedIds(parsed.marketSignedIds, parsed.recruited); this.marketPreferredPositions = Array.isArray(parsed.marketPreferredPositions) ? Array.from(new Set(parsed.marketPreferredPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)))) : []; this.marketCandidateIds = Array.isArray(parsed.marketCandidateIds) ? Array.from(new Set(parsed.marketCandidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)))) : []; this.marketCandidateCycle = Math.max(0, Math.round(finiteOr(parsed.marketCandidateCycle, -1)));     this.selectedMarketCandidateId = typeof parsed.marketSelectedCandidateId === "string" && this.marketCandidateIds.includes(parsed.marketSelectedCandidateId) ? parsed.marketSelectedCandidateId : this.marketCandidateIds[0] ?? null;
     const savedMarketNotice = parsed.marketUpdateNotice; this.pendingMarketUpdateNotice = savedMarketNotice && Number.isFinite(savedMarketNotice.week) && Array.isArray(savedMarketNotice.candidateIds) ? { week: Math.max(0, Math.round(savedMarketNotice.week)), candidateIds: savedMarketNotice.candidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)), requestedPositions: Array.isArray(savedMarketNotice.requestedPositions) ? savedMarketNotice.requestedPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)) : [] } : null; this.recruitNegotiation = this.hydrateRecruitNegotiation(parsed.recruitNegotiation, parsed.recruited); this.saleOffers = this.hydrateSaleOffers(parsed.saleOffers); this.trainingHistory = this.hydrateTrainingHistory(parsed.trainingHistory); this.youthPlayers = this.hydrateYouthPlayers(parsed.youthPlayers); this.seasonStats = this.hydrateSeasonStats(parsed.seasonStats); this.manualMarkAssignments = Object.fromEntries(Object.entries(parsed.manualMarkAssignments ?? {}).filter(([, playerId]) => typeof playerId === "string" && this.roster.some((player) => player.id === playerId)));
     } catch {
       try { localStorage.removeItem(storageKey); } catch { /* Storage may be disabled; the initial state remains usable. */ }
@@ -3217,6 +3237,7 @@ export class ClubSimulation {
     return {
       ...saved,
       name: normalizePlayerName(saved.name, saved.id, reference?.name),
+      nationality: saved.nationality ?? reference?.nationality ?? "JP",
       condition: clamp(Math.round(finiteOr(saved.condition, reference?.condition ?? defaultPlayerCondition)), 0, 100),
       position,
       secondary,
@@ -3268,8 +3289,8 @@ export class ClubSimulation {
     const candidate = this.currentMarketCandidate;
     if (!candidate) return initialRecruitNegotiation();
     if (!saved || !["scouting", "countered", "agreed"].includes(saved.stage) || (saved.candidateId && saved.candidateId !== candidate.id)) return initialRecruitNegotiation(candidate);
-    const openingOffer = finiteOr(saved.openingOffer, Math.round(candidate.salary * .82));
-    const counterOffer = finiteOr(saved.counterOffer, Math.round(candidate.salary * .95));
+    const openingOffer = finiteOr(saved.openingOffer, transferFeeFor(candidate, .82));
+    const counterOffer = finiteOr(saved.counterOffer, transferFeeFor(candidate, .95));
     return { candidateId: candidate.id, stage: saved.stage, openingOffer, counterOffer, agreedFee: saved.stage === "agreed" ? finiteOr(saved.agreedFee, counterOffer) : null };
   }
 
