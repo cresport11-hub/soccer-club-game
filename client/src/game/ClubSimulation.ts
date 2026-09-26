@@ -4,7 +4,7 @@
  */
 import { canMarkOpponent, defaultAttributeCeilingsFor, defaultSystemMasteryFor, defaultSystemUnderstandingFor, formationBaseId, formations, foreignPlayerLimit, isForeignPlayer, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, nationalityLabels, nationalityProfileFor, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerAttributeKeys, playerAttributeLabels, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, positionLabel, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type NationalityCode, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerAttributeKey, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
 
-export type PageId = "home" | "lineup" | "team" | "stats" | "league" | "training" | "market" | "academy" | "facilities" | "sponsors" | "cup" | "finance" | "settings";
+export type PageId = "home" | "lineup" | "team" | "stats" | "league" | "training" | "market" | "academy" | "facilities" | "sponsors" | "cup" | "finance" | "settings" | "help";
 export type Mentality = "defensive" | "balanced" | "attacking";
 export type PlayingStyle = "possession" | "direct" | "press";
 export type TrainingFocus = "attacking" | "passing" | "finishing" | "defending" | "goalkeeping" | "recovery";

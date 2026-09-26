@@ -8,7 +8,7 @@ import { canMarkOpponent, formationBaseId, formations, isMarkableOpponentPositio
 const navItems: Array<{ id: PageId; icon: string; label: string }> = [
   { id: "home", icon: "⌂", label: "ホーム" }, { id: "lineup", icon: "◫", label: "スタメン" }, { id: "team", icon: "◎", label: "チーム" }, { id: "stats", icon: "◈", label: "成績" },
   { id: "league", icon: "▤", label: "リーグ" }, { id: "cup", icon: "♛", label: "カップ戦" }, { id: "training", icon: "↗", label: "練習" },
-  { id: "market", icon: "◇", label: "移籍市場" }, { id: "academy", icon: "✦", label: "ユース" }, { id: "sponsors", icon: "▣", label: "スポンサー" }, { id: "facilities", icon: "▥", label: "施設" }, { id: "finance", icon: "◒", label: "財務" }, { id: "settings", icon: "⚙", label: "クラブ設定" },
+  { id: "market", icon: "◇", label: "移籍市場" }, { id: "academy", icon: "✦", label: "ユース" }, { id: "sponsors", icon: "▣", label: "スポンサー" }, { id: "facilities", icon: "▥", label: "施設" }, { id: "finance", icon: "◒", label: "財務" }, { id: "settings", icon: "⚙", label: "クラブ設定" }, { id: "help", icon: "?", label: "ヘルプ" },
 ];
 const mobileDockItems = navItems.filter((item) => ["home", "lineup", "team", "league"].includes(item.id));
 
@@ -662,6 +662,7 @@ export class GameUI {
       case "facilities": return this.facilitiesPage();
       case "finance": return this.financePage();
       case "settings": return this.settingsPage();
+      case "help": return this.helpPage();
       default: return this.homePage(score);
     }
   }
@@ -902,6 +903,19 @@ export class GameUI {
           <small class="settings-note">1〜24文字。前後の空白は自動で整理されます。</small>
         </article>
         <aside class="tactical-card settings-help-card"><div class="card-kicker">CLUBHOUSE NOTE</div><h3>名前は戦術の旗印</h3><p>クラブ名を変えても、選手、戦績、資金、移籍市場の進行はそのまま維持されます。</p><div class="settings-example"><span>試合結果</span><b>${clubName} 2 - 1 対戦クラブ</b></div></aside>
+      </section>
+    `;
+  }
+
+  private helpPage() {
+    return `
+      ${this.pageHeading("TOUCHLINE GUIDE", "ヘルプ", "戦術室の情報を読み解き、次の一手を決めるためのガイド。")}
+      <section class="help-layout">
+        <article class="tactical-card help-hero-card"><div class="card-kicker">HELP / HOME SCREEN</div><h2>ホーム画面の見方</h2><p>ホーム画面は、次の試合までに確認すべき情報をまとめた指揮官向けダッシュボードです。上から順番に確認し、必要なら各メニューへ移動してください。</p><div class="help-steps"><span><b>01</b>次の対戦相手を確認</span><span><b>02</b>チーム状態を確認</span><span><b>03</b>スタメン・戦術を整える</span><span><b>04</b>「試合をプレイ」で進行</span></div></article>
+        <article class="tactical-card help-topic-card"><div class="card-kicker">NEXT FIXTURE</div><h3>次の試合カード</h3><p>次に対戦するクラブ、ホーム／アウェー、士気・勢い・ホーム補正を確認できます。</p><ul><li><b>相手を偵察</b>：相手のフォーメーション、要注意選手、マーク相性を確認します。</li><li><b>戦術を確認</b>：スタメン画面へ移動し、配置・フォーメーション・中盤構成を調整します。</li><li><b>試合をプレイ</b>：現在の準備状態で試合を開始します。</li></ul></article>
+        <article class="tactical-card help-topic-card"><div class="card-kicker">CLUB PULSE</div><h3>人気と財務</h3><p>クラブの人気、所持金、次のホーム戦の見込み収入を確認できます。</p><ul><li><b>人気</b>：集客や収入、ホームの後押しに影響します。</li><li><b>次回見込み収入</b>：入場料、グッズ、売店、ファンクラブ会費の予測です。</li><li><b>財務ダッシュボード</b>：収支の内訳と資金推移を詳しく確認できます。</li></ul></article>
+        <article class="tactical-card help-topic-card"><div class="card-kicker">TOUCHLINE LOG</div><h3>監督レポート</h3><p>試合、練習、移籍、育成、契約など、最近発生した重要な出来事が表示されます。</p><ul><li>赤系の警告は、怪我・出場停止・契約整理など早めの対応が必要な情報です。</li><li>ログを確認すると、前回の判断がチーム状態へどう影響したか振り返れます。</li></ul></article>
+        <article class="tactical-card help-topic-card"><div class="card-kicker">QUICK ROUTE</div><h3>迷ったときの確認順</h3><div class="help-route"><span>1 <b>チーム</b><small>怪我・疲労・契約を確認</small></span><span>2 <b>練習</b><small>個別プランと負荷を確認</small></span><span>3 <b>スタメン</b><small>適性と戦術を調整</small></span><span>4 <b>試合</b><small>実況を見ながら進行</small></span></div></article>
       </section>
     `;
   }
