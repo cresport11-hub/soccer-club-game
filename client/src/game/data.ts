@@ -451,8 +451,9 @@ export const commonSurnamePool = [
   "白川", "杉浦", "瀬尾", "立花", "寺島", "永瀬", "早川", "樋口", "福井", "古川", "星野", "本多",
 ];
 
-/** 一文字の名を避け、日常的に見かける二文字以上の名を中心にした生成プール。 */
+/** 二文字名を中心に、一文字名も自然な割合で含めた男性名の生成プール。 */
 export const commonGivenNamePool = [
+  "翔", "蓮", "凪", "陸", "湊", "律", "岳", "樹", "昴", "慧",
   "翔太", "健太", "大輔", "拓也", "直樹", "和也", "亮太", "祐介", "雄太", "達也", "颯太", "海斗",
   "陽向", "陸斗", "悠斗", "蓮斗", "優斗", "拓海", "大和", "直人", "亮介", "雄大", "健吾", "康平",
   "俊介", "圭吾", "恒一", "直哉", "和真", "悠真", "智也", "遼太", "健人", "隼人", "翔平", "裕太",
@@ -471,15 +472,15 @@ const nameSeed = (value: string) => Array.from(value).reduce((total, character) 
 const splitPlayerName = (value: string) => value.trim().split(/\s+/).filter(Boolean);
 const excludedGivenNameSet = new Set(["美咲", "花音", "七海", "彩乃", "愛理", "遥香", "真央", "杏奈", "結菜", "莉子", "優花", "明日香", "里奈", "美穂", "千夏", "春香", "陽菜", "菜月", "沙織", "麻衣", "美月", "梨花", "桃子", "佳奈", "怜奈", "香織", "由佳", "奈緒", "理沙"]);
 
-/** 姓名を正規化し、女性名・空白・一文字の名をゲーム内で残さない。 */
+/** 姓名を正規化し、女性名・空白を除去する。一文字名は正式な候補として許可する。 */
 export const normalizePlayerName = (value: string, seed = value, fallback?: string) => {
   const parts = splitPlayerName(value);
   const fallbackParts = fallback ? splitPlayerName(fallback) : [];
   const surname = parts[0] || fallbackParts[0] || commonSurnamePool[nameSeed(seed) % commonSurnamePool.length];
   const given = parts.slice(1).join("");
-  if (given.length >= 2 && !excludedGivenNameSet.has(given)) return `${surname} ${given}`;
+  if (given.length >= 1 && !excludedGivenNameSet.has(given)) return `${surname} ${given}`;
   const fallbackGiven = fallbackParts.slice(1).join("");
-  if (fallbackGiven.length >= 2 && !excludedGivenNameSet.has(fallbackGiven)) return `${fallbackParts[0] || surname} ${fallbackGiven}`;
+  if (fallbackGiven.length >= 1 && !excludedGivenNameSet.has(fallbackGiven)) return `${fallbackParts[0] || surname} ${fallbackGiven}`;
   return `${surname} ${commonGivenNamePool[nameSeed(seed) % commonGivenNamePool.length]}`;
 };
 

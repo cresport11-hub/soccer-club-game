@@ -104,10 +104,11 @@ describe("ClubSimulation match commentary", () => {
 
     expect(commonSurnamePool.length).toBeGreaterThan(90);
     expect(commonGivenNamePool.length).toBeGreaterThan(90);
-    expect(givenNames.every((name) => name.replace(/\s/g, "").length >= 2)).toBe(true);
+    expect(givenNames.every((name) => name.replace(/\s/g, "").length >= 1)).toBe(true);
     expect(catalogNames.every((name) => name.split(/\s+/).slice(1).join("").length >= 2)).toBe(true);
-    expect(opponentNames.every((name) => name.split(/\s+/).slice(1).join("").length >= 2)).toBe(true);
-    expect(normalizePlayerName("篠崎 深", "r2", "篠崎 直人")).toBe("篠崎 直人");
+    expect(opponentNames.every((name) => name.split(/\s+/).slice(1).join("").length >= 1)).toBe(true);
+    expect(normalizePlayerName("篠崎 深", "r2", "篠崎 直人")).toBe("篠崎 深");
+    expect(normalizePlayerName("高瀬 蓮", "r-single")).toBe("高瀬 蓮");
     expect(commonGivenNamePool).not.toContain("美咲");
     expect(normalizePlayerName("高瀬 美咲", "y2", "高瀬 美咲")).not.toBe("高瀬 美咲");
     expect(normalizePlayerName("高瀬 美咲", "y2", "高瀬 美咲").split(/\s+/)[1].length).toBeGreaterThanOrEqual(2);
