@@ -570,3 +570,24 @@ describe("Recruit negotiation choices", () => {
     }
   });
 });
+
+describe("Squad age balance", () => {
+  it("keeps opening and market players distributed across young, prime, and veteran groups", async () => {
+    const { players } = await import("./data");
+    const openingGroups = players.reduce((groups, player) => {
+      groups[player.age <= 22 ? "young" : player.age <= 27 ? "prime" : "veteran"] += 1;
+      return groups;
+    }, { young: 0, prime: 0, veteran: 0 });
+    const marketGroups = marketRecruits.reduce((groups, player) => {
+      groups[player.age <= 22 ? "young" : player.age <= 27 ? "prime" : "veteran"] += 1;
+      return groups;
+    }, { young: 0, prime: 0, veteran: 0 });
+
+    expect(openingGroups.young).toBeGreaterThanOrEqual(4);
+    expect(openingGroups.prime).toBeGreaterThanOrEqual(5);
+    expect(openingGroups.veteran).toBeGreaterThanOrEqual(4);
+    expect(marketGroups.young).toBeGreaterThanOrEqual(2);
+    expect(marketGroups.prime).toBeGreaterThanOrEqual(2);
+    expect(marketGroups.veteran).toBeGreaterThanOrEqual(2);
+  });
+});
