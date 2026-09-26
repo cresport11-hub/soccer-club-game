@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ClubSimulation } from "./ClubSimulation";
-import { commonGivenNamePool, commonSurnamePool, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, playerAssessmentFor, youthIntakes, youthProspects } from "./data";
+import { commonGivenNamePool, commonSurnamePool, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, playerAssessmentFor, players, youthIntakes, youthProspects } from "./data";
 
 describe("ClubSimulation match commentary", () => {
   beforeEach(() => {
@@ -572,6 +572,10 @@ describe("Recruit negotiation choices", () => {
 });
 
 describe("Squad age balance", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it("keeps opening and market players distributed across young, prime, and veteran groups", async () => {
     const { players } = await import("./data");
     const openingGroups = players.reduce((groups, player) => {
@@ -589,5 +593,21 @@ describe("Squad age balance", () => {
     expect(marketGroups.young).toBeGreaterThanOrEqual(2);
     expect(marketGroups.prime).toBeGreaterThanOrEqual(2);
     expect(marketGroups.veteran).toBeGreaterThanOrEqual(2);
+  });
+
+  it("makes younger players less mature and older players more complete without repeated save inflation", () => {
+    const simulation = new ClubSimulation();
+    const young = simulation.rosterPlayers.find((player) => player.id === "p15");
+    const veteran = simulation.rosterPlayers.find((player) => player.id === "p13");
+    expect(young).toBeDefined();
+    expect(veteran).toBeDefined();
+    expect(young!.age).toBeLessThan(veteran!.age);
+    expect(young!.attack).toBeLessThanOrEqual((players.find((player) => player.id === "p15")?.attack ?? young!.attack) - 1);
+    expect(veteran!.gk).toBeGreaterThanOrEqual(players.find((player) => player.id === "p13")?.gk ?? veteran!.gk ?? 0);
+
+    const firstVeteranGk = veteran!.gk;
+    simulation.train("recovery");
+    const restored = new ClubSimulation();
+    expect(restored.rosterPlayers.find((player) => player.id === "p13")?.gk).toBe(firstVeteranGk);
   });
 });

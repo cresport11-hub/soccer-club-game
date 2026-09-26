@@ -375,14 +375,17 @@ const isCbEligible = (player: Pick<Player, "position" | "secondary">) => player.
 const isSbEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "SB" || player.secondary === "SB";
 const isGkEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "GK" || player.secondary === "GK";
 const copyPlayers = () => players.map((player) => {
-  const systemUnderstanding = clamp(Math.round(finiteOr(player.systemUnderstanding, defaultSystemUnderstandingFor(player))), 1, 99);
-  const systemMastery = Object.fromEntries(formations.map((formation) => [formation.id, clamp(Math.round(finiteOr(player.systemMastery?.[formation.id], defaultSystemMasteryFor(player, formation.id, systemUnderstanding))), 0, 100)]));
-  return { ...player, contractYears: defaultContractYears(player), condition: clamp(Math.round(finiteOr(player.condition, defaultPlayerCondition)), 0, 100), trainingLoad: player.trainingLoad ?? "standard", skillXp: { ...(player.skillXp ?? {}) }, attributeXp: Object.fromEntries(playerAttributeKeys.map((attribute) => [attribute, Math.max(0, Math.round(player.attributeXp?.[attribute] ?? 0))])), attributeCeilings: { ...defaultAttributeCeilingsFor(player), ...(player.attributeCeilings ?? {}) }, positionMastery: { ...(player.positionMastery ?? {}), [player.position]: Math.max(28, Math.round(player.positionMastery?.[player.position] ?? 28)), ...(player.secondary ? { [player.secondary]: Math.max(12, Math.round(player.positionMastery?.[player.secondary] ?? 12)) } : {}) }, systemUnderstanding, systemUnderstandingXp: Math.max(0, Math.round(player.systemUnderstandingXp ?? 0)), systemMastery, skillTrainingTarget: player.skillTrainingTarget ?? playerSkillsFor(player)[0], cfPlayStyle: isCfEligible(player) ? player.cfPlayStyle ?? cfPlayStyleOptions[0].id : undefined, wgPlayStyle: isWgEligible(player) ? player.wgPlayStyle ?? wgPlayStyleOptions[0].id : undefined, amPlayStyle: isAmEligible(player) ? player.amPlayStyle ?? amPlayStyleOptions[0].id : undefined, cmPlayStyle: isCmEligible(player) ? player.cmPlayStyle ?? cmPlayStyleOptions[0].id : undefined, dmPlayStyle: isDmEligible(player) ? player.dmPlayStyle ?? dmPlayStyleOptions[0].id : undefined, cbPlayStyle: isCbEligible(player) ? player.cbPlayStyle ?? cbPlayStyleOptions[0].id : undefined, sbPlayStyle: isSbEligible(player) ? player.sbPlayStyle ?? sbPlayStyleOptions[0].id : undefined, gkPlayStyle: isGkEligible(player) ? player.gkPlayStyle ?? gkPlayStyleOptions[0].id : undefined };
+  const mature = { ...player, ageMaturityApplied: true, attack: matureAttribute(player.attack, player.age), dribble: matureAttribute(player.dribble, player.age), pass: matureAttribute(player.pass, player.age), shoot: matureAttribute(player.shoot, player.age), defense: matureAttribute(player.defense, player.age), tackle: matureAttribute(player.tackle, player.age), block: matureAttribute(player.block, player.age), interception: matureAttribute(player.interception, player.age), gk: player.gk === undefined ? undefined : matureAttribute(player.gk, player.age) };
+  const systemUnderstanding = clamp(Math.round(finiteOr(mature.systemUnderstanding, defaultSystemUnderstandingFor(mature))), 1, 99);
+  const systemMastery = Object.fromEntries(formations.map((formation) => [formation.id, clamp(Math.round(finiteOr(mature.systemMastery?.[formation.id], defaultSystemMasteryFor(mature, formation.id, systemUnderstanding))), 0, 100)]));
+  return { ...mature, contractYears: defaultContractYears(mature), condition: clamp(Math.round(finiteOr(mature.condition, defaultPlayerCondition)), 0, 100), trainingLoad: mature.trainingLoad ?? "standard", skillXp: { ...(mature.skillXp ?? {}) }, attributeXp: Object.fromEntries(playerAttributeKeys.map((attribute) => [attribute, Math.max(0, Math.round(mature.attributeXp?.[attribute] ?? 0))])), attributeCeilings: { ...defaultAttributeCeilingsFor(mature), ...(mature.attributeCeilings ?? {}) }, positionMastery: { ...(mature.positionMastery ?? {}), [mature.position]: Math.max(28, Math.round(mature.positionMastery?.[mature.position] ?? 28)), ...(mature.secondary ? { [mature.secondary]: Math.max(12, Math.round(mature.positionMastery?.[mature.secondary] ?? 12)) } : {}) }, systemUnderstanding, systemUnderstandingXp: Math.max(0, Math.round(mature.systemUnderstandingXp ?? 0)), systemMastery, skillTrainingTarget: mature.skillTrainingTarget ?? playerSkillsFor(mature)[0], cfPlayStyle: isCfEligible(mature) ? mature.cfPlayStyle ?? cfPlayStyleOptions[0].id : undefined, wgPlayStyle: isWgEligible(mature) ? mature.wgPlayStyle ?? wgPlayStyleOptions[0].id : undefined, amPlayStyle: isAmEligible(mature) ? mature.amPlayStyle ?? amPlayStyleOptions[0].id : undefined, cmPlayStyle: isCmEligible(mature) ? mature.cmPlayStyle ?? cmPlayStyleOptions[0].id : undefined, dmPlayStyle: isDmEligible(mature) ? mature.dmPlayStyle ?? dmPlayStyleOptions[0].id : undefined, cbPlayStyle: isCbEligible(mature) ? mature.cbPlayStyle ?? cbPlayStyleOptions[0].id : undefined, sbPlayStyle: isSbEligible(mature) ? mature.sbPlayStyle ?? sbPlayStyleOptions[0].id : undefined, gkPlayStyle: isGkEligible(mature) ? mature.gkPlayStyle ?? gkPlayStyleOptions[0].id : undefined };
 });
 const blankLineup = () => Object.fromEntries(formations[0].slots.map((slot) => [slot.id, null])) as Record<string, string | null>;
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const deterministic = (seed: number) => { const value = Math.sin(seed * 12.9898 + 78.233) * 43758.5453; return value - Math.floor(value); };
 const finiteOr = (value: unknown, fallback: number) => typeof value === "number" && Number.isFinite(value) ? value : fallback;
+const ageMaturityModifier = (age: number) => clamp(Math.round((age - 25) * .7), -5, 5);
+const matureAttribute = (value: number, age: number, alreadyApplied = false) => clamp(Math.round(value) + (alreadyApplied ? 0 : ageMaturityModifier(age)), 0, 99);
 const normalizeClubName = (value: unknown, fallback = userClub.name) => {
   if (typeof value !== "string") return fallback;
   const normalized = value.trim().replace(/\s+/g, " ").replace(/[<>]/g, "").slice(0, 24);
@@ -1913,7 +1916,8 @@ export class ClubSimulation {
     const facility = this.scoutFacility;
     const boost = facility.ratingBoost;
     const nationality = nationalityProfileFor(candidate.nationality);
-    const boosted = (value: number) => clamp(value + boost, 0, 99);
+    const maturity = ageMaturityModifier(candidate.age);
+    const boosted = (value: number) => clamp(value + maturity + boost, 0, 99);
     const nationalityBoosted = (attribute: PlayerAttributeKey, value: number) => clamp(boosted(value) + (nationality.abilityBoosts[attribute] ?? 0), 0, 99);
     const values: Partial<Record<PlayerAttributeKey, number>> = { attack: nationalityBoosted("attack", candidate.attack), dribble: nationalityBoosted("dribble", candidate.dribble), pass: nationalityBoosted("pass", candidate.pass), shoot: nationalityBoosted("shoot", candidate.shoot), defense: nationalityBoosted("defense", candidate.defense), tackle: nationalityBoosted("tackle", candidate.tackle), block: nationalityBoosted("block", candidate.block), interception: nationalityBoosted("interception", candidate.interception), gk: candidate.gk === undefined ? undefined : nationalityBoosted("gk", candidate.gk) };
     const baseCeilings = { ...defaultAttributeCeilingsFor(candidate), ...(candidate.attributeCeilings ?? {}) };
@@ -3261,8 +3265,10 @@ export class ClubSimulation {
 
   private hydratePlayer(saved: Player) {
     const reference = [...players, ...marketRecruits, ...youthProspects, ...youthIntakes].find((player) => player.id === saved.id);
-    const attack = finiteOr(saved.attack, reference?.attack ?? 45);
-    const defense = finiteOr(saved.defense, reference?.defense ?? 45);
+    const age = clamp(Math.round(finiteOr(saved.age, reference?.age ?? 25)), 16, 40);
+    const maturityApplied = Boolean(saved.ageMaturityApplied || saved.attributeCeilings || saved.attributeXp);
+    const attack = matureAttribute(finiteOr(saved.attack, reference?.attack ?? 45), age, maturityApplied);
+    const defense = matureAttribute(finiteOr(saved.defense, reference?.defense ?? 45), age, maturityApplied);
     const legacyPosition = saved.position as string;
     const legacySecondary = saved.secondary as string | undefined;
     const position = legacyPosition === "ST" ? "CF" : saved.position;
@@ -3280,7 +3286,7 @@ export class ClubSimulation {
     const savedXp = saved.skillXp && Object.keys(saved.skillXp).length ? saved.skillXp : reference?.skillXp ?? {};
     const skillXp = Object.fromEntries(Object.entries(savedXp).filter(([skillId, xp]) => Boolean(playerSkillCatalog[skillId as PlayerSkillId]) && Number.isFinite(xp)).map(([skillId, xp]) => [skillId, clamp(Math.round(xp as number), 0, 210)])) as Partial<Record<PlayerSkillId, number>>;
     const attributeXp = Object.fromEntries(playerAttributeKeys.map((attribute) => [attribute, clamp(Math.round(finiteOr(saved.attributeXp?.[attribute], reference?.attributeXp?.[attribute] ?? 0)), 0, 999)])) as Partial<Record<PlayerAttributeKey, number>>;
-    const fallbackPlayer = { ...(reference ?? saved), ...saved, position, secondary, attack, defense, dribble: finiteOr(saved.dribble, reference?.dribble ?? attack), pass: finiteOr(saved.pass, reference?.pass ?? attack), shoot: finiteOr(saved.shoot, reference?.shoot ?? attack), tackle: finiteOr(saved.tackle, reference?.tackle ?? defense), block: finiteOr(saved.block, reference?.block ?? defense), interception: finiteOr(saved.interception, reference?.interception ?? defense) } as Player;
+    const fallbackPlayer = { ...(reference ?? saved), ...saved, position, secondary, age, attack, defense, dribble: matureAttribute(finiteOr(saved.dribble, reference?.dribble ?? attack), age, maturityApplied), pass: matureAttribute(finiteOr(saved.pass, reference?.pass ?? attack), age, maturityApplied), shoot: matureAttribute(finiteOr(saved.shoot, reference?.shoot ?? attack), age, maturityApplied), tackle: matureAttribute(finiteOr(saved.tackle, reference?.tackle ?? defense), age, maturityApplied), block: matureAttribute(finiteOr(saved.block, reference?.block ?? defense), age, maturityApplied), interception: matureAttribute(finiteOr(saved.interception, reference?.interception ?? defense), age, maturityApplied), gk: saved.gk === undefined && reference?.gk === undefined ? undefined : matureAttribute(finiteOr(saved.gk, reference?.gk ?? 45), age, maturityApplied) } as Player;
     const defaultCeilings = defaultAttributeCeilingsFor(fallbackPlayer);
     const attributeCeilings = Object.fromEntries(playerAttributeKeys.map((attribute) => {
       const current = attribute === "gk" ? fallbackPlayer.gk ?? 0 : fallbackPlayer[attribute];
@@ -3297,6 +3303,8 @@ export class ClubSimulation {
       ...saved,
       name: normalizePlayerName(saved.name, saved.id, reference?.name),
       nationality: saved.nationality ?? reference?.nationality ?? "JP",
+      age,
+      ageMaturityApplied: true,
       condition: clamp(Math.round(finiteOr(saved.condition, reference?.condition ?? defaultPlayerCondition)), 0, 100),
       position,
       secondary,
@@ -3321,12 +3329,13 @@ export class ClubSimulation {
       salary: reference?.salary ?? Math.max(2400000, finiteOr(saved.salary, 2400000) * (finiteOr(saved.salary, 0) < 1000000 ? 12 : 1)),
       attack,
       defense,
-      dribble: finiteOr(saved.dribble, reference?.dribble ?? attack),
-      pass: finiteOr(saved.pass, reference?.pass ?? attack),
-      shoot: finiteOr(saved.shoot, reference?.shoot ?? attack),
-      tackle: finiteOr(saved.tackle, reference?.tackle ?? defense),
-      block: finiteOr(saved.block, reference?.block ?? defense),
-      interception: finiteOr(saved.interception, reference?.interception ?? defense),
+      dribble: fallbackPlayer.dribble,
+      pass: fallbackPlayer.pass,
+      shoot: fallbackPlayer.shoot,
+      tackle: fallbackPlayer.tackle,
+      block: fallbackPlayer.block,
+      interception: fallbackPlayer.interception,
+      gk: fallbackPlayer.gk,
       trainingLoad: trainingLoadOptions.some((option) => option.id === saved.trainingLoad) ? saved.trainingLoad : "standard",
       trainingFocus: trainingOptions.some((option) => option.id === saved.trainingFocus) ? saved.trainingFocus : undefined,
       contractYears: clamp(Math.round(finiteOr(saved.contractYears, reference ? defaultContractYears(reference) : defaultContractYears(saved))), 1, 3),

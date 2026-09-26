@@ -92,6 +92,8 @@ export type Player = {
   /** 次の公式戦までの出場停止試合数。 */
   suspensionMatches?: number;
   age: number;
+  /** 年齢による能力成熟補正を適用済みか。旧セーブとの互換用。 */
+  ageMaturityApplied?: boolean;
   salary: number;
   contractYears?: number;
   winBonus?: number;
