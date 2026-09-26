@@ -2999,12 +2999,42 @@ export class ClubSimulation {
     this.lastResult = null;
     this.saleOffers = initialSaleOffers();
     this.refreshMarketCandidates();
+    const retirementNotes = this.applyRetirementRolls();
     const ageingNotes = this.applyAgeingDecline();
     this.roster.forEach((player) => { player.contractYears = Math.max(1, (player.contractYears ?? defaultContractYears(player)) - 1); });
     const contractDue = this.contractDuePlayers.length;
     const newcomers = this.replenishYouthPlayers();
     this.seasonStats = initialSeasonStats(this.roster);
-    this.logs.unshift(`シーズン終了。リーグ${finalPosition}位、順位報奨金 ${seasonBonus.toLocaleString()}円。${ageingNotes.length ? `${ageingNotes.join(" / ")}。` : ""}${contractDue ? `${contractDue}名が契約最終年です。` : ""}${newcomers.length ? `ユースへ${newcomers.join("、")}が加入。` : ""}新たなスポンサー契約とカップ戦が始まる。`);
+    this.logs.unshift(`シーズン終了。リーグ${finalPosition}位、順位報奨金 ${seasonBonus.toLocaleString()}円。${retirementNotes.length ? `${retirementNotes.join(" / ")}。` : ""}${ageingNotes.length ? `${ageingNotes.join(" / ")}。` : ""}${contractDue ? `${contractDue}名が契約最終年です。` : ""}${newcomers.length ? `ユースへ${newcomers.join("、")}が加入。` : ""}新たなスポンサー契約とカップ戦が始まる。`);
+  }
+
+  private retirementChanceFor(age: number) {
+    if (age <= 30) return age === 30 ? .02 : 0;
+    if (age === 31) return .04;
+    if (age === 32) return .07;
+    if (age === 33) return .12;
+    if (age === 34) return .20;
+    if (age === 35) return .32;
+    if (age === 36) return .48;
+    if (age === 37) return .65;
+    if (age === 38) return .80;
+    if (age === 39) return .92;
+    return 1;
+  }
+
+  private applyRetirementRolls() {
+    const retiring = this.roster.filter((player) => {
+      const chance = this.retirementChanceFor(player.age);
+      if (!chance) return false;
+      const seed = Array.from(player.id).reduce((sum, character) => sum + character.charCodeAt(0), 0) + this.week * 17 + player.age * 97;
+      return deterministic(seed) < chance;
+    });
+    if (!retiring.length) return [];
+    const retiringIds = new Set(retiring.map((player) => player.id));
+    this.roster = this.roster.filter((player) => !retiringIds.has(player.id));
+    Object.keys(this.lineup).forEach((slotId) => { if (this.lineup[slotId] && retiringIds.has(this.lineup[slotId]!)) this.lineup[slotId] = null; });
+    retiring.forEach((player) => { delete this.injuries[player.id]; delete this.suspensionMatches[player.id]; delete this.yellowCards[player.id]; });
+    return retiring.map((player) => `${player.name}（${player.age}歳）が現役引退`);
   }
 
   private applyAgeingDecline() {

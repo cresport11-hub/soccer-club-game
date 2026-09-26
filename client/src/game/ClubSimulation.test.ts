@@ -614,20 +614,34 @@ describe("Squad age balance", () => {
   it("ages the squad at the season boundary and declines veteran attributes", () => {
     localStorage.clear();
     const simulation = new ClubSimulation();
-    const veteran = simulation.rosterPlayers.find((player) => player.id === "p13")!;
-    veteran.age = 35;
-    veteran.gk = 99;
-    veteran.attributeXp = { ...(veteran.attributeXp ?? {}), gk: 999 };
-    veteran.attributeCeilings = { ...(veteran.attributeCeilings ?? {}), gk: 99 };
+    const veteran = simulation.rosterPlayers.find((player) => player.id === "p11")!;
+    veteran.age = 31;
+    veteran.defense = 90;
+    veteran.attributeXp = { ...(veteran.attributeXp ?? {}), defense: 999 };
+    veteran.attributeCeilings = { ...(veteran.attributeCeilings ?? {}), defense: 99 };
     const beforeAge = veteran.age;
-    const beforeGk = veteran.gk;
+    const beforeDefense = veteran.defense;
 
     for (let index = 0; index < 20; index += 1) simulation.advanceWeek();
 
-    const aged = simulation.rosterPlayers.find((player) => player.id === "p13")!;
+    const aged = simulation.rosterPlayers.find((player) => player.id === "p11")!;
     expect(aged.age).toBe(beforeAge + 1);
-    expect(aged.gk).toBeLessThan(beforeGk!);
-    expect(aged.attributeCeilings?.gk).toBeLessThanOrEqual(99);
+    expect(aged.defense).toBeLessThan(beforeDefense!);
+    expect(aged.attributeCeilings?.defense).toBeLessThanOrEqual(99);
     expect(simulation.logs.some((log) => log.includes("能力衰退"))).toBe(true);
+  });
+
+  it("retires a 40-year-old player at the season boundary and clears lineup slots", () => {
+    localStorage.clear();
+    const simulation = new ClubSimulation();
+    const veteran = simulation.rosterPlayers.find((player) => player.id === "p13")!;
+    veteran.age = 40;
+    expect(Object.values(simulation.lineupState)).toContain("p13");
+
+    for (let index = 0; index < 20; index += 1) simulation.advanceWeek();
+
+    expect(simulation.rosterPlayers.some((player) => player.id === "p13")).toBe(false);
+    expect(Object.values(simulation.lineupState)).not.toContain("p13");
+    expect(simulation.logs.some((log) => log.includes("現役引退"))).toBe(true);
   });
 });
