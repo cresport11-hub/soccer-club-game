@@ -714,3 +714,37 @@ describe("Squad age balance", () => {
     expect(simulation.logs.some((log) => log.includes("現役引退"))).toBe(true);
   });
 });
+
+describe("Rehabilitation facility", () => {
+  beforeEach(() => {
+    const values = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+      clear: () => values.clear(),
+    });
+  });
+
+  it("upgrades the rehabilitation center and persists its level", () => {
+    const simulation = new ClubSimulation();
+    const initial = simulation.rehabilitationFacility;
+    const result = simulation.upgradeRehabilitationFacility();
+    expect(result.ok).toBe(true);
+    expect(simulation.rehabilitationFacility.level).toBe(initial.level + 1);
+    expect(simulation.rehabilitationFacility.recoveryWeeks).toBe(2);
+    const restored = new ClubSimulation();
+    expect(restored.rehabilitationFacility.level).toBe(2);
+  });
+
+  it("uses the rehabilitation level to shorten injury recovery", () => {
+    const simulation = new ClubSimulation();
+    const player = simulation.rosterPlayers[0];
+    (simulation as unknown as { injuries: Record<string, number> }).injuries[player.id] = 2;
+    player.injuryWeeks = 2;
+    simulation.upgradeRehabilitationFacility();
+    simulation.advanceWeek();
+    expect(simulation.injuryWeeksFor(player.id)).toBe(0);
+    expect(player.injuryWeeks).toBeUndefined();
+  });
+});
