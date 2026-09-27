@@ -2556,6 +2556,12 @@ export class ClubSimulation {
         `${orbitCreator.name}が相手の攻撃をインターセプト。${orbitFinisher.name}が前線で受けて一気に加速するが、シュートは枠の外へ！`,
         `${orbitCreator.name}がカウンターの起点となる鋭い奪取。${orbitFinisher.name}の折り返しに走り込んだ味方のシュートはブロックされた！`,
         `${orbitCreator.name}が失った直後に激しく追い、味方全体が押し上げる。${orbitFinisher.name}のミドルはGKの正面に飛んだ！`,
+        `${orbitCreator.name}が中央で相手を引きつけ、${orbitFinisher.name}が空いた右へ走る。折り返しは味方にわずかに合わない！`,
+        `${orbitCreator.name}が相手の背後へ早いボールを送り、${orbitFinisher.name}が追いついて折り返す。守備陣が懸命に戻った！`,
+        `${orbitCreator.name}と${orbitFinisher.name}が狭い局面で三角形を作る。最後のパスが通り、ゴール前へ一気に迫った！`,
+        `${orbitCreator.name}がセカンドボールを拾って左足を振り抜く。ブロックに当たったボールを、さらに味方が拾い直す！`,
+        `${orbitCreator.name}が相手のプレスを背負って耐え、${orbitFinisher.name}へ落とす。前を向いた瞬間、スタンドが沸いた！`,
+        `${orbitCreator.name}が守備ラインの間へ縦パス。${orbitFinisher.name}が抜け出しかけるが、相手DFの読みが一歩早い！`,
       ];
       const opponentPlays = [
         `${opponentName}の${opponentCreator.name}がサイドを抜け出してクロス。${opponentFinisher.name}が合わせるが、${ownGoalkeeper}が横っ飛びで防いだ！`,
@@ -2582,6 +2588,12 @@ export class ClubSimulation {
         `${opponentName}の${opponentCreator.name}がインターセプトから前を向く。${opponentFinisher.name}の一撃は、${ownDefender}が足を伸ばして阻止！`,
         `${opponentName}の${opponentCreator.name}が奪ってから一気に人数をかける。${opponentFinisher.name}のヘディングはわずかに枠を越えた！`,
         `${opponentName}の${opponentCreator.name}が失った直後に再び寄せて主導権を取り戻す。${opponentFinisher.name}のミドルは${ownGoalkeeper}が弾いた！`,
+        `${opponentName}の${opponentCreator.name}が中央で時間を作り、${opponentFinisher.name}が右のスペースへ走り込む。折り返しは守備が先に触った！`,
+        `${opponentName}の${opponentCreator.name}が背後へ鋭いボールを入れる。${opponentFinisher.name}が追いつきクロスを送るが、${ownDefender}が戻って対応！`,
+        `${opponentName}の${opponentCreator.name}と${opponentFinisher.name}が細かなパスで中央を割る。最後のタッチを${ownDefender}が押さえた！`,
+        `${opponentName}の${opponentCreator.name}がこぼれ球を拾って左足を一閃。味方の二次攻撃も、${ownGoalkeeper}が落ち着いて止めた！`,
+        `${opponentName}の${opponentCreator.name}が背負ってボールを収め、${opponentFinisher.name}へ落とす。前を向かせまいと守備が一斉に寄せる！`,
+        `${opponentName}の${opponentCreator.name}がライン間へ縦パスを差し込む。${opponentFinisher.name}が抜け出す寸前、${ownDefender}がカットした！`,
       ];
       const playIndex = index % orbitPlays.length;
       return { minute, kind: "action" as const, team: orbitAction ? "orbit" as const : "opponent" as const, text: orbitAction ? orbitPlays[playIndex] : opponentPlays[playIndex] };
@@ -2643,9 +2655,10 @@ export class ClubSimulation {
       const role = scorerPlayer ? this.matchRoleFor(scorerPlayer) : null;
       const buildUp = tactics.sideLinkAttack >= 2 && index % 2 === 0 ? `${assistant ?? scorer}がサイドを崩してクロスを送った。` : tactics.midfieldPressDetail.active && index % 2 === 1 ? `${assistant ?? scorer}が高い位置でボールを奪い、素早く前へ運んだ。` : tactics.playingStyle === "direct" ? `${assistant ?? scorer}が縦パスで最終ラインの背後を突いた。` : tactics.playingStyle === "press" ? `${assistant ?? scorer}が敵陣で奪い返し、すぐにチャンスへつなげた。` : `${assistant ?? scorer}が細かなパス交換で守備を崩した。`;
       const opponentBuildUp = opponentTactics.playingStyle === "direct" ? `${opponentName}が素早い縦パスで背後を取った。` : opponentTactics.playingStyle === "press" ? `${opponentName}が高い位置で奪い返し、すぐに攻め込んだ。` : `${opponentName}が中盤でパスをつなぎ、守備の間を通した。`;
+      const rallyFinish = deterministic(matchWeek * 71 + seed + index * 13) >= .72;
       const text = team === "orbit"
-        ? `${buildUp}${scorer}が${role?.finishCopy ?? "ゴール右隅へ流し込み"}、ネットを揺らした！ ゴール！`
-        : `${opponentBuildUp}${scorer}が${opponentAttacker?.role.includes("ターゲット") ? "競り合いを制してヘディングを叩き込み" : "冷静にシュートを流し込み"}、ゴール！`;
+        ? `${rallyFinish ? "奪っては奪い返す激しいラリーが続く。最後に前を向いた" : buildUp}${scorer}が${role?.finishCopy ?? "ゴール右隅へ流し込み"}、ネットを揺らした！ ゴール！`
+        : `${rallyFinish ? `${opponentName}と自クラブの攻防が何度も入れ替わる。ラリーの最後に${scorer}が抜け出し、` : opponentBuildUp}${scorer}が${opponentAttacker?.role.includes("ターゲット") ? "競り合いを制してヘディングを叩き込み" : "冷静にシュートを流し込み"}、ゴール！`;
       highlights.push({ minute, kind: "goal", team, text, scorer, assistant });
     }
     return highlights;

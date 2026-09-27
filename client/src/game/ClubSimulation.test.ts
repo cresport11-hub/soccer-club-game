@@ -41,6 +41,17 @@ describe("ClubSimulation match commentary", () => {
     expect(secondHalfGoals.length).toBe(result.playerGoals + result.opponentGoals - firstHalfGoals.length);
   });
 
+  it("can finish a rally with a goal", () => {
+    const simulation = new ClubSimulation();
+    const rallyGoalTexts: string[] = [];
+    for (let week = 0; week < 12; week += 1) {
+      const result = simulation.advanceWeek();
+      rallyGoalTexts.push(...result.highlights.filter((item) => item.kind === "goal" && /ラリー/.test(item.text)).map((item) => item.text));
+    }
+    expect(rallyGoalTexts.length).toBeGreaterThan(0);
+    expect(rallyGoalTexts.every((text) => /ゴール！/.test(text))).toBe(true);
+  });
+
   it("generates ability-based scouting assessments for selected market candidates", () => {
     const attacking = { ...marketRecruits[0], attack: 82, dribble: 78, pass: 50, shoot: 86, defense: 28, tackle: 24, block: 22, interception: 20 };
     const defending = { ...marketRecruits[0], attack: 30, dribble: 34, pass: 48, shoot: 22, defense: 84, tackle: 82, block: 86, interception: 80 };

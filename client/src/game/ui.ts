@@ -1339,7 +1339,7 @@ export class GameUI {
       <section class="match-modal halftime-modal" style="background-image:linear-gradient(180deg,rgba(3,15,10,.35),rgba(3,15,10,.95)),url('${assets.commandCenter}')">
         <span class="modal-kicker">${liveFirstHalf ? "LIVE FIRST HALF" : "HALF TIME"} / WEEK ${this.simulation.completedWeeks}</span>
         <div class="match-crests"><div><img src="${assets.clubMark}" alt=""/><b>${escapeHtml(this.simulation.clubNameValue)}</b></div><strong>${displayScore.playerGoals}<i>-</i>${displayScore.opponentGoals}</strong><div><span class="opponent-crest">◉</span><b>${result.opponent}</b></div></div>
-        <p>${report.message}</p>
+        <p>${liveFirstHalf ? "前半の攻防を実況中。スコアは実況の進行に合わせて更新されます。" : report.message}</p>
         <section class="match-live-top" aria-live="polite"><span class="match-live-top-label">LATEST HIGHLIGHT</span>${liveFirstHalf ? this.liveCommentaryStatus(result, "first-half") : "<strong>HALF-TIME FEED</strong>"}${this.highlightsTimeline(result.highlights, true, liveFirstHalf ? this.commentaryVisibleCount : undefined)}</section>
         <section class="half-time-brief"><span>TACTICAL BRIEF</span><b>${report.tacticalNote}</b><p>${report.recommendation}</p></section>${this.matchConditionBoard(result.matchCondition)}
         ${liveFirstHalf ? "" : ""}
