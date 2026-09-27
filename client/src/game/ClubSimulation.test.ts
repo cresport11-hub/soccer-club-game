@@ -373,6 +373,14 @@ describe("Match statistics", () => {
     expect(opponent.passAccuracy).toBeGreaterThanOrEqual(0);
     expect(orbit.saves).toBeGreaterThanOrEqual(0);
     expect(opponent.saves).toBeGreaterThanOrEqual(0);
+    expect(orbit.shots).toBeLessThanOrEqual(22);
+    expect(opponent.shots).toBeLessThanOrEqual(22);
+    expect(orbit.passes).toBeGreaterThanOrEqual(250);
+    expect(orbit.passes).toBeLessThanOrEqual(680);
+    expect(opponent.passes).toBeGreaterThanOrEqual(250);
+    expect(opponent.passes).toBeLessThanOrEqual(680);
+    expect(orbit.bigChances).toBeLessThanOrEqual(6);
+    expect(opponent.bigChances).toBeLessThanOrEqual(6);
   });
 
   it("reports ratings for every player who appeared", () => {
@@ -380,6 +388,17 @@ describe("Match statistics", () => {
     const result = simulation.advanceWeek();
     expect(result.playerRatings).toHaveLength(11);
     expect(result.playerRatings.every((rating) => rating.playerId && rating.note.length > 0)).toBe(true);
+  });
+
+  it("raises defensive ratings when the team keeps a clean sheet", () => {
+    const simulation = new ClubSimulation();
+    const cleanSheet = (simulation as any).createPlayerRatings([], [], [], 0) as Array<{ position: string; rating: number }>;
+    const concededTwo = (simulation as any).createPlayerRatings([], [], [], 2) as Array<{ position: string; rating: number }>;
+    const cleanDefenders = cleanSheet.filter((item) => ["GK", "CB", "SB", "DM"].includes(item.position));
+    const concededDefenders = concededTwo.filter((item) => ["GK", "CB", "SB", "DM"].includes(item.position));
+    expect(cleanDefenders.length).toBeGreaterThan(0);
+    expect(cleanDefenders.reduce((sum, item) => sum + item.rating, 0) / cleanDefenders.length)
+      .toBeGreaterThan(concededDefenders.reduce((sum, item) => sum + item.rating, 0) / concededDefenders.length);
   });
 
   it("assigns a deterministic referee strictness profile to each match", () => {

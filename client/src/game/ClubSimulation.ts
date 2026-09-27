@@ -1470,7 +1470,7 @@ export class ClubSimulation {
     result.halfTimeChanges = [`${score.tactics.mentalityLabel} / ${score.tactics.playingStyleLabel}`, ...substitutions.map((item) => `${item.outPlayer} → ${item.inPlayer}`)];
     result.highlights = [...firstHalfHighlights, ...substitutionHighlights, ...secondHalfHighlights].sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind));
     this.rollbackSeasonStats(result.playerRatings, result.mvp);
-    result.playerRatings = this.createPlayerRatings(result.highlights, result.substitutions, result.injuries);
+    result.playerRatings = this.createPlayerRatings(result.highlights, result.substitutions, result.injuries, result.opponentGoals);
     result.markDuels = this.createMarkDuelReports(result.opponentTactics, result.playerRatings, result.playerGoals, result.opponentGoals);
     result.mvp = result.playerRatings[0] ?? null;
     this.recordSeasonStats(result.playerRatings, result.mvp);
@@ -2346,7 +2346,7 @@ export class ClubSimulation {
     this.saleOffers = this.saleOffers.filter((offer) => offer.expiresWeek >= this.week && this.roster.some((player) => player.id === offer.playerId));
     const marketRefreshLog = this.week % 3 === 0 ? this.refreshMarketCandidates(true) : "";
     this.captureCashPoint();
-    result.playerRatings = this.createPlayerRatings(result.highlights, result.substitutions, result.injuries);
+    result.playerRatings = this.createPlayerRatings(result.highlights, result.substitutions, result.injuries, result.opponentGoals);
     const cardNotices = this.applyCardDiscipline(result.highlights);
     result.conditionChanges = this.updatePlayerConditions(result.playerRatings, result.injuries, won, draw);
     result.markDuels = this.createMarkDuelReports(result.opponentTactics, result.playerRatings, result.playerGoals, result.opponentGoals);
@@ -2439,22 +2439,24 @@ export class ClubSimulation {
     const opponentActions = highlights.filter((item) => item.team === "opponent" && item.kind === "action").length;
     const orbitPossession = clamp(Math.round(50 + (matchAttack - opponentTactics.attack) * 0.22 + tactics.chemistry * 0.04 + (tactics.playingStyle === "possession" ? 4 : tactics.playingStyle === "direct" ? -2 : 0)), 35, 65);
     const opponentPossession = 100 - orbitPossession;
-    const orbitShots = clamp(8 + orbitActions + playerGoals * 2 + Math.round((matchAttack - opponentTactics.defense) * 0.18) + Math.round(deterministic(matchWeek + 301) * 3), 5, 24);
-    const opponentShots = clamp(8 + opponentActions + opponentGoals * 2 + Math.round((opponentTactics.attack - matchDefense) * 0.18) + Math.round(deterministic(matchWeek + 307) * 3), 5, 24);
-    const orbitShotsOnTarget = clamp(Math.round(orbitShots * 0.38) + playerGoals, 1, orbitShots);
-    const opponentShotsOnTarget = clamp(Math.round(opponentShots * 0.38) + opponentGoals, 1, opponentShots);
-    const orbitPasses = clamp(Math.round(250 + orbitPossession * 3.7 + tactics.chemistry * 1.7 + matchAttack), 260, 720);
-    const opponentPasses = clamp(Math.round(720 - orbitPossession * 3.1 + opponentTactics.attack), 260, 720);
-    const orbitPassAccuracy = clamp(Math.round(65 + orbitPossession * 0.25 + tactics.chemistry * 0.1), 65, 92);
-    const opponentPassAccuracy = clamp(Math.round(65 + opponentPossession * 0.22 + opponentTactics.attack * 0.08), 64, 91);
-    const orbitCorners = clamp(2 + Math.round(orbitShots * 0.18) + Math.round(deterministic(matchWeek + 313) * 2), 1, 10);
-    const opponentCorners = clamp(2 + Math.round(opponentShots * 0.18) + Math.round(deterministic(matchWeek + 317) * 2), 1, 10);
-    const orbitFouls = clamp(7 + Math.round((100 - orbitPossession) * 0.08) + Math.round(deterministic(matchWeek + 319) * 4), 4, 18);
-    const opponentFouls = clamp(7 + Math.round((100 - opponentPossession) * 0.08) + Math.round(deterministic(matchWeek + 323) * 4), 4, 18);
-    const orbitOffsides = clamp(Math.round(orbitShots / 7) + Math.round(deterministic(matchWeek + 331) * 2), 0, 6);
-    const opponentOffsides = clamp(Math.round(opponentShots / 7) + Math.round(deterministic(matchWeek + 337) * 2), 0, 6);
-    const orbitBigChances = clamp(1 + playerGoals + Math.round(orbitShotsOnTarget * 0.22), 1, 7);
-    const opponentBigChances = clamp(1 + opponentGoals + Math.round(opponentShotsOnTarget * 0.22), 1, 7);
+    const orbitShots = clamp(Math.round(8 + orbitActions * 0.9 + (matchAttack - opponentTactics.defense) * 0.12 + playerGoals * 0.8 + deterministic(matchWeek + 301) * 4), 5, 22);
+    const opponentShots = clamp(Math.round(8 + opponentActions * 0.9 + (opponentTactics.attack - matchDefense) * 0.12 + opponentGoals * 0.8 + deterministic(matchWeek + 307) * 4), 5, 22);
+    const orbitShotsOnTarget = clamp(Math.round(orbitShots * (0.28 + tactics.chemistry * 0.0015)) + playerGoals, playerGoals, orbitShots);
+    const opponentShotsOnTarget = clamp(Math.round(opponentShots * (0.27 + opponentTactics.attack * 0.001)) + opponentGoals, opponentGoals, opponentShots);
+    const orbitPassTempo = tactics.playingStyle === "possession" ? 1.08 : tactics.playingStyle === "direct" ? .9 : 1;
+    const opponentPassTempo = opponentTactics.playingStyle === "possession" ? 1.08 : opponentTactics.playingStyle === "direct" ? .9 : 1;
+    const orbitPasses = clamp(Math.round((270 + orbitPossession * 3.35 + tactics.chemistry * 1.45 + matchAttack * .8) * orbitPassTempo + deterministic(matchWeek + 309) * 34 - 17), 250, 680);
+    const opponentPasses = clamp(Math.round((270 + opponentPossession * 3.3 + opponentTactics.attack * 1.2) * opponentPassTempo + deterministic(matchWeek + 310) * 34 - 17), 250, 680);
+    const orbitPassAccuracy = clamp(Math.round(64 + orbitPossession * 0.27 + tactics.chemistry * 0.12 + deterministic(matchWeek + 311) * 4 - 2), 62, 93);
+    const opponentPassAccuracy = clamp(Math.round(64 + opponentPossession * 0.25 + opponentTactics.attack * 0.09 + deterministic(matchWeek + 312) * 4 - 2), 61, 92);
+    const orbitCorners = clamp(Math.round(1 + orbitShots * 0.24 + deterministic(matchWeek + 313) * 3), 0, 10);
+    const opponentCorners = clamp(Math.round(1 + opponentShots * 0.24 + deterministic(matchWeek + 317) * 3), 0, 10);
+    const orbitFouls = clamp(Math.round(7 + (100 - orbitPossession) * 0.1 + deterministic(matchWeek + 319) * 5 - 2), 4, 19);
+    const opponentFouls = clamp(Math.round(7 + (100 - opponentPossession) * 0.1 + deterministic(matchWeek + 323) * 5 - 2), 4, 19);
+    const orbitOffsides = clamp(Math.round(orbitShots * 0.12 + deterministic(matchWeek + 331) * 2 - .5), 0, 5);
+    const opponentOffsides = clamp(Math.round(opponentShots * 0.12 + deterministic(matchWeek + 337) * 2 - .5), 0, 5);
+    const orbitBigChances = clamp(Math.max(playerGoals, Math.round(orbitShotsOnTarget * .28 + deterministic(matchWeek + 341) * 2 - .5)), 0, 6);
+    const opponentBigChances = clamp(Math.max(opponentGoals, Math.round(opponentShotsOnTarget * .28 + deterministic(matchWeek + 347) * 2 - .5)), 0, 6);
     return {
       orbit: { possession: orbitPossession, shots: orbitShots, shotsOnTarget: orbitShotsOnTarget, bigChances: orbitBigChances, corners: orbitCorners, passes: orbitPasses, passAccuracy: orbitPassAccuracy, fouls: orbitFouls, offsides: orbitOffsides, saves: Math.max(0, opponentShotsOnTarget - opponentGoals) },
       opponent: { possession: opponentPossession, shots: opponentShots, shotsOnTarget: opponentShotsOnTarget, bigChances: opponentBigChances, corners: opponentCorners, passes: opponentPasses, passAccuracy: opponentPassAccuracy, fouls: opponentFouls, offsides: opponentOffsides, saves: Math.max(0, orbitShotsOnTarget - playerGoals) },
@@ -2761,7 +2763,7 @@ export class ClubSimulation {
     return notices;
   }
 
-  private createPlayerRatings(highlights: MatchHighlight[], substitutions: MatchSubstitution[], injuries: MatchInjury[]): PlayerMatchRating[] {
+  private createPlayerRatings(highlights: MatchHighlight[], substitutions: MatchSubstitution[], injuries: MatchInjury[], opponentGoals = 0): PlayerMatchRating[] {
     const subbedOnIds = new Set(substitutions.map((item) => item.inPlayerId));
     const startedIds = new Set([...this.startingPlayers().map((player) => player.id), ...substitutions.map((item) => item.outPlayerId)]);
     const participants = this.roster.filter((player) => startedIds.has(player.id) || subbedOnIds.has(player.id));
@@ -2772,7 +2774,9 @@ export class ClubSimulation {
       const started = startedIds.has(player.id) && !subbedOnIds.has(player.id);
       const subbedOn = subbedOnIds.has(player.id);
       const base = player.position === "GK" ? (player.gk ?? 50) : (this.attackPower(player) + this.defensePower(player)) / 2;
-      const rating = clamp(Math.round((6.0 + (base - 55) / 32 + goals * 1.45 + assists * .8 - (player.fatigue >= 85 ? .65 : 0) - (injured ? 1.3 : 0) - (subbedOn ? .2 : 0)) * 10) / 10, 4.5, 10);
+      const defensiveRole = ["GK", "CB", "SB", "DM"].includes(player.position);
+      const defensiveResultBonus = defensiveRole ? opponentGoals === 0 ? .45 : opponentGoals === 1 ? .15 : opponentGoals >= 3 ? -.35 : 0 : 0;
+      const rating = clamp(Math.round((6.0 + (base - 55) / 32 + goals * 1.45 + assists * .8 + defensiveResultBonus - (player.fatigue >= 85 ? .65 : 0) - (injured ? 1.3 : 0) - (subbedOn ? .2 : 0)) * 10) / 10, 4.5, 10);
       const commentGroups = injured
         ? ["負傷により途中離脱", "アクシデントまで守備で粘った", "痛みを抱えながら役割を果たした"]
         : rating < 5.9
