@@ -2667,18 +2667,18 @@ export class ClubSimulation {
   }
 
   private createMatchInjuries(highlights: MatchHighlight[], matchWeek: number): MatchInjury[] {
-    const candidates = this.startingPlayers().filter((player) => this.injuryWeeksFor(player.id) === 0 && player.fatigue >= 45).sort((a, b) => {
+    const candidates = this.startingPlayers().filter((player) => this.injuryWeeksFor(player.id) === 0 && player.fatigue >= 35).sort((a, b) => {
       const riskScore = (player: Player) => player.fatigue + (100 - this.conditionFor(player)) * .45 + this.trainingLoadFor(player).riskAdjustment * 2 + Math.max(0, player.age - 29) * 1.4;
       return riskScore(b) - riskScore(a);
     });
     const candidate = candidates[0];
     if (!candidate) return [];
-    const fatigueRisk = Math.max(0, candidate.fatigue - 45) * .009;
-    const conditionRisk = Math.max(0, 62 - this.conditionFor(candidate)) * .003;
-    const loadRisk = Math.max(0, this.trainingLoadFor(candidate).riskAdjustment) * .012;
-    const ageRisk = Math.max(0, candidate.age - 29) * .012;
-    const styleRisk = this.playingStyle === "press" ? .045 : this.playingStyle === "direct" ? .025 : 0;
-    const injuryChance = clamp(.10 + fatigueRisk + conditionRisk + loadRisk + ageRisk + styleRisk, .10, .55);
+    const fatigueRisk = Math.max(0, candidate.fatigue - 35) * .012;
+    const conditionRisk = Math.max(0, 68 - this.conditionFor(candidate)) * .005;
+    const loadRisk = Math.max(0, this.trainingLoadFor(candidate).riskAdjustment) * .016;
+    const ageRisk = Math.max(0, candidate.age - 29) * .016;
+    const styleRisk = this.playingStyle === "press" ? .08 : this.playingStyle === "direct" ? .05 : 0;
+    const injuryChance = clamp(.20 + fatigueRisk + conditionRisk + loadRisk + ageRisk + styleRisk, .16, .72);
     if (deterministic(matchWeek * 29 + candidate.fatigue + Math.round(this.conditionFor(candidate) * 3)) >= injuryChance) return [];
     const minute = clamp(Math.round(24 + deterministic(matchWeek * 31 + candidate.attack) * 56), 22, 84);
     const weeks = candidate.fatigue >= 90 || this.conditionFor(candidate) <= 40 ? 2 : 1;
@@ -2710,8 +2710,9 @@ export class ClubSimulation {
         : `${opponentTactics.formationLabel ? "相手" : "相手チーム"}の${name}が遅れて接触し、${card}。${red ? "退場処分" : "警告を受ける"}。`;
       events.push({ minute, kind: "card", team, text, playerId: team === "orbit" ? player?.id : undefined, cardType: red ? "red" : "yellow" });
     };
-    // A normal match has a chance of one or two cautions. Individual ability and
-    // match load now matter more than a single team-wide fixed probability.
+    // A normal match should produce several cautions over time. Individual ability,
+    // referee strictness and match load still matter, while extra checks create
+    // realistic opportunities for substitutes and tactical changes.
     const styleBoost = this.playingStyle === "press" ? .1 : this.playingStyle === "direct" ? .05 : 0;
     const ownFirst = orbitPlayers[0];
     const ownSecond = orbitPlayers[2];
@@ -2719,8 +2720,10 @@ export class ClubSimulation {
     const opponentSecond = opponentPlayers[3];
     if (ownFirst && deterministic(matchWeek * 53 + 7) < cardRiskFor(ownFirst, styleBoost)) addCard("orbit", 0, false);
     if (opponentFirst && deterministic(matchWeek * 53 + 13) < cardRiskFor(opponentFirst)) addCard("opponent", 1, false);
-    if (ownSecond && deterministic(matchWeek * 53 + 19) < .02 + cardRiskFor(ownSecond, styleBoost) * .16) addCard("orbit", 2, true);
-    if (opponentSecond && deterministic(matchWeek * 53 + 23) < .02 + cardRiskFor(opponentSecond) * .1) addCard("opponent", 3, true);
+    if (ownSecond && deterministic(matchWeek * 53 + 19) < cardRiskFor(ownSecond, styleBoost) * .7) addCard("orbit", 2, false);
+    if (opponentSecond && deterministic(matchWeek * 53 + 23) < cardRiskFor(opponentSecond) * .7) addCard("opponent", 3, false);
+    if (ownSecond && deterministic(matchWeek * 53 + 29) < .025 + cardRiskFor(ownSecond, styleBoost) * .08) addCard("orbit", 4, true);
+    if (opponentSecond && deterministic(matchWeek * 53 + 31) < .025 + cardRiskFor(opponentSecond) * .06) addCard("opponent", 4, true);
     return events;
   }
 

@@ -408,6 +408,19 @@ describe("Match statistics", () => {
     expect(result.refereeStrictness).toBeLessThanOrEqual(1.28);
     expect(["寛容", "標準", "厳格"]).toContain(result.refereeLabel);
   });
+
+  it("generates injuries and cards often enough to affect match management", () => {
+    const simulation = new ClubSimulation();
+    let injuryCount = 0;
+    let cardCount = 0;
+    for (let week = 0; week < 12; week += 1) {
+      const result = simulation.advanceWeek();
+      injuryCount += result.injuries.length;
+      cardCount += result.highlights.filter((item) => item.kind === "card").length;
+    }
+    expect(injuryCount).toBeGreaterThan(0);
+    expect(cardCount).toBeGreaterThan(4);
+  });
 });
 
 
