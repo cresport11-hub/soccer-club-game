@@ -1861,7 +1861,7 @@ export class ClubSimulation {
       .filter((player): player is Player => player !== undefined && !this.marketSignedIds.includes(player.id));
   }
 
-  private buildMarketCandidateIds() {
+  private buildMarketCandidateIds(excludeIds: string[] = this.marketCandidateIds) {
     const available = marketRecruits.filter((player) => !this.marketSignedIds.includes(player.id));
     const requested = this.marketPreferredPositions.length
       ? available.filter((player) => this.marketPreferredPositions.includes(player.position) || (player.secondary !== undefined && this.marketPreferredPositions.includes(player.secondary)))
@@ -1869,7 +1869,14 @@ export class ClubSimulation {
     const pool = this.marketPreferredPositions.length ? requested : available;
     if (!pool.length) return [];
     const offset = (Math.floor(this.week / 3) * 4) % pool.length;
-    return [...pool.slice(offset), ...pool.slice(0, offset)].slice(0, Math.min(4, pool.length)).map((player) => player.id);
+    const rotated = [...pool.slice(offset), ...pool.slice(0, offset)];
+    const previous = new Set(excludeIds);
+    const fresh = rotated.filter((player) => !previous.has(player.id));
+    const selected = fresh.slice(0, Math.min(4, pool.length));
+    if (selected.length < Math.min(4, pool.length)) {
+      selected.push(...rotated.filter((player) => previous.has(player.id)).slice(0, Math.min(4, pool.length) - selected.length));
+    }
+    return selected.map((player) => player.id);
   }
 
   private ensureMarketCandidateList() {

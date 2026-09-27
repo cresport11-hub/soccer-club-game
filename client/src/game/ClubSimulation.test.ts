@@ -70,6 +70,24 @@ describe("ClubSimulation match commentary", () => {
     expect(restoredSimulation.currentMarketTacticalFit?.score).toBe(target!.tacticalFit.score);
   });
 
+  it("rotates market candidates without repeating the previous list", () => {
+    const simulation = new ClubSimulation();
+    const first = new Set(simulation.marketCandidateComparison.map((item) => item.player.id));
+    simulation.advanceWeek();
+    simulation.advanceWeek();
+    simulation.advanceWeek();
+    const second = new Set(simulation.marketCandidateComparison.map((item) => item.player.id));
+
+    expect(second.size).toBeGreaterThan(0);
+    expect([...second].some((id) => first.has(id))).toBe(false);
+
+    simulation.advanceWeek();
+    simulation.advanceWeek();
+    simulation.advanceWeek();
+    const third = new Set(simulation.marketCandidateComparison.map((item) => item.player.id));
+    expect([...third].some((id) => second.has(id))).toBe(false);
+  });
+
   it("persists a renamed club across simulation instances and match reports", () => {
     const firstSimulation = new ClubSimulation();
     const update = firstSimulation.setClubName("  ブライト 札幌  ");
