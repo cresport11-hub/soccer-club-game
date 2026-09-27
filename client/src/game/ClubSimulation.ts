@@ -2,7 +2,7 @@
  * Design system: 「タッチライン戦術室」— game rules remain framework-independent and flow through one state owner.
  * Sponsors fund the season; financial history, matchday commerce, and facility levels evolve through this single state owner.
  */
-import { canMarkOpponent, defaultAttributeCeilingsFor, defaultSystemMasteryFor, defaultSystemUnderstandingFor, formationBaseId, formations, foreignPlayerLimit, isForeignPlayer, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, nationalityLabels, nationalityProfileFor, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerAttributeKeys, playerAttributeLabels, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, positionLabel, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type NationalityCode, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerAttributeKey, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
+import { canMarkOpponent, defaultAttributeCeilingsFor, defaultSystemMasteryFor, defaultSystemUnderstandingFor, formationBaseId, formations, foreignPlayerLimit, isForeignPlayer, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, nationalityLabels, nationalityNameFor, nationalityProfileFor, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerAttributeKeys, playerAttributeLabels, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, positionLabel, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type NationalityCode, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerAttributeKey, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
 
 export type PageId = "home" | "lineup" | "team" | "stats" | "league" | "training" | "market" | "academy" | "facilities" | "sponsors" | "cup" | "finance" | "settings" | "help";
 export type Mentality = "defensive" | "balanced" | "attacking";
@@ -3357,10 +3357,11 @@ export class ClubSimulation {
     const systemMastery = Object.fromEntries(formations.map((formation) => [formation.id, clamp(Math.round(finiteOr(saved.systemMastery?.[formation.id], reference?.systemMastery?.[formation.id] ?? defaultSystemMasteryFor(fallbackPlayer, formation.id, systemUnderstanding))), 0, 100)]));
     const savedTarget = isLegacyYouthTendency ? reference?.skillTrainingTarget : saved.skillTrainingTarget ?? reference?.skillTrainingTarget;
     const skillTrainingTarget = savedTarget && playerSkillCatalog[savedTarget] ? savedTarget : skills[0];
+    const nationality = saved.nationality ?? reference?.nationality ?? "JP";
     return {
       ...saved,
-      name: normalizePlayerName(saved.name, saved.id, reference?.name),
-      nationality: saved.nationality ?? reference?.nationality ?? "JP",
+      name: nationality === "JP" ? normalizePlayerName(saved.name, saved.id, reference?.name) : nationalityNameFor(nationality, saved.id),
+      nationality,
       age,
       ageMaturityApplied: true,
       condition: clamp(Math.round(finiteOr(saved.condition, reference?.condition ?? defaultPlayerCondition)), 0, 100),

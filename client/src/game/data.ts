@@ -484,6 +484,24 @@ export const commonGivenNamePool = [
   "直紀", "慎一", "健一", "雄一", "拓郎", "一真", "和弘", "智之",
 ];
 
+/** 外国籍選手は国籍に合った表記で生成する。姓・名の順は各言語圏で自然な一般表記に統一する。 */
+const nationalityNamePools: Record<Exclude<NationalityCode, "JP">, { surnames: string[]; givenNames: string[] }> = {
+  BR: { surnames: ["Silva", "Santos", "Oliveira", "Souza", "Costa", "Pereira", "Almeida", "Ferreira"], givenNames: ["Lucas", "Gabriel", "Rafael", "Mateus", "Bruno", "Thiago", "Caio", "Diego"] },
+  KR: { surnames: ["Kim", "Lee", "Park", "Choi", "Jung", "Kang", "Yoon", "Lim"], givenNames: ["Min-jun", "Seo-jun", "Ji-ho", "Hyun-woo", "Joon-ho", "Tae-yang", "Do-yun", "Sang-ho"] },
+  ES: { surnames: ["García", "Fernández", "González", "Rodríguez", "Martínez", "López", "Sánchez", "Navarro"], givenNames: ["Alejandro", "Carlos", "Diego", "Javier", "Miguel", "Pablo", "Álvaro", "Sergio"] },
+  DE: { surnames: ["Müller", "Schmidt", "Schneider", "Fischer", "Weber", "Wagner", "Becker", "Hoffmann"], givenNames: ["Lukas", "Leon", "Felix", "Jonas", "Maximilian", "Niklas", "Paul", "Julian"] },
+  FR: { surnames: ["Martin", "Bernard", "Dubois", "Thomas", "Robert", "Richard", "Petit", "Moreau"], givenNames: ["Lucas", "Hugo", "Gabriel", "Louis", "Jules", "Mathis", "Antoine", "Baptiste"] },
+  AR: { surnames: ["González", "Rodríguez", "Gómez", "Fernández", "López", "Díaz", "Pérez", "Romero"], givenNames: ["Santiago", "Mateo", "Joaquín", "Nicolás", "Franco", "Tomás", "Emiliano", "Valentín"] },
+};
+
+export const nationalityNameFor = (nationality: NationalityCode, seed: string = nationality) => {
+  if (nationality === "JP") return normalizePlayerName(seed, seed);
+  const pool = nationalityNamePools[nationality];
+  const surname = pool.surnames[nameSeed(`${seed}-surname`) % pool.surnames.length];
+  const given = pool.givenNames[nameSeed(`${seed}-given`) % pool.givenNames.length];
+  return `${surname} ${given}`;
+};
+
 const opponentSurnamePool = commonSurnamePool;
 const opponentGivenPool = commonGivenNamePool;
 
@@ -539,15 +557,15 @@ export function opponentSquadFor(clubId: string): OpponentPlayer[] {
 }
 
 export const marketRecruits: Player[] = [
-  { id: "r1", name: "東雲 怜司", nationality: "BR", position: "SH", secondary: "AM", wgPlayStyle: "inverted", amPlayStyle: "playmaker", attack: 74, dribble: 76, pass: 78, shoot: 70, defense: 44, tackle: 37, block: 41, interception: 53, fatigue: 0, age: 28, salary: 22000000, contractYears: 3, level: 5, ceiling: 10, chemistry: "spark" },
+  { id: "r1", name: nationalityNameFor("BR", "r1"), nationality: "BR", position: "SH", secondary: "AM", wgPlayStyle: "inverted", amPlayStyle: "playmaker", attack: 74, dribble: 76, pass: 78, shoot: 70, defense: 44, tackle: 37, block: 41, interception: 53, fatigue: 0, age: 28, salary: 22000000, contractYears: 3, level: 5, ceiling: 10, chemistry: "spark" },
   { id: "r2", name: "篠崎 直人", position: "CB", secondary: "SB", cbPlayStyle: "ball-playing", sbPlayStyle: "inverted-fullback", attack: 46, dribble: 48, pass: 61, shoot: 34, defense: 76, tackle: 77, block: 80, interception: 72, fatigue: 0, age: 30, salary: 15400000, contractYears: 3, level: 5, ceiling: 7, chemistry: "steady" },
   { id: "r3", name: "皆本 律希", position: "GK", gkPlayStyle: "distributor", gk: 73, attack: 17, dribble: 18, pass: 55, shoot: 10, defense: 25, tackle: 18, block: 29, interception: 37, fatigue: 0, age: 26, salary: 9200000, contractYears: 3, level: 4, ceiling: 9, chemistry: "edge" },
-  { id: "r4", name: "志摩 湊斗", nationality: "ES", position: "CF", secondary: "WG", cfPlayStyle: "runner", attack: 71, dribble: 74, pass: 58, shoot: 76, defense: 31, tackle: 27, block: 24, interception: 35, fatigue: 0, age: 21, salary: 11800000, contractYears: 3, level: 4, ceiling: 10, chemistry: "spark" },
+  { id: "r4", name: nationalityNameFor("ES", "r4"), nationality: "ES", position: "CF", secondary: "WG", cfPlayStyle: "runner", attack: 71, dribble: 74, pass: 58, shoot: 76, defense: 31, tackle: 27, block: 24, interception: 35, fatigue: 0, age: 21, salary: 11800000, contractYears: 3, level: 4, ceiling: 10, chemistry: "spark" },
   { id: "r5", name: "本多 朔也", position: "DM", secondary: "CB", dmPlayStyle: "anchor", cbPlayStyle: "stopper", attack: 48, dribble: 50, pass: 69, shoot: 41, defense: 72, tackle: 74, block: 70, interception: 76, fatigue: 0, age: 31, salary: 16800000, contractYears: 3, level: 5, ceiling: 8, chemistry: "steady" },
   { id: "r6", name: "日向 透真", position: "CM", secondary: "DM", cmPlayStyle: "box-to-box", dmPlayStyle: "regista", attack: 65, dribble: 67, pass: 74, shoot: 58, defense: 63, tackle: 61, block: 55, interception: 64, fatigue: 0, age: 24, salary: 17600000, contractYears: 3, level: 5, ceiling: 9, chemistry: "edge" },
   { id: "r7", name: "天城 陸斗", position: "AM", secondary: "SH", amPlayStyle: "playmaker", wgPlayStyle: "touchline", attack: 72, dribble: 73, pass: 79, shoot: 64, defense: 39, tackle: 34, block: 31, interception: 48, fatigue: 0, age: 23, salary: 21400000, contractYears: 3, level: 5, ceiling: 9, chemistry: "spark" },
   { id: "r8", name: "有沢 航平", position: "SB", secondary: "SH", sbPlayStyle: "overlap", wgPlayStyle: "wide-worker", attack: 59, dribble: 63, pass: 68, shoot: 45, defense: 67, tackle: 69, block: 60, interception: 62, fatigue: 0, age: 27, salary: 13900000, contractYears: 3, level: 4, ceiling: 9, chemistry: "spark" },
-  { id: "r9", name: "鷹野 玲央", nationality: "AR", position: "WG", secondary: "CF", wgPlayStyle: "inverted", cfPlayStyle: "false-nine", attack: 75, dribble: 81, pass: 66, shoot: 72, defense: 34, tackle: 30, block: 27, interception: 38, fatigue: 0, age: 20, salary: 19800000, contractYears: 3, level: 5, ceiling: 10, chemistry: "edge" },
+  { id: "r9", name: nationalityNameFor("AR", "r9"), nationality: "AR", position: "WG", secondary: "CF", wgPlayStyle: "inverted", cfPlayStyle: "false-nine", attack: 75, dribble: 81, pass: 66, shoot: 72, defense: 34, tackle: 30, block: 27, interception: 38, fatigue: 0, age: 20, salary: 19800000, contractYears: 3, level: 5, ceiling: 10, chemistry: "edge" },
 ];
 
 export const recruit = marketRecruits[0];

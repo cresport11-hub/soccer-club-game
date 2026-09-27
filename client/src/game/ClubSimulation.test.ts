@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ClubSimulation } from "./ClubSimulation";
-import { commonGivenNamePool, commonSurnamePool, marketRecruits, normalizePlayerName, opponentSeeds, opponentSquadFor, playerAssessmentFor, players, youthIntakes, youthProspects } from "./data";
+import { commonGivenNamePool, commonSurnamePool, marketRecruits, nationalityNameFor, normalizePlayerName, opponentSeeds, opponentSquadFor, playerAssessmentFor, players, youthIntakes, youthProspects } from "./data";
 
 describe("ClubSimulation match commentary", () => {
   beforeEach(() => {
@@ -112,6 +112,14 @@ describe("ClubSimulation match commentary", () => {
     expect(commonGivenNamePool).not.toContain("美咲");
     expect(normalizePlayerName("高瀬 美咲", "y2", "高瀬 美咲")).not.toBe("高瀬 美咲");
     expect(normalizePlayerName("高瀬 美咲", "y2", "高瀬 美咲").split(/\s+/)[1].length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("uses nationality-specific names for foreign players", () => {
+    expect(marketRecruits.find((player) => player.id === "r1")?.name).toBe(nationalityNameFor("BR", "r1"));
+    expect(marketRecruits.find((player) => player.id === "r4")?.name).toBe(nationalityNameFor("ES", "r4"));
+    expect(marketRecruits.find((player) => player.id === "r9")?.name).toBe(nationalityNameFor("AR", "r9"));
+    expect(nationalityNameFor("BR", "r1")).toMatch(/^[A-Za-zÀ-ÿ]+ [A-Za-zÀ-ÿ]+$/);
+    expect(nationalityNameFor("KR", "sample")).toMatch(/^[A-Za-z-]+ [A-Za-z-]+$/);
   });
 
   it("accumulates individual attribute XP and position mastery through training and matches", () => {
