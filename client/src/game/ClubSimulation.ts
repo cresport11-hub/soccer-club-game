@@ -161,7 +161,6 @@ export type MembershipReceipt = { members: number; weeklyFee: number; revenue: n
 export type ConcessionReceipt = { isHome: boolean; level: number; customers: number; purchaseRate: number; averageSpend: number; capacity: number; revenue: number };
 export type ConcessionFacility = { level: number; name: string; capacity: number; purchaseBonus: number; spendBonus: number; nextCost: number | null; nextName: string | null };
 export type ScoutFacility = { level: number; name: string; ratingBoost: number; ceilingBoost: number; youthQuality: YouthSkillQuality; youthInitialXpBonus: number; youthSessionXpBonus: number; youthPaceStep: number; youthQualityNote: string; nextCost: number | null; nextName: string | null; note: string };
-export type ScoutStaff = { id: string; name: string; region: string; specialtyPosition: Player["position"]; specialtyLabel: string; specialtySkill: PlayerSkillId; profile: string; note: string; entryXpBonus: number; sessionXpBonus: number };
 export type TrainingFacility = { level: number; name: string; weeklySlots: number; growthBonus: number; riskReduction: number; nextCost: number | null; nextName: string | null; note: string };
 export type RehabilitationFacility = { level: number; name: string; recoveryWeeks: number; fatigueRecovery: number; conditionBonus: number; nextCost: number | null; nextName: string | null; note: string };
 export type TrainingRecommendation = { focus: TrainingFocus; label: string; grade: "回復優先" | "調整推奨" | "実施可"; averageFatigue: number; highFatiguePlayers: number; highLoadPlayers: number; injuryCount: number; reason: string };
@@ -225,7 +224,6 @@ type Persisted = {
   youthPlayers?: YouthPlayer[];
   seasonStats?: PlayerSeasonStat[];
   scoutLevel?: number;
-  assignedScoutId?: string;
   teamMorale?: number;
   recentMatchForm?: RecentMatchForm[];
   youthIntakeCursor?: number;
@@ -246,12 +244,6 @@ const scoutLevels = [
   { name: "地域スカウティング", ratingBoost: 0, ceilingBoost: 0, youthQuality: "地域発掘" as YouthSkillQuality, youthInitialXpBonus: 0, youthSessionXpBonus: 0, youthPaceStep: 0, youthQualityNote: "基礎スキルと地元で見つけた伸びしろから、クラブらしい原石を育てる。", note: "近隣リーグの映像と地域ネットワークを活用する。", upgradeCost: 900000 },
   { name: "広域映像ネットワーク", ratingBoost: 2, ceilingBoost: 1, youthQuality: "広域注目" as YouthSkillQuality, youthInitialXpBonus: 10, youthSessionXpBonus: 1, youthPaceStep: 1, youthQualityNote: "全国の映像分析で、初期XPが高く、育成ペースを一段押し上げた注目株を見つける。", note: "全国の映像網を整え、即戦力と伸びしろを見逃さない。", upgradeCost: 1750000 },
   { name: "オービット・スカウト網", ratingBoost: 4, ceilingBoost: 2, youthQuality: "分析選抜" as YouthSkillQuality, youthInitialXpBonus: 24, youthSessionXpBonus: 2, youthPaceStep: 2, youthQualityNote: "分析班が適性を精査し、習得間近の初期XPと早い育成ペースを持つ選抜候補を招く。", note: "広域網と分析班が連携し、戦術適性の高い候補を選別する。", upgradeCost: null },
-];
-const scoutStaff: ScoutStaff[] = [
-  { id: "scout-forward", name: "北原 誠", region: "首都圏・攻撃局面", specialtyPosition: "CF", specialtyLabel: "CF / WG / AM", specialtySkill: "finisher", profile: "アタッカー発掘", note: "ゴールに直結する動きと決定力を見抜く。前線候補にはフィニッシュセンスを起点にした育成プランを持ち込む。", entryXpBonus: 14, sessionXpBonus: 1 },
-  { id: "scout-midfield", name: "香坂 凛", region: "広域・中盤創造", specialtyPosition: "CM", specialtyLabel: "CM / DM / AM", specialtySkill: "vision", profile: "ゲームメーカー発掘", note: "配球の質と判断の速さを評価する。中盤候補にはスルーパスを軸にした組立プランを与える。", entryXpBonus: 14, sessionXpBonus: 1 },
-  { id: "scout-defense", name: "相馬 剛", region: "沿岸・守備組織", specialtyPosition: "CB", specialtyLabel: "CB / SB / DM", specialtySkill: "interceptor", profile: "守備者発掘", note: "予測と対応の早さを重視する。守備候補にはインターセプトを軸にした奪回プランを与える。", entryXpBonus: 14, sessionXpBonus: 1 },
-  { id: "scout-keeper", name: "東雲 澪", region: "全国・GK分析", specialtyPosition: "GK", specialtyLabel: "GK", specialtySkill: "one-on-one", profile: "守護者発掘", note: "至近距離での判断と反応を見抜く。GK候補には1対1セーブを軸にした反応プランを与える。", entryXpBonus: 18, sessionXpBonus: 2 },
 ];
 const trainingFacilityLevels = [
   { name: "ベース・トレーニング棟", weeklySlots: 1, growthBonus: 0, riskReduction: 0, note: "基本設備で週1回の全体トレーニングを実施する。", upgradeCost: 650000 },
@@ -434,7 +426,6 @@ export class ClubSimulation {
   private recentMatchForm: RecentMatchForm[] = [];
   private concessionLevel = 1;
   private scoutLevel = 1;
-  private assignedScoutId = "scout-forward";
   private mentality: Mentality = "balanced";
   private playingStyle: PlayingStyle = "possession";
   private autoLineupCriteria: AutoLineupCriteria = "fit";
@@ -488,7 +479,6 @@ export class ClubSimulation {
     this.recentMatchForm = [];
     this.concessionLevel = 1;
     this.scoutLevel = 1;
-    this.assignedScoutId = "scout-forward";
     this.mentality = "balanced";
     this.playingStyle = "possession";
     this.ledger = [{ week: 0, label: "開幕運転資金", category: "繰越資金", amount: 3200000, kind: "income", note: "クラブの初期運転資金" }];
@@ -712,9 +702,7 @@ export class ClubSimulation {
     return { level: this.concessionLevel, name: current.name, capacity: current.capacity, purchaseBonus: current.purchaseBonus, spendBonus: current.spendBonus, nextCost: current.upgradeCost, nextName: next?.name ?? null };
   }
   get scoutFacility(): ScoutFacility { const current = scoutLevels[this.scoutLevel - 1]; const next = scoutLevels[this.scoutLevel]; return { level: this.scoutLevel, name: current.name, ratingBoost: current.ratingBoost, ceilingBoost: current.ceilingBoost, youthQuality: current.youthQuality, youthInitialXpBonus: current.youthInitialXpBonus, youthSessionXpBonus: current.youthSessionXpBonus, youthPaceStep: current.youthPaceStep, youthQualityNote: current.youthQualityNote, nextCost: current.upgradeCost, nextName: next?.name ?? null, note: current.note }; }
-  get scoutStaffMembers() { return scoutStaff; }
-  get assignedScout() { return scoutStaff.find((staff) => staff.id === this.assignedScoutId) ?? scoutStaff[0]; }
-  get scoutDeployment() { const staff = this.assignedScout; return { staff, tendency: `${staff.specialtyLabel}を優先発掘`, summary: `${staff.name}が${staff.region}を担当。${staff.specialtyLabel}の候補は${playerSkillCatalog[staff.specialtySkill].label}を初期スキル候補に持ち、加入XP +${staff.entryXpBonus}・ユースXP +${staff.sessionXpBonus}/回を得る。` }; }
+  get scoutFacilityLevels() { return scoutLevels.map((level, index) => ({ level: index + 1, name: level.name, ratingBoost: level.ratingBoost, ceilingBoost: level.ceilingBoost, youthQuality: level.youthQuality, youthInitialXpBonus: level.youthInitialXpBonus, youthSessionXpBonus: level.youthSessionXpBonus, youthPaceStep: level.youthPaceStep, isCurrent: index + 1 === this.scoutLevel })); }
   get youthScoutQualityForecast() { const current = this.scoutFacility; const next = scoutLevels[this.scoutLevel]; return { current, next: next ? { level: this.scoutLevel + 1, name: next.name, youthQuality: next.youthQuality, youthInitialXpBonus: next.youthInitialXpBonus, youthSessionXpBonus: next.youthSessionXpBonus, youthPaceStep: next.youthPaceStep, note: next.youthQualityNote } : null }; }
   get marketQualityNote() { const facility = this.scoutFacility; return `スカウトLv.${facility.level}：候補能力 +${facility.ratingBoost} / 上限 +${facility.ceilingBoost}`; }
   get upcomingConcessionForecast() { return this.createConcessionReceipt(this.upcomingGateForecast); }
@@ -1809,7 +1797,7 @@ export class ClubSimulation {
       if (player.academyWeeks % 2 === 0 && player.level < player.ceiling) player.level += 1;
       const target = player.skillTrainingTarget ?? player.youthSkillTendency?.developmentSkill ?? playerSkillsFor(player)[0];
       const paceBonus = player.youthSkillTendency?.growthPace === "早熟" ? 2 : player.youthSkillTendency?.growthPace === "標準" ? 1 : 0;
-      const grant = this.grantSkillXp(player, target, 10 + paceBonus + (player.youthScoutXpBonus ?? 0) + (player.youthScoutStaffSessionXpBonus ?? 0), "ユース");
+      const grant = this.grantSkillXp(player, target, 10 + paceBonus + (player.youthScoutXpBonus ?? 0), "ユース");
       return grant ? [grant] : [];
     });
     this.captureCashPoint();
@@ -2217,16 +2205,6 @@ export class ClubSimulation {
     this.logs.unshift(`スカウト網を ${upgraded.name}（Lv.${upgraded.level}）へ拡張。市場候補の能力とポテンシャルに加え、次季ユースの初期XPと育成ペースが向上した。`);
     this.persist();
     return { ok: true, text: `${upgraded.name} を稼働開始。次季ユースは${upgraded.youthQuality}となり、初期XP +${upgraded.youthInitialXpBonus}、セッションXP +${upgraded.youthSessionXpBonus}を得ます。` };
-  }
-
-  assignScoutStaff(staffId: string) {
-    const staff = scoutStaff.find((item) => item.id === staffId);
-    if (!staff) return { ok: false, text: "配置するスカウト担当者を確認できませんでした。" };
-    if (this.assignedScoutId === staff.id) return { ok: false, text: `${staff.name}はすでに${staff.region}を担当しています。` };
-    this.assignedScoutId = staff.id;
-    this.logs.unshift(`スカウト担当を${staff.name}へ変更。${staff.specialtyLabel}のユース候補を優先して追跡する。`);
-    this.persist();
-    return { ok: true, text: `${staff.name}を${staff.region}へ配置。次のユース加入では${staff.specialtyLabel}に${playerSkillCatalog[staff.specialtySkill].label}の傾向を反映します。` };
   }
 
   advanceWeek(): MatchResult {
@@ -3354,7 +3332,6 @@ export class ClubSimulation {
 
   private persist() {
     const saved: Persisted = { money: this.money, fame: this.fame, week: this.week, clubName: this.clubName, formationId: this.formationId, lineup: this.lineup, players: this.roster, rows: this.rows, logs: this.logs, recruited: this.recruited, sponsor: this.sponsor, cup: this.cup, popularity: this.popularity, teamMorale: this.teamMorale, recentMatchForm: this.recentMatchForm, concessionLevel: this.concessionLevel, scoutLevel: this.scoutLevel, trainingFacilityLevel: this.trainingFacilityLevel, rehabilitationFacilityLevel: this.rehabilitationFacilityLevel, trainingSessionsThisWeek: this.trainingSessionsThisWeek, youthIntakeCursor: this.youthIntakeCursor, ledger: this.ledger, cashTrail: this.cashTrail, mentality: this.mentality, playingStyle: this.playingStyle, autoLineupCriteria: this.autoLineupCriteria, injuries: this.injuries, recruitNegotiation: this.recruitNegotiation, saleOffers: this.saleOffers, trainingHistory: this.trainingHistory, lastTrainingWeek: this.lastTrainingWeek, lastYouthTrainingWeek: this.lastYouthTrainingWeek, marketSignedIds: this.marketSignedIds, marketCandidateIds: this.marketCandidateIds, marketPreferredPositions: this.marketPreferredPositions, marketCandidateCycle: this.marketCandidateCycle, marketSelectedCandidateId: this.selectedMarketCandidateId, marketUpdateNotice: this.pendingMarketUpdateNotice, youthPlayers: this.youthPlayers, seasonStats: this.seasonStats, manualMarkAssignments: this.manualMarkAssignments };
-    saved.assignedScoutId = this.assignedScoutId;
     try { localStorage.setItem(storageKey, JSON.stringify(saved)); } catch { /* Private mode or storage restrictions must not block gameplay. */ }
   }
 
@@ -3365,7 +3342,7 @@ export class ClubSimulation {
       const parsed = JSON.parse(raw) as Persisted;
       if (!this.hasUsableSave(parsed)) throw new Error("Invalid save data");
       this.money = parsed.money; this.fame = parsed.fame; this.week = parsed.week; this.clubName = normalizeClubName(parsed.clubName); this.formationId = parsed.formationId; this.lineup = parsed.lineup; this.roster = this.hydrateOpeningRoster(parsed.players, parsed.week); this.rows = parsed.rows.map((row) => row.id === userClub.id ? { ...row, name: this.clubName } : row); this.logs = parsed.logs; this.recruited = parsed.recruited;
-      this.sponsor = parsed.sponsor ?? null; this.cup = parsed.cup ?? initialCup(); this.popularity = parsed.popularity ?? 42; this.teamMorale = clamp(Math.round(finiteOr(parsed.teamMorale, 58)), 0, 100); this.recentMatchForm = Array.isArray(parsed.recentMatchForm) ? parsed.recentMatchForm.filter((entry): entry is RecentMatchForm => !!entry && ["W", "D", "L"].includes(entry.outcome) && Number.isFinite(entry.margin) && (entry.competition === "リーグ" || entry.competition === "カップ")).slice(0, 5).map((entry) => ({ outcome: entry.outcome, margin: clamp(Math.round(entry.margin), -5, 5), competition: entry.competition })) : []; this.concessionLevel = clamp(parsed.concessionLevel ?? 1, 1, concessionLevels.length); this.scoutLevel = clamp(parsed.scoutLevel ?? 1, 1, scoutLevels.length); this.assignedScoutId = scoutStaff.some((staff) => staff.id === parsed.assignedScoutId) ? parsed.assignedScoutId! : "scout-forward"; this.trainingFacilityLevel = clamp(parsed.trainingFacilityLevel ?? 1, 1, trainingFacilityLevels.length); this.rehabilitationFacilityLevel = clamp(parsed.rehabilitationFacilityLevel ?? 1, 1, rehabilitationFacilityLevels.length); this.trainingSessionsThisWeek = Math.max(0, Math.round(finiteOr(parsed.trainingSessionsThisWeek, 0))); this.youthIntakeCursor = Math.max(0, Math.round(finiteOr(parsed.youthIntakeCursor, 0))); this.lastTrainingWeek = typeof parsed.lastTrainingWeek === "number" && Number.isFinite(parsed.lastTrainingWeek) && parsed.lastTrainingWeek >= 0 ? Math.round(parsed.lastTrainingWeek) : null; this.lastYouthTrainingWeek = typeof parsed.lastYouthTrainingWeek === "number" && Number.isFinite(parsed.lastYouthTrainingWeek) && parsed.lastYouthTrainingWeek >= 0 ? Math.round(parsed.lastYouthTrainingWeek) : null; this.mentality = mentalityOptions.some((item) => item.id === parsed.mentality) ? parsed.mentality! : "balanced"; this.playingStyle = playingStyleOptions.some((item) => item.id === parsed.playingStyle) ? parsed.playingStyle! : "possession"; this.autoLineupCriteria = ["attack", "defense", "fit"].includes(parsed.autoLineupCriteria ?? "") ? parsed.autoLineupCriteria! : "fit"; this.injuries = parsed.injuries ?? Object.fromEntries(this.roster.filter((player) => (player.injuryWeeks ?? 0) > 0).map((player) => [player.id, player.injuryWeeks!])); this.yellowCards = Object.fromEntries(Object.entries(parsed.yellowCards ?? {}).filter(([id, value]) => this.roster.some((player) => player.id === id) && Number.isFinite(value)).map(([id, value]) => [id, clamp(Math.round(value), 0, 1)])); this.suspensionMatches = Object.fromEntries(Object.entries(parsed.suspensionMatches ?? {}).filter(([id, value]) => this.roster.some((player) => player.id === id) && Number.isFinite(value)).map(([id, value]) => [id, clamp(Math.round(value), 0, 1)])); this.ledger = parsed.ledger?.length ? parsed.ledger : [{ week: parsed.week, label: "既存シーズン繰越", category: "繰越資金", amount: parsed.money, kind: "income", note: "財務ダッシュボード導入前の残高" }]; this.cashTrail = parsed.cashTrail?.length ? parsed.cashTrail : [parsed.money]; this.marketSignedIds = this.hydrateMarketSignedIds(parsed.marketSignedIds, parsed.recruited); this.marketPreferredPositions = Array.isArray(parsed.marketPreferredPositions) ? Array.from(new Set(parsed.marketPreferredPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)))) : []; this.marketCandidateIds = Array.isArray(parsed.marketCandidateIds) ? Array.from(new Set(parsed.marketCandidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)))) : []; this.marketCandidateCycle = Math.max(0, Math.round(finiteOr(parsed.marketCandidateCycle, -1)));     this.selectedMarketCandidateId = typeof parsed.marketSelectedCandidateId === "string" && this.marketCandidateIds.includes(parsed.marketSelectedCandidateId) ? parsed.marketSelectedCandidateId : this.marketCandidateIds[0] ?? null;
+      this.sponsor = parsed.sponsor ?? null; this.cup = parsed.cup ?? initialCup(); this.popularity = parsed.popularity ?? 42; this.teamMorale = clamp(Math.round(finiteOr(parsed.teamMorale, 58)), 0, 100); this.recentMatchForm = Array.isArray(parsed.recentMatchForm) ? parsed.recentMatchForm.filter((entry): entry is RecentMatchForm => !!entry && ["W", "D", "L"].includes(entry.outcome) && Number.isFinite(entry.margin) && (entry.competition === "リーグ" || entry.competition === "カップ")).slice(0, 5).map((entry) => ({ outcome: entry.outcome, margin: clamp(Math.round(entry.margin), -5, 5), competition: entry.competition })) : []; this.concessionLevel = clamp(parsed.concessionLevel ?? 1, 1, concessionLevels.length); this.scoutLevel = clamp(parsed.scoutLevel ?? 1, 1, scoutLevels.length); this.trainingFacilityLevel = clamp(parsed.trainingFacilityLevel ?? 1, 1, trainingFacilityLevels.length); this.rehabilitationFacilityLevel = clamp(parsed.rehabilitationFacilityLevel ?? 1, 1, rehabilitationFacilityLevels.length); this.trainingSessionsThisWeek = Math.max(0, Math.round(finiteOr(parsed.trainingSessionsThisWeek, 0))); this.youthIntakeCursor = Math.max(0, Math.round(finiteOr(parsed.youthIntakeCursor, 0))); this.lastTrainingWeek = typeof parsed.lastTrainingWeek === "number" && Number.isFinite(parsed.lastTrainingWeek) && parsed.lastTrainingWeek >= 0 ? Math.round(parsed.lastTrainingWeek) : null; this.lastYouthTrainingWeek = typeof parsed.lastYouthTrainingWeek === "number" && Number.isFinite(parsed.lastYouthTrainingWeek) && parsed.lastYouthTrainingWeek >= 0 ? Math.round(parsed.lastYouthTrainingWeek) : null; this.mentality = mentalityOptions.some((item) => item.id === parsed.mentality) ? parsed.mentality! : "balanced"; this.playingStyle = playingStyleOptions.some((item) => item.id === parsed.playingStyle) ? parsed.playingStyle! : "possession"; this.autoLineupCriteria = ["attack", "defense", "fit"].includes(parsed.autoLineupCriteria ?? "") ? parsed.autoLineupCriteria! : "fit"; this.injuries = parsed.injuries ?? Object.fromEntries(this.roster.filter((player) => (player.injuryWeeks ?? 0) > 0).map((player) => [player.id, player.injuryWeeks!])); this.yellowCards = Object.fromEntries(Object.entries(parsed.yellowCards ?? {}).filter(([id, value]) => this.roster.some((player) => player.id === id) && Number.isFinite(value)).map(([id, value]) => [id, clamp(Math.round(value), 0, 1)])); this.suspensionMatches = Object.fromEntries(Object.entries(parsed.suspensionMatches ?? {}).filter(([id, value]) => this.roster.some((player) => player.id === id) && Number.isFinite(value)).map(([id, value]) => [id, clamp(Math.round(value), 0, 1)])); this.ledger = parsed.ledger?.length ? parsed.ledger : [{ week: parsed.week, label: "既存シーズン繰越", category: "繰越資金", amount: parsed.money, kind: "income", note: "財務ダッシュボード導入前の残高" }]; this.cashTrail = parsed.cashTrail?.length ? parsed.cashTrail : [parsed.money]; this.marketSignedIds = this.hydrateMarketSignedIds(parsed.marketSignedIds, parsed.recruited); this.marketPreferredPositions = Array.isArray(parsed.marketPreferredPositions) ? Array.from(new Set(parsed.marketPreferredPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)))) : []; this.marketCandidateIds = Array.isArray(parsed.marketCandidateIds) ? Array.from(new Set(parsed.marketCandidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)))) : []; this.marketCandidateCycle = Math.max(0, Math.round(finiteOr(parsed.marketCandidateCycle, -1)));     this.selectedMarketCandidateId = typeof parsed.marketSelectedCandidateId === "string" && this.marketCandidateIds.includes(parsed.marketSelectedCandidateId) ? parsed.marketSelectedCandidateId : this.marketCandidateIds[0] ?? null;
     const savedMarketNotice = parsed.marketUpdateNotice; this.pendingMarketUpdateNotice = savedMarketNotice && Number.isFinite(savedMarketNotice.week) && Array.isArray(savedMarketNotice.candidateIds) ? { week: Math.max(0, Math.round(savedMarketNotice.week)), candidateIds: savedMarketNotice.candidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)), requestedPositions: Array.isArray(savedMarketNotice.requestedPositions) ? savedMarketNotice.requestedPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)) : [] } : null; this.recruitNegotiation = this.hydrateRecruitNegotiation(parsed.recruitNegotiation, parsed.recruited); this.saleOffers = this.hydrateSaleOffers(parsed.saleOffers); this.trainingHistory = this.hydrateTrainingHistory(parsed.trainingHistory); this.youthPlayers = this.hydrateYouthPlayers(parsed.youthPlayers); this.seasonStats = this.hydrateSeasonStats(parsed.seasonStats); this.manualMarkAssignments = Object.fromEntries(Object.entries(parsed.manualMarkAssignments ?? {}).filter(([, playerId]) => typeof playerId === "string" && this.roster.some((player) => player.id === playerId)));
     } catch {
       try { localStorage.removeItem(storageKey); } catch { /* Storage may be disabled; the initial state remains usable. */ }
@@ -3492,13 +3469,10 @@ export class ClubSimulation {
 
   private scoutYouthProspect(prospect: Player): YouthPlayer {
     const facility = this.scoutFacility;
-    const staff = this.assignedScout;
     const paceOrder: Array<NonNullable<Player["youthSkillTendency"]>["growthPace"]> = ["じっくり", "標準", "早熟"];
     const tendency = prospect.youthSkillTendency;
-    const specialtyMatch = playerSkillCatalog[staff.specialtySkill].positions.includes(prospect.position) || Boolean(prospect.secondary && playerSkillCatalog[staff.specialtySkill].positions.includes(prospect.secondary));
-    const skills = specialtyMatch ? Array.from(new Set([...playerSkillsFor(prospect), staff.specialtySkill])) : playerSkillsFor(prospect);
+    const skills = playerSkillsFor(prospect);
     const initialXp = Object.fromEntries(Object.entries(prospect.skillXp ?? {}).map(([skillId, xp]) => [skillId, clamp(Math.round(finiteOr(xp, 0)) + facility.youthInitialXpBonus, 0, 99)])) as Partial<Record<PlayerSkillId, number>>;
-    if (specialtyMatch) initialXp[staff.specialtySkill] = clamp((initialXp[staff.specialtySkill] ?? facility.youthInitialXpBonus) + staff.entryXpBonus, 0, 99);
     const basePace = tendency ? paceOrder.indexOf(tendency.growthPace) : 1;
     const growthPace = tendency ? paceOrder[clamp(basePace + facility.youthPaceStep, 0, paceOrder.length - 1)] : undefined;
     const baseCeilings = { ...defaultAttributeCeilingsFor(prospect), ...(prospect.attributeCeilings ?? {}) };
@@ -3506,9 +3480,8 @@ export class ClubSimulation {
       const current = attribute === "gk" ? prospect.gk ?? 0 : prospect[attribute];
       return [attribute, clamp(Math.round((baseCeilings[attribute] ?? current) + facility.ceilingBoost), Math.round(current), 99)];
     })) as Partial<Record<PlayerAttributeKey, number>>;
-    return { ...prospect, skills, skillXp: initialXp, attributeCeilings, skillTrainingTarget: specialtyMatch ? staff.specialtySkill : prospect.skillTrainingTarget, youthScoutLevel: facility.level, youthSkillQuality: facility.youthQuality, youthInitialXpBonus: facility.youthInitialXpBonus, youthScoutXpBonus: facility.youthSessionXpBonus, youthScoutStaffId: specialtyMatch ? staff.id : undefined, youthScoutStaffName: specialtyMatch ? staff.name : undefined, youthScoutStaffImpact: specialtyMatch ? `${staff.profile}：${staff.specialtyLabel}に${playerSkillCatalog[staff.specialtySkill].label}の傾向を追加` : undefined, youthScoutStaffEntryXpBonus: specialtyMatch ? staff.entryXpBonus : 0, youthScoutStaffSessionXpBonus: specialtyMatch ? staff.sessionXpBonus : 0, youthSkillTendency: tendency && growthPace ? { ...tendency, developmentSkill: specialtyMatch ? staff.specialtySkill : tendency.developmentSkill, recommendedFocus: specialtyMatch ? playerSkillGrowthFocus[staff.specialtySkill][0] : tendency.recommendedFocus, growthPace, coachNote: `${tendency.coachNote} スカウト網Lv.${facility.level}の選抜により、${facility.youthQuality}品質で加入。${specialtyMatch ? ` ${staff.name}の${staff.profile}により、${playerSkillCatalog[staff.specialtySkill].label}を重点化。` : ""}` } : tendency, academyWeeks: 0 };
+    return { ...prospect, skills, skillXp: initialXp, attributeCeilings, skillTrainingTarget: prospect.skillTrainingTarget, youthScoutLevel: facility.level, youthSkillQuality: facility.youthQuality, youthInitialXpBonus: facility.youthInitialXpBonus, youthScoutXpBonus: facility.youthSessionXpBonus, youthSkillTendency: tendency && growthPace ? { ...tendency, growthPace, coachNote: `${tendency.coachNote} スカウト網Lv.${facility.level}の選抜により、${facility.youthQuality}品質で加入。` } : tendency, academyWeeks: 0 };
   }
-
   private hydrateYouthPlayers(saved: YouthPlayer[] | undefined): YouthPlayer[] {
     if (!Array.isArray(saved)) return youthProspects.map((player) => this.scoutYouthProspect(player));
     return saved.filter((player) => [...youthProspects, ...youthIntakes].some((prospect) => prospect.id === player?.id)).map((player) => {

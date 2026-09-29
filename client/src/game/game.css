@@ -794,3 +794,16 @@ button { font: inherit; }
 /* Remove any legacy scout artwork slot so an empty square cannot remain after migration. */
 .market-image { display:none !important; }
 .market-feature:has(.market-image) { display:block; }
+/* Match the scoreboard emphasis to the goal crowd timing and scoring side. */
+.match-crests > strong.match-score { display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+.match-crests > strong.match-score > b { display:inline-block; min-width:.72em; font:inherit; }
+.match-crests > strong.match-score.is-goal-score.orbit .score-home { color:var(--lime); animation:score-goal-pulse-own 1.45s cubic-bezier(.23,1,.32,1) both; }
+.match-crests > strong.match-score.is-goal-score.opponent .score-away { color:#ff8d69; animation:score-goal-pulse-opponent .9s cubic-bezier(.23,1,.32,1) both; }
+@keyframes score-goal-pulse-own { 0% { transform:scale(1); text-shadow:none; } 18% { transform:scale(1.22); text-shadow:0 0 28px rgba(217,255,74,.82); } 42% { transform:scale(1.08); text-shadow:0 0 16px rgba(217,255,74,.55); } 100% { transform:scale(1); text-shadow:none; } }
+@keyframes score-goal-pulse-opponent { 0% { transform:scale(1); text-shadow:none; } 18% { transform:scale(1.2); text-shadow:0 0 24px rgba(255,125,82,.72); } 44% { transform:scale(1.06); text-shadow:0 0 13px rgba(255,125,82,.46); } 100% { transform:scale(1); text-shadow:none; } }
+@media (prefers-reduced-motion:reduce) { .match-crests > strong.match-score.is-goal-score > b { animation:none; } }
+.match-crests .goal-team-name.is-goal-team-name { animation: goal-team-name-blink .95s cubic-bezier(.23,1,.32,1) both; }
+.match-crests .goal-team-name.is-goal-team-name.home-team.orbit { color:var(--lime); }
+.match-crests .goal-team-name.is-goal-team-name.away-team.opponent { color:#ff8d69; }
+@keyframes goal-team-name-blink { 0%,100% { opacity:1; text-shadow:none; } 18% { opacity:.18; text-shadow:0 0 16px currentColor; } 36% { opacity:1; text-shadow:0 0 10px currentColor; } 54% { opacity:.28; text-shadow:none; } 72% { opacity:1; text-shadow:0 0 7px currentColor; } }
+@media (prefers-reduced-motion:reduce) { .match-crests .goal-team-name.is-goal-team-name { animation:none; } }

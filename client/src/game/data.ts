@@ -110,11 +110,6 @@ export type Player = {
   youthSkillQuality?: YouthSkillQuality;
   youthInitialXpBonus?: number;
   youthScoutXpBonus?: number;
-  youthScoutStaffId?: string;
-  youthScoutStaffName?: string;
-  youthScoutStaffImpact?: string;
-  youthScoutStaffEntryXpBonus?: number;
-  youthScoutStaffSessionXpBonus?: number;
   attributeXp?: Partial<Record<PlayerAttributeKey, number>>;
   /** UIには公開しない、能力ごとの成長上限。既存セーブには後方互換で自動生成する。 */
   attributeCeilings?: Partial<Record<PlayerAttributeKey, number>>;

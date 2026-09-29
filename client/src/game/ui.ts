@@ -314,7 +314,7 @@ export class GameUI {
       case "close-opponent-scout": this.opponentScoutOpen = false; this.opponentPlayerDetailId = null; this.manualMarkSourceId = null; this.render(); break;
       case "close-opponent-player": this.opponentPlayerDetailId = null; this.render(); break;
       case "close-modal": { this.stopLiveCommentary(); this.stopGoalCelebration(); this.modal = false; this.matchStage = "fulltime"; this.resetHalfTimeControls(); const marketNotice = this.simulation.marketUpdateNotice; if (marketNotice) this.showToast(`市場更新：新着候補 ${marketNotice.candidates.length}名、売却オファー ${marketNotice.saleOffers?.length ?? 0}件が届きました。${marketNotice.requestedPositions.length ? `希望ポジション（${marketNotice.requestedPositions.map(positionLabel).join(" / ")}）に限定済みです。` : "移籍市場で確認してください。"}`); this.render(); break; }
-      case "skip-commentary": this.finishLiveCommentary(); this.render(); break;
+      case "skip-commentary": this.finishLiveCommentary(true); this.render(); break;
       case "continue-half": {
         const result = this.simulation.lastResult;
         if (!result) break;
@@ -324,6 +324,7 @@ export class GameUI {
         const update = this.simulation.applyHalfTimePlan(this.halfTimeMentality ?? result.tactics.mentality, this.halfTimeStyle ?? result.tactics.playingStyle, this.halfTimeChanges);
         this.showToast(update.text);
         this.matchStage = "fulltime";
+        this.playMatchWhistle("halftime");
         this.resetHalfTimeControls();
         this.startLiveCommentary("second-half");
         break;
@@ -445,6 +446,7 @@ export class GameUI {
   private openMatch() {
     this.unlockCrowdAudio();
     this.simulation.advanceWeek();
+    this.playMatchWhistle("start");
     this.modal = true;
     this.matchStage = "halftime";
     this.resetHalfTimeControls();
@@ -480,10 +482,12 @@ export class GameUI {
     this.commentaryTimer = null;
   }
 
-  private finishLiveCommentary() {
+  private finishLiveCommentary(playFinalWhistle = false) {
+    const wasSecondHalf = this.commentaryPhase === "second-half";
     this.stopLiveCommentary();
     this.commentaryPhase = null;
     this.commentaryVisibleCount = 0;
+    if (playFinalWhistle && wasSecondHalf) this.playMatchWhistle("end");
   }
 
   private unlockCrowdAudio() {
@@ -493,53 +497,78 @@ export class GameUI {
     } catch { /* Audio remains unavailable until browser policy allows playback. */ }
   }
 
+  private playMatchWhistle(kind: "start" | "halftime" | "end") {
+    const context = this.crowdAudio;
+    if (!context || context.state !== "running") return;
+    const now = context.currentTime;
+    const playTone = (start: number, duration: number, from: number, to: number, volume: number) => {
+      const whistle = context.createOscillator();
+      const gain = context.createGain();
+      const filter = context.createBiquadFilter();
+      whistle.type = "sine";
+      whistle.frequency.setValueAtTime(from, start);
+      whistle.frequency.exponentialRampToValueAtTime(to, start + duration * 0.72);
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(Math.max(from, to), start);
+      filter.Q.setValueAtTime(7, start);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(volume, start + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      whistle.connect(filter).connect(gain).connect(context.destination);
+      whistle.start(start);
+      whistle.stop(start + duration + 0.02);
+    };
+    if (kind === "start") {
+      playTone(now, 0.48, 1680, 2350, 0.12);
+      return;
+    }
+    if (kind === "halftime") {
+      playTone(now, 0.28, 1900, 2150, 0.095);
+      return;
+    }
+    playTone(now, 0.62, 2150, 1780, 0.14);
+    playTone(now + 0.78, 0.82, 2250, 1850, 0.16);
+  }
+
   private playGoalCrowd(team: MatchHighlight["team"]) {
     const context = this.crowdAudio;
     if (!context || context.state !== "running") return;
     const now = context.currentTime;
     const isOwnGoal = team === "orbit";
+    const duration = isOwnGoal ? 1.45 : 0.9;
     const output = context.createGain();
     output.gain.setValueAtTime(0.0001, now);
-    output.gain.exponentialRampToValueAtTime(isOwnGoal ? 0.14 : 0.045, now + (isOwnGoal ? 0.05 : 0.08));
-    output.gain.exponentialRampToValueAtTime(0.0001, now + (isOwnGoal ? 1.05 : 0.72));
+    output.gain.exponentialRampToValueAtTime(isOwnGoal ? 0.2 : 0.055, now + (isOwnGoal ? 0.16 : 0.1));
+    output.gain.exponentialRampToValueAtTime(isOwnGoal ? 0.12 : 0.028, now + (isOwnGoal ? 0.62 : 0.42));
+    output.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     output.connect(context.destination);
-    const crowd = context.createBuffer(1, Math.floor(context.sampleRate * (isOwnGoal ? 1.02 : 0.68)), context.sampleRate);
+    const crowd = context.createBuffer(1, Math.floor(context.sampleRate * duration), context.sampleRate);
     const samples = crowd.getChannelData(0);
     for (let index = 0; index < samples.length; index += 1) {
-      const envelope = 1 - index / samples.length;
-      samples[index] = (Math.random() * 2 - 1) * envelope * (isOwnGoal ? 1 : 0.62);
+      const progress = index / samples.length;
+      const swell = isOwnGoal ? Math.min(1, progress * 8) * (1 - progress * 0.55) : 1 - progress;
+      const roughness = Math.sin(index / 31) * 0.18 + Math.sin(index / 79) * 0.12;
+      samples[index] = (Math.random() * 2 - 1 + roughness) * swell * (isOwnGoal ? 1.15 : 0.55);
     }
     const crowdSource = context.createBufferSource();
-    const lowPass = context.createBiquadFilter();
-    lowPass.type = "lowpass";
-    lowPass.frequency.setValueAtTime(isOwnGoal ? 2200 : 850, now);
+    const crowdFilter = context.createBiquadFilter();
+    crowdFilter.type = "bandpass";
+    crowdFilter.frequency.setValueAtTime(isOwnGoal ? 1450 : 520, now);
+    crowdFilter.Q.setValueAtTime(isOwnGoal ? 0.7 : 0.9, now);
     crowdSource.buffer = crowd;
-    crowdSource.connect(lowPass).connect(output);
+    crowdSource.connect(crowdFilter).connect(output);
     crowdSource.start(now);
-    const sting = context.createOscillator();
-    const stingGain = context.createGain();
-    sting.type = isOwnGoal ? "sawtooth" : "sine";
-    sting.frequency.setValueAtTime(isOwnGoal ? 392 : 220, now);
-    sting.frequency.exponentialRampToValueAtTime(isOwnGoal ? 784 : 138, now + (isOwnGoal ? 0.22 : 0.42));
-    stingGain.gain.setValueAtTime(0.0001, now);
-    stingGain.gain.exponentialRampToValueAtTime(isOwnGoal ? 0.045 : 0.022, now + (isOwnGoal ? 0.03 : 0.08));
-    stingGain.gain.exponentialRampToValueAtTime(0.0001, now + (isOwnGoal ? 0.5 : 0.56));
-    sting.connect(stingGain).connect(context.destination);
-    sting.start(now);
-    sting.stop(now + (isOwnGoal ? 0.52 : 0.6));
-    if (!isOwnGoal) {
-      const oh = context.createOscillator();
-      const ohGain = context.createGain();
-      oh.type = "triangle";
-      oh.frequency.setValueAtTime(165, now + 0.04);
-      oh.frequency.exponentialRampToValueAtTime(110, now + 0.52);
-      ohGain.gain.setValueAtTime(0.0001, now + 0.04);
-      ohGain.gain.exponentialRampToValueAtTime(0.018, now + 0.12);
-      ohGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.62);
-      oh.connect(ohGain).connect(context.destination);
-      oh.start(now + 0.04);
-      oh.stop(now + 0.64);
-    }
+    const chant = context.createOscillator();
+    const chantGain = context.createGain();
+    chant.type = isOwnGoal ? "triangle" : "sine";
+    chant.frequency.setValueAtTime(isOwnGoal ? 220 : 165, now);
+    chant.frequency.exponentialRampToValueAtTime(isOwnGoal ? 440 : 112, now + (isOwnGoal ? 0.38 : 0.52));
+    chantGain.gain.setValueAtTime(0.0001, now);
+    chantGain.gain.exponentialRampToValueAtTime(isOwnGoal ? 0.055 : 0.022, now + 0.12);
+    chantGain.gain.exponentialRampToValueAtTime(0.0001, now + (isOwnGoal ? 1.05 : 0.68));
+    chant.connect(chantGain).connect(context.destination);
+    chant.start(now);
+    chant.stop(now + (isOwnGoal ? 1.1 : 0.72));
   }
 
   private stopGoalCelebration() {
@@ -571,7 +600,7 @@ export class GameUI {
     const items = this.commentaryItems(result, phase);
     this.stopLiveCommentary();
     this.stopGoalCelebration();
-    if (!items.length) { this.finishLiveCommentary(); this.render(); return; }
+    if (!items.length) { this.finishLiveCommentary(phase === "second-half"); this.render(); return; }
     this.commentaryPhase = phase;
     this.commentaryVisibleCount = 0;
     this.revealCommentaryItem(items[0]);
@@ -581,7 +610,7 @@ export class GameUI {
         this.revealCommentaryItem(items[this.commentaryVisibleCount]);
         return;
       }
-      this.finishLiveCommentary();
+      this.finishLiveCommentary(true);
       this.render();
     }, 3000);
   }
@@ -686,8 +715,9 @@ export class GameUI {
     }
   }
 
-  private pageHeading(kicker: string, title: string, copy: string) {
-    return `<section class="page-heading"><div><p>${kicker}</p><h1>${title}</h1><span>${copy}</span></div><button class="advance-button" data-action="advance"><span>次節へ</span><b>▶</b></button></section>`;
+  private pageHeading(kicker: string, title: string, copy: string, showAdvance = true) {
+    const advance = showAdvance ? `<button class="advance-button" data-action="advance"><span>次節へ</span><b>▶</b></button>` : "";
+    return `<section class="page-heading"><div><p>${kicker}</p><h1>${title}</h1><span>${copy}</span></div>${advance}</section>`;
   }
 
   private opponentDossier() {
@@ -908,7 +938,7 @@ export class GameUI {
 
   private helpPage() {
     return `
-      ${this.pageHeading("TOUCHLINE GUIDE", "ヘルプ", "戦術室の情報を読み解き、次の一手を決めるためのガイド。")}
+      ${this.pageHeading("TOUCHLINE GUIDE", "ヘルプ", "戦術室の情報を読み解き、次の一手を決めるためのガイド。", false)}
       <section class="help-layout">
         <article class="tactical-card help-hero-card"><div class="card-kicker">HELP / HOME SCREEN</div><h2>ホーム画面の見方</h2><p>ホーム画面は、次の試合までに確認すべき情報をまとめた指揮官向けダッシュボードです。上から順番に確認し、必要なら各メニューへ移動してください。</p><div class="help-steps"><span><b>01</b>次の対戦相手を確認</span><span><b>02</b>チーム状態を確認</span><span><b>03</b>スタメン・戦術を整える</span><span><b>04</b>「試合をプレイ」で進行</span></div></article>
         <article class="tactical-card help-topic-card"><div class="card-kicker">NEXT FIXTURE</div><h3>次の試合カード</h3><p>次に対戦するクラブ、ホーム／アウェー、士気・勢い・ホーム補正を確認できます。</p><ul><li><b>相手を偵察</b>：相手のフォーメーション、要注意選手、マーク相性を確認します。</li><li><b>戦術を確認</b>：スタメン画面へ移動し、配置・フォーメーション・中盤構成を調整します。</li><li><b>試合をプレイ</b>：現在の準備状態で試合を開始します。</li></ul></article>
@@ -1345,7 +1375,7 @@ export class GameUI {
     return `<div class="match-overlay">
       <section class="match-modal halftime-modal" style="background-image:linear-gradient(180deg,rgba(3,15,10,.35),rgba(3,15,10,.95)),url('${assets.commandCenter}')">
         <span class="modal-kicker">${liveFirstHalf ? "LIVE FIRST HALF" : "HALF TIME"} / WEEK ${this.simulation.completedWeeks}</span>
-        <div class="match-crests"><div><img src="${assets.clubMark}" alt=""/><b>${escapeHtml(this.simulation.clubNameValue)}</b></div><strong>${displayScore.playerGoals}<i>-</i>${displayScore.opponentGoals}</strong><div><span class="opponent-crest">◉</span><b>${result.opponent}</b></div></div>
+        <div class="match-crests"><div><img src="${assets.clubMark}" alt=""/><b class="goal-team-name home-team ${this.goalCelebration ? `is-goal-team-name ${this.goalCelebration.team}` : ""}">${escapeHtml(this.simulation.clubNameValue)}</b></div><strong class="match-score ${this.goalCelebration ? `is-goal-score ${this.goalCelebration.team}` : ""}"><b class="score-home">${displayScore.playerGoals}</b><i>-</i><b class="score-away">${displayScore.opponentGoals}</b></strong><div><span class="opponent-crest">◉</span><b class="goal-team-name away-team ${this.goalCelebration ? `is-goal-team-name ${this.goalCelebration.team}` : ""}">${result.opponent}</b></div></div>
         <p>${liveFirstHalf ? "前半の攻防を実況中。スコアは実況の進行に合わせて更新されます。" : report.message}</p>
         <section class="match-live-top" aria-live="polite"><span class="match-live-top-label">LATEST HIGHLIGHT</span>${liveFirstHalf ? this.liveCommentaryStatus(result, "first-half") : "<strong>HALF-TIME FEED</strong>"}${this.highlightsTimeline(result.highlights, true, liveFirstHalf ? this.commentaryVisibleCount : undefined)}</section>
         <section class="half-time-brief"><span>TACTICAL BRIEF</span><b>${report.tacticalNote}</b><p>${report.recommendation}</p></section>${this.matchConditionBoard(result.matchCondition)}
@@ -1373,6 +1403,6 @@ export class GameUI {
     const ratings = result.playerRatings.length ? `<section class="player-ratings"><div><span>PLAYER RATINGS</span><b>${result.playerRatings.length} PLAYERS / ALL APPEARANCES</b></div>${result.playerRatings.map((player) => `<article class="rating-row ${player.injured ? "injured" : ""}"><strong>${surname(player.player)}<small>${positionLabel(player.position)}</small></strong><span>${player.goals ? `${player.goals}G` : ""}${player.assists ? `${player.assists}A` : ""}${player.injured ? "MED" : ""}</span><p>${player.note}</p><b>${player.rating.toFixed(1)}</b></article>`).join("")}</section>` : "";
     const duels = result.markDuels.length ? `<section class="mark-duel-report"><div class="mark-duel-head"><div><span>MARK DUEL REPORT</span><b>対人局面の振り返り</b></div><aside><i class="win">勝利 ${result.markDuels.filter((duel) => duel.outcome === "勝利").length}</i><i class="even">拮抗 ${result.markDuels.filter((duel) => duel.outcome === "拮抗").length}</i><i class="loss">苦戦 ${result.markDuels.filter((duel) => duel.outcome === "苦戦").length}</i></aside></div><p>相手のCF・WG・SH・OH・中盤の攻撃選手を、自クラブのCB・SB・DH・CH・SHがどう抑えたかを、試合採点・対人能力・結果から再評価。相手GK・CB・SBは個別マークせず、守備ブロックで対応。</p><div class="mark-duel-list">${result.markDuels.map((duel) => `<article class="mark-duel-row ${duel.outcome === "勝利" ? "win" : duel.outcome === "苦戦" ? "loss" : "even"}"><div class="duel-player"><span>${positionLabel(duel.position)} / ORBIT</span><strong>${surname(duel.player)}</strong><small>採点 ${duel.rating.toFixed(1)}</small></div><div class="duel-battle"><b>${duel.outcome}</b><i><em style="width:${duel.activity}%"></em></i><small>活躍度 ${duel.activity} / 対決 ${duel.engagements}回・${duel.activityGrade}</small></div><div class="duel-opponent"><span>vs ${positionLabel(duel.opponentPosition)} / ${duel.opponentRole}</span><strong>${surname(duel.opponent)}</strong><small>対人差 ${signed(duel.differential)}</small></div><p>${duel.summary}</p></article>`).join("")}</div></section>` : "";
     const individualBonuses = result.individualBonuses.total ? `<section class="individual-bonus-receipt"><div><span>INDIVIDUAL BONUS</span><b>−${formatMoney(result.individualBonuses.total)}</b></div>${result.individualBonuses.entries.map((entry) => `<p><strong>${surname(entry.player)}</strong><span>${entry.appearance ? `出場 ${formatMoney(entry.appearance)}` : ""}${entry.goals ? `${entry.appearance ? " / " : ""}${entry.goals / Math.max(1, this.simulation.rosterPlayers.find((player) => player.id === entry.playerId)?.goalBonus ?? 1)}得点 ${formatMoney(entry.goals)}` : ""}</span><b>−${formatMoney(entry.amount)}</b></p>`).join("")}</section>` : "";
-    return `<div class="match-overlay"><section class="match-modal ${liveSecondHalf ? "live-match-modal" : ""}" style="background-image:linear-gradient(180deg,rgba(3,15,10,.35),rgba(3,15,10,.95)),url('${assets.commandCenter}')"><span class="modal-kicker">${liveSecondHalf ? "LIVE SECOND HALF" : "FULL TIME"} / WEEK ${this.simulation.completedWeeks}</span><div class="match-crests"><div><img src="${assets.clubMark}" alt=""/><b>${escapeHtml(this.simulation.clubNameValue)}</b></div><strong>${displayPlayerGoals}<i>-</i>${displayOpponentGoals}</strong><div><span class="opponent-crest">◉</span><b>${result.opponent}</b></div></div><p>${liveSecondHalf ? "後半のプレーを実況で追跡中。最後の一行まで、戦況はまだ決まらない。" : result.message}</p>${liveSecondHalf ? `<section class="match-live-top" aria-live="polite"><span class="match-live-top-label">LATEST HIGHLIGHT</span>${this.liveCommentaryStatus(result, "second-half")}${this.highlightsTimeline(result.highlights, false, this.commentaryVisibleCount)}</section>` : `<section class="match-live-top" aria-live="polite"><span class="match-live-top-label">MATCH HIGHLIGHTS</span>${this.highlightsTimeline(result.highlights, false)}</section>${this.matchStatsPanel(result)}<section class="match-tactics"><span>GAME PLAN</span><b>${result.tactics.formationLabel} / ${result.tactics.formationTrait} / ${result.tactics.mentalityLabel}</b><p>${result.tactics.playingStyleLabel}　連携 ${result.tactics.chemistry}%　切替 攻${result.tactics.transitionAttack} / 守${result.tactics.transitionDefense}　攻 ${signed(result.tactics.attackModifier)} / 守 ${signed(result.tactics.defenseModifier)}<br/>審判　${result.refereeLabel}（カード基準 ${Math.round(result.refereeStrictness * 100)}%）<br/>${result.tactics.sideLinkDetails.length ? `WIDE LINK-UP　攻 ${signed(result.tactics.sideLinkAttack)} / 守 ${signed(result.tactics.sideLinkDefense)}` : "WIDE LINK-UP　未発動"}<br/>${result.tactics.midfieldPressDetail.active ? `MIDFIELD PRESS　${result.tactics.midfieldPressDetail.grade}　攻 ${signed(result.tactics.midfieldPressAttack)} / 守 ${signed(result.tactics.midfieldPressDefense)}` : "MIDFIELD PRESS　準備中"}<br/><strong>OPPOSITION　${result.opponentTactics.formationLabel} / ${result.opponentTactics.mentalityLabel} / ${result.opponentTactics.playingStyleLabel}</strong><br/>${result.opponentTactics.trait}　${result.opponentTactics.roles.slice(0, 3).join(" / ")}<br/>MATCH-UP ${result.tacticalMatchup.label}　自 攻 ${signed(result.tacticalMatchup.playerAttackModifier)} / 守 ${signed(result.tacticalMatchup.playerDefenseModifier)}</p></section>${mvp}${ratings}${duels}${individualBonuses}${this.gateReceipt(result.gate)}${result.cupResult ? this.gateReceipt(result.cupResult.gate, `CUP ${result.cupResult.round}`) : ""}${this.commerceReceipt(result.merchandise, result.membership)}<section class="concession-receipts">${this.concessionReceipt(result.concession)}${result.cupResult ? this.concessionReceipt(result.cupResult.concession, `CUP FOOD`) : ""}</section><div class="reward-line"><span>PRIZE MONEY</span><b>+ ${formatMoney(result.reward)}</b>${result.sponsorRevenue ? `<span>PARTNER</span><b>+ ${formatMoney(result.sponsorRevenue)}</b>` : ""}${result.cupResult ? `<span>CUP ${result.cupResult.round}</span><b>+ ${formatMoney(result.cupResult.reward)}</b>` : ""}<span>FANS</span><b>${result.popularityDelta >= 0 ? "+" : ""}${result.popularityDelta} → ${result.popularity}%</b><span>FAME</span><b>+ ${result.won ? 11 : result.playerGoals === result.opponentGoals ? 4 : 1}</b></div><button data-action="close-modal" class="primary-action">戦術室へ戻る <b>→</b></section>`}</section></div>`;
+    return `<div class="match-overlay"><section class="match-modal ${liveSecondHalf ? "live-match-modal" : ""}" style="background-image:linear-gradient(180deg,rgba(3,15,10,.35),rgba(3,15,10,.95)),url('${assets.commandCenter}')"><span class="modal-kicker">${liveSecondHalf ? "LIVE SECOND HALF" : "FULL TIME"} / WEEK ${this.simulation.completedWeeks}</span><div class="match-crests"><div><img src="${assets.clubMark}" alt=""/><b class="goal-team-name home-team ${this.goalCelebration ? `is-goal-team-name ${this.goalCelebration.team}` : ""}">${escapeHtml(this.simulation.clubNameValue)}</b></div><strong class="match-score ${this.goalCelebration ? `is-goal-score ${this.goalCelebration.team}` : ""}"><b class="score-home">${displayPlayerGoals}</b><i>-</i><b class="score-away">${displayOpponentGoals}</b></strong><div><span class="opponent-crest">◉</span><b class="goal-team-name away-team ${this.goalCelebration ? `is-goal-team-name ${this.goalCelebration.team}` : ""}">${result.opponent}</b></div></div><p>${liveSecondHalf ? "後半のプレーを実況で追跡中。最後の一行まで、戦況はまだ決まらない。" : result.message}</p>${liveSecondHalf ? `<section class="match-live-top" aria-live="polite"><span class="match-live-top-label">LATEST HIGHLIGHT</span>${this.liveCommentaryStatus(result, "second-half")}${this.highlightsTimeline(result.highlights, false, this.commentaryVisibleCount)}</section>` : `<section class="match-live-top" aria-live="polite"><span class="match-live-top-label">MATCH HIGHLIGHTS</span>${this.highlightsTimeline(result.highlights, false)}</section>${this.matchStatsPanel(result)}<section class="match-tactics"><span>GAME PLAN</span><b>${result.tactics.formationLabel} / ${result.tactics.formationTrait} / ${result.tactics.mentalityLabel}</b><p>${result.tactics.playingStyleLabel}　連携 ${result.tactics.chemistry}%　切替 攻${result.tactics.transitionAttack} / 守${result.tactics.transitionDefense}　攻 ${signed(result.tactics.attackModifier)} / 守 ${signed(result.tactics.defenseModifier)}<br/>審判　${result.refereeLabel}（カード基準 ${Math.round(result.refereeStrictness * 100)}%）<br/>${result.tactics.sideLinkDetails.length ? `WIDE LINK-UP　攻 ${signed(result.tactics.sideLinkAttack)} / 守 ${signed(result.tactics.sideLinkDefense)}` : "WIDE LINK-UP　未発動"}<br/>${result.tactics.midfieldPressDetail.active ? `MIDFIELD PRESS　${result.tactics.midfieldPressDetail.grade}　攻 ${signed(result.tactics.midfieldPressAttack)} / 守 ${signed(result.tactics.midfieldPressDefense)}` : "MIDFIELD PRESS　準備中"}<br/><strong>OPPOSITION　${result.opponentTactics.formationLabel} / ${result.opponentTactics.mentalityLabel} / ${result.opponentTactics.playingStyleLabel}</strong><br/>${result.opponentTactics.trait}　${result.opponentTactics.roles.slice(0, 3).join(" / ")}<br/>MATCH-UP ${result.tacticalMatchup.label}　自 攻 ${signed(result.tacticalMatchup.playerAttackModifier)} / 守 ${signed(result.tacticalMatchup.playerDefenseModifier)}</p></section>${mvp}${ratings}${duels}${individualBonuses}${this.gateReceipt(result.gate)}${result.cupResult ? this.gateReceipt(result.cupResult.gate, `CUP ${result.cupResult.round}`) : ""}${this.commerceReceipt(result.merchandise, result.membership)}<section class="concession-receipts">${this.concessionReceipt(result.concession)}${result.cupResult ? this.concessionReceipt(result.cupResult.concession, `CUP FOOD`) : ""}</section><div class="reward-line"><span>PRIZE MONEY</span><b>+ ${formatMoney(result.reward)}</b>${result.sponsorRevenue ? `<span>PARTNER</span><b>+ ${formatMoney(result.sponsorRevenue)}</b>` : ""}${result.cupResult ? `<span>CUP ${result.cupResult.round}</span><b>+ ${formatMoney(result.cupResult.reward)}</b>` : ""}<span>FANS</span><b>${result.popularityDelta >= 0 ? "+" : ""}${result.popularityDelta} → ${result.popularity}%</b><span>FAME</span><b>+ ${result.won ? 11 : result.playerGoals === result.opponentGoals ? 4 : 1}</b></div><button data-action="close-modal" class="primary-action">戦術室へ戻る <b>→</b></section>`}</section></div>`;
   }
 }
