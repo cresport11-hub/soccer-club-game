@@ -807,3 +807,10 @@ button { font: inherit; }
 .match-crests .goal-team-name.is-goal-team-name.away-team.opponent { color:#ff8d69; }
 @keyframes goal-team-name-blink { 0%,100% { opacity:1; text-shadow:none; } 18% { opacity:.18; text-shadow:0 0 16px currentColor; } 36% { opacity:1; text-shadow:0 0 10px currentColor; } 54% { opacity:.28; text-shadow:none; } 72% { opacity:1; text-shadow:0 0 7px currentColor; } }
 @media (prefers-reduced-motion:reduce) { .match-crests .goal-team-name.is-goal-team-name { animation:none; } }
+
+
+/* Background music control: subtle in the HUD, bright when active. */
+.bgm-toggle { color: #8ea995; transition: color .18s ease, border-color .18s ease, background .18s ease; }
+.bgm-toggle.is-on { color: var(--lime); border-color: rgba(217,255,74,.55); background: rgba(217,255,74,.08); }
+.bgm-toggle:not(.is-on) { opacity: .72; }
+@media (max-width: 600px) { .bgm-toggle { display: inline-grid; } }

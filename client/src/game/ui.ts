@@ -60,6 +60,9 @@ export class GameUI {
   private goalCelebration: MatchHighlight | null = null;
   private goalCelebrationTimer: number | null = null;
   private crowdAudio: AudioContext | null = null;
+  private bgmAudio: HTMLAudioElement | null = null;
+  private bgmTrack: "city" | "match" | null = null;
+  private bgmEnabled = window.localStorage.getItem("touchline-bgm-enabled") !== "0";
   private mobileNavOpen = false;
   private playerDetailId: string | null = null;
   private opponentScoutOpen = false;
@@ -125,6 +128,8 @@ export class GameUI {
     this.stopGoalCelebration();
     this.clearToast();
     this.clearPlayerLongPress();
+    this.bgmAudio?.pause();
+    this.bgmAudio = null;
     void this.crowdAudio?.close();
     this.root.removeEventListener("click", this.handleClick);
     this.root.removeEventListener("dragstart", this.handleMarkDragStart);
@@ -208,13 +213,22 @@ export class GameUI {
   };
 
   private handleClick = (event: MouseEvent) => {
-    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action], [data-nav], [data-mobile-nav], [data-team-power-toggle], [data-auto-criteria], [data-player], [data-player-detail], [data-close-player-detail], [data-opponent-player], [data-mark-source], [data-mark-clear], [data-slot], [data-formation], [data-mentality], [data-style], [data-half-mentality], [data-half-style], [data-half-out], [data-half-in], [data-half-remove], [data-roster-sort], [data-roster-salary-filter], [data-roster-contract-filter]");
+    this.unlockBgm();
+    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action], [data-nav], [data-mobile-nav], [data-bgm-toggle], [data-team-power-toggle], [data-auto-criteria], [data-player], [data-player-detail], [data-close-player-detail], [data-opponent-player], [data-mark-source], [data-mark-clear], [data-slot], [data-formation], [data-mentality], [data-style], [data-half-mentality], [data-half-style], [data-half-out], [data-half-in], [data-half-remove], [data-roster-sort], [data-roster-salary-filter], [data-roster-contract-filter]");
     if (!target) return;
     if (this.suppressNextPlayerClick && (target.matches("[data-slot]") || target.matches("[data-player]"))) {
       this.suppressNextPlayerClick = false;
       return;
     }
     if (target.dataset.mobileNav !== undefined) { this.mobileNavOpen = !this.mobileNavOpen; this.render(); return; }
+    if (target.dataset.bgmToggle !== undefined) {
+      this.bgmEnabled = !this.bgmEnabled;
+      window.localStorage.setItem("touchline-bgm-enabled", this.bgmEnabled ? "1" : "0");
+      if (this.bgmEnabled) this.updateBgmContext();
+      else this.bgmAudio?.pause();
+      this.render();
+      return;
+    }
     if (target.dataset.teamPowerToggle !== undefined) {
       this.teamPowerRadarVisible = !this.teamPowerRadarVisible;
       window.localStorage.setItem("touchline-team-power-visible", this.teamPowerRadarVisible ? "1" : "0");
@@ -497,6 +511,33 @@ export class GameUI {
     } catch { /* Audio remains unavailable until browser policy allows playback. */ }
   }
 
+  private bgmUrl(track: "city" | "match") {
+    return `${import.meta.env.BASE_URL}audio/${track === "city" ? "touchline-city-pop" : "match-football-anthem"}.mp3`;
+  }
+
+  private updateBgmContext() {
+    if (!this.bgmEnabled) return;
+    const nextTrack: "city" | "match" = this.modal ? "match" : "city";
+    if (!this.bgmAudio) {
+      this.bgmAudio = new Audio();
+      this.bgmAudio.loop = true;
+      this.bgmAudio.preload = "auto";
+      this.bgmAudio.volume = 0.22;
+    }
+    if (this.bgmTrack !== nextTrack) {
+      this.bgmTrack = nextTrack;
+      this.bgmAudio.src = this.bgmUrl(nextTrack);
+      this.bgmAudio.currentTime = 0;
+    }
+    void this.bgmAudio.play().catch(() => {
+      // Autoplay may be blocked until the first user gesture; handleClick retries it.
+    });
+  }
+
+  private unlockBgm() {
+    if (this.bgmEnabled) this.updateBgmContext();
+  }
+
   private playMatchWhistle(kind: "start" | "halftime" | "end") {
     const context = this.crowdAudio;
     if (!context || context.state !== "running") return;
@@ -665,7 +706,7 @@ export class GameUI {
       <header class="club-header">
         <div class="club-brand"><img src="${assets.clubMark}" alt="" /><div><span>TOUCHLINE</span><strong>${escapeHtml(this.simulation.clubNameValue)}</strong></div></div>
         <div class="header-score"><span>第 ${this.simulation.currentWeek} 節</span><b>${this.simulation.teamPosition} 位</b></div>
-        <div class="header-metrics"><span class="money-metric"><i>💰</i><em class="money-full">${formatMoney(this.simulation.currentMoney)}</em><em class="money-short">${Math.round(this.simulation.currentMoney / 10000).toLocaleString()}万</em></span><span>✦ ${this.simulation.currentFame}</span><span class="fan-header">♬ ${this.simulation.fanPopularity}%</span>${contractAlertCount ? `<button data-nav="team" class="header-contract-alert">契約 ${contractAlertCount}名</button>` : ""}<button data-action="save" class="icon-button" aria-label="セーブ">⌘</button></div>
+        <div class="header-metrics"><span class="money-metric"><i>💰</i><em class="money-full">${formatMoney(this.simulation.currentMoney)}</em><em class="money-short">${Math.round(this.simulation.currentMoney / 10000).toLocaleString()}万</em></span><span>✦ ${this.simulation.currentFame}</span><span class="fan-header">♬ ${this.simulation.fanPopularity}%</span>${contractAlertCount ? `<button data-nav="team" class="header-contract-alert">契約 ${contractAlertCount}名</button>` : ""}<button data-bgm-toggle class="icon-button bgm-toggle ${this.bgmEnabled ? "is-on" : ""}" aria-label="BGM ${this.bgmEnabled ? "を停止" : "を再生"}" title="BGM ${this.bgmEnabled ? "ON" : "OFF"}">${this.bgmEnabled ? "♫" : "🔇"}</button><button data-action="save" class="icon-button" aria-label="セーブ">⌘</button></div>
         <button class="mobile-nav-toggle" data-mobile-nav aria-label="${this.mobileNavOpen ? "メニューを閉じる" : "メニューを開く"}" aria-expanded="${this.mobileNavOpen}"><i>${this.mobileNavOpen ? "×" : "☰"}</i><span>MENU</span></button>
       </header>
       <aside class="club-nav ${this.mobileNavOpen ? "is-open" : ""}">
@@ -685,6 +726,7 @@ export class GameUI {
       ${this.playerDetailPanel()}
       ${this.goalCelebration ? `<div class="goal-celebration ${this.goalCelebration.team}" role="status" aria-live="assertive"><div><span>GOAL / ${String(this.goalCelebration.minute).padStart(2, "0")}′</span><strong>${this.goalCelebration.team === "orbit" ? "ORBIT GOAL" : "OPPONENT GOAL"}</strong><p>${this.goalCelebration.scorer ? `${this.goalCelebration.scorer} がネットを揺らした` : "スタジアムを揺らすゴール！"}</p></div></div>` : ""}
     `;
+    this.updateBgmContext();
     this.decorateManualMarkControls();
     this.decorateOpponentMarkings();
     this.decorateMarkingMatchImpact();
@@ -942,7 +984,7 @@ export class GameUI {
       <section class="help-layout">
         <article class="tactical-card help-hero-card"><div class="card-kicker">HELP / HOME SCREEN</div><h2>ホーム画面の見方</h2><p>ホーム画面は、次の試合までに確認すべき情報をまとめた指揮官向けダッシュボードです。上から順番に確認し、必要なら各メニューへ移動してください。</p><div class="help-steps"><span><b>01</b>次の対戦相手を確認</span><span><b>02</b>チーム状態を確認</span><span><b>03</b>スタメン・戦術を整える</span><span><b>04</b>「試合をプレイ」で進行</span></div></article>
         <article class="tactical-card help-topic-card"><div class="card-kicker">NEXT FIXTURE</div><h3>次の試合カード</h3><p>次に対戦するクラブ、ホーム／アウェー、士気・勢い・ホーム補正を確認できます。</p><ul><li><b>相手を偵察</b>：相手のフォーメーション、要注意選手、マーク相性を確認します。</li><li><b>戦術を確認</b>：スタメン画面へ移動し、配置・フォーメーション・中盤構成を調整します。</li><li><b>試合をプレイ</b>：現在の準備状態で試合を開始します。</li></ul></article>
-        <article class="tactical-card help-topic-card"><div class="card-kicker">CLUB PULSE</div><h3>人気と財務</h3><p>クラブの人気、所持金、次のホーム戦の見込み収入を確認できます。</p><ul><li><b>人気</b>：集客や収入、ホームの後押しに影響します。</li><li><b>次回見込み収入</b>：入場料、グッズ、売店、ファンクラブ会費の予測です。</li><li><b>財務ダッシュボード</b>：収支の内訳と資金推移を詳しく確認できます。</li></ul></article>
+        <article class="tactical-card help-topic-card"><div class="card-kicker">CLUB PULSE</div><h3>人気と財務</h3><p>クラブの人気、所持金、次のホーム戦の見込み収入を確認できます。</p><ul><li><b>人気</b>：集客や収入、ホームの後押しに影響します。</li><li><b>次回見込み収入</b>：入場料、グッズ、売店、ファンクラブ会費の予測です。</li><li><b>財務ダッシュボード</b>：収入・費用の内訳と直近の収支を確認できます。</li></ul></article>
         <article class="tactical-card help-topic-card"><div class="card-kicker">TOUCHLINE LOG</div><h3>監督レポート</h3><p>試合、練習、移籍、育成、契約など、最近発生した重要な出来事が表示されます。</p><ul><li>赤系の警告は、怪我・出場停止・契約整理など早めの対応が必要な情報です。</li><li>ログを確認すると、前回の判断がチーム状態へどう影響したか振り返れます。</li></ul></article>
         <article class="tactical-card help-topic-card"><div class="card-kicker">QUICK ROUTE</div><h3>迷ったときの確認順</h3><div class="help-route"><span>1 <b>チーム</b><small>怪我・疲労・契約を確認</small></span><span>2 <b>練習</b><small>個別プランと負荷を確認</small></span><span>3 <b>スタメン</b><small>適性と戦術を調整</small></span><span>4 <b>試合</b><small>実況を見ながら進行</small></span></div></article>
       </section>
@@ -1217,7 +1259,6 @@ export class GameUI {
   }
 
   private trainingPage(score: ReturnType<ClubSimulation["score"]>) {
-    const history = this.simulation.recentTrainingHistory;
     const facility = this.simulation.trainingFacility;
     const recommendation = this.simulation.trainingRecommendation;
     const loadSummary = this.simulation.trainingLoadSummary;
@@ -1228,7 +1269,6 @@ export class GameUI {
       <section class="training-layout"><article class="training-visual tactical-card" style="background-image:linear-gradient(90deg,rgba(5,23,14,.9),rgba(5,23,14,.34)),url('${assets.commandCenter}')"><span class="card-kicker">DEVELOPMENT DESK / ${facility.name}</span><h2>能力別トレーニング</h2><p>狙うプレーを選び、個別能力を伸ばす。高負荷メニューの後は、リカバリーで状態を整える。</p><div><span>週次練習枠</span><b>${this.simulation.trainingSessionsUsed} / ${facility.weeklySlots}</b></div></article><aside class="training-aside"><article class="tactical-card training-recommendation ${recommendation.grade === "回復優先" ? "is-recovery" : ""}"><span class="card-kicker">TRAINING ADVISOR / ${recommendation.grade}</span><h3>${recommendation.label} を推奨</h3><div class="shape-number">${recommendation.averageFatigue}<small> FATIGUE</small></div><p>${recommendation.reason}</p><small class="advisor-load-note">高負荷 ${recommendation.highLoadPlayers}人 / 高疲労 ${recommendation.highFatiguePlayers}人</small></article><article class="tactical-card"><span class="card-kicker">WEEKLY NOTE</span><p>選手ごとの育成方針と練習強度を設定し、次節前に自動反映します。施設Lv.${facility.level}では週${facility.weeklySlots}枠を利用できます。</p></article></aside></section>
       <section class="training-load-command tactical-card"><div class="training-load-copy"><span class="card-kicker">INDIVIDUAL LOAD CONTROL</span><h3>選手別の練習負荷</h3><p>選手カードから回復・軽め・標準・高負荷を指定します。設定は技術成長、疲労変動、過負荷リスクに即時反映されます。</p></div><div class="training-load-legend">${loadSummary.map((option) => `<span class="load-${option.id}"><b>${option.count}</b>${option.shortLabel}</span>`).join("")}</div></section>
       <section class="training-load-board tactical-card"><div class="training-load-board-head"><div><span class="card-kicker">SQUAD CONDITIONING BOARD</span><h3>個別コンディション設定</h3></div><p>スタメンを先頭に表示。疲労が高い選手は軽めまたは回復専念へ切り替えられます。</p></div><div class="training-load-list">${trainingRoster.map((player) => { const load = this.simulation.trainingLoadFor(player); const injured = this.simulation.injuryWeeksFor(player.id); const starter = Object.values(this.simulation.lineupState).includes(player.id); const fatigueClass = player.fatigue >= 60 ? "danger" : player.fatigue >= 38 ? "warning" : "ready"; const conditionStatus = this.simulation.conditionStatusFor(player); const growthAttributes = this.simulation.attributeProgressFor(player).filter((item) => this.simulation.developmentAttributeKeysFor(player).includes(item.attribute)).slice(0, 4); const mastery = this.simulation.positionMasterySummaryFor(player); const system = this.simulation.systemEffectivenessFor(player); return `<article class="training-load-row ${load.id === "high" ? "is-high" : ""} ${injured ? "is-injured" : ""}"><div class="training-player-meta"><span class="load-starter">${starter ? "STARTER" : "SQUAD"}</span><strong>${player.name} <small>${positionLabel(player.position)}</small></strong><span class="condition-pill player-condition ${conditionStatus.tone}">状態 ${conditionStatus.label} ${conditionStatus.value}</span><span class="condition-pill fatigue-pill ${injured ? "injured" : fatigueClass}">${injured ? `離脱 ${injured}週` : `疲労 ${player.fatigue}`}</span></div><div class="training-focus-options" aria-label="${player.name}の育成メニュー">${trainingOptions.filter((option) => option.id !== "recovery").map((option) => `<button data-action="set-training-focus" data-training-player="${player.id}" data-training-focus="${option.id}" class="focus-option ${this.simulation.trainingFocusFor(player) === option.id ? "is-selected" : ""}">${option.id === "recovery" ? "回復" : option.label.replace("トレーニング", "").replace("練習", "")}</button>`).join("")}</div><div class="training-load-options" aria-label="${player.name}の練習負荷">${trainingLoadOptions.map((option) => `<button data-action="set-training-load" data-training-player="${player.id}" data-training-load="${option.id}" class="load-option load-${option.id} ${load.id === option.id ? "is-selected" : ""}" title="${option.copy}">${option.shortLabel}</button>`).join("")}</div><small class="training-load-effect">${load.label}：${load.growthAdjustment >= 0 ? `成長 +${load.growthAdjustment}` : `成長 ${load.growthAdjustment}`} / 疲労 ${load.fatigueAdjustment >= 0 ? `+${load.fatigueAdjustment}` : load.fatigueAdjustment} / リスク ${load.riskAdjustment >= 0 ? `+${load.riskAdjustment}` : load.riskAdjustment}</small><div class="development-mini"><div class="development-mini-head"><span>能力XP</span><small>100XPで能力 +1</small></div><div class="development-mini-bars">${growthAttributes.map((item) => `<span title="${item.label} ${item.xp}/100"><b>${item.label}</b><i><em style="width:${item.progress}%"></em></i></span>`).join("")}</div><div class="development-mini-mastery">${mastery.map((item) => `<span>${item.label} <b>${item.totalXp}</b></span>`).join("")}</div><div class="development-mini-system"><span><b>理解 ${system.understanding}</b><small>${system.formationLabel} 習熟 ${system.mastery}</small></span><strong>${system.rate}%<small>${system.grade}</small></strong></div></div></article>`; }).join("")}</div></section>
-      <section class="training-history tactical-card"><div class="training-history-head"><div><span class="card-kicker">DEVELOPMENT LEDGER</span><h3>成長履歴</h3></div><span>${history.length} SESSIONS</span></div>${history.length ? `<div class="training-history-list">${history.map((entry) => `<article><div><span>W${entry.week}</span><b>${entry.label}</b><small>${entry.affected}人を対象</small></div><p>${entry.changes.length ? entry.changes.join(" / ") : "能力値の変動なし"}</p><strong class="${entry.fatigueChange > 0 ? "is-load" : "is-recovery"}">${entry.fatigueChange > 0 ? `疲労 +${entry.fatigueChange}` : `疲労 ${entry.fatigueChange}`}</strong></article>`).join("")}</div>` : `<p class="training-history-empty">まだ練習履歴はありません。メニューを実施すると、対象人数と能力・疲労の変動がここに記録されます。</p>`}</section>
     `;
   }
 
@@ -1304,7 +1344,6 @@ export class GameUI {
   private financePage() {
     const finance = this.simulation.financialSummary;
     const colors: Record<string, string> = { "繰越資金": "#d9ff4a", "試合賞金": "#f5c955", "スポンサー": "#b8e83a", "入場料": "#f5c955", "グッズ": "#ff9b73", "会員費": "#6ad7ff", "売店・飲食": "#86c9ff", "移籍": "#ff7d52", "トレーニング": "#c793ff", "年俸": "#ff7d52", "契約更新": "#ff9b73", "出来高": "#6ad7ff", "施設投資": "#ff7d52", "育成": "#d9ff4a", "シーズン報奨金": "#d9ff4a" };
-    const maxTrail = Math.max(...finance.cashTrail, 1);
     const maxIncome = Math.max(...finance.incomeBreakdown.map((entry) => entry.amount), 1);
     const maxExpense = Math.max(...finance.expenseBreakdown.map((entry) => entry.amount), 1);
     const summaryRows = [["総収入", finance.incomeTotal, "income"], ["総費用", finance.expenseTotal, "expense"], ["純増額", finance.net, finance.net >= 0 ? "income" : "expense"], ["今週の収支", finance.currentWeekIncome - finance.currentWeekExpense, finance.currentWeekIncome >= finance.currentWeekExpense ? "income" : "expense"]] as const;
@@ -1312,7 +1351,7 @@ export class GameUI {
       ${this.pageHeading("FINANCIAL CONTROL", "クラブ財務ダッシュボード", "収益の源泉と投資の余力を、一枚の戦術ボードで把握する。")}
       <section class="finance-hero tactical-card"><div><span class="card-kicker">AVAILABLE CASH / SEASON ${this.simulation.completedWeeks} WEEKS</span><h2>${formatMoney(finance.cash)}</h2><p>手元資金は、ホーム戦の集客、スポンサー契約、週次年俸、クラブ設備への投資によって変動します。数字を確認して次の一手を決めましょう。</p></div><div class="finance-hero-stat"><span>今週の収入</span><b>+${formatMoney(finance.currentWeekIncome)}</b><small>今週の費用 ${formatMoney(finance.currentWeekExpense)}</small></div><div class="finance-hero-stat salary"><span>週次年俸</span><b>−${formatMoney(this.simulation.weeklySalary)}</b><small>年間 ${formatMoney(this.simulation.annualSalary)}</small></div><div class="finance-hero-stat"><span>財務純増</span><b class="${finance.net >= 0 ? "is-positive" : "is-negative"}">${finance.net >= 0 ? "+" : ""}${formatMoney(finance.net)}</b><small>シーズン累計の収支</small></div></section>
       <section class="finance-summary-grid">${summaryRows.map(([label, value, tone]) => `<article class="finance-summary tactical-card ${tone}"><span>${label}</span><b>${value >= 0 ? (label === "総費用" ? "−" : "+") : ""}${formatMoney(Math.abs(value))}</b><small>${label === "今週の収支" ? `第${this.simulation.completedWeeks}節まで` : "シーズン累計"}</small></article>`).join("")}</section>
-      <section class="finance-layout"><article class="tactical-card cashflow-card"><div class="finance-section-head"><div><span class="card-kicker">CASH POSITION</span><h3>資金推移</h3></div><b>${finance.cashTrail.length} POINTS</b></div><div class="cash-bars">${finance.cashTrail.map((value, index) => `<div class="cash-bar"><i style="height:${Math.max(12, Math.round(value / maxTrail * 100))}%"></i><span>${index === finance.cashTrail.length - 1 ? "NOW" : `#${index + 1}`}</span></div>`).join("")}</div><div class="cash-axis"><span>最小 ${formatMoney(Math.min(...finance.cashTrail))}</span><b>現在 ${formatMoney(finance.cash)}</b><span>最大 ${formatMoney(maxTrail)}</span></div></article><article class="tactical-card finance-guide"><span class="card-kicker">OPERATING NOTE</span><h3>収支の見方</h3><p>チケット、グッズ、売店・飲食はホーム戦でのみ拡大します。ファンクラブ会費とスポンサー収入は毎週の基礎収入です。施設・選手・トレーニングへの投資は、将来の成果と収益の土台になります。</p><button data-nav="facilities" class="ghost-action">施設投資を確認 <b>→</b></button></article></section>
+      <section class="finance-guide tactical-card"><span class="card-kicker">OPERATING NOTE</span><h3>収支の見方</h3><p>チケット、グッズ、売店・飲食はホーム戦でのみ拡大します。ファンクラブ会費とスポンサー収入は毎週の基礎収入です。施設・選手・トレーニングへの投資は、将来の成果と収益の土台になります。</p><button data-nav="facilities" class="ghost-action">施設投資を確認 <b>→</b></button></section>
       <section class="finance-breakdown-grid"><article class="tactical-card finance-breakdown"><div class="finance-section-head"><div><span class="card-kicker">REVENUE MIX</span><h3>収益構成</h3></div><b>+${formatMoney(finance.incomeTotal)}</b></div><div class="finance-rows">${finance.incomeBreakdown.length ? finance.incomeBreakdown.map((entry) => `<div class="finance-row"><span><i style="background:${colors[entry.category]}"></i>${entry.category}</span><div><b style="width:${Math.max(4, Math.round(entry.amount / maxIncome * 100))}%;background:${colors[entry.category]}"></b></div><strong>+${formatMoney(entry.amount)}</strong></div>`).join("") : `<p class="finance-empty">まだ収益データがありません。</p>`}</div></article><article class="tactical-card finance-breakdown expense"><div class="finance-section-head"><div><span class="card-kicker">INVESTMENT & COST</span><h3>費用構成</h3></div><b>−${formatMoney(finance.expenseTotal)}</b></div><div class="finance-rows">${finance.expenseBreakdown.length ? finance.expenseBreakdown.map((entry) => `<div class="finance-row"><span><i style="background:${colors[entry.category]}"></i>${entry.category}</span><div><b style="width:${Math.max(4, Math.round(entry.amount / maxExpense * 100))}%;background:${colors[entry.category]}"></b></div><strong>−${formatMoney(entry.amount)}</strong></div>`).join("") : `<p class="finance-empty">まだ投資・費用データがありません。</p>`}</div></article></section>
       <section class="tactical-card ledger-card"><div class="finance-section-head"><div><span class="card-kicker">LATEST LEDGER</span><h3>直近の収支</h3></div><b>${finance.recentEntries.length} ENTRIES</b></div><div class="ledger-head"><span>節</span><span>区分</span><span>内容</span><span>金額</span></div>${finance.recentEntries.map((entry) => `<div class="ledger-row ${entry.kind}"><span>W${entry.week}</span><span><i style="background:${colors[entry.category]}"></i>${entry.category}</span><p>${entry.note}</p><strong>${entry.kind === "income" ? "+" : "−"}${formatMoney(entry.amount)}</strong></div>`).join("")}</section>
     `;
