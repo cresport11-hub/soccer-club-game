@@ -512,7 +512,9 @@ export class GameUI {
   }
 
   private bgmUrl(track: "city" | "match") {
-    return `${import.meta.env.BASE_URL}audio/${track === "city" ? "touchline-city-pop" : "match-football-anthem"}.mp3`;
+    return track === "city"
+      ? "https://files.manuscdn.com/user_upload_by_module/session_file/310519663912848847/IRCRjFkRfSMYfutx.mp3"
+      : "https://files.manuscdn.com/user_upload_by_module/session_file/310519663912848847/xffjknPPYSaZqEPk.mp3";
   }
 
   private updateBgmContext() {
