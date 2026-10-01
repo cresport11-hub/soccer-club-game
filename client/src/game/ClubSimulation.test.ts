@@ -319,6 +319,8 @@ describe("ClubSimulation match commentary", () => {
     expect(current.mastery).toBeGreaterThanOrEqual(0);
     expect(current.rate).toBeGreaterThanOrEqual(70);
     expect(current.rate).toBeLessThanOrEqual(104);
+    expect(simulation.rosterPlayers.every((item) => simulation.systemUnderstandingFor(item) <= 72)).toBe(true);
+    expect(simulation.rosterPlayers.every((item) => simulation.systemMasterySummaryFor(item).every((system) => system.mastery <= 42))).toBe(true);
     expect(systems.length).toBeGreaterThanOrEqual(8);
     expect(new Set(systems.map((item) => item.mastery)).size).toBeGreaterThan(1);
     expect(simulation.score().systemRate).toBeGreaterThanOrEqual(70);
