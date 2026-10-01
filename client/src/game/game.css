@@ -814,3 +814,15 @@ button { font: inherit; }
 .bgm-toggle.is-on { color: var(--lime); border-color: rgba(217,255,74,.55); background: rgba(217,255,74,.08); }
 .bgm-toggle:not(.is-on) { opacity: .72; }
 @media (max-width: 600px) { .bgm-toggle { display: inline-grid; } }
+
+/* 48-week calendar break activities */
+.break-schedule-card { margin-top: 18px; padding: 18px; border-color: rgba(217,255,74,.42); background: rgba(7,28,18,.76); }
+.break-schedule-card h2 { margin: 5px 0 6px; }
+.break-schedule-card p { margin: 0; color: rgba(235,247,235,.74); }
+.break-activity-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.break-activity-grid button { display: flex; min-height: 76px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 5px; text-align: left; }
+.break-activity-grid button small { color: rgba(235,247,235,.72); font-size: 11px; line-height: 1.4; }
+@media (max-width: 720px) {
+  .break-activity-grid { grid-template-columns: 1fr; }
+  .break-schedule-card { padding: 14px; }
+}

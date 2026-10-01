@@ -324,6 +324,15 @@ export class GameUI {
     if (target.dataset.halfRemove) { this.halfTimeChanges.splice(Number(target.dataset.halfRemove), 1); this.render(); return; }
     switch (target.dataset.action) {
       case "advance": this.openMatch(); break;
+      case "break-activity": {
+        const activity = target.dataset.breakActivity as "preseason-match" | "training-camp";
+        const label = activity === "preseason-match" ? "プレシーズンマッチ" : "トレーニングキャンプ";
+        if (!window.confirm(`${label}を実施して1週進めます。よろしいですか？`)) break;
+        const result = this.simulation.advanceBreakWeek(activity);
+        this.showToast(result.text);
+        this.render();
+        break;
+      }
       case "open-opponent-scout": this.opponentScoutOpen = true; this.playerDetailId = null; this.opponentPlayerDetailId = null; this.manualMarkSourceId = null; this.render(); break;
       case "close-opponent-scout": this.opponentScoutOpen = false; this.opponentPlayerDetailId = null; this.manualMarkSourceId = null; this.render(); break;
       case "close-opponent-player": this.opponentPlayerDetailId = null; this.render(); break;
@@ -993,7 +1002,13 @@ export class GameUI {
     `;
   }
 
+  private breakScheduleCard() {
+    const phase = this.simulation.breakLabel;
+    return `<section class="tactical-card break-schedule-card"><div><span class="card-kicker">${phase.toUpperCase()} / WEEK ${this.simulation.currentWeek}</span><h2>公式戦のない週を活用する</h2><p>この週は次の公式戦へ向けた準備期間です。どちらか一つを選んで週を進めます。</p></div><div class="break-activity-grid"><button type="button" data-action="break-activity" data-break-activity="preseason-match" class="ghost-action"><b>プレシーズンマッチ</b><small>実戦感覚・士気を高める　費用 50,000円</small></button><button type="button" data-action="break-activity" data-break-activity="training-camp" class="primary-action"><b>トレーニングキャンプ</b><small>疲労 −10・コンディション +5　費用 30,000円</small></button></div></section>`;
+  }
+
   private homePage(score: ReturnType<ClubSimulation["score"]>) {
+    const isBreak = this.simulation.isBreakWeek;
     const opponent = this.simulation.currentOpponent;
     const recent = this.simulation.currentLogs;
     const nextGate = this.simulation.upcomingGateForecast;
@@ -1006,10 +1021,10 @@ export class GameUI {
     return `
       ${this.pageHeading("DASHBOARD", "指揮官の戦術室", "全ての決断は、次の90分につながる。")}
       <section class="home-hero" style="background-image:linear-gradient(90deg,rgba(5,20,13,.96) 3%,rgba(5,20,13,.72) 43%,rgba(5,20,13,.24) 100%),url('${assets.commandCenter}')">
-        <div class="hero-copy"><span class="eyebrow">NEXT FIXTURE / WEEK ${this.simulation.currentWeek}</span><h2>${escapeHtml(this.simulation.clubNameValue)} <i>vs</i> ${opponent.name}</h2><p>${opponent.form}。現在の戦術総合値は <b>${score.total || "--"}</b>。スタメンを確認してからキックオフへ。</p><div class="venue-note ${nextGate.isHome ? "is-home" : "is-away"}"><span>${nextGate.isHome ? "⌂" : "↗"}</span>${venueCopy}</div>${this.matchConditionBoard(condition)}<div class="hero-actions"><button data-action="open-opponent-scout" class="ghost-action">相手を偵察</button><button data-nav="lineup" class="ghost-action">戦術を確認</button><button data-action="advance" class="primary-action">試合をプレイ <b>▶</b></button></div></div>
-        <div class="hero-rival"><span class="rival-dot" style="background:${opponent.color}"></span><small>OPPONENT RATING</small><strong>${opponent.rating}</strong><em>${opponent.form}</em></div>
+        <div class="hero-copy"><span class="eyebrow">${isBreak ? `${this.simulation.breakLabel.toUpperCase()} / WEEK ${this.simulation.currentWeek}` : `NEXT FIXTURE / WEEK ${this.simulation.currentWeek}`}</span><h2>${isBreak ? `${this.simulation.breakLabel} / 第${this.simulation.currentWeek}週` : `${escapeHtml(this.simulation.clubNameValue)} <i>vs</i> ${opponent.name}`}</h2><p>${isBreak ? "リーグ戦の合間を活用して、実戦または育成に集中できます。" : `${opponent.form}。現在の戦術総合値は <b>${score.total || "--"}</b>。スタメンを確認してからキックオフへ。`}</p>${isBreak ? this.breakScheduleCard() : `<div class="venue-note ${nextGate.isHome ? "is-home" : "is-away"}"><span>${nextGate.isHome ? "⌂" : "↗"}</span>${venueCopy}</div>${this.matchConditionBoard(condition)}<div class="hero-actions"><button data-action="open-opponent-scout" class="ghost-action">相手を偵察</button><button data-nav="lineup" class="ghost-action">戦術を確認</button><button data-action="advance" class="primary-action">試合をプレイ <b>▶</b></button></div>`}</div>
+        ${isBreak ? "" : `<div class="hero-rival"><span class="rival-dot" style="background:${opponent.color}"></span><small>OPPONENT RATING</small><strong>${opponent.rating}</strong><em>${opponent.form}</em></div>`}
       </section>
-      ${this.opponentDossier()}
+      ${isBreak ? "" : this.opponentDossier()}
       <section class="dashboard-grid">
         <article class="tactical-card team-card"><div class="card-kicker">TEAM PULSE</div><h3>チーム総合値</h3><div class="score-ring" style="--score:${score.total || 0}"><span>${score.total || "--"}</span></div><div class="split-metrics"><span><b>${score.attack || "--"}</b>攻撃</span><span><b>${score.defense || "--"}</b>守備</span><span><b>${score.readiness || "--"}</b>準備度</span><span><b>${score.systemRate || "--"}%</b>発揮率</span></div></article>
         <article class="tactical-card objective-card"><div class="card-kicker">SEASON OBJECTIVE</div><h3>今季の目標</h3><div class="objective-list"><p><b>01</b> リーグ <strong>6位以内</strong></p><p><b>02</b> 名声 <strong>500</strong> に到達</p><p><b>03</b> 10勝を積み上げる</p></div><div class="progress-label"><span>SEASON PROGRESS</span><b>${this.simulation.seasonProgress}%</b></div><div class="progress-bar"><i style="width:${this.simulation.seasonProgress}%"></i></div></article>

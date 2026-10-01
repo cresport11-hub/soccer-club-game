@@ -184,6 +184,8 @@ export type HalfTimeReport = { playerGoals: number; opponentGoals: number; messa
 export type MatchStatsTeam = { possession: number; shots: number; shotsOnTarget: number; bigChances: number; corners: number; passes: number; passAccuracy: number; fouls: number; offsides: number; saves: number };
 export type MatchStats = { orbit: MatchStatsTeam; opponent: MatchStatsTeam };
 export type MatchResult = { opponent: string; opponentId: string; playerGoals: number; opponentGoals: number; message: string; won: boolean; reward: number; sponsorRevenue: number; cupResult: CupMatchResult | null; gate: GateReceipt; merchandise: MerchandiseReceipt; membership: MembershipReceipt; concession: ConcessionReceipt; totalTicketRevenue: number; totalAttendance: number; totalCommercialRevenue: number; popularityDelta: number; leaguePopularityDelta: number; popularity: number; tactics: TacticalAssessment; opponentTactics: OpponentTacticalAssessment; tacticalMatchup: TacticalMatchup; markingImpact: MarkingMatchImpact; matchAttack: number; matchDefense: number; matchCondition: TeamMatchCondition; conditionAfter: TeamMatchCondition; stats: MatchStats; halfTime: HalfTimeReport; refereeStrictness: number; refereeLabel: "寛容" | "標準" | "厳格"; highlights: MatchHighlight[]; substitutions: MatchSubstitution[]; injuries: MatchInjury[]; playerRatings: PlayerMatchRating[]; markDuels: MarkDuelReport[]; mvp: PlayerMatchRating | null; individualBonuses: IndividualBonusReceipt; skillXpGrants: SkillXpGrant[]; attributeXpGrants: AttributeXpGrant[]; positionMasteryGrants: PositionMasteryGrant[]; systemMasteryGrants: SystemMasteryGrant[]; conditionChanges: PlayerConditionChange[]; halfTimeChanges: string[] };
+export type CalendarPhase = "league" | "winter-break" | "off-season";
+export type BreakActivity = "preseason-match" | "training-camp";
 
 type Persisted = {
   money: number;
@@ -232,6 +234,10 @@ type Persisted = {
 };
 
 const storageKey = "touchline-tactics-save-v1";
+const SEASON_WEEKS = 48;
+const WINTER_BREAK_START = 19;
+const WINTER_BREAK_END = 23;
+const OFF_SEASON_START = 38;
 const userClub: ClubSeed = { id: "orbit", name: "オービット東京", rating: 64, color: "#d9ff4a", form: "新体制で上昇気流" };
 const cupWeeks = [3, 7, 11, 15];
 const cupRoundNames = ["ラウンド16", "準々決勝", "準決勝", "決勝"];
@@ -541,8 +547,13 @@ export class ClubSimulation {
   }
   get leagueRows() { return [...this.rows].sort((a, b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf || b.rating - a.rating); }
   get selectedPlayer() { return this.roster.find((player) => player.id === this.selectedPlayerId) ?? null; }
-  get seasonProgress() { return Math.round((this.week / 19) * 100); }
+  get seasonProgress() { return Math.round((this.week / SEASON_WEEKS) * 100); }
   get completedWeeks() { return this.week; }
+  get seasonWeeks() { return SEASON_WEEKS; }
+  get calendarPhase(): CalendarPhase { return this.week >= OFF_SEASON_START ? "off-season" : this.week >= WINTER_BREAK_START && this.week <= WINTER_BREAK_END ? "winter-break" : "league"; }
+  get isBreakWeek() { return this.calendarPhase !== "league"; }
+  get breakLabel() { return this.calendarPhase === "winter-break" ? "ウインターブレイク" : this.calendarPhase === "off-season" ? "オフシーズン" : "リーグ戦"; }
+  get nextLeagueWeek() { for (let week = this.week; week < SEASON_WEEKS; week += 1) if (week < WINTER_BREAK_START || week > WINTER_BREAK_END && week < OFF_SEASON_START) return week; return 0; }
   get autoLineupCriteriaValue() { return this.autoLineupCriteria; }
   get annualSalary() { return this.roster.reduce((sum, player) => sum + player.salary, 0); }
   get weeklySalary() { return Math.round(this.annualSalary / 52); }
@@ -673,7 +684,7 @@ export class ClubSimulation {
   get trainingRecommendation() { return this.buildTrainingRecommendation(); }
   get trainingLoadSummary() { return trainingLoadOptions.map((option) => ({ ...option, count: this.roster.filter((player) => this.trainingLoadFor(player).id === option.id).length })); }
   get seasonPlayerStats() { return [...this.seasonStats].sort((a, b) => b.goals - a.goals || b.assists - a.assists || (b.ratingCount ? b.ratingTotal / b.ratingCount : 0) - (a.ratingCount ? a.ratingTotal / a.ratingCount : 0) || b.appearances - a.appearances); }
-  get sponsorWeeksRemaining() { return Math.max(0, 19 - this.week); }
+  get sponsorWeeksRemaining() { return Math.max(0, SEASON_WEEKS - this.week); }
   get cupState() { return this.cup; }
   get cupCurrentRound() { return this.cup.rounds[this.cup.roundIndex] ?? this.cup.rounds.at(-1); }
   get nextCupWeek() { return cupWeeks.find((scheduled) => scheduled > this.week) ?? null; }
@@ -1178,6 +1189,10 @@ export class ClubSimulation {
     if (suffix === "diamond") return { attack: 3, defense: 1, midfield: 4, transition: 3 };
     if (suffix === "wide") return { attack: 2, defense: 1, midfield: 2, transition: 2 };
     if (suffix === "flat") return { attack: 1, defense: 1, midfield: 3, transition: 1 };
+    if (suffix === "control") return { attack: 1, defense: 2, midfield: 5, transition: 1 };
+    if (suffix === "attacking-mid") return { attack: 4, defense: 0, midfield: 2, transition: 3 };
+    if (suffix === "central") return { attack: 0, defense: 4, midfield: 4, transition: 0 };
+    if (suffix === "counter") return { attack: 2, defense: 3, midfield: 2, transition: 4 };
     return bonuses[base] ?? { attack: 0, defense: 0, midfield: 0, transition: 0 };
   }
 
@@ -2207,8 +2222,35 @@ export class ClubSimulation {
     return { ok: true, text: `${upgraded.name} を稼働開始。次季ユースは${upgraded.youthQuality}となり、初期XP +${upgraded.youthInitialXpBonus}、セッションXP +${upgraded.youthSessionXpBonus}を得ます。` };
   }
 
+  advanceBreakWeek(activity: BreakActivity) {
+    if (!this.isBreakWeek) return { ok: false, text: "現在は公式戦週です。次節へ進むとリーグ戦を行います。" };
+    const label = activity === "preseason-match" ? "プレシーズンマッチ" : "トレーニングキャンプ";
+    const cost = activity === "preseason-match" ? 50000 : 30000;
+    const weeklySalary = this.weeklySalary;
+    this.applyIndividualTrainingPlans();
+    this.roster.forEach((player) => {
+      player.fatigue = clamp(player.fatigue + (activity === "preseason-match" ? 4 : -10), 0, 99);
+      player.condition = clamp(this.conditionFor(player) + (activity === "preseason-match" ? 1 : 5), 0, 100);
+    });
+    this.money -= weeklySalary + cost;
+    this.recordFinance("年俸", weeklySalary, "expense", `${this.roster.length}人分の週次年俸（${label}週）`, this.currentWeek);
+    this.recordFinance("トレーニング", cost, "expense", `${label}を実施`, this.currentWeek);
+    if (activity === "preseason-match") {
+      this.teamMorale = clamp(this.teamMorale + 2, 0, 100);
+      this.logs.unshift(`${this.breakLabel}に${label}を実施。実戦感覚と士気を整えた。`);
+    } else {
+      this.teamMorale = clamp(this.teamMorale + 4, 0, 100);
+      this.logs.unshift(`${this.breakLabel}に${label}を実施。全員の疲労を抑え、次の公式戦へ備えた。`);
+    }
+    this.week += 1;
+    if (this.week >= SEASON_WEEKS) this.beginNewSeason();
+    this.captureCashPoint();
+    this.persist();
+    return { ok: true, text: `${label}を実施し、第${this.week}週へ進みました。${this.week === 0 ? "新シーズンが開幕します。" : ""}` };
+  }
+
   advanceWeek(): MatchResult {
-    if (this.week >= 19) this.beginNewSeason();
+    if (this.isBreakWeek) throw new Error(`${this.breakLabel}です。プレシーズンマッチまたはキャンプを選択してください。`);
     this.applyIndividualTrainingPlans();
     const recoveringPlayers = Object.keys(this.injuries);
     const suspendedAtStart = Object.keys(this.suspensionMatches);

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ClubSimulation } from "./ClubSimulation";
-import { commonGivenNamePool, commonSurnamePool, marketRecruits, nationalityNameFor, normalizePlayerName, opponentSeeds, opponentSquadFor, playerAssessmentFor, players, youthIntakes, youthProspects } from "./data";
+import { commonGivenNamePool, commonSurnamePool, formations, marketRecruits, nationalityNameFor, normalizePlayerName, opponentSeeds, opponentSquadFor, playerAssessmentFor, players, youthIntakes, youthProspects } from "./data";
 
 describe("ClubSimulation match commentary", () => {
   beforeEach(() => {
@@ -523,6 +523,20 @@ describe("Team power radar", () => {
       expect(simulation.score().tactics.formationTrait.length).toBeGreaterThan(0);
     });
   });
+  it("offers three non-4-4-2 midfield structures while preserving 4-4-2 variants", () => {
+    const baseIds = ["4-3-3", "4-5-1", "3-4-3", "3-5-2", "3-6-1", "5-4-1", "5-3-2"] as const;
+    baseIds.forEach((baseId) => {
+      const structures = formations.filter((formation) => formation.id.startsWith(`${baseId}-`));
+      expect(structures).toHaveLength(3);
+      expect(new Set(structures.map((formation) => formation.id)).size).toBe(3);
+    });
+    expect(formations.filter((formation) => formation.id.startsWith("4-4-2-")).map((formation) => formation.id)).toEqual([
+      "4-4-2-double-pivot",
+      "4-4-2-attacking-wide",
+      "4-4-2-central",
+      "4-4-2-diamond",
+    ]);
+  });
   it("keeps the diamond OH and DH on the central vertical axis", () => {
     const simulation = new ClubSimulation();
     simulation.setFormation("4-4-2-diamond");
@@ -552,6 +566,18 @@ describe("Team power radar", () => {
     expect(diamond.tactics.structureTransition).toBe(3);
     expect(central.radar.midfield).toBeGreaterThan(pivot.radar.midfield);
     expect(wide.radar.attack).toBeGreaterThan(pivot.radar.attack);
+  });
+  it("applies tailored bonuses to the added non-4-4-2 structures", () => {
+    const read = (formationId: string) => {
+      const simulation = new ClubSimulation();
+      simulation.setFormation(formationId);
+      simulation.autoLineup();
+      return simulation.score().tactics;
+    };
+    expect(read("4-3-3-control").structureMidfield).toBe(5);
+    expect(read("4-5-1-attacking-mid").structureAttack).toBe(4);
+    expect(read("5-4-1-central").structureDefense).toBe(4);
+    expect(read("5-3-2-counter").structureTransition).toBe(4);
   });
 });
 
@@ -693,7 +719,10 @@ describe("Squad age balance", () => {
     const beforeAge = veteran.age;
     const beforeDefense = veteran.defense;
 
-    for (let index = 0; index < 20; index += 1) simulation.advanceWeek();
+    for (let index = 0; index < 19; index += 1) simulation.advanceWeek();
+    for (let index = 0; index < 5; index += 1) simulation.advanceBreakWeek("training-camp");
+    for (let index = 0; index < 14; index += 1) simulation.advanceWeek();
+    for (let index = 0; index < 10; index += 1) simulation.advanceBreakWeek("training-camp");
 
     const aged = simulation.rosterPlayers.find((player) => player.id === "p11")!;
     expect(aged.age).toBe(beforeAge + 1);
@@ -709,7 +738,10 @@ describe("Squad age balance", () => {
     veteran.age = 40;
     expect(Object.values(simulation.lineupState)).toContain("p13");
 
-    for (let index = 0; index < 20; index += 1) simulation.advanceWeek();
+    for (let index = 0; index < 19; index += 1) simulation.advanceWeek();
+    for (let index = 0; index < 5; index += 1) simulation.advanceBreakWeek("training-camp");
+    for (let index = 0; index < 14; index += 1) simulation.advanceWeek();
+    for (let index = 0; index < 10; index += 1) simulation.advanceBreakWeek("training-camp");
 
     expect(simulation.rosterPlayers.some((player) => player.id === "p13")).toBe(false);
     expect(Object.values(simulation.lineupState)).not.toContain("p13");
@@ -748,5 +780,44 @@ describe("Rehabilitation facility", () => {
     simulation.advanceWeek();
     expect(simulation.injuryWeeksFor(player.id)).toBe(0);
     expect(player.injuryWeeks).toBeUndefined();
+  });
+});
+
+
+describe("48-week season calendar", () => {
+  beforeEach(() => {
+    const values = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+      clear: () => values.clear(),
+    });
+  });
+
+  it("uses a 48-week season with winter and off-season break windows", () => {
+    const simulation = new ClubSimulation();
+    expect(simulation.seasonWeeks).toBe(48);
+    for (let index = 0; index < 19; index += 1) simulation.advanceWeek();
+    expect(simulation.calendarPhase).toBe("winter-break");
+    expect(simulation.isBreakWeek).toBe(true);
+    const camp = simulation.advanceBreakWeek("training-camp");
+    expect(camp.ok).toBe(true);
+    expect(simulation.completedWeeks).toBe(20);
+    for (let index = 0; index < 4; index += 1) simulation.advanceBreakWeek("preseason-match");
+    expect(simulation.completedWeeks).toBe(24);
+    expect(simulation.calendarPhase).toBe("league");
+  });
+
+  it("finishes the 48-week season after the off-season activities and starts a new season", () => {
+    const simulation = new ClubSimulation();
+    for (let index = 0; index < 19; index += 1) simulation.advanceWeek();
+    for (let index = 0; index < 5; index += 1) simulation.advanceBreakWeek("training-camp");
+    for (let index = 0; index < 14; index += 1) simulation.advanceWeek();
+    expect(simulation.completedWeeks).toBe(38);
+    expect(simulation.calendarPhase).toBe("off-season");
+    for (let index = 0; index < 10; index += 1) simulation.advanceBreakWeek("preseason-match");
+    expect(simulation.completedWeeks).toBe(0);
+    expect(simulation.calendarPhase).toBe("league");
   });
 });
