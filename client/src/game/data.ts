@@ -500,7 +500,8 @@ export const nationalityNameFor = (nationality: NationalityCode, seed: string = 
 const opponentSurnamePool = commonSurnamePool;
 const opponentGivenPool = commonGivenNamePool;
 
-const nameSeed = (value: string) => Array.from(value).reduce((total, character) => total + character.codePointAt(0)!, 0);
+/** 同じ文字コード合計になりやすい短いシードでも結果が衝突しない決定論的ハッシュ。 */
+const nameSeed = (value: string) => Array.from(value).reduce((total, character) => ((total * 31) + character.codePointAt(0)!) >>> 0, 7);
 const splitPlayerName = (value: string) => value.trim().split(/\s+/).filter(Boolean);
 const excludedGivenNameSet = new Set(["美咲", "花音", "七海", "彩乃", "愛理", "遥香", "真央", "杏奈", "結菜", "莉子", "優花", "明日香", "里奈", "美穂", "千夏", "春香", "陽菜", "菜月", "沙織", "麻衣", "美月", "梨花", "桃子", "佳奈", "怜奈", "香織", "由佳", "奈緒", "理沙"]);
 
@@ -562,6 +563,51 @@ export const marketRecruits: Player[] = [
   { id: "r8", name: "有沢 航平", position: "SB", secondary: "SH", sbPlayStyle: "overlap", wgPlayStyle: "wide-worker", attack: 59, dribble: 63, pass: 68, shoot: 45, defense: 67, tackle: 69, block: 60, interception: 62, fatigue: 0, age: 27, salary: 13900000, contractYears: 3, level: 4, ceiling: 9, chemistry: "spark" },
   { id: "r9", name: nationalityNameFor("AR", "r9"), nationality: "AR", position: "WG", secondary: "CF", wgPlayStyle: "inverted", cfPlayStyle: "false-nine", attack: 75, dribble: 81, pass: 66, shoot: 72, defense: 34, tackle: 30, block: 27, interception: 38, fatigue: 0, age: 20, salary: 19800000, contractYears: 3, level: 5, ceiling: 10, chemistry: "edge" },
 ];
+
+/**
+ * 市場の既視感を減らすための追加候補。
+ * 固定の能力表を複製するのではなく、ポジション別の基準値へ年齢・タイプ・国籍ごとの
+ * 決定論的な振れ幅を加える。セーブ間で結果は再現されるが、候補の組み合わせは豊富になる。
+ */
+const generatedMarketRecruits: Player[] = Array.from({ length: 84 }, (_, index) => {
+  const positions: Position[] = ["CF", "WG", "SH", "AM", "CM", "DM", "SB", "CB", "GK"];
+  const nationalities: NationalityCode[] = ["JP", "BR", "KR", "ES", "DE", "FR", "AR"];
+  const position = positions[index % positions.length];
+  const nationality = nationalities[(index * 5 + Math.floor(index / positions.length)) % nationalities.length];
+  const variation = ((index * 17) % 13) - 6;
+  const age = 19 + ((index * 7) % 17);
+  const seed = `market-generated-${index}`;
+  const catalogGivenNamePool = commonGivenNamePool.filter((givenName) => givenName.length >= 2);
+  const japaneseName = `${commonSurnamePool[(index * 7 + 13) % commonSurnamePool.length]} ${catalogGivenNamePool[(index * 11 + 5) % catalogGivenNamePool.length]}`;
+  const name = nationality === "JP" ? japaneseName : nationalityNameFor(nationality, seed);
+  const base: Record<Position, [number, number, number, number, number, number, number, number]> = {
+    CF: [65, 61, 48, 68, 29, 25, 22, 32], WG: [63, 72, 57, 61, 35, 30, 27, 39], SH: [60, 67, 64, 55, 43, 37, 34, 48],
+    AM: [61, 64, 73, 54, 38, 33, 29, 47], CM: [53, 57, 70, 45, 57, 53, 48, 60], DM: [43, 48, 65, 35, 66, 67, 62, 72],
+    SB: [49, 58, 60, 37, 61, 65, 55, 59], CB: [37, 42, 54, 27, 72, 74, 77, 69], GK: [16, 18, 51, 9, 25, 18, 28, 35],
+  };
+  const values = base[position].map((value, attributeIndex) => Math.max(8, Math.min(91, value + variation + (((index + attributeIndex * 3) % 9) - 4))));
+  const [attack, dribble, pass, shoot, defense, tackle, block, interception] = values;
+  const secondary: Partial<Record<Position, Position>> = { CF: "WG", WG: "CF", SH: "AM", AM: "CM", CM: "DM", DM: "CB", SB: "SH", CB: "SB" };
+  const styleIndex = index % 3;
+  const player: Player = {
+    id: `rg${String(index + 1).padStart(3, "0")}`, name, nationality, position, secondary: secondary[position],
+    attack, dribble, pass, shoot, defense, tackle, block, interception, fatigue: 0, age,
+    salary: Math.round((4_800_000 + (attack + dribble + pass + shoot + defense + tackle) * 135_000) * (age >= 30 ? 1.08 : age <= 21 ? .88 : 1)),
+    contractYears: 3, level: Math.max(2, Math.min(6, Math.round((attack + defense) / 28))), ceiling: Math.max(7, Math.min(10, 8 + (index % 3))),
+    chemistry: (["spark", "steady", "edge"] as const)[index % 3],
+  };
+  if (position === "GK") { player.gk = Math.max(35, Math.min(92, 67 + variation + (index % 8) - 3)); player.gkPlayStyle = (["shot-stopper", "sweeper-keeper", "distributor"] as const)[styleIndex]; }
+  if (position === "CF") player.cfPlayStyle = (["target", "runner", "false-nine"] as const)[styleIndex];
+  if (position === "WG" || position === "SH") player.wgPlayStyle = (["touchline", "inverted", "wide-worker"] as const)[styleIndex];
+  if (position === "AM") player.amPlayStyle = (["playmaker", "shadow-striker", "pressing-ten"] as const)[styleIndex];
+  if (position === "CM") player.cmPlayStyle = (["box-to-box", "deep-playmaker", "mezzala"] as const)[styleIndex];
+  if (position === "DM") player.dmPlayStyle = (["anchor", "regista", "destroyer"] as const)[styleIndex];
+  if (position === "CB") player.cbPlayStyle = (["stopper", "ball-playing", "cover"] as const)[styleIndex];
+  if (position === "SB") player.sbPlayStyle = (["overlap", "inverted-fullback", "defensive-fullback"] as const)[styleIndex];
+  return player;
+});
+
+marketRecruits.push(...generatedMarketRecruits);
 
 export const recruit = marketRecruits[0];
 
