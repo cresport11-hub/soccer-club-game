@@ -357,13 +357,13 @@ const structureAllowed: Record<Position, Position[]> = {
   GK: ["GK"], CB: ["CB", "SB"], SB: ["SB", "WG", "SH"], DM: ["DM", "CM", "CB"], CM: ["CM", "DM", "AM"], AM: ["AM", "CM", "CF", "WG"], SH: ["SH", "WG", "AM", "CM", "SB"], WG: ["WG", "SH", "AM", "CF"], CF: ["CF", "AM", "WG"],
 };
 const structurePresets: Record<string, Array<{ suffix: string; description: string; midfield: Position[] }>> = {
-  "4-3-3": [{ suffix: "double-pivot", description: "DH2・CH1／ダブルピボット", midfield: ["DM", "DM", "CM"] }, { suffix: "attacking", description: "CH2・OH1／攻撃型", midfield: ["CM", "CM", "AM"] }],
-  "4-5-1": [{ suffix: "wide", description: "SH2・DH1・CH2／ワイド型", midfield: ["SH", "CM", "DM", "CM", "SH"] }, { suffix: "diamond", description: "OH2・CH2・DH1／中央支配", midfield: ["AM", "CM", "DM", "CM", "AM"] }],
-  "3-4-3": [{ suffix: "double-pivot", description: "SH2・DH2／守備安定", midfield: ["SH", "DM", "DM", "SH"] }, { suffix: "attacking", description: "SH2・OH2／前線連動", midfield: ["SH", "AM", "AM", "SH"] }],
-  "3-5-2": [{ suffix: "flat", description: "CH3／フラット型", midfield: ["CM", "CM", "CM"] }, { suffix: "diamond", description: "DH1・CH1・OH1／ダイヤモンド", midfield: ["CM", "DM", "AM"] }],
-  "3-6-1": [{ suffix: "double-pivot", description: "SH2・DH2／中盤ブロック", midfield: ["SH", "DM", "DM", "SH"] }, { suffix: "attacking", description: "SH2・CH1・OH1／攻撃型", midfield: ["SH", "CM", "AM", "SH"] }],
-  "5-4-1": [{ suffix: "double-pivot", description: "SH2・DH2／守備重視", midfield: ["SH", "DM", "DM", "SH"] }, { suffix: "wide", description: "SH2・CH2／ワイド展開", midfield: ["SH", "CM", "CM", "SH"] }],
-  "5-3-2": [{ suffix: "flat", description: "CH3／中盤安定", midfield: ["CM", "CM", "CM"] }, { suffix: "double-pivot", description: "DH2・CH1／堅守速攻", midfield: ["DM", "DM", "CM"] }],
+  "4-3-3": [{ suffix: "double-pivot", description: "DH2・CH1／ダブルピボット", midfield: ["DM", "DM", "CM"] }, { suffix: "attacking", description: "CH2・OH1／攻撃型", midfield: ["CM", "CM", "AM"] }, { suffix: "control", description: "DH1・CH2／中央コントロール", midfield: ["DM", "CM", "CM"] }],
+  "4-5-1": [{ suffix: "wide", description: "SH2・DH1・CH2／ワイド型", midfield: ["SH", "CM", "DM", "CM", "SH"] }, { suffix: "diamond", description: "OH2・CH2・DH1／中央支配", midfield: ["AM", "CM", "DM", "CM", "AM"] }, { suffix: "attacking-mid", description: "SH2・OH1・DH1・CH1／攻撃的中盤", midfield: ["SH", "AM", "DM", "CM", "SH"] }],
+  "3-4-3": [{ suffix: "double-pivot", description: "SH2・DH2／守備安定", midfield: ["SH", "DM", "DM", "SH"] }, { suffix: "attacking", description: "SH2・OH2／前線連動", midfield: ["SH", "AM", "AM", "SH"] }, { suffix: "diamond", description: "SH2・DH1・OH1／中央可変", midfield: ["SH", "DM", "AM", "SH"] }],
+  "3-5-2": [{ suffix: "flat", description: "CH3／フラット型", midfield: ["CM", "CM", "CM"] }, { suffix: "diamond", description: "DH1・CH1・OH1／ダイヤモンド", midfield: ["CM", "DM", "AM"] }, { suffix: "wide", description: "SH2・DH1・CH2／ワイド展開", midfield: ["SH", "CM", "DM", "CM", "SH"] }],
+  "3-6-1": [{ suffix: "double-pivot", description: "SH2・DH2／中盤ブロック", midfield: ["SH", "DM", "DM", "SH"] }, { suffix: "attacking", description: "SH2・CH1・OH1／攻撃型", midfield: ["SH", "CM", "AM", "SH"] }, { suffix: "control", description: "SH2・DH2・CH2／中央制御", midfield: ["SH", "CM", "DM", "DM", "CM", "SH"] }],
+  "5-4-1": [{ suffix: "double-pivot", description: "SH2・DH2／守備重視", midfield: ["SH", "DM", "DM", "SH"] }, { suffix: "wide", description: "SH2・CH2／ワイド展開", midfield: ["SH", "CM", "CM", "SH"] }, { suffix: "central", description: "CH2・DH2／中央封鎖", midfield: ["CM", "DM", "DM", "CM"] }],
+  "5-3-2": [{ suffix: "flat", description: "CH3／中盤安定", midfield: ["CM", "CM", "CM"] }, { suffix: "double-pivot", description: "DH2・CH1／堅守速攻", midfield: ["DM", "DM", "CM"] }, { suffix: "counter", description: "DH2・CH1／奪って速攻", midfield: ["DM", "CM", "DM"] }],
 };
 const baseFormationIds = new Set(["4-4-2", "4-3-3", "4-5-1", "3-4-3", "3-5-2", "3-6-1", "5-4-1", "5-3-2"]);
 const primaryFormationSeeds = formationSeeds.filter((formation) => baseFormationIds.has(formation.id));

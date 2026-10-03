@@ -1268,8 +1268,9 @@ export class GameUI {
   private leaguePage() {
     const rows = this.simulation.leagueRows;
     const calendar = this.simulation.seasonCalendar;
-    const phaseLabel = (phase: string) => phase === "league" ? "リーグ戦" : phase === "winter-break" ? "ウインターブレイク" : "オフシーズン";
+    const phaseLabel = (phase: string) => phase === "preseason" ? "開幕準備" : phase === "league" ? "リーグ戦" : phase === "winter-break" ? "ウインターブレイク" : "オフシーズン";
     const resultLabel = (entry: (typeof calendar)[number]) => entry.result === "W" ? "勝利" : entry.result === "D" ? "引分" : entry.result === "L" ? "敗戦" : "未実施";
+    const phaseDescription = (phase: string) => phase === "preseason" ? "開幕前の準備" : phase === "league" ? "公式戦" : phase === "winter-break" ? "中断期間" : "シーズン終了後";
     const calendarRows = calendar.map((entry) => {
       const breakText = entry.activity === "preseason-match" ? "プレシーズンマッチ" : entry.activity === "training-camp" ? "トレーニングキャンプ" : "準備期間";
       const opponent = entry.opponent ? `${entry.isHome ? "HOME" : "AWAY"}  ${escapeHtml(entry.opponent)}` : breakText;
@@ -1278,11 +1279,13 @@ export class GameUI {
       const tone = entry.result ? `is-${entry.result.toLowerCase()}` : entry.phase === "league" ? "is-upcoming" : "is-break";
       return `<div class="calendar-row ${tone}"><span class="calendar-week">${String(entry.week).padStart(2, "0")}<small>週</small></span><span class="calendar-phase">${phaseLabel(entry.phase)}</span><strong>${opponent}</strong><span class="calendar-score">${score}</span><span class="calendar-result">${result}</span></div>`;
     }).join("");
+    const phaseCounts = ["preseason", "league", "winter-break", "off-season"].map((phase) => ({ phase, count: calendar.filter((entry) => entry.phase === phase).length, done: calendar.filter((entry) => entry.phase === phase && (entry.result || entry.activity)).length }));
+    const phaseSummary = phaseCounts.map(({ phase, count, done }) => `<div class="calendar-summary-card phase-${phase}"><span>${phaseLabel(phase)}</span><strong>${done}<small> / ${count}週</small></strong><em>${phaseDescription(phase)}</em></div>`).join("");
     return `
       ${this.pageHeading("NATIONAL LEAGUE", "リーグ順位表", "勝点、得失点差、そして次節への執念。")}
       <section class="league-intro tactical-card"><div><span class="card-kicker">DIVISION 5 / 20 CLUBS</span><h3>昇格圏は、上位3クラブ。</h3><p>現在の${escapeHtml(this.simulation.clubNameValue)}は <b>${this.simulation.teamPosition}位</b>。毎節の結果が、クラブの物語を動かします。</p></div><div class="league-key"><span><i class="promotion"></i>昇格圏</span><span><i class="club-dot"></i>あなたのクラブ</span></div></section>
       <section class="league-table tactical-card"><div class="league-head"><span>順位 / クラブ</span><span>試</span><span>勝</span><span>分</span><span>負</span><span>得点</span><span>失点</span><span>差</span><span>勝点</span></div>${rows.map((row, index) => `<div class="league-row ${row.id === "orbit" ? "is-user" : ""} ${index < 3 ? "is-promotion" : ""}"><strong><i>${index + 1}</i><b style="background:${row.color}"></b>${row.name}</strong><span>${row.played}</span><span>${row.win}</span><span>${row.draw}</span><span>${row.loss}</span><span>${row.gf}</span><span>${row.ga}</span><span>${row.gf - row.ga > 0 ? "+" : ""}${row.gf - row.ga}</span><span><em>${row.pts}</em></span></div>`).join("")}</section>
-      <section class="season-calendar tactical-card"><div class="calendar-head"><div><span class="card-kicker">48-WEEK SEASON CALENDAR</span><h3>シーズン日程・試合結果</h3><p>現在週までの公式戦結果と、これからの休止期間を一覧で確認できます。</p></div><span class="calendar-legend"><i class="is-w">勝利</i><i class="is-d">引分</i><i class="is-l">敗戦</i></span></div><div class="calendar-columns"><span>週</span><span>区分</span><span>対戦 / 活動</span><span>結果</span><span>判定</span></div><div class="calendar-list">${calendarRows}</div></section>
+      <section class="season-calendar tactical-card"><div class="calendar-head"><div><span class="card-kicker">48-WEEK SEASON CALENDAR</span><h3>シーズン日程・試合結果</h3><p>区分ごとの進行状況と、週ごとの対戦・活動を確認できます。開幕後2週は準備期間です。</p></div><span class="calendar-legend"><i class="is-w">勝利</i><i class="is-d">引分</i><i class="is-l">敗戦</i></span></div><div class="calendar-summary">${phaseSummary}</div><div class="calendar-columns"><span>週</span><span>区分</span><span>対戦 / 活動</span><span>結果</span><span>判定</span></div><div class="calendar-list">${calendarRows}</div></section>
     `;
   }
 

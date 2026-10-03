@@ -841,3 +841,23 @@ button { font: inherit; }
 .emblem-option i { position:absolute; top:7px; right:7px; color:var(--emblem-accent); font-size:.6rem; font-style:normal; }
 @media (max-width: 760px) { .emblem-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .emblem-option { min-height:132px; } }
 @media (min-width: 761px) and (max-width: 980px) { .emblem-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+
+
+/* Readable 48-week season calendar */
+.season-calendar { display:grid; gap:14px; }
+.calendar-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+.calendar-head h3 { margin:5px 0 6px; color:#eef9eb; font-size:20px; }
+.calendar-head p { max-width:620px; margin:0; color:#9eb9a3; font-size:10px; line-height:1.6; }
+.calendar-legend { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:5px; }
+.calendar-legend i { padding:4px 7px; border-radius:999px; font-size:8px; font-style:normal; font-weight:900; }
+.calendar-legend .is-w { color:#19320f; background:var(--lime); }.calendar-legend .is-d { color:#082a35; background:#6ad7ff; }.calendar-legend .is-l { color:#45170d; background:#ff9b73; }
+.calendar-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+.calendar-summary-card { display:grid; gap:4px; min-height:82px; padding:10px 11px; border:1px solid rgba(218,255,216,.14); border-left:3px solid #78957d; background:rgba(3,22,13,.58); }
+.calendar-summary-card span { color:#a6c1a8; font-size:8px; font-weight:900; letter-spacing:.08em; }.calendar-summary-card strong { color:#edf9ea; font-size:22px; line-height:1; }.calendar-summary-card strong small { color:#8fa992; font-size:9px; font-weight:700; }.calendar-summary-card em { color:#7f9e85; font-size:8px; font-style:normal; }.calendar-summary-card.phase-preseason { border-left-color:#6ad7ff; }.calendar-summary-card.phase-league { border-left-color:var(--lime); }.calendar-summary-card.phase-winter-break { border-left-color:var(--gold); }.calendar-summary-card.phase-off-season { border-left-color:#a48cff; }
+.calendar-columns, .calendar-row { display:grid; grid-template-columns:54px 115px minmax(180px,1fr) 64px 72px; align-items:center; gap:8px; }
+.calendar-columns { padding:6px 10px; color:#75937b; font-size:8px; font-weight:900; letter-spacing:.08em; }.calendar-columns span:nth-child(4), .calendar-columns span:nth-child(5) { text-align:right; }
+.calendar-list { display:grid; gap:3px; max-height:620px; overflow:auto; padding-right:4px; scrollbar-width:thin; }
+.calendar-row { min-height:42px; padding:7px 10px; border:1px solid rgba(218,255,216,.08); border-left:3px solid rgba(218,255,216,.14); background:rgba(2,17,9,.52); font-size:9px; }.calendar-row:hover { background:rgba(106,215,255,.07); }.calendar-row.is-w { border-left-color:var(--lime); }.calendar-row.is-d { border-left-color:#6ad7ff; }.calendar-row.is-l { border-left-color:#ff9b73; }.calendar-row.is-break { border-left-color:#78957d; background:rgba(120,149,125,.06); }.calendar-row.is-upcoming { border-left-color:rgba(217,255,74,.36); }
+.calendar-week { color:var(--lime); font-size:13px; font-weight:900; }.calendar-week small { margin-left:2px; color:#739178; font-size:7px; }.calendar-phase { color:#89a990; font-size:8px; }.calendar-row strong { overflow:hidden; color:#e8f5e7; text-overflow:ellipsis; white-space:nowrap; }.calendar-score, .calendar-result { color:#c4d8c5; font-weight:800; text-align:right; }.calendar-row.is-w .calendar-result { color:var(--lime); }.calendar-row.is-d .calendar-result { color:#6ad7ff; }.calendar-row.is-l .calendar-result { color:#ff9b73; }
+@media (max-width:800px) { .calendar-head { flex-direction:column; gap:10px; }.calendar-legend { justify-content:flex-start; }.calendar-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }.calendar-columns, .calendar-row { grid-template-columns:42px 82px minmax(0,1fr) 43px 52px; gap:5px; }.calendar-columns { padding-left:7px; padding-right:7px; font-size:7px; }.calendar-row { min-height:45px; padding:7px; font-size:8px; }.calendar-phase { font-size:7px; }.calendar-row strong { line-height:1.35; white-space:normal; }.calendar-list { max-height:560px; } }
+@media (max-width:480px) { .calendar-summary-card { min-height:72px; padding:8px; }.calendar-summary-card strong { font-size:18px; }.calendar-columns, .calendar-row { grid-template-columns:34px 65px minmax(0,1fr) 36px 45px; }.calendar-score, .calendar-result { font-size:8px; } }

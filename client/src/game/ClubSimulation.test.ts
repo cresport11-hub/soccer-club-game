@@ -2,6 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ClubSimulation } from "./ClubSimulation";
 import { commonGivenNamePool, commonSurnamePool, formations, marketRecruits, nationalityNameFor, normalizePlayerName, opponentSeeds, opponentSquadFor, playerAssessmentFor, players, youthIntakes, youthProspects } from "./data";
 
+const advanceWeekForTest = (simulation: ClubSimulation) => {
+  while (simulation.isBreakWeek) simulation.advanceBreakWeek("training-camp");
+  return simulation.advanceWeek();
+};
+
 describe("ClubSimulation match commentary", () => {
   beforeEach(() => {
     const values = new Map<string, string>();
@@ -15,7 +20,7 @@ describe("ClubSimulation match commentary", () => {
 
   it("keeps each half dense and includes consecutive attack-counterattack sequences", () => {
     const simulation = new ClubSimulation();
-    const result = simulation.advanceWeek();
+    const result = advanceWeekForTest(simulation);
     const firstHalf = result.highlights.filter((item) => item.minute <= 45);
     const secondHalf = result.highlights.filter((item) => item.minute > 45 && item.kind !== "fulltime");
     const sequenceLines = result.highlights.filter((item) => /即座に反撃|奪い返してカウンター|一気に前進/.test(item.text));
@@ -29,7 +34,7 @@ describe("ClubSimulation match commentary", () => {
 
   it("keeps the live goal count aligned with the halftime and final scores", () => {
     const simulation = new ClubSimulation();
-    const result = simulation.advanceWeek();
+    const result = advanceWeekForTest(simulation);
     const firstHalfGoals = result.highlights.filter((item) => item.minute <= 45 && item.kind === "goal");
     const secondHalfGoals = result.highlights.filter((item) => item.minute > 45 && item.minute < 90 && item.kind === "goal");
     const orbitGoals = result.highlights.filter((item) => item.kind === "goal" && item.team === "orbit");
@@ -45,7 +50,7 @@ describe("ClubSimulation match commentary", () => {
     const simulation = new ClubSimulation();
     const rallyGoalTexts: string[] = [];
     for (let week = 0; week < 12; week += 1) {
-      const result = simulation.advanceWeek();
+      const result = advanceWeekForTest(simulation);
       rallyGoalTexts.push(...result.highlights.filter((item) => item.kind === "goal" && /ラリー/.test(item.text)).map((item) => item.text));
     }
     expect(rallyGoalTexts.length).toBeGreaterThan(0);
@@ -84,17 +89,17 @@ describe("ClubSimulation match commentary", () => {
   it("rotates market candidates without repeating the previous list", () => {
     const simulation = new ClubSimulation();
     const first = new Set(simulation.marketCandidateComparison.map((item) => item.player.id));
-    simulation.advanceWeek();
-    simulation.advanceWeek();
-    simulation.advanceWeek();
+    advanceWeekForTest(simulation);
+    advanceWeekForTest(simulation);
+    advanceWeekForTest(simulation);
     const second = new Set(simulation.marketCandidateComparison.map((item) => item.player.id));
 
     expect(second.size).toBeGreaterThan(0);
     expect([...second].some((id) => first.has(id))).toBe(false);
 
-    simulation.advanceWeek();
-    simulation.advanceWeek();
-    simulation.advanceWeek();
+    advanceWeekForTest(simulation);
+    advanceWeekForTest(simulation);
+    advanceWeekForTest(simulation);
     const third = new Set(simulation.marketCandidateComparison.map((item) => item.player.id));
     expect([...third].some((id) => second.has(id))).toBe(false);
   });
@@ -109,13 +114,13 @@ describe("ClubSimulation match commentary", () => {
     expect(restoredSimulation.clubNameValue).toBe("ブライト 札幌");
     expect(restoredSimulation.leagueRows.find((row) => row.id === "orbit")?.name).toBe("ブライト 札幌");
 
-    const result = restoredSimulation.advanceWeek();
+    const result = advanceWeekForTest(restoredSimulation);
     expect(result.highlights.some((item) => item.kind === "fulltime" && item.text.includes("ブライト 札幌"))).toBe(true);
   });
 
   it("maps only attack or midfield opponents to defensive markers", () => {
     const simulation = new ClubSimulation();
-    const result = simulation.advanceWeek();
+    const result = advanceWeekForTest(simulation);
     const markableOpponentPositions = ["CF", "WG", "AM", "SH", "CM", "DM"];
     const defensivePositions = ["CB", "SB", "DM", "CM", "SH"];
 
@@ -163,7 +168,7 @@ describe("ClubSimulation match commentary", () => {
     expect(afterTraining.attributeXp?.attack ?? 0).toBeGreaterThan(beforeAttributeXp);
     expect(afterTraining.positionMastery?.[afterTraining.position] ?? 0).toBeGreaterThan(beforeMastery);
 
-    const result = simulation.advanceWeek();
+    const result = advanceWeekForTest(simulation);
     expect(result.attributeXpGrants.length).toBeGreaterThan(0);
     expect(result.positionMasteryGrants.length).toBeGreaterThan(0);
     const restored = new ClubSimulation();
@@ -189,7 +194,7 @@ describe("ClubSimulation match commentary", () => {
     expect(afterTraining.attributeXp?.pass ?? 0).toBe(beforeXp);
     expect(afterTraining.fatigue).toBeLessThan(beforeFatigue);
 
-    const result = simulation.advanceWeek();
+    const result = advanceWeekForTest(simulation);
     expect(result.conditionChanges.length).toBeGreaterThan(0);
     const restored = new ClubSimulation();
     expect(restored.conditionFor(restored.rosterPlayers.find((item) => item.id === player!.id)!)).toBe(simulation.conditionFor(afterTraining));
@@ -232,7 +237,7 @@ describe("ClubSimulation match commentary", () => {
     expect(simulation.trainingFocusFor(player!)).toBe("passing");
     player!.fatigue = 40;
     const before = player!.fatigue;
-    const result = simulation.advanceWeek();
+    const result = advanceWeekForTest(simulation);
     expect(result).toBeDefined();
     expect(player!.fatigue).toBeLessThan(before);
     const restored = new ClubSimulation();
@@ -276,7 +281,7 @@ describe("ClubSimulation match commentary", () => {
 
   it("keeps match marking one-to-one and reports zone coverage for surplus attackers", () => {
     const simulation = new ClubSimulation();
-    const result = simulation.advanceWeek();
+    const result = advanceWeekForTest(simulation);
     const assignedDefenders = result.markDuels.map((duel) => duel.playerId);
     const markedOpponents = result.markDuels.map((duel) => duel.opponent);
 
@@ -339,7 +344,7 @@ describe("ClubSimulation match commentary", () => {
     expect(simulation.systemMasteryFor(player!, formationId)).toBeGreaterThan(masteryBefore);
     expect(player!.systemUnderstandingXp ?? 0).toBeGreaterThan(understandingXpBefore);
 
-    const result = simulation.advanceWeek();
+    const result = advanceWeekForTest(simulation);
     expect(result.systemMasteryGrants.length).toBeGreaterThan(0);
     expect(result.systemMasteryGrants.every((grant) => grant.formationId === formationId)).toBe(true);
 
@@ -365,7 +370,7 @@ describe("Match statistics", () => {
 
   it("creates coherent full-time statistics for both teams", () => {
     const simulation = new ClubSimulation();
-    const result = simulation.advanceWeek();
+    const result = advanceWeekForTest(simulation);
     const { orbit, opponent } = result.stats;
 
     expect(orbit.possession + opponent.possession).toBe(100);
@@ -387,7 +392,7 @@ describe("Match statistics", () => {
 
   it("reports ratings for every player who appeared", () => {
     const simulation = new ClubSimulation();
-    const result = simulation.advanceWeek();
+    const result = advanceWeekForTest(simulation);
     expect(result.playerRatings).toHaveLength(11);
     expect(result.playerRatings.every((rating) => rating.playerId && rating.note.length > 0)).toBe(true);
   });
@@ -405,7 +410,7 @@ describe("Match statistics", () => {
 
   it("assigns a deterministic referee strictness profile to each match", () => {
     const simulation = new ClubSimulation();
-    const result = simulation.advanceWeek();
+    const result = advanceWeekForTest(simulation);
     expect(result.refereeStrictness).toBeGreaterThanOrEqual(.78);
     expect(result.refereeStrictness).toBeLessThanOrEqual(1.28);
     expect(["寛容", "標準", "厳格"]).toContain(result.refereeLabel);
@@ -416,7 +421,7 @@ describe("Match statistics", () => {
     let injuryCount = 0;
     let cardCount = 0;
     for (let week = 0; week < 12; week += 1) {
-      const result = simulation.advanceWeek();
+      const result = advanceWeekForTest(simulation);
       injuryCount += result.injuries.length;
       cardCount += result.highlights.filter((item) => item.kind === "card").length;
     }
@@ -603,7 +608,7 @@ describe("Youth academy sessions", () => {
     expect(duplicate.ok).toBe(false);
     expect(duplicate.text).toContain("今週のユース育成セッションは実施済み");
 
-    simulation.advanceWeek();
+    advanceWeekForTest(simulation);
     expect(simulation.youthTrainingUsedThisWeek).toBe(false);
     expect(simulation.developYouth().ok).toBe(true);
   });
@@ -624,11 +629,17 @@ describe("Transfer market refresh", () => {
     const simulation = new ClubSimulation();
     expect(simulation.activeSaleOffers).toHaveLength(0);
 
+    simulation.advanceBreakWeek("training-camp");
+    simulation.advanceBreakWeek("preseason-match");
+
     simulation.advanceWeek();
-    expect(simulation.marketUpdateNotice).toBeNull();
+    expect(simulation.marketUpdateNotice).not.toBeNull();
+    simulation.dismissMarketUpdateNotice();
     simulation.advanceWeek();
     expect(simulation.marketUpdateNotice).toBeNull();
 
+    simulation.advanceWeek();
+    expect(simulation.marketUpdateNotice).toBeNull();
     simulation.advanceWeek();
     const notice = simulation.marketUpdateNotice;
     expect(notice).not.toBeNull();
@@ -719,9 +730,9 @@ describe("Squad age balance", () => {
     const beforeAge = veteran.age;
     const beforeDefense = veteran.defense;
 
-    for (let index = 0; index < 19; index += 1) simulation.advanceWeek();
+    for (let index = 0; index < 19; index += 1) advanceWeekForTest(simulation);
     for (let index = 0; index < 5; index += 1) simulation.advanceBreakWeek("training-camp");
-    for (let index = 0; index < 14; index += 1) simulation.advanceWeek();
+    for (let index = 0; index < 14; index += 1) advanceWeekForTest(simulation);
     for (let index = 0; index < 10; index += 1) simulation.advanceBreakWeek("training-camp");
 
     const aged = simulation.rosterPlayers.find((player) => player.id === "p11")!;
@@ -738,9 +749,9 @@ describe("Squad age balance", () => {
     veteran.age = 40;
     expect(Object.values(simulation.lineupState)).toContain("p13");
 
-    for (let index = 0; index < 19; index += 1) simulation.advanceWeek();
+    for (let index = 0; index < 19; index += 1) advanceWeekForTest(simulation);
     for (let index = 0; index < 5; index += 1) simulation.advanceBreakWeek("training-camp");
-    for (let index = 0; index < 14; index += 1) simulation.advanceWeek();
+    for (let index = 0; index < 14; index += 1) advanceWeekForTest(simulation);
     for (let index = 0; index < 10; index += 1) simulation.advanceBreakWeek("training-camp");
 
     expect(simulation.rosterPlayers.some((player) => player.id === "p13")).toBe(false);
@@ -777,7 +788,7 @@ describe("Rehabilitation facility", () => {
     (simulation as unknown as { injuries: Record<string, number> }).injuries[player.id] = 2;
     player.injuryWeeks = 2;
     simulation.upgradeRehabilitationFacility();
-    simulation.advanceWeek();
+    advanceWeekForTest(simulation);
     expect(simulation.injuryWeeksFor(player.id)).toBe(0);
     expect(player.injuryWeeks).toBeUndefined();
   });
@@ -795,10 +806,16 @@ describe("48-week season calendar", () => {
     });
   });
 
-  it("uses a 48-week season with winter and off-season break windows", () => {
+  it("uses a 48-week season with two opening off-weeks", () => {
     const simulation = new ClubSimulation();
     expect(simulation.seasonWeeks).toBe(48);
-    for (let index = 0; index < 19; index += 1) simulation.advanceWeek();
+    expect(simulation.calendarPhase).toBe("preseason");
+    simulation.advanceBreakWeek("training-camp");
+    expect(simulation.calendarPhase).toBe("preseason");
+    simulation.advanceBreakWeek("preseason-match");
+    expect(simulation.completedWeeks).toBe(2);
+    expect(simulation.calendarPhase).toBe("league");
+    for (let index = 0; index < 17; index += 1) simulation.advanceWeek();
     expect(simulation.calendarPhase).toBe("winter-break");
     expect(simulation.isBreakWeek).toBe(true);
     const camp = simulation.advanceBreakWeek("training-camp");
@@ -811,13 +828,14 @@ describe("48-week season calendar", () => {
 
   it("finishes the 48-week season after the off-season activities and starts a new season", () => {
     const simulation = new ClubSimulation();
-    for (let index = 0; index < 19; index += 1) simulation.advanceWeek();
+    for (let index = 0; index < 2; index += 1) simulation.advanceBreakWeek("training-camp");
+    for (let index = 0; index < 17; index += 1) simulation.advanceWeek();
     for (let index = 0; index < 5; index += 1) simulation.advanceBreakWeek("training-camp");
     for (let index = 0; index < 14; index += 1) simulation.advanceWeek();
     expect(simulation.completedWeeks).toBe(38);
     expect(simulation.calendarPhase).toBe("off-season");
     for (let index = 0; index < 10; index += 1) simulation.advanceBreakWeek("preseason-match");
     expect(simulation.completedWeeks).toBe(0);
-    expect(simulation.calendarPhase).toBe("league");
+    expect(simulation.calendarPhase).toBe("preseason");
   });
 });

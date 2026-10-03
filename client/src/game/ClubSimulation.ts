@@ -185,7 +185,7 @@ export type HalfTimeReport = { playerGoals: number; opponentGoals: number; messa
 export type MatchStatsTeam = { possession: number; shots: number; shotsOnTarget: number; bigChances: number; corners: number; passes: number; passAccuracy: number; fouls: number; offsides: number; saves: number };
 export type MatchStats = { orbit: MatchStatsTeam; opponent: MatchStatsTeam };
 export type MatchResult = { opponent: string; opponentId: string; playerGoals: number; opponentGoals: number; message: string; won: boolean; reward: number; sponsorRevenue: number; cupResult: CupMatchResult | null; gate: GateReceipt; merchandise: MerchandiseReceipt; membership: MembershipReceipt; concession: ConcessionReceipt; totalTicketRevenue: number; totalAttendance: number; totalCommercialRevenue: number; popularityDelta: number; leaguePopularityDelta: number; popularity: number; tactics: TacticalAssessment; opponentTactics: OpponentTacticalAssessment; tacticalMatchup: TacticalMatchup; markingImpact: MarkingMatchImpact; matchAttack: number; matchDefense: number; matchCondition: TeamMatchCondition; conditionAfter: TeamMatchCondition; stats: MatchStats; halfTime: HalfTimeReport; refereeStrictness: number; refereeLabel: "寛容" | "標準" | "厳格"; highlights: MatchHighlight[]; substitutions: MatchSubstitution[]; injuries: MatchInjury[]; playerRatings: PlayerMatchRating[]; markDuels: MarkDuelReport[]; mvp: PlayerMatchRating | null; individualBonuses: IndividualBonusReceipt; skillXpGrants: SkillXpGrant[]; attributeXpGrants: AttributeXpGrant[]; positionMasteryGrants: PositionMasteryGrant[]; systemMasteryGrants: SystemMasteryGrant[]; conditionChanges: PlayerConditionChange[]; halfTimeChanges: string[] };
-export type CalendarPhase = "league" | "winter-break" | "off-season";
+export type CalendarPhase = "preseason" | "league" | "winter-break" | "off-season";
 export type BreakActivity = "preseason-match" | "training-camp";
 export type SeasonCalendarEntry = {
   week: number;
@@ -249,6 +249,7 @@ type Persisted = {
 
 const storageKey = "touchline-tactics-save-v1";
 const SEASON_WEEKS = 48;
+const OPENING_BREAK_END = 2;
 const WINTER_BREAK_START = 19;
 const WINTER_BREAK_END = 23;
 const OFF_SEASON_START = 38;
@@ -572,7 +573,7 @@ export class ClubSimulation {
     const recorded = new Map(this.calendarEntries.map((entry) => [entry.week, entry]));
     return Array.from({ length: SEASON_WEEKS }, (_, index) => {
       const week = index + 1;
-      const phase: CalendarPhase = week >= OFF_SEASON_START + 1 ? "off-season" : week >= WINTER_BREAK_START + 1 && week <= WINTER_BREAK_END + 1 ? "winter-break" : "league";
+      const phase: CalendarPhase = week <= OPENING_BREAK_END ? "preseason" : week >= OFF_SEASON_START + 1 ? "off-season" : week >= WINTER_BREAK_START + 1 && week <= WINTER_BREAK_END + 1 ? "winter-break" : "league";
       const saved = recorded.get(week);
       if (phase === "league") {
         const opponent = opponentSeeds[(week - 1) % opponentSeeds.length];
@@ -581,10 +582,10 @@ export class ClubSimulation {
       return { week, phase, ...saved };
     });
   }
-  get calendarPhase(): CalendarPhase { return this.week >= OFF_SEASON_START ? "off-season" : this.week >= WINTER_BREAK_START && this.week <= WINTER_BREAK_END ? "winter-break" : "league"; }
+  get calendarPhase(): CalendarPhase { return this.week < OPENING_BREAK_END ? "preseason" : this.week >= OFF_SEASON_START ? "off-season" : this.week >= WINTER_BREAK_START && this.week <= WINTER_BREAK_END ? "winter-break" : "league"; }
   get isBreakWeek() { return this.calendarPhase !== "league"; }
-  get breakLabel() { return this.calendarPhase === "winter-break" ? "ウインターブレイク" : this.calendarPhase === "off-season" ? "オフシーズン" : "リーグ戦"; }
-  get nextLeagueWeek() { for (let week = this.week; week < SEASON_WEEKS; week += 1) if (week < WINTER_BREAK_START || week > WINTER_BREAK_END && week < OFF_SEASON_START) return week; return 0; }
+  get breakLabel() { return this.calendarPhase === "preseason" ? "開幕準備期間" : this.calendarPhase === "winter-break" ? "ウインターブレイク" : this.calendarPhase === "off-season" ? "オフシーズン" : "リーグ戦"; }
+  get nextLeagueWeek() { for (let week = this.week + 1; week <= SEASON_WEEKS; week += 1) if (week > OPENING_BREAK_END && (week <= WINTER_BREAK_START || week > WINTER_BREAK_END && week <= OFF_SEASON_START)) return week; return 0; }
   get autoLineupCriteriaValue() { return this.autoLineupCriteria; }
   get annualSalary() { return this.roster.reduce((sum, player) => sum + player.salary, 0); }
   get weeklySalary() { return Math.round(this.annualSalary / 52); }
