@@ -843,7 +843,7 @@ button { font: inherit; }
 @media (min-width: 761px) and (max-width: 980px) { .emblem-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
 
 
-/* Readable 48-week season calendar */
+/* Readable 44-week season calendar */
 .season-calendar { display:grid; gap:14px; }
 .calendar-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding-bottom:14px; border-bottom:1px solid var(--line); }
 .calendar-head h3 { margin:5px 0 6px; color:#eef9eb; font-size:20px; }

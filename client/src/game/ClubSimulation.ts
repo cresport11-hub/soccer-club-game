@@ -248,7 +248,7 @@ type Persisted = {
 };
 
 const storageKey = "touchline-tactics-save-v1";
-const SEASON_WEEKS = 48;
+const SEASON_WEEKS = 44;
 const OPENING_BREAK_END = 2;
 const WINTER_BREAK_START = 19;
 const WINTER_BREAK_END = 23;

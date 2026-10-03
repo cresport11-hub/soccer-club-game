@@ -795,7 +795,7 @@ describe("Rehabilitation facility", () => {
 });
 
 
-describe("48-week season calendar", () => {
+describe("44-week season calendar", () => {
   beforeEach(() => {
     const values = new Map<string, string>();
     vi.stubGlobal("localStorage", {
@@ -806,9 +806,9 @@ describe("48-week season calendar", () => {
     });
   });
 
-  it("uses a 48-week season with two opening off-weeks", () => {
+  it("uses a 44-week season with two opening off-weeks", () => {
     const simulation = new ClubSimulation();
-    expect(simulation.seasonWeeks).toBe(48);
+    expect(simulation.seasonWeeks).toBe(44);
     expect(simulation.calendarPhase).toBe("preseason");
     simulation.advanceBreakWeek("training-camp");
     expect(simulation.calendarPhase).toBe("preseason");
@@ -826,7 +826,7 @@ describe("48-week season calendar", () => {
     expect(simulation.calendarPhase).toBe("league");
   });
 
-  it("finishes the 48-week season after the off-season activities and starts a new season", () => {
+  it("finishes the 44-week season after the off-season activities and starts a new season", () => {
     const simulation = new ClubSimulation();
     for (let index = 0; index < 2; index += 1) simulation.advanceBreakWeek("training-camp");
     for (let index = 0; index < 17; index += 1) simulation.advanceWeek();
@@ -834,7 +834,7 @@ describe("48-week season calendar", () => {
     for (let index = 0; index < 14; index += 1) simulation.advanceWeek();
     expect(simulation.completedWeeks).toBe(38);
     expect(simulation.calendarPhase).toBe("off-season");
-    for (let index = 0; index < 10; index += 1) simulation.advanceBreakWeek("preseason-match");
+    for (let index = 0; index < 6; index += 1) simulation.advanceBreakWeek("preseason-match");
     expect(simulation.completedWeeks).toBe(0);
     expect(simulation.calendarPhase).toBe("preseason");
   });
