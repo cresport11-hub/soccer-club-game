@@ -815,13 +815,19 @@ button { font: inherit; }
 .bgm-toggle:not(.is-on) { opacity: .72; }
 @media (max-width: 600px) { .bgm-toggle { display: inline-grid; } }
 
-/* 48-week calendar break activities */
+/* 44-week calendar break activities */
 .break-schedule-card { margin-top: 18px; padding: 18px; border-color: rgba(217,255,74,.42); background: rgba(7,28,18,.76); }
 .break-schedule-card h2 { margin: 5px 0 6px; }
 .break-schedule-card p { margin: 0; color: rgba(235,247,235,.74); }
 .break-activity-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
 .break-activity-grid button { display: flex; min-height: 76px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 5px; text-align: left; }
 .break-activity-grid button small { color: rgba(235,247,235,.72); font-size: 11px; line-height: 1.4; }
+.break-activity-grid .primary-action { color: #10220f; }
+.break-activity-grid .primary-action b { color: #10220f; }
+.break-activity-grid .primary-action small { color: rgba(16,34,15,.78); }
+.break-activity-grid .primary-action:hover { color: #08180a; }
+.break-activity-grid .primary-action:hover b { color: #08180a; }
+.break-activity-grid .primary-action:hover small { color: rgba(8,24,10,.82); }
 @media (max-width: 720px) {
   .break-activity-grid { grid-template-columns: 1fr; }
   .break-schedule-card { padding: 14px; }
@@ -861,3 +867,27 @@ button { font: inherit; }
 .calendar-week { color:var(--lime); font-size:13px; font-weight:900; }.calendar-week small { margin-left:2px; color:#739178; font-size:7px; }.calendar-phase { color:#89a990; font-size:8px; }.calendar-row strong { overflow:hidden; color:#e8f5e7; text-overflow:ellipsis; white-space:nowrap; }.calendar-score, .calendar-result { color:#c4d8c5; font-weight:800; text-align:right; }.calendar-row.is-w .calendar-result { color:var(--lime); }.calendar-row.is-d .calendar-result { color:#6ad7ff; }.calendar-row.is-l .calendar-result { color:#ff9b73; }
 @media (max-width:800px) { .calendar-head { flex-direction:column; gap:10px; }.calendar-legend { justify-content:flex-start; }.calendar-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }.calendar-columns, .calendar-row { grid-template-columns:42px 82px minmax(0,1fr) 43px 52px; gap:5px; }.calendar-columns { padding-left:7px; padding-right:7px; font-size:7px; }.calendar-row { min-height:45px; padding:7px; font-size:8px; }.calendar-phase { font-size:7px; }.calendar-row strong { line-height:1.35; white-space:normal; }.calendar-list { max-height:560px; } }
 @media (max-width:480px) { .calendar-summary-card { min-height:72px; padding:8px; }.calendar-summary-card strong { font-size:18px; }.calendar-columns, .calendar-row { grid-template-columns:34px 65px minmax(0,1fr) 36px 45px; }.calendar-score, .calendar-result { font-size:8px; } }
+
+/* Scout report growth forecast: show the likely development path without exposing hidden ceilings as certainty. */
+.scout-growth-report { display:grid; gap:13px; margin:16px 0; padding:15px; border:1px solid rgba(217,255,74,.28); border-top:3px solid var(--lime); background:linear-gradient(120deg,rgba(34,53,17,.72),rgba(7,27,17,.76)); }
+.scout-growth-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding-bottom:10px; border-bottom:1px solid rgba(217,255,74,.16); }
+.scout-growth-head > div { display:grid; gap:4px; }.scout-growth-head span { color:var(--lime); font-size:8px; font-weight:900; letter-spacing:.14em; }.scout-growth-head h3 { margin:0; color:#f0ffe8; font-size:16px; }.scout-growth-head h3 b { color:var(--lime); }.scout-growth-head p { margin:0; color:#9fba9f; font-size:9px; line-height:1.5; }.scout-growth-head > strong { display:grid; justify-items:end; color:var(--lime); font-size:25px; line-height:1; }.scout-growth-head > strong small { margin-top:4px; color:#9fba9f; font-size:8px; font-weight:500; }
+.scout-growth-list { display:grid; gap:9px; }.scout-growth-row { display:grid; grid-template-columns:78px 1fr 50px; gap:9px; align-items:center; }.scout-growth-row > span { display:grid; gap:2px; }.scout-growth-row > span b { color:#e8f6e8; font-size:10px; }.scout-growth-row > span small { color:#8eae96; font-size:8px; }.scout-growth-row > i { display:block; height:6px; overflow:hidden; border-radius:99px; background:rgba(255,255,255,.1); }.scout-growth-row > i em { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#83e9a3,#d9ff4a); }.scout-growth-row > strong { color:#f3ffe6; font-size:13px; text-align:right; }.scout-growth-row > strong small { margin:0 3px; color:#89a98f; font-size:9px; }.scout-growth-note { color:#849f89; font-size:8px; line-height:1.5; }
+@media (max-width:600px) { .scout-growth-report { padding:13px; }.scout-growth-head h3 { font-size:14px; }.scout-growth-row { grid-template-columns:68px 1fr 46px; gap:7px; }.scout-growth-row > span b { font-size:9px; }.scout-growth-row > strong { font-size:11px; } }
+
+/* Candidate list ability readout: OF and DF share the same visual weight. */
+.candidate-compare-row { min-height:47px; padding-top:5px; padding-bottom:5px; }
+.compare-abilities { display:grid; gap:2px; align-content:center; color:#dcebdc; font-size:10px; font-weight:800; line-height:1.15; white-space:nowrap; }
+.compare-abilities b { display:block; font-size:10px; font-weight:800; }
+.compare-abilities b::first-letter { color:var(--lime); }
+@media (max-width:600px) { .candidate-compare-row { min-height:51px; padding-top:5px; padding-bottom:5px; }.compare-abilities,.compare-abilities b { font-size:10px; } }
+
+/* Training camp remains an action choice, but no longer uses a lime fill that washes out its copy. */
+.break-activity-grid .primary-action[data-break-activity="training-camp"] { background: rgba(7,28,18,.9); border: 1px solid rgba(217,255,74,.72); color: #effbea; box-shadow: inset 0 0 0 1px rgba(217,255,74,.08); }
+.break-activity-grid .primary-action[data-break-activity="training-camp"] b { color: #effbea; }
+.break-activity-grid .primary-action[data-break-activity="training-camp"] small { color: #b8d1bb; }
+.break-activity-grid .primary-action[data-break-activity="training-camp"]:hover { background: rgba(217,255,74,.12); color: #f3ffe8; }
+.break-activity-grid .primary-action[data-break-activity="training-camp"]:hover b { color: #f3ffe8; }
+.break-activity-grid .primary-action[data-break-activity="training-camp"]:hover small { color: #cce6cf; }
+
+.facility-running-cost { display: block; margin-top: 9px; color: #efb36a; font-size: 9px; letter-spacing: .04em; }

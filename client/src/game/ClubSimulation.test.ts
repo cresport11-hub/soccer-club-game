@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ClubSimulation } from "./ClubSimulation";
-import { commonGivenNamePool, commonSurnamePool, formations, marketRecruits, nationalityNameFor, normalizePlayerName, opponentSeeds, opponentSquadFor, playerAssessmentFor, players, youthIntakes, youthProspects } from "./data";
+import { commonGivenNamePool, commonSurnamePool, defaultGrowthProfileFor, formations, growthCurveModifierFor, marketRecruits, nationalityNameFor, normalizePlayerName, opponentSeeds, opponentSquadFor, playerAssessmentFor, players, youthIntakes, youthProspects } from "./data";
 
 const advanceWeekForTest = (simulation: ClubSimulation) => {
   while (simulation.isBreakWeek) simulation.advanceBreakWeek("training-camp");
@@ -331,6 +331,23 @@ describe("ClubSimulation match commentary", () => {
     expect(simulation.score().systemRate).toBeGreaterThanOrEqual(70);
   });
 
+  it("assigns unique growth profiles and applies curve timing to XP gains", () => {
+    const simulation = new ClubSimulation();
+    const first = simulation.rosterPlayers[0]!;
+    const second = simulation.rosterPlayers.find((player) => player.id !== first.id)!;
+    const firstProfile = defaultGrowthProfileFor(first);
+    const secondProfile = defaultGrowthProfileFor(second);
+    expect(firstProfile.seed).not.toBe(secondProfile.seed);
+    expect(firstProfile.affinities).not.toEqual(secondProfile.affinities);
+    expect(growthCurveModifierFor("early", 20)).toBeGreaterThan(growthCurveModifierFor("late", 20));
+    expect(growthCurveModifierFor("late", 31)).toBeGreaterThan(growthCurveModifierFor("early", 31));
+
+    const summary = simulation.growthProfileSummaryFor(first);
+    expect(["早熟型", "標準型", "晩成型"]).toContain(summary.curveLabel);
+    expect(summary.top).toHaveLength(3);
+    expect(summary.top[0]!.value).toBeGreaterThanOrEqual(summary.top[1]!.value);
+  });
+
   it("grows and persists current-system mastery through training and match experience", () => {
     const simulation = new ClubSimulation();
     const player = simulation.rosterPlayers.find((item) => item.position !== "GK" && Object.values(simulation.lineupState).includes(item.id));
@@ -647,6 +664,25 @@ describe("Transfer market refresh", () => {
     expect(notice?.saleOffers?.length ?? 0).toBeLessThanOrEqual(1);
     expect(notice?.saleOfferIds ?? []).toEqual((notice?.saleOffers ?? []).map((offer) => offer.id));
   });
+
+  it("does not repeat a market player name within the same season", () => {
+    const simulation = new ClubSimulation();
+    const firstNames = new Set(simulation.marketCandidateComparison.map((item) => item.player.name));
+
+    simulation.advanceBreakWeek("training-camp");
+    simulation.advanceBreakWeek("preseason-match");
+    simulation.advanceWeek();
+    const secondNames = new Set(simulation.marketCandidateComparison.map((item) => item.player.name));
+    simulation.advanceWeek();
+    simulation.advanceWeek();
+    simulation.advanceWeek();
+    const thirdNames = new Set(simulation.marketCandidateComparison.map((item) => item.player.name));
+
+    expect([...secondNames].some((name) => firstNames.has(name))).toBe(false);
+    expect([...thirdNames].some((name) => firstNames.has(name) || secondNames.has(name))).toBe(false);
+    expect(secondNames.size).toBeGreaterThan(0);
+    expect(thirdNames.size).toBeGreaterThan(0);
+  });
 });
 
 describe("Recruit negotiation choices", () => {
@@ -676,6 +712,33 @@ describe("Recruit negotiation choices", () => {
       expect(highSimulation.currentRecruitNegotiation.holdReason).toBeTruthy();
       expect(highSimulation.acceptRecruitHold().ok).toBe(true);
     }
+  });
+
+  it("reports a deterministic growth curve and bounded ability forecast", () => {
+    const simulation = new ClubSimulation();
+    const candidate = simulation.currentMarketCandidate;
+    expect(candidate).toBeDefined();
+    const report = simulation.scoutGrowthReport(candidate!);
+    expect(["早熟型", "標準型", "晩成型"]).toContain(report.curveLabel);
+    expect(report.confidence).toBeGreaterThan(0);
+    expect(report.top.length).toBeGreaterThan(0);
+    report.forecasts.forEach((item) => {
+      expect(item.potential).toBeGreaterThanOrEqual(item.current);
+      expect(item.potential).toBeLessThanOrEqual(item.ceiling);
+    });
+    expect(simulation.scoutGrowthReport(candidate!).top).toEqual(report.top);
+  });
+
+});
+
+describe("Club startup defaults", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("starts a new club with 30 million yen", () => {
+    const simulation = new ClubSimulation();
+    expect(simulation.currentMoney).toBe(30_000_000);
   });
 });
 
@@ -780,6 +843,22 @@ describe("Rehabilitation facility", () => {
     expect(simulation.rehabilitationFacility.recoveryWeeks).toBe(2);
     const restored = new ClubSimulation();
     expect(restored.rehabilitationFacility.level).toBe(2);
+  });
+
+  it("uses meaningful upgrade costs across all facility categories", () => {
+    const simulation = new ClubSimulation();
+    expect(simulation.trainingFacility.nextCost).toBe(2_500_000);
+    expect(simulation.rehabilitationFacility.nextCost).toBe(2_500_000);
+    expect(simulation.concessionFacility.nextCost).toBe(3_000_000);
+    expect(simulation.scoutFacility.nextCost).toBe(2_000_000);
+  });
+
+  it("charges the combined facility maintenance cost every week", () => {
+    const simulation = new ClubSimulation();
+    expect(simulation.weeklyFacilityMaintenance).toBe(550_000);
+    simulation.advanceBreakWeek("training-camp");
+    const maintenance = simulation.financialSummary.expenseBreakdown.find((entry) => entry.category === "施設維持費");
+    expect(maintenance?.amount).toBe(550_000);
   });
 
   it("uses the rehabilitation level to shorten injury recovery", () => {

@@ -32,6 +32,8 @@ export type TrainingLoad = "recovery" | "light" | "standard" | "high";
 export type PlayerAttributeKey = "attack" | "dribble" | "pass" | "shoot" | "defense" | "tackle" | "block" | "interception" | "gk";
 export const playerAttributeKeys: PlayerAttributeKey[] = ["attack", "dribble", "pass", "shoot", "defense", "tackle", "block", "interception", "gk"];
 export const playerAttributeLabels: Record<PlayerAttributeKey, string> = { attack: "OF", dribble: "ドリブル", pass: "パス", shoot: "シュート", defense: "DF", tackle: "タックル", block: "ブロック", interception: "パスカット", gk: "GK" };
+export type GrowthCurve = "early" | "standard" | "late";
+export type PlayerGrowthProfile = { curve: GrowthCurve; affinities: Partial<Record<PlayerAttributeKey, number>>; seed: number };
 export type NationalityProfile = { label: string; abilityBoosts: Partial<Record<PlayerAttributeKey, number>>; transferFeeMultiplier: number; note: string };
 export const nationalityProfiles: Record<NationalityCode, NationalityProfile> = {
   JP: { label: "日本", abilityBoosts: {}, transferFeeMultiplier: 1, note: "国内基準" },
@@ -113,6 +115,8 @@ export type Player = {
   attributeXp?: Partial<Record<PlayerAttributeKey, number>>;
   /** UIには公開しない、能力ごとの成長上限。既存セーブには後方互換で自動生成する。 */
   attributeCeilings?: Partial<Record<PlayerAttributeKey, number>>;
+  /** 選手固有の能力別成長適性と、早熟・標準・晩成の成長曲線。 */
+  growthProfile?: PlayerGrowthProfile;
   positionMastery?: Partial<Record<Position, number>>;
   /** 戦術指示を読み取り、異なる布陣へ適応する基礎能力。 */
   systemUnderstanding?: number;
@@ -136,6 +140,32 @@ export const defaultSystemUnderstandingFor = (player: Pick<Player, "id" | "age" 
 export const defaultSystemMasteryFor = (player: Pick<Player, "id">, formationId: string, understanding: number) => {
   const variation = stableSystemSeed(`${player.id}:${formationId}`) % 15;
   return Math.max(8, Math.min(42, Math.round(8 + understanding * .18 + variation)));
+};
+
+const growthFocusByPosition: Record<Position, PlayerAttributeKey[]> = {
+  GK: ["gk", "pass"], CB: ["defense", "tackle", "block", "interception"], SB: ["defense", "tackle", "interception", "dribble"],
+  DM: ["defense", "tackle", "interception", "pass"], CM: ["pass", "dribble", "defense", "attack"], AM: ["pass", "dribble", "attack", "shoot"],
+  SH: ["dribble", "pass", "attack", "defense"], WG: ["dribble", "attack", "shoot", "pass"], CF: ["shoot", "attack", "dribble", "pass"],
+};
+
+/** IDを種にして、同じ選手は常に同じ成長特性になるようにする。 */
+export const defaultGrowthProfileFor = (player: Pick<Player, "id" | "position" | "secondary">): PlayerGrowthProfile => {
+  const seed = stableSystemSeed(`growth:${player.id}`);
+  const primary = growthFocusByPosition[player.position] ?? [];
+  const secondary = player.secondary ? growthFocusByPosition[player.secondary] ?? [] : [];
+  const affinities = Object.fromEntries(playerAttributeKeys.map((attribute, index) => {
+    const roleBonus = primary.includes(attribute) ? 14 : secondary.includes(attribute) ? 7 : 0;
+    return [attribute, 82 + ((seed + index * 17) % 25) + roleBonus];
+  })) as Partial<Record<PlayerAttributeKey, number>>;
+  const curve: GrowthCurve = seed % 3 === 0 ? "early" : seed % 3 === 1 ? "standard" : "late";
+  return { curve, affinities, seed };
+};
+
+/** 年齢と成長曲線から、能力XPの獲得量へ適用する補正。 */
+export const growthCurveModifierFor = (curve: GrowthCurve, age: number) => {
+  if (curve === "early") return age <= 22 ? 1.18 : age <= 26 ? 1.06 : age >= 30 ? .82 : .96;
+  if (curve === "late") return age <= 21 ? .86 : age <= 25 ? .98 : age <= 29 ? 1.1 : 1.16;
+  return age <= 20 ? .94 : age <= 27 ? 1.04 : age >= 31 ? .92 : 1;
 };
 
 /** 選手の現在能力と潜在性から能力別の隠し上限を決める。 */
