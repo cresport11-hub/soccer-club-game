@@ -1,11 +1,63 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ClubSimulation } from "./ClubSimulation";
-import { commonGivenNamePool, commonSurnamePool, defaultGrowthProfileFor, formations, growthCurveModifierFor, marketRecruits, nationalityNameFor, normalizePlayerName, opponentSeeds, opponentSquadFor, playerAssessmentFor, players, youthIntakes, youthProspects } from "./data";
+import { ClubSimulation, sponsorOffers, wbPlayStyleOptions } from "./ClubSimulation";
+import { commonGivenNamePool, commonSurnamePool, defaultGrowthProfileFor, defaultPlayerSideFor, defaultSecondarySideFor, formations, growthCurveModifierFor, marketRecruits, nationalityNameFor, nationalityPositionBoostFor, nationalityProfiles, normalizePlayerName, opponentSeeds, opponentSquadFor, playerAssessmentFor, players, youthIntakes, youthProspects } from "./data";
 
 const advanceWeekForTest = (simulation: ClubSimulation) => {
   while (simulation.isBreakWeek) simulation.advanceBreakWeek("training-camp");
   return simulation.advanceWeek();
 };
+
+describe("Player side foundation", () => {
+  it("provides dedicated WB play styles and applies the selected style", () => {
+    expect(wbPlayStyleOptions).toHaveLength(3);
+    expect(wbPlayStyleOptions.map((option) => option.label)).toEqual(["攻撃型ウイングバック", "内側可変ウイングバック", "守備安定型ウイングバック"]);
+    const simulation = new ClubSimulation();
+    const wingBack = simulation.rosterPlayers[0];
+    wingBack.secondary = "WB";
+    expect(simulation.wbPlayStyleFor(wingBack!)).toBeDefined();
+    const result = simulation.setWbPlayStyle(wingBack!.id, "underlapping-wingback");
+    expect(result.ok).toBe(true);
+    expect(simulation.wbPlayStyleFor(wingBack!)?.id).toBe("underlapping-wingback");
+  });
+
+  it("assigns deterministic left/right adaptation sides without changing central roles", () => {
+    expect(defaultPlayerSideFor({ id: "sb-demo", position: "SB" })).toBe(defaultPlayerSideFor({ id: "sb-demo", position: "SB" }));
+    expect(["left", "right"]).toContain(defaultPlayerSideFor({ id: "sb-demo", position: "SB" }));
+    expect(defaultPlayerSideFor({ id: "cf-demo", position: "CF" })).toBe("center");
+    expect(defaultSecondarySideFor({ id: "wg-demo", position: "WG", secondary: "CF" })).toBe("center");
+  });
+
+  it("gives a wide secondary position the opposite side by default", () => {
+    const primary = defaultPlayerSideFor({ id: "sb-demo", position: "SB" });
+    const secondary = defaultSecondarySideFor({ id: "sb-demo", position: "SB", secondary: "SH" });
+    expect(secondary).toBe(primary === "left" ? "right" : "left");
+  });
+
+  it("defines a left, center, or right side on every formation slot", () => {
+    for (const formation of formations) {
+      expect(formation.slots.every((slot) => ["left", "center", "right"].includes(slot.side))).toBe(true);
+      expect(formation.slots.find((slot) => slot.id === "gk")?.side).toBe("center");
+    }
+    const fourFourTwo = formations.find((formation) => formation.id === "4-4-2");
+    expect(fourFourTwo?.slots.find((slot) => slot.id === "lb")?.side).toBe("left");
+    expect(fourFourTwo?.slots.find((slot) => slot.id === "rb")?.side).toBe("right");
+    expect(fourFourTwo?.slots.find((slot) => slot.id === "lst")?.side).toBe("left");
+    expect(fourFourTwo?.slots.find((slot) => slot.id === "rst")?.side).toBe("right");
+  });
+
+  it("defines distinct WB commentary for each play style", () => {
+    expect(wbPlayStyleOptions.find((option) => option.id === "attacking-wingback")?.finishCopy).toContain("大外");
+    expect(wbPlayStyleOptions.find((option) => option.id === "underlapping-wingback")?.finishCopy).toContain("内側");
+    expect(wbPlayStyleOptions.find((option) => option.id === "defensive-wingback")?.finishCopy).toContain("帰陣");
+  });
+
+  it("supports WB as a distinct wing-back position", () => {
+    expect(marketRecruits.some((player) => player.position === "WB" || player.secondary === "WB")).toBe(true);
+    const wideSlot = formations.find((formation) => formation.id === "3-5-2")?.slots.find((slot) => slot.id === "lwb");
+    expect(wideSlot?.allowed).toContain("WB");
+    expect(formations.find((formation) => formation.id === "5-4-1")?.slots.find((slot) => slot.id === "rwb")?.allowed).toContain("WB");
+  });
+});
 
 describe("ClubSimulation match commentary", () => {
   beforeEach(() => {
@@ -154,6 +206,29 @@ describe("ClubSimulation match commentary", () => {
     expect(marketRecruits.find((player) => player.id === "r9")?.name).toBe(nationalityNameFor("AR", "r9"));
     expect(nationalityNameFor("BR", "r1")).toMatch(/^[A-Za-zÀ-ÿ]+ [A-Za-zÀ-ÿ]+$/);
     expect(nationalityNameFor("KR", "sample")).toMatch(/^[A-Za-z-]+ [A-Za-z-]+$/);
+  });
+
+  it("provides 300 unique market player IDs with exactly 50 foreign players", () => {
+    expect(marketRecruits).toHaveLength(300);
+    expect(new Set(marketRecruits.map((player) => player.id)).size).toBe(300);
+    expect(marketRecruits.filter((player) => player.nationality && player.nationality !== "JP")).toHaveLength(50);
+    expect(marketRecruits.filter((player) => (player.nationality ?? "JP") === "JP")).toHaveLength(250);
+    expect(marketRecruits.filter((player) => player.id.startsWith("rg"))).toHaveLength(291);
+  });
+
+  it("differentiates nationality tendencies by position", () => {
+    expect(nationalityProfiles.BR.note).toContain("突破");
+    expect(Object.values(nationalityProfiles).every((profile) => profile.styleTendency.length >= 40)).toBe(true);
+    expect(nationalityPositionBoostFor("BR", "WG").dribble).toBeGreaterThan(nationalityPositionBoostFor("BR", "CB").dribble ?? 0);
+    expect(nationalityPositionBoostFor("ES", "CM").pass).toBeGreaterThan(nationalityPositionBoostFor("ES", "WG").pass ?? 0);
+    expect(nationalityPositionBoostFor("DE", "CB").defense).toBeGreaterThan(nationalityPositionBoostFor("DE", "WG").defense ?? 0);
+    expect(nationalityPositionBoostFor("AR", "AM").pass).toBeGreaterThan(nationalityPositionBoostFor("AR", "CB").pass ?? 0);
+    const brazilianWingers = marketRecruits.filter((player) => player.nationality === "BR" && player.position === "WG");
+    const spanishMidfielders = marketRecruits.filter((player) => player.nationality === "ES" && ["CM", "AM", "DM"].includes(player.position));
+    expect(brazilianWingers.length).toBeGreaterThan(0);
+    expect(spanishMidfielders.length).toBeGreaterThan(0);
+    expect(brazilianWingers.every((player) => player.dribble >= 60)).toBe(true);
+    expect(spanishMidfielders.every((player) => player.pass >= 55)).toBe(true);
   });
 
   it("accumulates individual attribute XP and position mastery through training and matches", () => {
@@ -459,6 +534,28 @@ describe("Team power radar", () => {
     });
   });
 
+  it("keeps the goalkeeper visibly separated from the central defenders in three-back formations", () => {
+    for (const formationId of ["3-4-3", "3-5-2", "3-6-1"]) {
+      const formation = formations.find((item) => item.id === formationId);
+      const gk = formation?.slots.find((slot) => slot.id === "gk");
+      const cb = formation?.slots.find((slot) => slot.id === "cb");
+      expect(gk).toBeDefined();
+      expect(cb).toBeDefined();
+      expect((gk?.y ?? 0) - (cb?.y ?? 0)).toBeGreaterThanOrEqual(13);
+    }
+  });
+
+  it("keeps the goalkeeper visibly separated from the central defenders in five-back formations", () => {
+    for (const formationId of ["5-4-1", "5-3-2"]) {
+      const formation = formations.find((item) => item.id === formationId);
+      const gk = formation?.slots.find((slot) => slot.id === "gk");
+      const cb = formation?.slots.find((slot) => slot.id === "cb");
+      expect(gk).toBeDefined();
+      expect(cb).toBeDefined();
+      expect((gk?.y ?? 0) - (cb?.y ?? 0)).toBeGreaterThanOrEqual(13);
+    }
+  });
+
   it("builds six bounded axes and reacts to squad condition", () => {
     const simulation = new ClubSimulation();
     simulation.autoLineup();
@@ -665,6 +762,27 @@ describe("Transfer market refresh", () => {
     expect(notice?.saleOfferIds ?? []).toEqual((notice?.saleOffers ?? []).map((offer) => offer.id));
   });
 
+  it("shows four candidates initially and normalizes an oversized saved list", () => {
+    const simulation = new ClubSimulation();
+    expect(simulation.marketCandidateComparison).toHaveLength(4);
+
+    const values = new Map<string, string>();
+    simulation.resetGame();
+    const saved = JSON.parse(values.get("touchline-tactics-save-v1") ?? "{}") as Record<string, unknown>;
+    saved.marketCandidateIds = marketRecruits.map((player) => player.id);
+    saved.marketCandidateCycle = 0;
+    values.set("touchline-tactics-save", JSON.stringify(saved));
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+      clear: () => values.clear(),
+    });
+
+    const restored = new ClubSimulation();
+    expect(restored.marketCandidateComparison).toHaveLength(4);
+  });
+
   it("does not repeat a market player name within the same season", () => {
     const simulation = new ClubSimulation();
     const firstNames = new Set(simulation.marketCandidateComparison.map((item) => item.player.name));
@@ -682,6 +800,28 @@ describe("Transfer market refresh", () => {
     expect([...thirdNames].some((name) => firstNames.has(name) || secondNames.has(name))).toBe(false);
     expect(secondNames.size).toBeGreaterThan(0);
     expect(thirdNames.size).toBeGreaterThan(0);
+  });
+});
+
+describe("Sponsor balance", () => {
+  it("keeps sponsor contracts meaningful without making any plan strictly dominant", () => {
+    const byId = Object.fromEntries(sponsorOffers.map((offer) => [offer.id, offer]));
+    expect(byId["orbit-credit"].upFront).toBe(1500000);
+    expect(byId["northforge"].winBonus).toBe(190000);
+    expect(byId["mori-craft"].weeklyIncome).toBe(220000);
+    for (const offer of sponsorOffers) {
+      expect(offer.upFront).toBeGreaterThanOrEqual(1000000);
+      expect(offer.weeklyIncome).toBeGreaterThanOrEqual(120000);
+      expect(offer.winBonus).toBeGreaterThanOrEqual(50000);
+    }
+  });
+
+  it("provides sponsor-specific milestone rewards after signing", () => {
+    const simulation = new ClubSimulation();
+    expect(simulation.signSponsor("orbit-credit").ok).toBe(true);
+    expect(simulation.currentSponsor?.id).toBe("orbit-credit");
+    expect(simulation.sponsorSpecialRewards.map((reward) => reward.condition)).toEqual(["league-wins-3", "fame-400"]);
+    expect(simulation.sponsorSpecialRewards.every((reward) => !reward.claimed && !reward.eligible)).toBe(true);
   });
 });
 

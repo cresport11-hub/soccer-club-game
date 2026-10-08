@@ -1,21 +1,38 @@
 /**
  * Design system: 「タッチライン戦術室」— data is compact, legible, and designed for a tactical board UI.
  */
-export type Position = "GK" | "CB" | "SB" | "DM" | "CM" | "AM" | "SH" | "WG" | "CF";
+export type Position = "GK" | "CB" | "SB" | "WB" | "DM" | "CM" | "AM" | "SH" | "WG" | "CF";
+export type Side = "left" | "center" | "right";
 export type NationalityCode = "JP" | "BR" | "KR" | "ES" | "DE" | "FR" | "AR";
 export const foreignPlayerLimit = 3;
 export const nationalityLabels: Record<NationalityCode, string> = { JP: "日本", BR: "ブラジル", KR: "韓国", ES: "スペイン", DE: "ドイツ", FR: "フランス", AR: "アルゼンチン" };
 export const isForeignPlayer = (player: { nationality?: NationalityCode }) => (player.nationality ?? "JP") !== "JP";
-export const positionLabels: Record<Position, string> = { GK: "GK", CB: "CB", SB: "SB", DM: "DH", CM: "CH", AM: "OH", SH: "SH", WG: "WG", CF: "CF" };
+export const positionLabels: Record<Position, string> = { GK: "GK", CB: "CB", SB: "SB", WB: "WB", DM: "DH", CM: "CH", AM: "OH", SH: "SH", WG: "WG", CF: "CF" };
+export const sideLabels: Record<Side, string> = { left: "左", center: "中央", right: "右" };
+export const sideLabel = (side: Side | string | undefined) => side ? sideLabels[side as Side] ?? side : "中央";
+
+const sideSeedFor = (value: string) => Array.from(value).reduce((total, character, index) => total + character.charCodeAt(0) * (index + 5), 0);
+const sideAwarePositions: Position[] = ["CB", "SB", "WB", "SH", "WG"];
+/** 左右属性未設定の旧選手にも、ID固定で同じ適応サイドを割り当てる。中央の選手は中央適応とする。 */
+export const defaultPlayerSideFor = (player: Pick<Player, "id" | "position">): Side => {
+  if (!sideAwarePositions.includes(player.position)) return "center";
+  return sideSeedFor(`${player.id}:${player.position}`) % 2 === 0 ? "left" : "right";
+};
+export const defaultSecondarySideFor = (player: Pick<Player, "id" | "position" | "secondary">): Side | undefined => {
+  if (!player.secondary) return undefined;
+  if (!sideAwarePositions.includes(player.secondary)) return "center";
+  const primary = defaultPlayerSideFor(player);
+  return primary === "left" ? "right" : "left";
+};
 
 /** 実戦の守備対応に合わせたマーク対象と担当優先順位。GK・CB・SBは個別マークせず、守備ブロックで対応する。 */
 export const markingTargetPositions: Position[] = ["CF", "WG", "AM", "SH", "CM", "DM"];
-export const markingDefenderPositions: Position[] = ["CB", "SB", "DM", "CM", "SH"];
+export const markingDefenderPositions: Position[] = ["CB", "SB", "WB", "DM", "CM", "SH"];
 const markingDefenderPriority: Partial<Record<Position, Position[]>> = {
   CF: ["CB", "SB", "DM", "CM", "SH"],
-  WG: ["SB", "CB", "SH", "DM", "CM"],
+  WG: ["SB", "WB", "CB", "SH", "DM", "CM"],
   AM: ["DM", "CM", "CB", "SB", "SH"],
-  SH: ["SB", "SH", "DM", "CM", "CB"],
+  SH: ["SB", "WB", "SH", "DM", "CM", "CB"],
   CM: ["CM", "DM", "SH", "CB", "SB"],
   DM: ["DM", "CM", "CB", "SB", "SH"],
 };
@@ -34,17 +51,18 @@ export const playerAttributeKeys: PlayerAttributeKey[] = ["attack", "dribble", "
 export const playerAttributeLabels: Record<PlayerAttributeKey, string> = { attack: "OF", dribble: "ドリブル", pass: "パス", shoot: "シュート", defense: "DF", tackle: "タックル", block: "ブロック", interception: "パスカット", gk: "GK" };
 export type GrowthCurve = "early" | "standard" | "late";
 export type PlayerGrowthProfile = { curve: GrowthCurve; affinities: Partial<Record<PlayerAttributeKey, number>>; seed: number };
-export type NationalityProfile = { label: string; abilityBoosts: Partial<Record<PlayerAttributeKey, number>>; transferFeeMultiplier: number; note: string };
+export type NationalityProfile = { label: string; abilityBoosts: Partial<Record<PlayerAttributeKey, number>>; positionBoosts: Partial<Record<Position, Partial<Record<PlayerAttributeKey, number>>>>; transferFeeMultiplier: number; note: string; styleTendency: string };
 export const nationalityProfiles: Record<NationalityCode, NationalityProfile> = {
-  JP: { label: "日本", abilityBoosts: {}, transferFeeMultiplier: 1, note: "国内基準" },
-  BR: { label: "ブラジル", abilityBoosts: { attack: 3, dribble: 5, pass: 2, shoot: 2, defense: -1 }, transferFeeMultiplier: 1.12, note: "個人技と突破力に優れる" },
-  KR: { label: "韓国", abilityBoosts: { attack: 1, defense: 3, tackle: 4, interception: 3 }, transferFeeMultiplier: 1.06, note: "運動量と守備強度に優れる" },
-  ES: { label: "スペイン", abilityBoosts: { pass: 5, dribble: 2, attack: 2, interception: 1 }, transferFeeMultiplier: 1.1, note: "パスワークと判断力に優れる" },
-  DE: { label: "ドイツ", abilityBoosts: { defense: 4, block: 4, pass: 2, attack: 1 }, transferFeeMultiplier: 1.14, note: "組織守備と対人強度に優れる" },
-  FR: { label: "フランス", abilityBoosts: { attack: 3, defense: 2, dribble: 3, shoot: 2 }, transferFeeMultiplier: 1.16, note: "フィジカルと攻守の総合力に優れる" },
-  AR: { label: "アルゼンチン", abilityBoosts: { attack: 3, dribble: 4, shoot: 4, pass: 2, defense: -2 }, transferFeeMultiplier: 1.14, note: "創造性とフィニッシュに優れる" },
+  JP: { label: "日本", abilityBoosts: { pass: 1, interception: 1 }, positionBoosts: { SB: { pass: 2, interception: 2 }, CM: { pass: 2 }, GK: { pass: 2 } }, transferFeeMultiplier: 1, note: "連係・運動量・丁寧なビルドアップを重視", styleTendency: "短いパス交換と連動したポゼッションを好み、サイドバックの上下動や前線からの連係プレスで組織的に前進する傾向があります。" },
+  BR: { label: "ブラジル", abilityBoosts: { attack: 3, dribble: 5, pass: 2, shoot: 2, defense: -1 }, positionBoosts: { WG: { dribble: 3, attack: 2 }, CF: { shoot: 3, dribble: 2 }, AM: { dribble: 2, pass: 2 }, SB: { dribble: 1 } }, transferFeeMultiplier: 1.12, note: "個人技・突破・創造性に優れる", styleTendency: "1対1の仕掛けと即興的なコンビネーションを重視し、WGやAMが内側へ切り込んで局面を個人技で動かす傾向があります。" },
+  KR: { label: "韓国", abilityBoosts: { attack: 1, defense: 3, tackle: 4, interception: 3 }, positionBoosts: { CF: { attack: 2, shoot: 2 }, WG: { attack: 2, defense: 1 }, SH: { tackle: 2, interception: 2 }, SB: { tackle: 2 } }, transferFeeMultiplier: 1.06, note: "運動量・前線守備・縦への推進力に優れる", styleTendency: "高い運動量で前線から追い込み、奪った後は縦へ速く進むトランジションと強度の高いプレッシングを好む傾向があります。" },
+  ES: { label: "スペイン", abilityBoosts: { pass: 5, dribble: 2, attack: 2, interception: 1 }, positionBoosts: { CM: { pass: 3, dribble: 2 }, AM: { pass: 3, attack: 2 }, DM: { pass: 2, interception: 2 }, CB: { pass: 2 } }, transferFeeMultiplier: 1.1, note: "パスワーク・狭い局面の判断・保持に優れる", styleTendency: "中盤で三角形を作る細かなパスワークを得意とし、CMやAMが間で受けて保持を安定させるポゼッション志向の傾向があります。" },
+  DE: { label: "ドイツ", abilityBoosts: { defense: 4, block: 4, pass: 2, attack: 1 }, positionBoosts: { CB: { defense: 3, block: 3 }, GK: { gk: 3, pass: 2 }, DM: { defense: 2, interception: 2 }, SB: { defense: 2, tackle: 2 } }, transferFeeMultiplier: 1.14, note: "組織守備・対人強度・規律ある判断に優れる", styleTendency: "守備ブロックの距離と役割分担を重視し、奪回後はCBやGKから前線へ正確に運ぶ規律ある切替を好む傾向があります。" },
+  FR: { label: "フランス", abilityBoosts: { attack: 3, defense: 2, dribble: 3, shoot: 2 }, positionBoosts: { CF: { attack: 3, shoot: 2 }, WG: { dribble: 3, attack: 2 }, CM: { dribble: 2, defense: 1 }, CB: { defense: 2 } }, transferFeeMultiplier: 1.16, note: "身体能力・攻守の切替・前線の多様性に優れる", styleTendency: "身体能力を活かした縦への推進と、攻守の切替の速さを武器にします。前線の選手が複数ポジションを入れ替える傾向があります。" },
+  AR: { label: "アルゼンチン", abilityBoosts: { attack: 3, dribble: 4, shoot: 4, pass: 2, defense: -2 }, positionBoosts: { AM: { pass: 3, dribble: 3 }, CF: { shoot: 3, attack: 2 }, WG: { dribble: 3, shoot: 2 }, CM: { pass: 2 } }, transferFeeMultiplier: 1.14, note: "創造性・狭い局面の打開・フィニッシュに優れる", styleTendency: "AMやWGが狭いスペースでボールを受け、ラストパスや個人突破で決定機を作る創造性重視の傾向があります。" },
 };
 export const nationalityProfileFor = (nationality?: NationalityCode) => nationalityProfiles[nationality ?? "JP"];
+export const nationalityPositionBoostFor = (nationality: NationalityCode | undefined, position: Position) => nationalityProfileFor(nationality).positionBoosts[position] ?? {};
 export type SkillGrowthFocus = "attacking" | "passing" | "finishing" | "defending" | "goalkeeping";
 export type PlayerSkillId = "finisher" | "linkman" | "cut-in" | "cross-master" | "vision" | "engine" | "switcher" | "ball-hunter" | "overlap" | "duel-master" | "aerial-wall" | "interceptor" | "sweeper" | "one-on-one" | "tempo-controller" | "recovery-run" | "regista-scan" | "touchline-drive" | "aerial-target";
 export type PlayerSkillDefinition = { id: PlayerSkillId; label: string; short: string; description: string; positions: Position[]; focus: "attack" | "defense" | "pass" | "tackle" | "interception" | "gk"; minimum: number; styles?: Array<"possession" | "direct" | "press">; attackBoost: number; defenseBoost: number; highlight: string };
@@ -57,6 +75,7 @@ export type CMPlayStyle = "box-to-box" | "deep-playmaker" | "mezzala";
 export type DMPlayStyle = "anchor" | "regista" | "destroyer";
 export type CBPlayStyle = "stopper" | "ball-playing" | "cover";
 export type SBPlayStyle = "overlap" | "inverted-fullback" | "defensive-fullback";
+export type WBPlayStyle = "attacking-wingback" | "underlapping-wingback" | "defensive-wingback";
 export type GKPlayStyle = "shot-stopper" | "sweeper-keeper" | "distributor";
 
 export type Player = {
@@ -66,6 +85,10 @@ export type Player = {
   nationality?: NationalityCode;
   position: Position;
   secondary?: Position;
+  /** 主ポジションで得意とするサイド。未設定の旧セーブはIDから補完する。 */
+  preferredSide?: Side;
+  /** 副ポジションで得意とするサイド。 */
+  secondarySide?: Side;
   attack: number;
   dribble: number;
   pass: number;
@@ -87,6 +110,7 @@ export type Player = {
   dmPlayStyle?: DMPlayStyle;
   cbPlayStyle?: CBPlayStyle;
   sbPlayStyle?: SBPlayStyle;
+  wbPlayStyle?: WBPlayStyle;
   gkPlayStyle?: GKPlayStyle;
   injuryWeeks?: number;
   /** 累積警告数。2枚で次の公式戦を出場停止にする。 */
@@ -143,7 +167,7 @@ export const defaultSystemMasteryFor = (player: Pick<Player, "id">, formationId:
 };
 
 const growthFocusByPosition: Record<Position, PlayerAttributeKey[]> = {
-  GK: ["gk", "pass"], CB: ["defense", "tackle", "block", "interception"], SB: ["defense", "tackle", "interception", "dribble"],
+  GK: ["gk", "pass"], WB: ["dribble", "pass", "defense", "tackle"], CB: ["defense", "tackle", "block", "interception"], SB: ["defense", "tackle", "interception", "dribble"],
   DM: ["defense", "tackle", "interception", "pass"], CM: ["pass", "dribble", "defense", "attack"], AM: ["pass", "dribble", "attack", "shoot"],
   SH: ["dribble", "pass", "attack", "defense"], WG: ["dribble", "attack", "shoot", "pass"], CF: ["shoot", "attack", "dribble", "pass"],
 };
@@ -172,6 +196,7 @@ export const growthCurveModifierFor = (curve: GrowthCurve, age: number) => {
 export const defaultAttributeCeilingsFor = (player: Pick<Player, "position" | "secondary" | "age" | "ceiling" | "attack" | "dribble" | "pass" | "shoot" | "defense" | "tackle" | "block" | "interception" | "gk">): Partial<Record<PlayerAttributeKey, number>> => {
   const focusByPosition: Record<Position, PlayerAttributeKey[]> = {
     GK: ["gk", "pass"],
+    WB: ["dribble", "pass", "defense", "tackle"],
     CB: ["defense", "tackle", "block", "interception"],
     SB: ["defense", "tackle", "interception", "dribble"],
     DM: ["defense", "tackle", "interception", "pass"],
@@ -196,6 +221,7 @@ export const defaultAttributeCeilingsFor = (player: Pick<Player, "position" | "s
 export type Slot = {
   id: string;
   label: Position;
+  side: Side;
   x: number;
   y: number;
   allowed: Position[];
@@ -229,7 +255,7 @@ export const playerSkillCatalog: Record<PlayerSkillId, PlayerSkillDefinition> = 
   "ball-hunter": { id: "ball-hunter", label: "ボールハンター", short: "奪取", description: "相手の持ち出しを読み、前向きの奪取から即時攻撃につなげる。", positions: ["DM", "CM", "SH"], focus: "tackle", minimum: 58, styles: ["press"], attackBoost: 0, defenseBoost: 2, highlight: "鋭い寄せでボールを奪い、攻撃へつなげた。" },
   overlap: { id: "overlap", label: "オーバーラップ", short: "追越", description: "外側を追い越して幅をつくり、前線へ選択肢を増やす。", positions: ["SB", "SH"], focus: "attack", minimum: 45, styles: ["direct", "press"], attackBoost: 1, defenseBoost: 0, highlight: "外側を追い越し、前進の出口をつくった。" },
   "duel-master": { id: "duel-master", label: "対人強度", short: "対人", description: "一対一で粘り強く対応し、相手の前進を止める。", positions: ["SB", "CB", "DM"], focus: "defense", minimum: 65, attackBoost: 0, defenseBoost: 1, highlight: "対人局面を制し、危険な前進を止めた。" },
-  "aerial-wall": { id: "aerial-wall", label: "空中戦の壁", short: "空中", description: "競り合いで高さを発揮し、クロスとロングボールを跳ね返す。", positions: ["CB", "SB"], focus: "defense", minimum: 68, styles: ["direct"], attackBoost: 0, defenseBoost: 1, highlight: "高い打点で競り勝ち、危険を跳ね返した。" },
+  "aerial-wall": { id: "aerial-wall", label: "空中戦の壁", short: "空中", description: "競り合いで高さを発揮し、クロスとロングボールを跳ね返す。", positions: ["CB", "SB", "WB"], focus: "defense", minimum: 68, styles: ["direct"], attackBoost: 0, defenseBoost: 1, highlight: "高い打点で競り勝ち、危険を跳ね返した。" },
   interceptor: { id: "interceptor", label: "インターセプト", short: "予測", description: "相手のパスコースを先読みし、攻撃の芽を摘み取る。", positions: ["CB", "DM"], focus: "interception", minimum: 64, attackBoost: 0, defenseBoost: 1, highlight: "パスコースを読み切り、前進を寸断した。" },
   sweeper: { id: "sweeper", label: "スイーパー対応", short: "掃除", description: "最終ラインの背後を素早くカバーし、広い守備範囲を使う。", positions: ["GK"], focus: "gk", minimum: 70, styles: ["press"], attackBoost: 0, defenseBoost: 1, highlight: "背後へ素早く飛び出し、危険を消した。" },
   "one-on-one": { id: "one-on-one", label: "1対1セーブ", short: "反応", description: "至近距離でも冷静に構え、決定機を止める。", positions: ["GK"], focus: "gk", minimum: 68, attackBoost: 0, defenseBoost: 2, highlight: "至近距離の決定機を止め、チームを救った。" },
@@ -245,14 +271,16 @@ export const playerSkillGrowthFocus: Record<PlayerSkillId, SkillGrowthFocus[]> =
   finisher: ["finishing", "attacking"], linkman: ["passing"], "cut-in": ["attacking", "finishing"], "cross-master": ["passing"], vision: ["passing"], engine: ["attacking", "defending"], switcher: ["passing"], "ball-hunter": ["defending"], overlap: ["attacking", "passing"], "duel-master": ["defending"], "aerial-wall": ["defending"], interceptor: ["defending"], sweeper: ["goalkeeping"], "one-on-one": ["goalkeeping"], "tempo-controller": ["passing"], "recovery-run": ["defending"], "regista-scan": ["passing"], "touchline-drive": ["attacking"], "aerial-target": ["finishing", "attacking"],
 };
 const fallbackPlayerSkills: Record<Position, PlayerSkillId[]> = {
-  GK: ["one-on-one"], CB: ["aerial-wall"], SB: ["overlap"], DM: ["interceptor"], CM: ["tempo-controller"], AM: ["vision"], SH: ["touchline-drive"], WG: ["cut-in"], CF: ["finisher"],
+  GK: ["one-on-one"], CB: ["aerial-wall"], SB: ["overlap"], WB: ["overlap", "cross-master"], DM: ["interceptor"], CM: ["tempo-controller"], AM: ["vision"], SH: ["touchline-drive"], WG: ["cut-in"], CF: ["finisher"],
 };
 export const playerSkillsFor = (player: Pick<Player, "position" | "skills">) => {
   const configured = (player.skills ?? []).filter((skill): skill is PlayerSkillId => Boolean(playerSkillCatalog[skill]));
   return configured.length ? configured : fallbackPlayerSkills[player.position];
 };
 
-const field = (id: string, label: Position, x: number, y: number, allowed: Position[]): Slot => ({ id, label, x, y, allowed });
+const sideForFieldX = (x: number): Side => x <= 40 ? "left" : x >= 60 ? "right" : "center";
+/** フォーメーションの左右レーンをスロット自身に保持する。必要な場合だけ明示指定できる。 */
+const field = (id: string, label: Position, x: number, y: number, allowed: Position[], side: Side = sideForFieldX(x)): Slot => ({ id, label, side, x, y, allowed });
 
 const formationSeeds: Formation[] = [
   {
@@ -261,7 +289,7 @@ const formationSeeds: Formation[] = [
     description: "王道のバランス",
     slots: [
       field("gk", "GK", 50, 91, ["GK"]),
-      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB"]), field("rcb", "CB", 62, 80, ["CB", "SB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
+      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB", "WB"]), field("rcb", "CB", 62, 80, ["CB", "SB", "WB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
       field("lm", "SH", 17, 51, ["SH", "WG", "AM", "CM"]), field("lcm", "CM", 39, 57, ["CM", "DM", "AM"]), field("rcm", "CM", 61, 57, ["CM", "DM", "AM"]), field("rm", "SH", 83, 51, ["SH", "WG", "AM", "CM"]),
       field("lst", "CF", 38, 24, ["CF", "AM", "WG"]), field("rst", "CF", 62, 24, ["CF", "AM", "WG"]),
     ],
@@ -272,7 +300,7 @@ const formationSeeds: Formation[] = [
     description: "DH2・SH2／ダブルボランチ",
     slots: [
       field("gk", "GK", 50, 91, ["GK"]),
-      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB"]), field("rcb", "CB", 62, 80, ["CB", "SB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
+      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB", "WB"]), field("rcb", "CB", 62, 80, ["CB", "SB", "WB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
       field("lm", "SH", 17, 51, ["SH", "WG", "AM", "CM"]), field("ldm", "DM", 39, 57, ["DM", "CM", "CB"]), field("rdm", "DM", 61, 57, ["DM", "CM", "CB"]), field("rm", "SH", 83, 51, ["SH", "WG", "AM", "CM"]),
       field("lst", "CF", 38, 24, ["CF", "AM", "WG"]), field("rst", "CF", 62, 24, ["CF", "AM", "WG"]),
     ],
@@ -283,7 +311,7 @@ const formationSeeds: Formation[] = [
     description: "DH1・OH1・SH2／攻撃的ワイド",
     slots: [
       field("gk", "GK", 50, 91, ["GK"]),
-      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB"]), field("rcb", "CB", 62, 80, ["CB", "SB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
+      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB", "WB"]), field("rcb", "CB", 62, 80, ["CB", "SB", "WB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
       field("lm", "SH", 17, 51, ["SH", "WG", "AM", "CM"]), field("dm", "DM", 39, 62, ["DM", "CM", "CB"]), field("oh", "AM", 61, 50, ["AM", "CM", "CF", "WG"]), field("rm", "SH", 83, 51, ["SH", "WG", "AM", "CM"]),
       field("lst", "CF", 38, 24, ["CF", "AM", "WG"]), field("rst", "CF", 62, 24, ["CF", "AM", "WG"]),
     ],
@@ -294,7 +322,7 @@ const formationSeeds: Formation[] = [
     description: "CH4／中央支配",
     slots: [
       field("gk", "GK", 50, 91, ["GK"]),
-      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB"]), field("rcb", "CB", 62, 80, ["CB", "SB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
+      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB", "WB"]), field("rcb", "CB", 62, 80, ["CB", "SB", "WB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
       field("lcm-wide", "CM", 17, 51, ["CM", "DM", "AM"]), field("lcm", "CM", 39, 57, ["CM", "DM", "AM"]), field("rcm", "CM", 61, 57, ["CM", "DM", "AM"]), field("rcm-wide", "CM", 83, 51, ["CM", "DM", "AM"]),
       field("lst", "CF", 38, 24, ["CF", "AM", "WG"]), field("rst", "CF", 62, 24, ["CF", "AM", "WG"]),
     ],
@@ -305,7 +333,7 @@ const formationSeeds: Formation[] = [
     description: "DH1・CH2・OH1／ダイヤモンド",
     slots: [
       field("gk", "GK", 50, 91, ["GK"]),
-      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB"]), field("rcb", "CB", 62, 80, ["CB", "SB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
+      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB", "WB"]), field("rcb", "CB", 62, 80, ["CB", "SB", "WB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
       field("dm", "DM", 50, 66, ["DM", "CM", "CB"]), field("lcm", "CM", 31, 52, ["CM", "DM", "AM"]), field("rcm", "CM", 69, 52, ["CM", "DM", "AM"]), field("oh", "AM", 50, 34, ["AM", "CM", "CF", "WG"]),
       field("lst", "CF", 38, 24, ["CF", "AM", "WG"]), field("rst", "CF", 62, 24, ["CF", "AM", "WG"]),
     ],
@@ -316,7 +344,7 @@ const formationSeeds: Formation[] = [
     description: "攻撃的バランス",
     slots: [
       field("gk", "GK", 50, 91, ["GK"]),
-      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB"]), field("rcb", "CB", 62, 80, ["CB", "SB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
+      field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB", "WB"]), field("rcb", "CB", 62, 80, ["CB", "SB", "WB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
       field("lcm", "CM", 28, 57, ["CM", "DM", "AM"]), field("cm", "DM", 50, 62, ["DM", "CM"]), field("rcm", "CM", 72, 57, ["CM", "DM", "AM"]),
       field("lw", "WG", 20, 29, ["WG", "SH", "AM", "CF"]), field("st", "CF", 50, 23, ["CF", "AM", "WG"]), field("rw", "WG", 80, 29, ["WG", "SH", "AM", "CF"]),
     ],
@@ -326,7 +354,7 @@ const formationSeeds: Formation[] = [
     label: "4-5-1",
     description: "中盤支配",
     slots: [
-      field("gk", "GK", 50, 91, ["GK"]), field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB"]), field("rcb", "CB", 62, 80, ["CB", "SB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
+      field("gk", "GK", 50, 91, ["GK"]), field("lb", "SB", 16, 76, ["SB", "CB"]), field("lcb", "CB", 38, 80, ["CB", "SB", "WB"]), field("rcb", "CB", 62, 80, ["CB", "SB", "WB"]), field("rb", "SB", 84, 76, ["SB", "CB"]),
       field("lm", "SH", 12, 45, ["SH", "WG", "AM", "CM"]), field("lcm", "CM", 31, 57, ["CM", "DM", "AM"]), field("dm", "DM", 50, 64, ["DM", "CM", "CB"]), field("rcm", "CM", 69, 57, ["CM", "DM", "AM"]), field("rm", "SH", 88, 45, ["SH", "WG", "AM", "CM"]),
       field("st", "CF", 50, 22, ["CF", "AM", "WG"]),
     ],
@@ -336,7 +364,7 @@ const formationSeeds: Formation[] = [
     label: "3-4-3",
     description: "前線プレス",
     slots: [
-      field("gk", "GK", 50, 91, ["GK"]), field("lcb", "CB", 22, 80, ["CB", "SB"]), field("cb", "CB", 50, 84, ["CB"]), field("rcb", "CB", 78, 80, ["CB", "SB"]),
+      field("gk", "GK", 50, 93, ["GK"]), field("lcb", "CB", 22, 76, ["CB", "SB", "WB"]), field("cb", "CB", 50, 80, ["CB"]), field("rcb", "CB", 78, 76, ["CB", "SB", "WB"]),
       field("lm", "SH", 17, 53, ["SH", "WG", "AM", "CM", "SB"]), field("lcm", "CM", 38, 58, ["CM", "DM", "AM"]), field("rcm", "CM", 62, 58, ["CM", "DM", "AM"]), field("rm", "SH", 83, 53, ["SH", "WG", "AM", "CM", "SB"]),
       field("lw", "WG", 18, 26, ["WG", "SH", "AM", "CF"]), field("st", "CF", 50, 21, ["CF", "AM", "WG"]), field("rw", "WG", 82, 26, ["WG", "SH", "AM", "CF"]),
     ],
@@ -346,8 +374,8 @@ const formationSeeds: Formation[] = [
     label: "3-5-2",
     description: "厚い中盤",
     slots: [
-      field("gk", "GK", 50, 91, ["GK"]), field("lcb", "CB", 22, 80, ["CB", "SB"]), field("cb", "CB", 50, 84, ["CB"]), field("rcb", "CB", 78, 80, ["CB", "SB"]),
-      field("lwb", "SB", 12, 54, ["SB", "WG", "SH"]), field("lcm", "CM", 33, 57, ["CM", "DM", "AM"]), field("dm", "DM", 50, 63, ["DM", "CM", "CB"]), field("rcm", "CM", 67, 57, ["CM", "DM", "AM"]), field("rwb", "SB", 88, 54, ["SB", "WG", "SH"]),
+      field("gk", "GK", 50, 93, ["GK"]), field("lcb", "CB", 22, 76, ["CB", "SB", "WB"]), field("cb", "CB", 50, 80, ["CB"]), field("rcb", "CB", 78, 76, ["CB", "SB", "WB"]),
+      field("lwb", "SB", 12, 54, ["SB", "WB", "WG", "SH"]), field("lcm", "CM", 33, 57, ["CM", "DM", "AM"]), field("dm", "DM", 50, 63, ["DM", "CM", "CB"]), field("rcm", "CM", 67, 57, ["CM", "DM", "AM"]), field("rwb", "SB", 88, 54, ["SB", "WB", "WG", "SH"]),
       field("lst", "CF", 38, 25, ["CF", "AM", "WG"]), field("rst", "CF", 62, 25, ["CF", "AM", "WG"]),
     ],
   },
@@ -356,8 +384,8 @@ const formationSeeds: Formation[] = [
     label: "3-6-1",
     description: "中盤の数的優位",
     slots: [
-      field("gk", "GK", 50, 91, ["GK"]), field("lcb", "CB", 22, 80, ["CB", "SB"]), field("cb", "CB", 50, 84, ["CB"]), field("rcb", "CB", 78, 80, ["CB", "SB"]),
-      field("lwb", "SB", 9, 62, ["SB", "WG", "SH"]), field("lm", "SH", 24, 45, ["SH", "WG", "AM", "CM"]), field("lcm", "CM", 39, 60, ["CM", "DM", "AM"]), field("rcm", "CM", 61, 60, ["CM", "DM", "AM"]), field("rm", "SH", 76, 45, ["SH", "WG", "AM", "CM"]), field("rwb", "SB", 91, 62, ["SB", "WG", "SH"]),
+      field("gk", "GK", 50, 93, ["GK"]), field("lcb", "CB", 22, 76, ["CB", "SB", "WB"]), field("cb", "CB", 50, 80, ["CB"]), field("rcb", "CB", 78, 76, ["CB", "SB", "WB"]),
+      field("lwb", "SB", 9, 62, ["SB", "WB", "WG", "SH"]), field("lm", "SH", 24, 45, ["SH", "WG", "AM", "CM"]), field("lcm", "CM", 39, 60, ["CM", "DM", "AM"]), field("rcm", "CM", 61, 60, ["CM", "DM", "AM"]), field("rm", "SH", 76, 45, ["SH", "WG", "AM", "CM"]), field("rwb", "SB", 91, 62, ["SB", "WB", "WG", "SH"]),
       field("st", "CF", 50, 20, ["CF", "AM", "WG"]),
     ],
   },
@@ -366,7 +394,7 @@ const formationSeeds: Formation[] = [
     label: "5-4-1",
     description: "守備ブロック",
     slots: [
-      field("gk", "GK", 50, 91, ["GK"]), field("lwb", "SB", 10, 69, ["SB", "WG", "SH"]), field("lcb", "CB", 30, 80, ["CB", "SB"]), field("cb", "CB", 50, 83, ["CB"]), field("rcb", "CB", 70, 80, ["CB", "SB"]), field("rwb", "SB", 90, 69, ["SB", "WG", "SH"]),
+      field("gk", "GK", 50, 93, ["GK"]), field("lwb", "SB", 10, 69, ["SB", "WB", "WG", "SH"]), field("lcb", "CB", 30, 76, ["CB", "SB", "WB"]), field("cb", "CB", 50, 80, ["CB"]), field("rcb", "CB", 70, 76, ["CB", "SB", "WB"]), field("rwb", "SB", 90, 69, ["SB", "WB", "WG", "SH"]),
       field("lm", "SH", 17, 51, ["SH", "WG", "AM", "CM"]), field("lcm", "CM", 39, 57, ["CM", "DM", "AM"]), field("rcm", "CM", 61, 57, ["CM", "DM", "AM"]), field("rm", "SH", 83, 51, ["SH", "WG", "AM", "CM"]),
       field("st", "CF", 50, 23, ["CF", "AM", "WG"]),
     ],
@@ -376,7 +404,7 @@ const formationSeeds: Formation[] = [
     label: "5-3-2",
     description: "堅守速攻",
     slots: [
-      field("gk", "GK", 50, 91, ["GK"]), field("lwb", "SB", 10, 69, ["SB", "WG", "SH"]), field("lcb", "CB", 30, 80, ["CB", "SB"]), field("cb", "CB", 50, 83, ["CB"]), field("rcb", "CB", 70, 80, ["CB", "SB"]), field("rwb", "SB", 90, 69, ["SB", "WG", "SH"]),
+      field("gk", "GK", 50, 93, ["GK"]), field("lwb", "SB", 10, 69, ["SB", "WB", "WG", "SH"]), field("lcb", "CB", 30, 76, ["CB", "SB", "WB"]), field("cb", "CB", 50, 80, ["CB"]), field("rcb", "CB", 70, 76, ["CB", "SB", "WB"]), field("rwb", "SB", 90, 69, ["SB", "WB", "WG", "SH"]),
       field("lcm", "CM", 28, 55, ["CM", "DM", "AM"]), field("cm", "DM", 50, 60, ["DM", "CM"]), field("rcm", "CM", 72, 55, ["CM", "DM", "AM"]), field("lst", "CF", 38, 25, ["CF", "AM", "WG"]), field("rst", "CF", 62, 25, ["CF", "AM", "WG"]),
     ],
   },
@@ -384,7 +412,7 @@ const formationSeeds: Formation[] = [
 
 const midfieldLabels = new Set<Position>(["DM", "CM", "AM", "SH"]);
 const structureAllowed: Record<Position, Position[]> = {
-  GK: ["GK"], CB: ["CB", "SB"], SB: ["SB", "WG", "SH"], DM: ["DM", "CM", "CB"], CM: ["CM", "DM", "AM"], AM: ["AM", "CM", "CF", "WG"], SH: ["SH", "WG", "AM", "CM", "SB"], WG: ["WG", "SH", "AM", "CF"], CF: ["CF", "AM", "WG"],
+  GK: ["GK"], CB: ["CB", "SB", "WB"], SB: ["SB", "WB", "WG", "SH"], WB: ["WB", "SB", "WG", "SH"], DM: ["DM", "CM", "CB"], CM: ["CM", "DM", "AM"], AM: ["AM", "CM", "CF", "WG"], SH: ["SH", "WG", "AM", "CM", "SB"], WG: ["WG", "SH", "AM", "CF"], CF: ["CF", "AM", "WG"],
 };
 const structurePresets: Record<string, Array<{ suffix: string; description: string; midfield: Position[] }>> = {
   "4-3-3": [{ suffix: "double-pivot", description: "DH2・CH1／ダブルピボット", midfield: ["DM", "DM", "CM"] }, { suffix: "attacking", description: "CH2・OH1／攻撃型", midfield: ["CM", "CM", "AM"] }, { suffix: "control", description: "DH1・CH2／中央コントロール", midfield: ["DM", "CM", "CM"] }],
@@ -547,9 +575,9 @@ export const normalizePlayerName = (value: string, seed = value, fallback?: stri
   return `${surname} ${commonGivenNamePool[nameSeed(seed) % commonGivenNamePool.length]}`;
 };
 
-const fallbackOpponentRole: Record<Position, string> = { GK: "ショットストッパー", CB: "カバー", SB: "守備的SB", DM: "アンカー", CM: "ボックス・トゥ・ボックス", AM: "ゲームメーカー", SH: "ワイド・ワーカー", WG: "タッチライン・ウイング", CF: "ターゲットマン" };
+const fallbackOpponentRole: Record<Position, string> = { WB: "ウイングバック", GK: "ショットストッパー", CB: "カバー", SB: "守備的SB", DM: "アンカー", CM: "ボックス・トゥ・ボックス", AM: "ゲームメーカー", SH: "ワイド・ワーカー", WG: "タッチライン・ウイング", CF: "ターゲットマン" };
 const opponentValue = (value: number) => Math.max(12, Math.min(94, Math.round(value)));
-const opponentPositionModifier: Record<Position, { attack: number; defense: number }> = { GK: { attack: -52, defense: 1 }, CB: { attack: -10, defense: 6 }, SB: { attack: -5, defense: 4 }, DM: { attack: -2, defense: 5 }, CM: { attack: 1, defense: 1 }, AM: { attack: 5, defense: -4 }, SH: { attack: 4, defense: -1 }, WG: { attack: 6, defense: -4 }, CF: { attack: 8, defense: -10 } };
+const opponentPositionModifier: Record<Position, { attack: number; defense: number }> = { WB: { attack: 1, defense: 3 }, GK: { attack: -52, defense: 1 }, CB: { attack: -10, defense: 6 }, SB: { attack: -5, defense: 4 }, DM: { attack: -2, defense: 5 }, CM: { attack: 1, defense: 1 }, AM: { attack: 5, defense: -4 }, SH: { attack: 4, defense: -1 }, WG: { attack: 6, defense: -4 }, CF: { attack: 8, defense: -10 } };
 
 const opponentSkillFor = (position: Position, role: string): PlayerSkillId => {
   if (position === "GK") return role === "スイーパーGK" ? "sweeper" : "one-on-one";
@@ -599,11 +627,15 @@ export const marketRecruits: Player[] = [
  * 固定の能力表を複製するのではなく、ポジション別の基準値へ年齢・タイプ・国籍ごとの
  * 決定論的な振れ幅を加える。セーブ間で結果は再現されるが、候補の組み合わせは豊富になる。
  */
-const generatedMarketRecruits: Player[] = Array.from({ length: 84 }, (_, index) => {
-  const positions: Position[] = ["CF", "WG", "SH", "AM", "CM", "DM", "SB", "CB", "GK"];
-  const nationalities: NationalityCode[] = ["JP", "BR", "KR", "ES", "DE", "FR", "AR"];
-  const position = positions[index % positions.length];
-  const nationality = nationalities[(index * 5 + Math.floor(index / positions.length)) % nationalities.length];
+// 固定9名（日本籍6名・外国籍3名）に、生成291名（日本籍244名・外国籍47名）を加え、
+// 市場候補を常時300名（日本籍250名・外国籍50名）にする。
+const generatedMarketRecruits: Player[] = Array.from({ length: 291 }, (_, index) => {
+    const positions: Position[] = ["CF", "WG", "SH", "AM", "CM", "DM", "WB", "SB", "CB", "GK"];
+    const nationalities: NationalityCode[] = ["JP", "BR", "KR", "ES", "DE", "FR", "AR"];
+    const basePosition = positions[index % positions.length];
+  const position: Position = index === 244 ? "WG" : index === 246 ? "CM" : basePosition;
+  const foreignIndex = index - 244;
+  const nationality = foreignIndex < 0 ? "JP" : nationalities[1 + (foreignIndex % (nationalities.length - 1))];
   const variation = ((index * 17) % 13) - 6;
   const age = 19 + ((index * 7) % 17);
   const seed = `market-generated-${index}`;
@@ -611,13 +643,19 @@ const generatedMarketRecruits: Player[] = Array.from({ length: 84 }, (_, index) 
   const japaneseName = `${commonSurnamePool[(index * 7 + 13) % commonSurnamePool.length]} ${catalogGivenNamePool[(index * 11 + 5) % catalogGivenNamePool.length]}`;
   const name = nationality === "JP" ? japaneseName : nationalityNameFor(nationality, seed);
   const base: Record<Position, [number, number, number, number, number, number, number, number]> = {
+    WB: [52, 60, 58, 42, 58, 62, 50, 60],
     CF: [65, 61, 48, 68, 29, 25, 22, 32], WG: [63, 72, 57, 61, 35, 30, 27, 39], SH: [60, 67, 64, 55, 43, 37, 34, 48],
     AM: [61, 64, 73, 54, 38, 33, 29, 47], CM: [53, 57, 70, 45, 57, 53, 48, 60], DM: [43, 48, 65, 35, 66, 67, 62, 72],
     SB: [49, 58, 60, 37, 61, 65, 55, 59], CB: [37, 42, 54, 27, 72, 74, 77, 69], GK: [16, 18, 51, 9, 25, 18, 28, 35],
   };
-  const values = base[position].map((value, attributeIndex) => Math.max(8, Math.min(91, value + variation + (((index + attributeIndex * 3) % 9) - 4))));
+  const profile = nationalityProfileFor(nationality);
+  const positionBoosts = nationalityPositionBoostFor(nationality, position);
+  const values = base[position].map((value, attributeIndex) => {
+    const attribute = playerAttributeKeys[attributeIndex];
+    return Math.max(8, Math.min(91, value + variation + (((index + attributeIndex * 3) % 9) - 4) + (profile.abilityBoosts[attribute] ?? 0) + (positionBoosts[attribute] ?? 0)));
+  });
   const [attack, dribble, pass, shoot, defense, tackle, block, interception] = values;
-  const secondary: Partial<Record<Position, Position>> = { CF: "WG", WG: "CF", SH: "AM", AM: "CM", CM: "DM", DM: "CB", SB: "SH", CB: "SB" };
+  const secondary: Partial<Record<Position, Position>> = { CF: "WG", WG: "CF", SH: "AM", AM: "CM", CM: "DM", DM: "CB", WB: "SB", SB: "SH", CB: "SB" };
   const styleIndex = index % 3;
   const player: Player = {
     id: `rg${String(index + 1).padStart(3, "0")}`, name, nationality, position, secondary: secondary[position],

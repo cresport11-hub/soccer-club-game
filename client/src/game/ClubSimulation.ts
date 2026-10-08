@@ -2,7 +2,7 @@
  * Design system: 「タッチライン戦術室」— game rules remain framework-independent and flow through one state owner.
  * Sponsors fund the season; financial history, matchday commerce, and facility levels evolve through this single state owner.
  */
-import { canMarkOpponent, defaultAttributeCeilingsFor, defaultGrowthProfileFor, defaultSystemMasteryFor, defaultSystemUnderstandingFor, formationBaseId, formations, foreignPlayerLimit, growthCurveModifierFor, isForeignPlayer, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, nationalityLabels, nationalityNameFor, nationalityProfileFor, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerAttributeKeys, playerAttributeLabels, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, positionLabel, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type NationalityCode, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerAttributeKey, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WGPlayStyle, type YouthSkillQuality } from "./data";
+import { canMarkOpponent, defaultAttributeCeilingsFor, defaultGrowthProfileFor, defaultPlayerSideFor, defaultSecondarySideFor, defaultSystemMasteryFor, defaultSystemUnderstandingFor, formationBaseId, formations, foreignPlayerLimit, growthCurveModifierFor, isForeignPlayer, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, nationalityLabels, nationalityNameFor, nationalityPositionBoostFor, nationalityProfileFor, normalizePlayerName, opponentSeeds, opponentSquadFor, opponentTactics, playerAttributeKeys, playerAttributeLabels, playerSkillCatalog, playerSkillGrowthFocus, playerSkillsFor, players, positionLabel, recruit, youthIntakes, youthProspects, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type ClubSeed, type DMPlayStyle, type Formation, type GKPlayStyle, type NationalityCode, type OpponentPlayer, type OpponentTacticalPlan, type Player, type PlayerAttributeKey, type PlayerSkillDefinition, type PlayerSkillId, type SBPlayStyle, type TrainingLoad, type WBPlayStyle, type WGPlayStyle, type YouthSkillQuality } from "./data";
 
 export type PageId = "home" | "lineup" | "team" | "stats" | "league" | "training" | "market" | "academy" | "facilities" | "sponsors" | "cup" | "finance" | "settings" | "help";
 export type ClubEmblemId = "orbit" | "shield" | "bolt" | "crown" | "wolf" | "star" | "wave" | "flame" | "compass" | "eagle";
@@ -17,12 +17,13 @@ export type AMPlayStyleOption = { id: AMPlayStyle; label: string; copy: string; 
 export type CMPlayStyleOption = { id: CMPlayStyle; label: string; copy: string; attackBonus: number; defenseBonus: number; directBonus: number; possessionBonus: number; pressBonus: number; finishCopy: string };
 export type DMPlayStyleOption = { id: DMPlayStyle; label: string; copy: string; attackBonus: number; defenseBonus: number; directBonus: number; possessionBonus: number; pressBonus: number; finishCopy: string };
 export type CBPlayStyleOption = { id: CBPlayStyle; label: string; copy: string; attackBonus: number; defenseBonus: number; directBonus: number; possessionBonus: number; pressBonus: number; finishCopy: string };
+export type WBPlayStyleOption = { id: WBPlayStyle; label: string; copy: string; attackBonus: number; defenseBonus: number; directBonus: number; possessionBonus: number; pressBonus: number; finishCopy: string };
 export type SBPlayStyleOption = { id: SBPlayStyle; label: string; copy: string; attackBonus: number; defenseBonus: number; directBonus: number; possessionBonus: number; pressBonus: number; finishCopy: string };
 export type GKPlayStyleOption = { id: GKPlayStyle; label: string; copy: string; attackBonus: number; defenseBonus: number; directBonus: number; possessionBonus: number; pressBonus: number; finishCopy: string };
-export type RoleKind = "cf" | "wg" | "am" | "cm" | "dm" | "cb" | "sb" | "gk";
-export type RoleStyleOption = CFPlayStyleOption | WGPlayStyleOption | AMPlayStyleOption | CMPlayStyleOption | DMPlayStyleOption | CBPlayStyleOption | SBPlayStyleOption | GKPlayStyleOption;
+export type RoleKind = "cf" | "wg" | "am" | "cm" | "dm" | "cb" | "sb" | "wb" | "gk";
+export type RoleStyleOption = CFPlayStyleOption | WGPlayStyleOption | AMPlayStyleOption | CMPlayStyleOption | DMPlayStyleOption | CBPlayStyleOption | SBPlayStyleOption | WBPlayStyleOption | GKPlayStyleOption;
 export type RolePlayStyleFit = { playerId: string; player: string; role: RoleKind; style: string; active: boolean; abilityScore: number; abilityBonus: number; formationBonus: number; attackBoost: number; defenseBoost: number; totalBoost: number; grade: "伸長大" | "伸長" | "標準" | "待機"; reason: string };
-export type SideLinkDetail = { side: "左" | "右"; widePlayer: string; widePosition: "SH" | "WG"; wideStyle: string; backPlayer: string; backStyle: string; attackBoost: number; defenseBoost: number; totalBoost: number; grade: "攻撃連動" | "攻守連動" | "守備連動"; reason: string };
+export type SideLinkDetail = { side: "左" | "右"; widePlayer: string; widePosition: "SH" | "WG"; wideStyle: string; backPlayer: string; backPosition: "SB" | "WB"; backStyle: string; attackBoost: number; defenseBoost: number; totalBoost: number; grade: "攻撃連動" | "攻守連動" | "守備連動"; reason: string };
 export type MidfieldPressDetail = { active: boolean; grade: "一斉奪回" | "中盤封鎖" | "準備中" | "対象外"; midfielders: string[]; fitted: number; ballWinners: number; pressureScore: number; attackBoost: number; defenseBoost: number; totalBoost: number; summary: string; reason: string };
 export type PlayerSkillActivation = { playerId: string; player: string; skillId: string; label: string; short: string; description: string; active: boolean; focusValue: number; minimum: number; attackBoost: number; defenseBoost: number; masteryLevel: number; masteryLabel: string; xp: number; reason: string; highlight: string };
 export type PlayerSkillProgress = { skillId: PlayerSkillId; label: string; short: string; learned: boolean; canTrain: boolean; target: boolean; xp: number; level: number; levelLabel: string; nextXp: number | null; progress: number; trainingLabels: string[]; reason: string };
@@ -78,6 +79,9 @@ export type TacticalAssessment = {
   sbRoleAttack: number;
   sbRoleDefense: number;
   sbRoleSummary: string;
+  wbRoleAttack: number;
+  wbRoleDefense: number;
+  wbRoleSummary: string;
   gkRoleAttack: number;
   gkRoleDefense: number;
   gkRoleSummary: string;
@@ -143,6 +147,8 @@ export type Sponsor = {
   fameRequired: number;
   copy: string;
 };
+export type SponsorRewardCondition = "league-wins-3" | "win-streak-3" | "fame-400" | "cup-champion" | "league-wins-5" | "popularity-50";
+export type SponsorSpecialReward = { id: string; label: string; description: string; amount: number; condition: SponsorRewardCondition; claimed?: boolean; eligible?: boolean };
 
 export type CupFixture = {
   id: string;
@@ -210,6 +216,7 @@ type Persisted = {
   logs: string[];
   recruited: boolean;
   sponsor?: Sponsor | null;
+  sponsorRewardIds?: string[];
   cup?: CupState;
   popularity?: number;
   concessionLevel?: number;
@@ -326,6 +333,11 @@ export const cbPlayStyleOptions: CBPlayStyleOption[] = [
   { id: "cover", label: "カバー", copy: "背後を読み、危険な走路を消して最終ラインを整える。", attackBonus: 0, defenseBonus: 1, directBonus: 1, possessionBonus: 0, pressBonus: 1, finishCopy: "背後のスペースを読む守備から、意表を突く一撃を決めた。" },
 ];
 
+export const wbPlayStyleOptions: WBPlayStyleOption[] = [
+  { id: "attacking-wingback", label: "攻撃型ウイングバック", copy: "高い位置まで幅を取り、追い越しとクロスで攻撃人数を増やす。", attackBonus: 2, defenseBonus: -1, directBonus: 2, possessionBonus: 1, pressBonus: 0, finishCopy: "大外を駆け上がり、クロスのこぼれ球を押し込んだ。" },
+  { id: "underlapping-wingback", label: "内側可変ウイングバック", copy: "ハーフスペースへ入り、中央の数的優位と前進の出口を作る。", attackBonus: 1, defenseBonus: 1, directBonus: 0, possessionBonus: 2, pressBonus: 1, finishCopy: "内側へ走り込み、中央の連係から決定機を作った。" },
+  { id: "defensive-wingback", label: "守備安定型ウイングバック", copy: "無理な前進を抑え、五枚の守備ブロックと帰陣を優先する。", attackBonus: 0, defenseBonus: 2, directBonus: 0, possessionBonus: 0, pressBonus: 1, finishCopy: "素早く帰陣して危険を消し、奪回から前進を始めた。" },
+];
 export const sbPlayStyleOptions: SBPlayStyleOption[] = [
   { id: "overlap", label: "オーバーラップ", copy: "外側を追い越し、幅とクロスで前進を加速させる。", attackBonus: 1, defenseBonus: 0, directBonus: 1, possessionBonus: 1, pressBonus: 0, finishCopy: "外側を駆け上がり、鋭いクロスの流れから決めた。" },
   { id: "inverted-fullback", label: "インバートSB", copy: "内側へ絞って中盤を助け、保持時の数的優位を作る。", attackBonus: 1, defenseBonus: 1, directBonus: 0, possessionBonus: 2, pressBonus: 0, finishCopy: "内側へ入り込み、連係からゴール前へ飛び出した。" },
@@ -383,9 +395,9 @@ const systemMasteryKey = (formationId: string) => formationBaseId(formationId);
 export const formationSelectionOrder = ["4-4-2", "4-3-3", "4-5-1", "3-4-3", "3-5-2", "3-6-1", "5-4-1", "5-3-2"] as const;
 
 export const sponsorOffers: Sponsor[] = [
-  { id: "orbit-credit", name: "ORBIT CREDIT", sector: "地域金融", accent: "#d9ff4a", upFront: 360000, weeklyIncome: 62000, winBonus: 35000, fameRequired: 250, copy: "地域の挑戦を支える金融パートナー。勝利に応じた上乗せ報酬を重視する。" },
-  { id: "northforge", name: "NORTH FORGE", sector: "テクノロジー", accent: "#6ad7ff", upFront: 520000, weeklyIncome: 41000, winBonus: 68000, fameRequired: 300, copy: "上位を目指すクラブへ研究開発の力を。勝利時の高額ボーナスが魅力。" },
-  { id: "mori-craft", name: "MORI CRAFT", sector: "飲料・ライフスタイル", accent: "#f5c955", upFront: 220000, weeklyIncome: 79000, winBonus: 18000, fameRequired: 180, copy: "ファンの日常に寄り添う長期協賛。安定した週次収入をもたらす。" },
+  { id: "orbit-credit", name: "ORBIT CREDIT", sector: "地域金融", accent: "#d9ff4a", upFront: 1500000, weeklyIncome: 180000, winBonus: 100000, fameRequired: 250, copy: "地域の挑戦を支える金融パートナー。固定収入と勝利報酬のバランスに優れる。" },
+  { id: "northforge", name: "NORTH FORGE", sector: "テクノロジー", accent: "#6ad7ff", upFront: 2100000, weeklyIncome: 120000, winBonus: 190000, fameRequired: 300, copy: "上位を目指すクラブへ研究開発の力を。勝利時の高額ボーナスが魅力。" },
+  { id: "mori-craft", name: "MORI CRAFT", sector: "飲料・ライフスタイル", accent: "#f5c955", upFront: 1000000, weeklyIncome: 220000, winBonus: 50000, fameRequired: 180, copy: "ファンの日常に寄り添う長期協賛。安定した週次収入をもたらす。" },
 ];
 
 const defaultContractYears = (player: Player) => player.contractYears ?? (player.age <= 21 ? 3 : player.age >= 28 ? 1 : 2);
@@ -400,12 +412,13 @@ const isCmEligible = (player: Pick<Player, "position" | "secondary">) => player.
 const isDmEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "DM" || player.secondary === "DM";
 const isCbEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "CB" || player.secondary === "CB";
 const isSbEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "SB" || player.secondary === "SB";
+const isWbEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "WB" || player.secondary === "WB";
 const isGkEligible = (player: Pick<Player, "position" | "secondary">) => player.position === "GK" || player.secondary === "GK";
 const copyPlayers = () => players.map((player) => {
   const mature = { ...player, ageMaturityApplied: true, attack: matureAttribute(player.attack, player.age), dribble: matureAttribute(player.dribble, player.age), pass: matureAttribute(player.pass, player.age), shoot: matureAttribute(player.shoot, player.age), defense: matureAttribute(player.defense, player.age), tackle: matureAttribute(player.tackle, player.age), block: matureAttribute(player.block, player.age), interception: matureAttribute(player.interception, player.age), gk: player.gk === undefined ? undefined : matureAttribute(player.gk, player.age) };
   const systemUnderstanding = clamp(Math.round(finiteOr(mature.systemUnderstanding, defaultSystemUnderstandingFor(mature))), 1, 99);
   const systemMastery = Object.fromEntries(formations.map((formation) => [formation.id, clamp(Math.round(finiteOr(mature.systemMastery?.[formation.id], defaultSystemMasteryFor(mature, formation.id, systemUnderstanding))), 0, 100)]));
-  return { ...mature, contractYears: defaultContractYears(mature), condition: clamp(Math.round(finiteOr(mature.condition, defaultPlayerCondition)), 0, 100), trainingLoad: mature.trainingLoad ?? "standard", skillXp: { ...(mature.skillXp ?? {}) }, attributeXp: Object.fromEntries(playerAttributeKeys.map((attribute) => [attribute, Math.max(0, Math.round(mature.attributeXp?.[attribute] ?? 0))])), attributeCeilings: { ...defaultAttributeCeilingsFor(mature), ...(mature.attributeCeilings ?? {}) }, positionMastery: { ...(mature.positionMastery ?? {}), [mature.position]: Math.max(28, Math.round(mature.positionMastery?.[mature.position] ?? 28)), ...(mature.secondary ? { [mature.secondary]: Math.max(12, Math.round(mature.positionMastery?.[mature.secondary] ?? 12)) } : {}) }, systemUnderstanding, systemUnderstandingXp: Math.max(0, Math.round(mature.systemUnderstandingXp ?? 0)), systemMastery, skillTrainingTarget: mature.skillTrainingTarget ?? playerSkillsFor(mature)[0], cfPlayStyle: isCfEligible(mature) ? mature.cfPlayStyle ?? cfPlayStyleOptions[0].id : undefined, wgPlayStyle: isWgEligible(mature) ? mature.wgPlayStyle ?? wgPlayStyleOptions[0].id : undefined, amPlayStyle: isAmEligible(mature) ? mature.amPlayStyle ?? amPlayStyleOptions[0].id : undefined, cmPlayStyle: isCmEligible(mature) ? mature.cmPlayStyle ?? cmPlayStyleOptions[0].id : undefined, dmPlayStyle: isDmEligible(mature) ? mature.dmPlayStyle ?? dmPlayStyleOptions[0].id : undefined, cbPlayStyle: isCbEligible(mature) ? mature.cbPlayStyle ?? cbPlayStyleOptions[0].id : undefined, sbPlayStyle: isSbEligible(mature) ? mature.sbPlayStyle ?? sbPlayStyleOptions[0].id : undefined, gkPlayStyle: isGkEligible(mature) ? mature.gkPlayStyle ?? gkPlayStyleOptions[0].id : undefined };
+  return { ...mature, contractYears: defaultContractYears(mature), condition: clamp(Math.round(finiteOr(mature.condition, defaultPlayerCondition)), 0, 100), preferredSide: mature.preferredSide ?? defaultPlayerSideFor(mature), secondarySide: mature.secondarySide ?? defaultSecondarySideFor(mature), trainingLoad: mature.trainingLoad ?? "standard", skillXp: { ...(mature.skillXp ?? {}) }, attributeXp: Object.fromEntries(playerAttributeKeys.map((attribute) => [attribute, Math.max(0, Math.round(mature.attributeXp?.[attribute] ?? 0))])), attributeCeilings: { ...defaultAttributeCeilingsFor(mature), ...(mature.attributeCeilings ?? {}) }, positionMastery: { ...(mature.positionMastery ?? {}), [mature.position]: Math.max(28, Math.round(mature.positionMastery?.[mature.position] ?? 28)), ...(mature.secondary ? { [mature.secondary]: Math.max(12, Math.round(mature.positionMastery?.[mature.secondary] ?? 12)) } : {}) }, systemUnderstanding, systemUnderstandingXp: Math.max(0, Math.round(mature.systemUnderstandingXp ?? 0)), systemMastery, skillTrainingTarget: mature.skillTrainingTarget ?? playerSkillsFor(mature)[0], cfPlayStyle: isCfEligible(mature) ? mature.cfPlayStyle ?? cfPlayStyleOptions[0].id : undefined, wgPlayStyle: isWgEligible(mature) ? mature.wgPlayStyle ?? wgPlayStyleOptions[0].id : undefined, amPlayStyle: isAmEligible(mature) ? mature.amPlayStyle ?? amPlayStyleOptions[0].id : undefined, cmPlayStyle: isCmEligible(mature) ? mature.cmPlayStyle ?? cmPlayStyleOptions[0].id : undefined, dmPlayStyle: isDmEligible(mature) ? mature.dmPlayStyle ?? dmPlayStyleOptions[0].id : undefined, cbPlayStyle: isCbEligible(mature) ? mature.cbPlayStyle ?? cbPlayStyleOptions[0].id : undefined, sbPlayStyle: isSbEligible(mature) ? mature.sbPlayStyle ?? sbPlayStyleOptions[0].id : undefined, wbPlayStyle: isWbEligible(mature) ? mature.wbPlayStyle ?? wbPlayStyleOptions[0].id : undefined, gkPlayStyle: isGkEligible(mature) ? mature.gkPlayStyle ?? gkPlayStyleOptions[0].id : undefined };
 });
 const blankLineup = () => Object.fromEntries(formations[0].slots.map((slot) => [slot.id, null])) as Record<string, string | null>;
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
@@ -422,6 +435,20 @@ const transferFeeFor = (candidate: Player, baseMultiplier: number) => Math.round
 const initialRecruitNegotiation = (candidate: Player = marketRecruits[0]): RecruitNegotiation => ({ candidateId: candidate.id, stage: "scouting", openingOffer: transferFeeFor(candidate, .78), counterOffer: transferFeeFor(candidate, .95), agreedFee: null, offerTier: undefined, proposedSalary: candidate.salary, contractYears: 3, appearanceGuarantee: false, performanceBonus: 0, attempts: 0 });
 const initialSaleOffers = (): SaleOffer[] => [];
 const initialSeasonStats = (roster: Player[]): PlayerSeasonStat[] => roster.map((player) => ({ playerId: player.id, player: player.name, position: player.position, appearances: 0, starts: 0, goals: 0, assists: 0, ratingTotal: 0, ratingCount: 0, mvpAwards: 0 }));
+const sponsorRewardCatalog: Record<string, SponsorSpecialReward[]> = {
+  "orbit-credit": [
+    { id: "orbit-credit-wins-3", label: "リーグ3勝", description: "今季リーグ戦で3勝を達成", amount: 600000, condition: "league-wins-3" },
+    { id: "orbit-credit-fame-400", label: "名声400", description: "クラブ名声400に到達", amount: 500000, condition: "fame-400" },
+  ],
+  northforge: [
+    { id: "northforge-streak-3", label: "3連勝", description: "リーグ戦で3連勝を達成", amount: 1200000, condition: "win-streak-3" },
+    { id: "northforge-cup", label: "カップ制覇", description: "カップ戦で優勝", amount: 1500000, condition: "cup-champion" },
+  ],
+  "mori-craft": [
+    { id: "mori-craft-wins-5", label: "リーグ5勝", description: "今季リーグ戦で5勝を達成", amount: 700000, condition: "league-wins-5" },
+    { id: "mori-craft-popularity-50", label: "人気50", description: "クラブ人気50%に到達", amount: 500000, condition: "popularity-50" },
+  ],
+};
 
 function baseRows(): LeagueRow[] {
   return [userClub, ...opponentSeeds].map((club) => ({ ...club, played: 0, win: 0, draw: 0, loss: 0, gf: 0, ga: 0, pts: 0 }));
@@ -448,6 +475,7 @@ export class ClubSimulation {
   private selectedPlayerId: string | null = null;
   private recruited = false;
   private sponsor: Sponsor | null = null;
+  private sponsorRewardIds: string[] = [];
   private cup = initialCup();
   private popularity = 42;
   private teamMorale = 58;
@@ -505,6 +533,7 @@ export class ClubSimulation {
     this.selectedPlayerId = null;
     this.recruited = false;
     this.sponsor = null;
+    this.sponsorRewardIds = [];
     this.cup = initialCup();
     this.popularity = 42;
     this.teamMorale = 58;
@@ -519,10 +548,11 @@ export class ClubSimulation {
     this.yellowCards = {};
     this.suspensionMatches = {};
     this.marketSignedIds = [];
-    this.marketCandidateIds = marketRecruits.map((player) => player.id);
+    // 候補マスター全件ではなく、初回更新時に通常の4名だけを選ぶ。
+    this.marketCandidateIds = [];
     this.marketPreferredPositions = [];
     this.marketSeenNames = [];
-    this.marketCandidateCycle = 0;
+    this.marketCandidateCycle = -1;
     this.selectedMarketCandidateId = null;
     this.pendingMarketUpdateNotice = null;
     this.recruitNegotiation = initialRecruitNegotiation();
@@ -609,7 +639,7 @@ export class ClubSimulation {
     const formation = formations.find((item) => item.id === tactics.formationId) ?? formations[1];
     const entries = tactics.lineup.map((player) => ({ player, slot: formation.slots.find((slot) => player.id.endsWith(`-${slot.id}`)) ?? formation.slots[0] }));
     const average = (values: number[]) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
-    const unit = (kind: "attack" | "midfield" | "defense") => entries.filter(({ slot }) => kind === "attack" ? ["CF", "WG"].includes(slot.label) : kind === "midfield" ? ["DM", "CM", "AM", "SH"].includes(slot.label) : ["GK", "CB", "SB"].includes(slot.label));
+    const unit = (kind: "attack" | "midfield" | "defense") => entries.filter(({ slot }) => kind === "attack" ? ["CF", "WG"].includes(slot.label) : kind === "midfield" ? ["DM", "CM", "AM", "SH"].includes(slot.label) : ["GK", "CB", "SB", "WB"].includes(slot.label));
     const power = (kind: "attack" | "midfield" | "defense", baseline: number) => {
       const members = unit(kind);
       if (!members.length) return 0;
@@ -656,6 +686,9 @@ export class ClubSimulation {
   get isRecruited() { return this.recruited; }
   get lineupState() { return this.lineup; }
   get currentSponsor() { return this.sponsor; }
+  get sponsorSpecialRewards() {
+    return (this.sponsor ? sponsorRewardCatalog[this.sponsor.id] ?? [] : []).map((reward) => ({ ...reward, claimed: this.sponsorRewardIds.includes(reward.id), eligible: this.sponsorRewardEligible(reward) }));
+  }
   get currentMarketCandidate() { const base = (this.selectedMarketCandidateId ? this.marketCandidates.find((player) => player.id === this.selectedMarketCandidateId) : undefined) ?? this.marketCandidates[0] ?? null; return base ? this.scoutCandidate(base) : null; }
   get currentMarketTacticalFit() { const candidate = this.currentMarketCandidate; return candidate ? this.scoutTacticalFit(candidate) : null; }
   get marketCandidateComparison() { return this.buildMarketCandidateComparison(); }
@@ -683,6 +716,27 @@ export class ClubSimulation {
   get youthTrainingUsedThisWeek() { return this.lastYouthTrainingWeek === this.week; }
   get youthIntakeForecast() { return Math.max(0, 3 - this.youthPlayers.length); }
   get activeSaleOffers() { return this.saleOffers.filter((offer) => this.roster.some((player) => player.id === offer.playerId)); }
+
+  private sponsorRewardEligible(reward: SponsorSpecialReward) {
+    const leagueWins = this.leagueRows.find((row) => row.id === userClub.id)?.win ?? 0;
+    const leagueForm = this.recentMatchForm.filter((entry) => entry.competition === "リーグ");
+    const winStreak = leagueForm.length >= 3 && leagueForm.slice(0, 3).every((entry) => entry.outcome === "W");
+    return reward.condition === "league-wins-3" ? leagueWins >= 3 : reward.condition === "league-wins-5" ? leagueWins >= 5 : reward.condition === "win-streak-3" ? winStreak : reward.condition === "fame-400" ? this.fame >= 400 : reward.condition === "cup-champion" ? this.cup.status === "champion" : this.popularity >= 50;
+  }
+
+  private claimSponsorSpecialRewards(week: number) {
+    if (!this.sponsor) return [];
+    const rewards = sponsorRewardCatalog[this.sponsor.id] ?? [];
+    const claimed: SponsorSpecialReward[] = [];
+    rewards.forEach((reward) => {
+      if (this.sponsorRewardIds.includes(reward.id) || !this.sponsorRewardEligible(reward)) return;
+      this.sponsorRewardIds.push(reward.id);
+      this.money += reward.amount;
+      this.recordFinance("スポンサー", reward.amount, "income", `特別報酬：${reward.label}`, week);
+      claimed.push(reward);
+    });
+    return claimed;
+  }
 
   setClubName(value: string) {
     const nextName = normalizeClubName(value);
@@ -1152,6 +1206,7 @@ export class ClubSimulation {
     if (role === "cm") return styleId === "box-to-box" ? weighted([player.attack, .22], [player.pass, .22], [player.defense, .25], [player.tackle, .16], [player.interception, .15]) : styleId === "deep-playmaker" ? weighted([player.pass, .52], [player.attack, .18], [player.defense, .15], [player.interception, .15]) : weighted([player.attack, .27], [player.dribble, .28], [player.pass, .3], [player.shoot, .15]);
     if (role === "dm") return styleId === "anchor" ? weighted([player.defense, .32], [player.tackle, .26], [player.block, .18], [player.interception, .24]) : styleId === "regista" ? weighted([player.pass, .5], [player.attack, .18], [player.defense, .16], [player.interception, .16]) : weighted([player.defense, .28], [player.tackle, .34], [player.block, .14], [player.interception, .24]);
     if (role === "cb") return styleId === "stopper" ? weighted([player.defense, .28], [player.tackle, .34], [player.block, .22], [player.interception, .16]) : styleId === "ball-playing" ? weighted([player.pass, .46], [player.defense, .2], [player.interception, .18], [player.attack, .16]) : weighted([player.defense, .28], [player.block, .24], [player.interception, .32], [player.pass, .16]);
+    if (role === "wb") return styleId === "attacking-wingback" ? weighted([player.attack, .25], [player.dribble, .28], [player.pass, .25], [player.defense, .12], [player.tackle, .1]) : styleId === "underlapping-wingback" ? weighted([player.pass, .38], [player.dribble, .2], [player.attack, .2], [player.defense, .12], [player.interception, .1]) : weighted([player.defense, .34], [player.tackle, .28], [player.interception, .22], [player.block, .1], [player.pass, .06]);
     if (role === "sb") return styleId === "overlap" ? weighted([player.attack, .2], [player.dribble, .31], [player.pass, .3], [player.defense, .19]) : styleId === "inverted-fullback" ? weighted([player.pass, .4], [player.dribble, .2], [player.defense, .23], [player.interception, .17]) : weighted([player.defense, .3], [player.tackle, .28], [player.block, .18], [player.interception, .24]);
     return styleId === "shot-stopper" ? weighted([player.gk ?? 0, .62], [player.block, .23], [player.interception, .15]) : styleId === "sweeper-keeper" ? weighted([player.gk ?? 0, .5], [player.interception, .25], [player.pass, .25]) : weighted([player.gk ?? 0, .32], [player.pass, .53], [player.attack, .15]);
   }
@@ -1167,6 +1222,7 @@ export class ClubSimulation {
     if (role === "cm") return styleId === "deep-playmaker" && centralHeavy ? 1 : styleId === "mezzala" && ["4-3-3", "3-4-3"].includes(formationId) ? 1 : styleId === "box-to-box" && centralHeavy ? 1 : 0;
     if (role === "dm") return styleId === "anchor" && hasBackThree ? 1 : styleId === "regista" && centralHeavy ? 1 : styleId === "destroyer" && formationId === "3-4-3" ? 1 : 0;
     if (role === "cb") return styleId === "cover" && hasBackThree ? 1 : styleId === "ball-playing" && ["4-3-3", "4-5-1"].includes(formationId) ? 1 : styleId === "stopper" && formationId === "3-4-3" ? 1 : 0;
+    if (role === "wb") return styleId === "attacking-wingback" && ["3-4-3", "3-5-2", "5-3-2"].includes(formationId) ? 1 : styleId === "underlapping-wingback" && ["3-5-2", "3-6-1"].includes(formationId) ? 1 : styleId === "defensive-wingback" && ["5-4-1", "5-3-2", "3-6-1"].includes(formationId) ? 1 : 0;
     if (role === "sb") return styleId === "overlap" && ["3-5-2", "3-6-1", "5-4-1", "5-3-2"].includes(formationId) ? 1 : styleId === "inverted-fullback" && ["4-3-3", "4-5-1", "3-6-1"].includes(formationId) ? 1 : styleId === "defensive-fullback" && (["4-4-2", "3-6-1", "5-4-1"].includes(formationId)) ? 1 : 0;
     return styleId === "sweeper-keeper" && ["3-4-3", "3-5-2", "3-6-1"].includes(formationId) ? 1 : styleId === "distributor" && ["4-3-3", "4-5-1", "3-6-1"].includes(formationId) ? 1 : styleId === "shot-stopper" && ["5-4-1", "5-3-2"].includes(formationId) ? 1 : 0;
   }
@@ -1285,7 +1341,7 @@ export class ClubSimulation {
     if (!selected.length) return { attack: 0, defense: 0, midfield: 0, chemistry: 0, tacticalAdaptation: 0, transition: 0, overall: 0, strengthKey: "attack", weaknessKey: "attack" };
     const average = <T,>(items: T[], getter: (item: T) => number) => items.length ? items.reduce((sum, item) => sum + getter(item), 0) / items.length : 0;
     const occupied = this.formation.slots.map((slot) => ({ slot, player: this.playerForSlot(slot.id) })).filter((item): item is { slot: Formation["slots"][number]; player: Player } => item.player !== null && this.injuryWeeksFor(item.player.id) === 0);
-    const unit = (kind: "attack" | "midfield" | "defense") => occupied.filter(({ slot }) => kind === "attack" ? ["CF", "WG"].includes(slot.label) : kind === "midfield" ? ["DM", "CM", "AM", "SH"].includes(slot.label) : ["GK", "CB", "SB"].includes(slot.label));
+    const unit = (kind: "attack" | "midfield" | "defense") => occupied.filter(({ slot }) => kind === "attack" ? ["CF", "WG"].includes(slot.label) : kind === "midfield" ? ["DM", "CM", "AM", "SH"].includes(slot.label) : ["GK", "CB", "SB", "WB"].includes(slot.label));
     const fitValue = (slot: Formation["slots"][number], player: Player) => {
       if (slot.allowed.includes(player.position)) return 1;
       if (player.secondary && slot.allowed.includes(player.secondary)) return .92;
@@ -1429,6 +1485,18 @@ export class ClubSimulation {
     return { ok: true, text: `${player.name}を「${option.label}」に設定しました。${option.copy}` };
   }
 
+  wbPlayStyleFor(player: Player) {
+    if (!isWbEligible(player)) return null;
+    return wbPlayStyleOptions.find((option) => option.id === player.wbPlayStyle) ?? wbPlayStyleOptions[0];
+  }
+  setWbPlayStyle(playerId: string, playStyle: WBPlayStyle) {
+    const player = this.roster.find((item) => item.id === playerId);
+    const option = wbPlayStyleOptions.find((item) => item.id === playStyle);
+    if (!player || !isWbEligible(player) || !option) return { ok: false, text: "WB適性を持つ選手だけがウイングバックのプレースタイルを設定できます。" };
+    player.wbPlayStyle = option.id;
+    this.persist();
+    return { ok: true, text: `${player.name}のWBスタイルを「${option.label}」に変更しました。` };
+  }
   sbPlayStyleFor(player: Player) {
     if (!isSbEligible(player)) return null;
     return sbPlayStyleOptions.find((option) => option.id === player.sbPlayStyle) ?? sbPlayStyleOptions[0];
@@ -1466,6 +1534,7 @@ export class ClubSimulation {
     if (slot.label === "DM") return this.dmPlayStyleFor(player) ?? this.cmPlayStyleFor(player);
     if (slot.label === "CB") return this.cbPlayStyleFor(player);
     if (slot.label === "SB") return this.sbPlayStyleFor(player);
+    if (slot.label === "WB") return this.wbPlayStyleFor(player);
     if (slot.label === "GK") return this.gkPlayStyleFor(player);
     return null;
   }
@@ -1987,7 +2056,8 @@ export class ClubSimulation {
 
   private ensureMarketCandidateList() {
     const expectedCycle = Math.floor(this.week / 3) * 3;
-    const candidateIdsAreValid = this.marketCandidateIds.length > 0 && this.marketCandidateIds.every((id) => marketRecruits.some((player) => player.id === id));
+    // 旧セーブに保存された「全候補ID」も、次回ロード時に4名へ正規化する。
+    const candidateIdsAreValid = this.marketCandidateIds.length > 0 && this.marketCandidateIds.length <= 4 && this.marketCandidateIds.every((id) => marketRecruits.some((player) => player.id === id));
     if (candidateIdsAreValid && this.marketCandidateCycle === expectedCycle) return;
     this.marketCandidateCycle = expectedCycle;
     this.marketCandidateIds = this.buildMarketCandidateIds();
@@ -2033,7 +2103,8 @@ export class ClubSimulation {
     const nationality = nationalityProfileFor(candidate.nationality);
     const maturity = ageMaturityModifier(candidate.age);
     const boosted = (value: number) => clamp(value + maturity + boost, 0, 99);
-    const nationalityBoosted = (attribute: PlayerAttributeKey, value: number) => clamp(boosted(value) + (nationality.abilityBoosts[attribute] ?? 0), 0, 99);
+    const positionBoosts = nationalityPositionBoostFor(candidate.nationality, candidate.position);
+    const nationalityBoosted = (attribute: PlayerAttributeKey, value: number) => clamp(boosted(value) + (nationality.abilityBoosts[attribute] ?? 0) + (positionBoosts[attribute] ?? 0), 0, 99);
     const values: Partial<Record<PlayerAttributeKey, number>> = { attack: nationalityBoosted("attack", candidate.attack), dribble: nationalityBoosted("dribble", candidate.dribble), pass: nationalityBoosted("pass", candidate.pass), shoot: nationalityBoosted("shoot", candidate.shoot), defense: nationalityBoosted("defense", candidate.defense), tackle: nationalityBoosted("tackle", candidate.tackle), block: nationalityBoosted("block", candidate.block), interception: nationalityBoosted("interception", candidate.interception), gk: candidate.gk === undefined ? undefined : nationalityBoosted("gk", candidate.gk) };
     const baseCeilings = { ...defaultAttributeCeilingsFor(candidate), ...(candidate.attributeCeilings ?? {}) };
     const attributeCeilings = Object.fromEntries(playerAttributeKeys.map((attribute) => {
@@ -2102,7 +2173,7 @@ export class ClubSimulation {
   }
 
   private recruitmentPriorityBoard(): RecruitmentPriority[] {
-    const positions: Player["position"][] = ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"];
+    const positions: Player["position"][] = ["GK", "CB", "WB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"];
     return positions.map((position) => {
       const demand = this.formation.slots.filter((slot) => slot.allowed.includes(position)).length;
       const relevant = this.roster.filter((player) => player.position === position || player.secondary === position);
@@ -2514,10 +2585,11 @@ export class ClubSimulation {
       this.recordFinance("出来高", result.individualBonuses.total, "expense", `個人出来高: ${opponent.name}`, financeWeek);
       this.captureCashPoint();
     }
+    const sponsorSpecialRewards = this.claimSponsorSpecialRewards(financeWeek);
     this.calendarEntries = this.calendarEntries.filter((entry) => entry.week !== financeWeek);
     this.calendarEntries.push({ week: financeWeek, phase: "league", opponent: opponent.name, opponentId: opponent.id, isHome, playerGoals, opponentGoals, result: won ? "W" : draw ? "D" : "L" });
     this.lastResult = result;
-    const sponsorLog = sponsorRevenue ? ` スポンサー収入 ${sponsorRevenue.toLocaleString()}円。` : "";
+    const sponsorLog = `${sponsorRevenue ? ` スポンサー収入 ${sponsorRevenue.toLocaleString()}円。` : ""}${sponsorSpecialRewards.length ? ` 特別報酬 ${sponsorSpecialRewards.map((reward) => `${reward.label} +${reward.amount.toLocaleString()}円`).join(" / ")}を獲得。` : ""}`;
     const gateLog = gate.isHome ? ` ホーム入場料 ${gate.revenue.toLocaleString()}円（${gate.attendance.toLocaleString()}人）。` : " アウェー戦のため入場料収入なし。";
     const goodsLog = merchandise.revenue ? ` グッズ売上 ${merchandise.revenue.toLocaleString()}円（${merchandise.buyers.toLocaleString()}人）。` : "";
     const concessionLog = concession.revenue ? ` 売店・飲食 ${concession.revenue.toLocaleString()}円（${concession.customers.toLocaleString()}人）。` : "";
@@ -2809,7 +2881,14 @@ export class ClubSimulation {
       const scorer = scorerPlayer?.name ?? opponentAttacker?.name ?? (team === "orbit" ? this.clubName : `${opponentName}のFW`);
       const assistant = team === "orbit" && attackers.length > 1 ? attackers[(index + 1) % attackers.length].name : undefined;
       const role = scorerPlayer ? this.matchRoleFor(scorerPlayer) : null;
-      const buildUp = tactics.sideLinkAttack >= 2 && index % 2 === 0 ? `${assistant ?? scorer}がサイドを崩してクロスを送った。` : tactics.midfieldPressDetail.active && index % 2 === 1 ? `${assistant ?? scorer}が高い位置でボールを奪い、素早く前へ運んだ。` : tactics.playingStyle === "direct" ? `${assistant ?? scorer}が縦パスで最終ラインの背後を突いた。` : tactics.playingStyle === "press" ? `${assistant ?? scorer}が敵陣で奪い返し、すぐにチャンスへつなげた。` : `${assistant ?? scorer}が細かなパス交換で守備を崩した。`;
+      const wbPlayer = team === "orbit" ? this.startingPlayers().find((player) => player.position === "WB" || player.secondary === "WB") : undefined;
+      const wbRole = wbPlayer ? this.wbPlayStyleFor(wbPlayer) : null;
+      const wbBuildUp = wbPlayer && wbRole && index % 3 === 0
+        ? wbRole.id === "attacking-wingback" ? `${wbPlayer.name}が大外を一気に駆け上がり、クロスを送り込んだ。`
+          : wbRole.id === "underlapping-wingback" ? `${wbPlayer.name}が内側へ潜り込み、中央の数的優位から決定機を作った。`
+            : `${wbPlayer.name}が素早く帰陣してサイドを封鎖し、奪回から攻撃を始めた。`
+        : null;
+      const buildUp = wbBuildUp ?? (tactics.sideLinkAttack >= 2 && index % 2 === 0 ? `${assistant ?? scorer}がサイドを崩してクロスを送った。` : tactics.midfieldPressDetail.active && index % 2 === 1 ? `${assistant ?? scorer}が高い位置でボールを奪い、素早く前へ運んだ。` : tactics.playingStyle === "direct" ? `${assistant ?? scorer}が縦パスで最終ラインの背後を突いた。` : tactics.playingStyle === "press" ? `${assistant ?? scorer}が敵陣で奪い返し、すぐにチャンスへつなげた。` : `${assistant ?? scorer}が細かなパス交換で守備を崩した。`);
       const opponentBuildUp = opponentTactics.playingStyle === "direct" ? `${opponentName}が素早い縦パスで背後を取った。` : opponentTactics.playingStyle === "press" ? `${opponentName}が高い位置で奪い返し、すぐに攻め込んだ。` : `${opponentName}が中盤でパスをつなぎ、守備の間を通した。`;
       const rallyFinish = deterministic(matchWeek * 71 + seed + index * 13) >= .72;
       const text = team === "orbit"
@@ -3177,6 +3256,7 @@ export class ClubSimulation {
     this.calendarEntries = [];
     this.rows = baseRows();
     this.sponsor = null;
+    this.sponsorRewardIds = [];
     this.cup = initialCup();
     this.lastResult = null;
     this.saleOffers = initialSaleOffers();
@@ -3281,22 +3361,22 @@ export class ClubSimulation {
     const evaluateSide = (side: "左" | "右", wideSlots: string[], backSlots: string[]) => {
       const wide = occupied.find((item) => wideSlots.includes(item.slot.id));
       const back = occupied.find((item) => backSlots.includes(item.slot.id));
-      if (!wide || !back || !["SH", "WG"].includes(wide.slot.label) || back.slot.label !== "SB" || !isWgEligible(wide.player) || !isSbEligible(back.player)) return;
+      if (!wide || !back || !["SH", "WG"].includes(wide.slot.label) || !["SB", "WB"].includes(back.slot.label) || !isWgEligible(wide.player) || !(back.slot.label === "WB" ? isWbEligible(back.player) : isSbEligible(back.player))) return;
       const wideStyle = this.wgPlayStyleFor(wide.player);
-      const backStyle = this.sbPlayStyleFor(back.player);
+      const backStyle = back.slot.label === "WB" ? this.wbPlayStyleFor(back.player) : this.sbPlayStyleFor(back.player);
       if (!wideStyle || !backStyle) return;
       let attackBoost = 1;
       let defenseBoost = 1;
       let grade: SideLinkDetail["grade"] = "攻守連動";
       let reason = "幅を保ちながら、前進とカバーを分担する。";
-      if ((wideStyle.id === "touchline" || wideStyle.id === "inverted") && backStyle.id === "overlap") {
+      if ((wideStyle.id === "touchline" || wideStyle.id === "inverted") && (backStyle.id === "overlap" || backStyle.id === "attacking-wingback")) {
         attackBoost = 2; defenseBoost = 0; grade = "攻撃連動"; reason = "ウイングの仕掛けとSBのオーバーラップが外側のレーンを広げる。";
-      } else if (wideStyle.id === "inverted" && backStyle.id === "inverted-fullback") {
+      } else if (wideStyle.id === "inverted" && (backStyle.id === "inverted-fullback" || backStyle.id === "underlapping-wingback")) {
         attackBoost = 1; defenseBoost = 2; grade = "攻守連動"; reason = "内側への絞りとSBの中盤化で、中央の数的優位をつくる。";
-      } else if (wideStyle.id === "wide-worker" && backStyle.id === "defensive-fullback") {
+      } else if (wideStyle.id === "wide-worker" && (backStyle.id === "defensive-fullback" || backStyle.id === "defensive-wingback")) {
         attackBoost = 0; defenseBoost = 2; grade = "守備連動"; reason = "ワイド・ワーカーと守備的SBがサイドの守備ブロックを固める。";
       }
-      details.push({ side, widePlayer: wide.player.name, widePosition: wide.player.position === "SH" ? "SH" : "WG", wideStyle: wideStyle.label, backPlayer: back.player.name, backStyle: backStyle.label, attackBoost, defenseBoost, totalBoost: attackBoost + defenseBoost, grade, reason });
+      details.push({ side, widePlayer: wide.player.name, widePosition: wide.player.position === "SH" ? "SH" : "WG", wideStyle: wideStyle.label, backPlayer: back.player.name, backPosition: back.slot.label as "SB" | "WB", backStyle: backStyle.label, attackBoost, defenseBoost, totalBoost: attackBoost + defenseBoost, grade, reason });
     };
     evaluateSide("左", ["lm", "lw"], ["lb", "lwb"]);
     evaluateSide("右", ["rm", "rw"], ["rb", "rwb"]);
@@ -3347,7 +3427,7 @@ export class ClubSimulation {
     const fatigueAverage = selected.length ? selected.reduce((total, player) => total + player.fatigue, 0) / selected.length : 100;
     const chemistry = selected.length ? clamp(Math.round(30 + pairAverage * 5 + fitRate * 15 - fatigueAverage * .12), 20, 95) : 0;
     const chemistryBonus = selected.length ? Math.round((chemistry - 50) / 15) : 0;
-    const roleBonus = (option: CFPlayStyleOption | WGPlayStyleOption | AMPlayStyleOption | CMPlayStyleOption | DMPlayStyleOption | CBPlayStyleOption | SBPlayStyleOption | GKPlayStyleOption) => option.attackBonus + (style.id === "direct" ? option.directBonus : style.id === "possession" ? option.possessionBonus : option.pressBonus);
+    const roleBonus = (option: CFPlayStyleOption | WGPlayStyleOption | AMPlayStyleOption | CMPlayStyleOption | DMPlayStyleOption | CBPlayStyleOption | SBPlayStyleOption | WBPlayStyleOption | GKPlayStyleOption) => option.attackBonus + (style.id === "direct" ? option.directBonus : style.id === "possession" ? option.possessionBonus : option.pressBonus);
     const cfRoles = occupied.filter((item) => item.slot.label === "CF" && isCfEligible(item.player)).map((item) => ({ player: item.player, option: this.cfPlayStyleFor(item.player) })).filter((item): item is { player: Player; option: CFPlayStyleOption } => Boolean(item.option));
     const wgRoles = occupied.filter((item) => ["WG", "SH"].includes(item.slot.label) && isWgEligible(item.player)).map((item) => ({ player: item.player, option: this.wgPlayStyleFor(item.player) })).filter((item): item is { player: Player; option: WGPlayStyleOption } => Boolean(item.option));
     const amRoles = occupied.filter((item) => item.slot.label === "CM" && isAmEligible(item.player)).map((item) => ({ player: item.player, option: this.amPlayStyleFor(item.player) })).filter((item): item is { player: Player; option: AMPlayStyleOption } => Boolean(item.option));
@@ -3355,6 +3435,7 @@ export class ClubSimulation {
     const dmRoles = occupied.filter((item) => item.slot.label === "DM" && isDmEligible(item.player)).map((item) => ({ player: item.player, option: this.dmPlayStyleFor(item.player) })).filter((item): item is { player: Player; option: DMPlayStyleOption } => Boolean(item.option));
     const cbRoles = occupied.filter((item) => item.slot.label === "CB" && isCbEligible(item.player)).map((item) => ({ player: item.player, option: this.cbPlayStyleFor(item.player) })).filter((item): item is { player: Player; option: CBPlayStyleOption } => Boolean(item.option));
     const sbRoles = occupied.filter((item) => item.slot.label === "SB" && isSbEligible(item.player)).map((item) => ({ player: item.player, option: this.sbPlayStyleFor(item.player) })).filter((item): item is { player: Player; option: SBPlayStyleOption } => Boolean(item.option));
+    const wbRoles = occupied.filter((item) => item.slot.label === "WB" && isWbEligible(item.player)).map((item) => ({ player: item.player, option: this.wbPlayStyleFor(item.player) })).filter((item): item is { player: Player; option: WBPlayStyleOption } => Boolean(item.option));
     const gkRoles = occupied.filter((item) => item.slot.label === "GK" && isGkEligible(item.player)).map((item) => ({ player: item.player, option: this.gkPlayStyleFor(item.player) })).filter((item): item is { player: Player; option: GKPlayStyleOption } => Boolean(item.option));
     const roleFitDetails = [
       ...cfRoles.map((item) => this.rolePlayStyleFit(item.player, "cf", item.option)),
@@ -3364,6 +3445,7 @@ export class ClubSimulation {
       ...dmRoles.map((item) => this.rolePlayStyleFit(item.player, "dm", item.option)),
       ...cbRoles.map((item) => this.rolePlayStyleFit(item.player, "cb", item.option)),
       ...sbRoles.map((item) => this.rolePlayStyleFit(item.player, "sb", item.option)),
+      ...wbRoles.map((item) => this.rolePlayStyleFit(item.player, "wb", item.option)),
       ...gkRoles.map((item) => this.rolePlayStyleFit(item.player, "gk", item.option)),
     ];
     const roleFitAttack = roleFitDetails.reduce((sum, item) => sum + item.attackBoost, 0);
@@ -3400,6 +3482,9 @@ export class ClubSimulation {
     const sbRoleAttack = sbRoles.reduce((sum, item) => sum + roleBonus(item.option), 0);
     const sbRoleDefense = sbRoles.reduce((sum, item) => sum + item.option.defenseBonus, 0);
     const sbRoleSummary = sbRoles.length ? `SB役割: ${sbRoles.map((item) => `${item.player.name}=${item.option.label}`).join(" / ")}` : "SB役割: 設定なし";
+    const wbRoleAttack = wbRoles.reduce((sum, item) => sum + roleBonus(item.option), 0);
+    const wbRoleDefense = wbRoles.reduce((sum, item) => sum + item.option.defenseBonus, 0);
+    const wbRoleSummary = wbRoles.length ? `WB役割: ${wbRoles.map((item) => `${item.player.name}=${item.option.label}`).join(" / ")}` : "WB役割: 設定なし";
     const gkRoleAttack = gkRoles.reduce((sum, item) => sum + roleBonus(item.option), 0);
     const gkRoleDefense = gkRoles.reduce((sum, item) => sum + item.option.defenseBonus, 0);
     const gkRoleSummary = gkRoles.length ? `GK役割: ${gkRoles.map((item) => `${item.player.name}=${item.option.label}`).join(" / ")}` : "GK役割: 設定なし";
@@ -3419,6 +3504,7 @@ export class ClubSimulation {
       dmRoleAttack, dmRoleDefense, dmRoleSummary,
       cbRoleAttack, cbRoleDefense, cbRoleSummary,
       sbRoleAttack, sbRoleDefense, sbRoleSummary,
+      wbRoleAttack, wbRoleDefense, wbRoleSummary,
       gkRoleAttack, gkRoleDefense, gkRoleSummary,
       roleFitAttack, roleFitDefense, roleFitSummary, roleFitDetails,
       sideLinkAttack, sideLinkDefense, sideLinkSummary, sideLinkDetails,
@@ -3426,8 +3512,8 @@ export class ClubSimulation {
       skillAttack, skillDefense, skillSummary, skillDetails,
       transitionAttack: transition.attack, transitionDefense: transition.defense,
       structureAttack: structure.attack, structureDefense: structure.defense, structureMidfield: structure.midfield, structureTransition: structure.transition,
-      attackModifier: formationIdentity.attack + mentality.attack + style.attack + chemistryBonus + structure.attack + cfRoleAttack + wgRoleAttack + amRoleAttack + cmRoleAttack + dmRoleAttack + cbRoleAttack + sbRoleAttack + gkRoleAttack + roleFitAttack + sideLinkAttack + midfieldPressAttack + skillAttack + Math.round((transition.attack - 60) / 25),
-      defenseModifier: formationIdentity.defense + mentality.defense + style.defense + chemistryBonus + structure.defense + cfRoleDefense + wgRoleDefense + amRoleDefense + cmRoleDefense + dmRoleDefense + cbRoleDefense + sbRoleDefense + gkRoleDefense + roleFitDefense + sideLinkDefense + midfieldPressDefense + skillDefense + Math.round((transition.defense - 60) / 25),
+      attackModifier: formationIdentity.attack + mentality.attack + style.attack + chemistryBonus + structure.attack + cfRoleAttack + wgRoleAttack + amRoleAttack + cmRoleAttack + dmRoleAttack + cbRoleAttack + sbRoleAttack + wbRoleAttack + gkRoleAttack + roleFitAttack + sideLinkAttack + midfieldPressAttack + skillAttack + Math.round((transition.attack - 60) / 25),
+      defenseModifier: formationIdentity.defense + mentality.defense + style.defense + chemistryBonus + structure.defense + cfRoleDefense + wgRoleDefense + amRoleDefense + cmRoleDefense + dmRoleDefense + cbRoleDefense + sbRoleDefense + wbRoleDefense + gkRoleDefense + roleFitDefense + sideLinkDefense + midfieldPressDefense + skillDefense + Math.round((transition.defense - 60) / 25),
     };
   }
 
@@ -3484,7 +3570,7 @@ export class ClubSimulation {
   }
 
   private persist() {
-    const saved: Persisted = { money: this.money, fame: this.fame, week: this.week, clubName: this.clubName, emblemId: this.emblemId, formationId: this.formationId, lineup: this.lineup, players: this.roster, rows: this.rows, logs: this.logs, recruited: this.recruited, sponsor: this.sponsor, cup: this.cup, popularity: this.popularity, teamMorale: this.teamMorale, recentMatchForm: this.recentMatchForm, concessionLevel: this.concessionLevel, scoutLevel: this.scoutLevel, trainingFacilityLevel: this.trainingFacilityLevel, rehabilitationFacilityLevel: this.rehabilitationFacilityLevel, trainingSessionsThisWeek: this.trainingSessionsThisWeek, youthIntakeCursor: this.youthIntakeCursor, ledger: this.ledger, cashTrail: this.cashTrail, mentality: this.mentality, playingStyle: this.playingStyle, autoLineupCriteria: this.autoLineupCriteria, injuries: this.injuries, recruitNegotiation: this.recruitNegotiation, saleOffers: this.saleOffers, trainingHistory: this.trainingHistory, lastTrainingWeek: this.lastTrainingWeek, lastYouthTrainingWeek: this.lastYouthTrainingWeek, marketSignedIds: this.marketSignedIds, marketCandidateIds: this.marketCandidateIds, marketPreferredPositions: this.marketPreferredPositions, marketSeenNames: this.marketSeenNames, marketCandidateCycle: this.marketCandidateCycle, marketSelectedCandidateId: this.selectedMarketCandidateId, marketUpdateNotice: this.pendingMarketUpdateNotice, youthPlayers: this.youthPlayers, seasonStats: this.seasonStats, manualMarkAssignments: this.manualMarkAssignments, calendarEntries: this.calendarEntries };
+    const saved: Persisted = { money: this.money, fame: this.fame, week: this.week, clubName: this.clubName, emblemId: this.emblemId, formationId: this.formationId, lineup: this.lineup, players: this.roster, rows: this.rows, logs: this.logs, recruited: this.recruited, sponsor: this.sponsor, sponsorRewardIds: this.sponsorRewardIds, cup: this.cup, popularity: this.popularity, teamMorale: this.teamMorale, recentMatchForm: this.recentMatchForm, concessionLevel: this.concessionLevel, scoutLevel: this.scoutLevel, trainingFacilityLevel: this.trainingFacilityLevel, rehabilitationFacilityLevel: this.rehabilitationFacilityLevel, trainingSessionsThisWeek: this.trainingSessionsThisWeek, youthIntakeCursor: this.youthIntakeCursor, ledger: this.ledger, cashTrail: this.cashTrail, mentality: this.mentality, playingStyle: this.playingStyle, autoLineupCriteria: this.autoLineupCriteria, injuries: this.injuries, recruitNegotiation: this.recruitNegotiation, saleOffers: this.saleOffers, trainingHistory: this.trainingHistory, lastTrainingWeek: this.lastTrainingWeek, lastYouthTrainingWeek: this.lastYouthTrainingWeek, marketSignedIds: this.marketSignedIds, marketCandidateIds: this.marketCandidateIds, marketPreferredPositions: this.marketPreferredPositions, marketSeenNames: this.marketSeenNames, marketCandidateCycle: this.marketCandidateCycle, marketSelectedCandidateId: this.selectedMarketCandidateId, marketUpdateNotice: this.pendingMarketUpdateNotice, youthPlayers: this.youthPlayers, seasonStats: this.seasonStats, manualMarkAssignments: this.manualMarkAssignments, calendarEntries: this.calendarEntries };
     try { localStorage.setItem(storageKey, JSON.stringify(saved)); } catch { /* Private mode or storage restrictions must not block gameplay. */ }
   }
 
@@ -3495,7 +3581,7 @@ export class ClubSimulation {
       const parsed = JSON.parse(raw) as Persisted;
       if (!this.hasUsableSave(parsed)) throw new Error("Invalid save data");
       this.money = parsed.money; this.fame = parsed.fame; this.week = parsed.week; this.clubName = normalizeClubName(parsed.clubName); this.emblemId = ["orbit", "shield", "bolt", "crown", "wolf", "star", "wave", "flame", "compass", "eagle"].includes(parsed.emblemId ?? "") ? parsed.emblemId! : "orbit"; this.formationId = parsed.formationId; this.lineup = parsed.lineup; this.roster = this.hydrateOpeningRoster(parsed.players, parsed.week); this.rows = parsed.rows.map((row) => row.id === userClub.id ? { ...row, name: this.clubName } : row); this.logs = parsed.logs; this.recruited = parsed.recruited;
-      this.sponsor = parsed.sponsor ?? null; this.cup = parsed.cup ?? initialCup(); this.popularity = parsed.popularity ?? 42; this.teamMorale = clamp(Math.round(finiteOr(parsed.teamMorale, 58)), 0, 100); this.recentMatchForm = Array.isArray(parsed.recentMatchForm) ? parsed.recentMatchForm.filter((entry): entry is RecentMatchForm => !!entry && ["W", "D", "L"].includes(entry.outcome) && Number.isFinite(entry.margin) && (entry.competition === "リーグ" || entry.competition === "カップ")).slice(0, 5).map((entry) => ({ outcome: entry.outcome, margin: clamp(Math.round(entry.margin), -5, 5), competition: entry.competition })) : []; this.concessionLevel = clamp(parsed.concessionLevel ?? 1, 1, concessionLevels.length); this.scoutLevel = clamp(parsed.scoutLevel ?? 1, 1, scoutLevels.length); this.trainingFacilityLevel = clamp(parsed.trainingFacilityLevel ?? 1, 1, trainingFacilityLevels.length); this.rehabilitationFacilityLevel = clamp(parsed.rehabilitationFacilityLevel ?? 1, 1, rehabilitationFacilityLevels.length); this.trainingSessionsThisWeek = Math.max(0, Math.round(finiteOr(parsed.trainingSessionsThisWeek, 0))); this.youthIntakeCursor = Math.max(0, Math.round(finiteOr(parsed.youthIntakeCursor, 0))); this.lastTrainingWeek = typeof parsed.lastTrainingWeek === "number" && Number.isFinite(parsed.lastTrainingWeek) && parsed.lastTrainingWeek >= 0 ? Math.round(parsed.lastTrainingWeek) : null; this.lastYouthTrainingWeek = typeof parsed.lastYouthTrainingWeek === "number" && Number.isFinite(parsed.lastYouthTrainingWeek) && parsed.lastYouthTrainingWeek >= 0 ? Math.round(parsed.lastYouthTrainingWeek) : null; this.calendarEntries = Array.isArray(parsed.calendarEntries) ? parsed.calendarEntries.filter((entry) => entry && Number.isInteger(entry.week) && entry.week >= 1 && entry.week <= SEASON_WEEKS).map((entry) => ({ ...entry, week: Math.round(entry.week) })) : []; this.mentality = mentalityOptions.some((item) => item.id === parsed.mentality) ? parsed.mentality! : "balanced"; this.playingStyle = playingStyleOptions.some((item) => item.id === parsed.playingStyle) ? parsed.playingStyle! : "possession"; this.autoLineupCriteria = ["attack", "defense", "fit"].includes(parsed.autoLineupCriteria ?? "") ? parsed.autoLineupCriteria! : "fit"; this.injuries = parsed.injuries ?? Object.fromEntries(this.roster.filter((player) => (player.injuryWeeks ?? 0) > 0).map((player) => [player.id, player.injuryWeeks!])); this.yellowCards = Object.fromEntries(Object.entries(parsed.yellowCards ?? {}).filter(([id, value]) => this.roster.some((player) => player.id === id) && Number.isFinite(value)).map(([id, value]) => [id, clamp(Math.round(value), 0, 1)])); this.suspensionMatches = Object.fromEntries(Object.entries(parsed.suspensionMatches ?? {}).filter(([id, value]) => this.roster.some((player) => player.id === id) && Number.isFinite(value)).map(([id, value]) => [id, clamp(Math.round(value), 0, 1)])); this.ledger = parsed.ledger?.length ? parsed.ledger : [{ week: parsed.week, label: "既存シーズン繰越", category: "繰越資金", amount: parsed.money, kind: "income", note: "財務ダッシュボード導入前の残高" }]; this.cashTrail = parsed.cashTrail?.length ? parsed.cashTrail : [parsed.money]; this.marketSignedIds = this.hydrateMarketSignedIds(parsed.marketSignedIds, parsed.recruited); this.marketPreferredPositions = Array.isArray(parsed.marketPreferredPositions) ? Array.from(new Set(parsed.marketPreferredPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)))) : []; this.marketCandidateIds = Array.isArray(parsed.marketCandidateIds) ? Array.from(new Set(parsed.marketCandidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)))) : []; this.marketSeenNames = Array.isArray(parsed.marketSeenNames) ? Array.from(new Set(parsed.marketSeenNames.filter((name): name is string => typeof name === "string" && marketRecruits.some((player) => player.name === name)))) : this.marketCandidateIds.slice(0, 4).map((id) => marketRecruits.find((player) => player.id === id)?.name).filter((name): name is string => Boolean(name)); this.marketCandidateCycle = Math.max(0, Math.round(finiteOr(parsed.marketCandidateCycle, -1)));     this.selectedMarketCandidateId = typeof parsed.marketSelectedCandidateId === "string" && this.marketCandidateIds.includes(parsed.marketSelectedCandidateId) ? parsed.marketSelectedCandidateId : this.marketCandidateIds[0] ?? null;
+      this.sponsor = parsed.sponsor ?? null; this.sponsorRewardIds = Array.isArray(parsed.sponsorRewardIds) ? parsed.sponsorRewardIds.filter((id): id is string => typeof id === "string") : []; this.cup = parsed.cup ?? initialCup(); this.popularity = parsed.popularity ?? 42; this.teamMorale = clamp(Math.round(finiteOr(parsed.teamMorale, 58)), 0, 100); this.recentMatchForm = Array.isArray(parsed.recentMatchForm) ? parsed.recentMatchForm.filter((entry): entry is RecentMatchForm => !!entry && ["W", "D", "L"].includes(entry.outcome) && Number.isFinite(entry.margin) && (entry.competition === "リーグ" || entry.competition === "カップ")).slice(0, 5).map((entry) => ({ outcome: entry.outcome, margin: clamp(Math.round(entry.margin), -5, 5), competition: entry.competition })) : []; this.concessionLevel = clamp(parsed.concessionLevel ?? 1, 1, concessionLevels.length); this.scoutLevel = clamp(parsed.scoutLevel ?? 1, 1, scoutLevels.length); this.trainingFacilityLevel = clamp(parsed.trainingFacilityLevel ?? 1, 1, trainingFacilityLevels.length); this.rehabilitationFacilityLevel = clamp(parsed.rehabilitationFacilityLevel ?? 1, 1, rehabilitationFacilityLevels.length); this.trainingSessionsThisWeek = Math.max(0, Math.round(finiteOr(parsed.trainingSessionsThisWeek, 0))); this.youthIntakeCursor = Math.max(0, Math.round(finiteOr(parsed.youthIntakeCursor, 0))); this.lastTrainingWeek = typeof parsed.lastTrainingWeek === "number" && Number.isFinite(parsed.lastTrainingWeek) && parsed.lastTrainingWeek >= 0 ? Math.round(parsed.lastTrainingWeek) : null; this.lastYouthTrainingWeek = typeof parsed.lastYouthTrainingWeek === "number" && Number.isFinite(parsed.lastYouthTrainingWeek) && parsed.lastYouthTrainingWeek >= 0 ? Math.round(parsed.lastYouthTrainingWeek) : null; this.calendarEntries = Array.isArray(parsed.calendarEntries) ? parsed.calendarEntries.filter((entry) => entry && Number.isInteger(entry.week) && entry.week >= 1 && entry.week <= SEASON_WEEKS).map((entry) => ({ ...entry, week: Math.round(entry.week) })) : []; this.mentality = mentalityOptions.some((item) => item.id === parsed.mentality) ? parsed.mentality! : "balanced"; this.playingStyle = playingStyleOptions.some((item) => item.id === parsed.playingStyle) ? parsed.playingStyle! : "possession"; this.autoLineupCriteria = ["attack", "defense", "fit"].includes(parsed.autoLineupCriteria ?? "") ? parsed.autoLineupCriteria! : "fit"; this.injuries = parsed.injuries ?? Object.fromEntries(this.roster.filter((player) => (player.injuryWeeks ?? 0) > 0).map((player) => [player.id, player.injuryWeeks!])); this.yellowCards = Object.fromEntries(Object.entries(parsed.yellowCards ?? {}).filter(([id, value]) => this.roster.some((player) => player.id === id) && Number.isFinite(value)).map(([id, value]) => [id, clamp(Math.round(value), 0, 1)])); this.suspensionMatches = Object.fromEntries(Object.entries(parsed.suspensionMatches ?? {}).filter(([id, value]) => this.roster.some((player) => player.id === id) && Number.isFinite(value)).map(([id, value]) => [id, clamp(Math.round(value), 0, 1)])); this.ledger = parsed.ledger?.length ? parsed.ledger : [{ week: parsed.week, label: "既存シーズン繰越", category: "繰越資金", amount: parsed.money, kind: "income", note: "財務ダッシュボード導入前の残高" }]; this.cashTrail = parsed.cashTrail?.length ? parsed.cashTrail : [parsed.money]; this.marketSignedIds = this.hydrateMarketSignedIds(parsed.marketSignedIds, parsed.recruited); this.marketPreferredPositions = Array.isArray(parsed.marketPreferredPositions) ? Array.from(new Set(parsed.marketPreferredPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)))) : []; this.marketCandidateIds = Array.isArray(parsed.marketCandidateIds) ? Array.from(new Set(parsed.marketCandidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)))) : []; this.marketSeenNames = Array.isArray(parsed.marketSeenNames) ? Array.from(new Set(parsed.marketSeenNames.filter((name): name is string => typeof name === "string" && marketRecruits.some((player) => player.name === name)))) : this.marketCandidateIds.slice(0, 4).map((id) => marketRecruits.find((player) => player.id === id)?.name).filter((name): name is string => Boolean(name)); this.marketCandidateCycle = Math.max(0, Math.round(finiteOr(parsed.marketCandidateCycle, -1)));     this.selectedMarketCandidateId = typeof parsed.marketSelectedCandidateId === "string" && this.marketCandidateIds.includes(parsed.marketSelectedCandidateId) ? parsed.marketSelectedCandidateId : this.marketCandidateIds[0] ?? null;
     const savedMarketNotice = parsed.marketUpdateNotice; this.pendingMarketUpdateNotice = savedMarketNotice && Number.isFinite(savedMarketNotice.week) && Array.isArray(savedMarketNotice.candidateIds) ? { week: Math.max(0, Math.round(savedMarketNotice.week)), candidateIds: savedMarketNotice.candidateIds.filter((id): id is string => typeof id === "string" && marketRecruits.some((player) => player.id === id)), requestedPositions: Array.isArray(savedMarketNotice.requestedPositions) ? savedMarketNotice.requestedPositions.filter((position): position is Player["position"] => typeof position === "string" && ["GK", "CB", "SB", "DM", "CM", "AM", "SH", "WG", "CF"].includes(position)) : [] } : null; this.recruitNegotiation = this.hydrateRecruitNegotiation(parsed.recruitNegotiation, parsed.recruited); this.saleOffers = this.hydrateSaleOffers(parsed.saleOffers); this.trainingHistory = this.hydrateTrainingHistory(parsed.trainingHistory); this.youthPlayers = this.hydrateYouthPlayers(parsed.youthPlayers); this.seasonStats = this.hydrateSeasonStats(parsed.seasonStats); this.manualMarkAssignments = Object.fromEntries(Object.entries(parsed.manualMarkAssignments ?? {}).filter(([, playerId]) => typeof playerId === "string" && this.roster.some((player) => player.id === playerId)));
     } catch {
       try { localStorage.removeItem(storageKey); } catch { /* Storage may be disabled; the initial state remains usable. */ }
@@ -3520,6 +3606,7 @@ export class ClubSimulation {
     const dmPlayStyle = isDmEligible({ position, secondary }) ? (dmPlayStyleOptions.find((option) => option.id === (saved.dmPlayStyle ?? reference?.dmPlayStyle))?.id ?? dmPlayStyleOptions[0].id) : undefined;
     const cbPlayStyle = isCbEligible({ position, secondary }) ? (cbPlayStyleOptions.find((option) => option.id === (saved.cbPlayStyle ?? reference?.cbPlayStyle))?.id ?? cbPlayStyleOptions[0].id) : undefined;
     const sbPlayStyle = isSbEligible({ position, secondary }) ? (sbPlayStyleOptions.find((option) => option.id === (saved.sbPlayStyle ?? reference?.sbPlayStyle))?.id ?? sbPlayStyleOptions[0].id) : undefined;
+    const wbPlayStyle = isWbEligible({ position, secondary }) ? (wbPlayStyleOptions.find((option) => option.id === (saved.wbPlayStyle ?? reference?.wbPlayStyle))?.id ?? wbPlayStyleOptions[0].id) : undefined;
     const gkPlayStyle = isGkEligible({ position, secondary }) ? (gkPlayStyleOptions.find((option) => option.id === (saved.gkPlayStyle ?? reference?.gkPlayStyle))?.id ?? gkPlayStyleOptions[0].id) : undefined;
     const skills = playerSkillsFor({ position, skills: saved.skills ?? reference?.skills });
     const isLegacyYouthTendency = Boolean(reference?.youthSkillTendency) && !saved.youthSkillTendency;
@@ -3554,6 +3641,8 @@ export class ClubSimulation {
       condition: clamp(Math.round(finiteOr(saved.condition, reference?.condition ?? defaultPlayerCondition)), 0, 100),
       position,
       secondary,
+      preferredSide: saved.preferredSide ?? reference?.preferredSide ?? defaultPlayerSideFor({ id: saved.id, position }),
+      secondarySide: saved.secondarySide ?? reference?.secondarySide ?? defaultSecondarySideFor({ id: saved.id, position, secondary }),
       cfPlayStyle,
       wgPlayStyle,
       amPlayStyle,
@@ -3561,6 +3650,7 @@ export class ClubSimulation {
       dmPlayStyle,
       cbPlayStyle,
       sbPlayStyle,
+      wbPlayStyle,
       gkPlayStyle,
       skills,
       skillXp,
