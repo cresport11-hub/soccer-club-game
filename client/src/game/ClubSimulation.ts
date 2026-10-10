@@ -844,9 +844,23 @@ export class ClubSimulation {
   }
   suspensionMatchesFor(playerId: string) { return this.suspensionMatches[playerId] ?? 0; }
 
-  playerIsFit(player: Player, slotId: string) {
+  positionFitTypeFor(player: Player, slotId: string): "primary" | "secondary" | "offrole" {
     const slot = this.formation.slots.find((item) => item.id === slotId);
-    return Boolean(slot && (slot.allowed.includes(player.position) || (player.secondary && slot.allowed.includes(player.secondary))));
+    if (!slot) return "offrole";
+    const sideMatches = (position: Player["position"], side: Player["preferredSide"] | Player["secondarySide"] | undefined) => {
+      // CF・中盤中央・GK・中央CBは中央スロットを優先し、左右対応ポジションは登録サイドを確認する。
+      const central = ["GK", "CF", "AM", "CM", "DM"].includes(position) || (position === "CB" && slot.side === "center");
+      return central || slot.side === "center" || side === slot.side;
+    };
+    const primarySide = player.preferredSide ?? defaultPlayerSideFor(player);
+    const secondarySide = player.secondarySide ?? (player.secondary ? defaultSecondarySideFor(player) : undefined);
+    if (slot.allowed.includes(player.position) && sideMatches(player.position, primarySide)) return "primary";
+    if (player.secondary && slot.allowed.includes(player.secondary) && sideMatches(player.secondary, secondarySide)) return "secondary";
+    return "offrole";
+  }
+
+  playerIsFit(player: Player, slotId: string) {
+    return this.positionFitTypeFor(player, slotId) !== "offrole";
   }
 
   rolePlayStyleFit(player: Player, role: RoleKind, option: RoleStyleOption): RolePlayStyleFit {
@@ -1092,8 +1106,13 @@ export class ClubSimulation {
 
   private attributeFocusForPosition(position: Player["position"]): PlayerAttributeKey[] {
     if (position === "GK") return ["gk", "pass"];
-    if (["CF", "WG", "SH"].includes(position)) return ["attack", "dribble", "shoot", "pass"];
-    if (["AM", "CM", "DM"].includes(position)) return ["pass", "dribble", "attack", "defense"];
+    if (position === "CF") return ["shoot", "attack", "dribble", "pass"];
+    if (["WG", "SH"].includes(position)) return ["dribble", "pass", "attack", "shoot"];
+    if (position === "AM") return ["pass", "dribble", "attack", "shoot"];
+    if (position === "CM") return ["pass", "dribble", "defense", "attack"];
+    if (position === "DM") return ["defense", "interception", "pass", "tackle"];
+    if (position === "WB") return ["dribble", "pass", "defense", "tackle"];
+    if (position === "SB") return ["defense", "tackle", "interception", "dribble"];
     return ["defense", "tackle", "block", "interception"];
   }
 
@@ -1595,7 +1614,8 @@ export class ClubSimulation {
     this.popularity = clamp(this.popularity - oldLeaguePopularity + leaguePopularityDelta, 12, 98);
     this.updateTeamCondition(won, draw, playerGoals - opponentGoals, "リーグ");
     if (result.cupResult) this.updateTeamCondition(result.cupResult.won, false, result.cupResult.playerGoals - result.cupResult.opponentGoals, "カップ");
-    const updatedFlow = this.createMatchFlow(playerGoals, opponentGoals, result.opponent, score.tactics, opponentTactics, tacticalMatchup, matchCondition, matchWeek, result.halfTime);
+    const redCardTimes = new Map(result.highlights.filter((item) => item.cardType === "red" && item.team === "orbit" && item.playerId).map((item) => [item.playerId!, item.minute]));
+    const updatedFlow = this.createMatchFlow(playerGoals, opponentGoals, result.opponent, score.tactics, opponentTactics, tacticalMatchup, matchCondition, matchWeek, result.halfTime, redCardTimes);
     updatedFlow.halfTime.tacticalNote += ` / ${markingImpact.summary} / ${matchCondition.summary}`;
     const firstHalfHighlights = result.highlights.filter((item) => item.minute <= 45);
     const substitutionHighlights: MatchHighlight[] = substitutions.map((item, index) => ({ minute: 46 + index, kind: "substitution", team: "orbit", text: `${item.outPlayer} → ${item.inPlayer}。後半から交代を投入。` }));
@@ -1714,6 +1734,18 @@ export class ClubSimulation {
     this.logs.unshift(`${player.name}の個別練習負荷を「${option.label}」へ設定。`);
     this.persist();
     return { ok: true, text: `${player.name}を「${option.label}」に設定しました。${option.copy}` };
+  }
+
+  setAllTrainingLoads(load: TrainingLoad, injuredMode: "include" | "skip" | "recovery" = "include") {
+    const option = trainingLoadOptions.find((item) => item.id === load);
+    if (!option) return { ok: false, text: "練習負荷を確認できませんでした。" };
+    const injured = this.roster.filter((player) => this.injuryWeeksFor(player.id) > 0);
+    const targets = this.roster.filter((player) => injuredMode === "skip" ? this.injuryWeeksFor(player.id) === 0 : true);
+    targets.forEach((player) => { player.trainingLoad = injuredMode === "recovery" && this.injuryWeeksFor(player.id) > 0 ? "recovery" : option.id; });
+    const modeCopy = injuredMode === "skip" ? `（負傷者${injured.length}名は変更なし）` : injuredMode === "recovery" ? `（負傷者${injured.length}名は回復）` : "";
+    this.logs.unshift(`全選手の練習負荷を「${option.label}」へ一括設定${modeCopy}。`);
+    this.persist();
+    return { ok: true, text: `全${this.roster.length}名を「${option.label}」に設定しました。${modeCopy}${option.copy}` };
   }
 
   assignSelected(slotId: string) {
@@ -2121,7 +2153,11 @@ export class ClubSimulation {
     const curveNotes = { early: "若い時期から伸びやすく、早めの主力化が期待できます。", standard: "年齢と経験に合わせて安定して伸びるタイプです。", late: "若手時はじっくりですが、成熟期以降の伸びしろが大きいタイプです。" } as const;
     const confidence = clamp(48 + this.scoutFacility.level * 9, 0, 90);
     const ageFactor = growthCurveModifierFor(profile.curve, scouted.age);
-    const forecasts = playerAttributeKeys
+    // 成長予測は選手の主ポジションに直結する4能力を優先表示する。
+    // 全能力を一括比較すると、能力上限や個体差だけでDF能力が上位に入り、
+    // OH/SHのような攻撃的な選手にもブロック・タックルが表示されてしまう。
+    const forecastAttributes = this.attributeFocusForPosition(scouted.position);
+    const forecasts = forecastAttributes
       .filter((attribute) => attribute !== "gk" || scouted.position === "GK")
       .map((attribute) => {
         const current = attribute === "gk" ? scouted.gk ?? 0 : scouted[attribute];
@@ -2439,6 +2475,7 @@ export class ClubSimulation {
     const isHome = this.isHomeWeek();
     const matchCondition = this.matchConditionFor(isHome);
     const matchCards = this.createMatchCards(this.week, opponentTactics);
+    const redCardTimes = new Map(matchCards.filter((item) => item.cardType === "red" && item.team === "orbit" && item.playerId).map((item) => [item.playerId!, item.minute]));
     const redCardPenalty = this.redCardPenalty(matchCards);
     const matchAttack = clamp(score.attack + tacticalMatchup.playerAttackModifier + markingImpact.attackModifier + matchCondition.homeAttack + matchCondition.moraleAttack + matchCondition.momentumAttack - redCardPenalty.attack, 0, 99);
     const matchDefense = clamp(score.defense + tacticalMatchup.playerDefenseModifier + markingImpact.defenseModifier + matchCondition.homeDefense + matchCondition.moraleDefense + matchCondition.momentumDefense - redCardPenalty.defense, 0, 99);
@@ -2448,7 +2485,7 @@ export class ClubSimulation {
     const concession = this.createConcessionReceipt(gate);
     const playerGoals = clamp(Math.round((matchAttack - (opponentTactics.defense + tacticalMatchup.opponentDefenseModifier) + 18 + deterministic(this.week + 4) * 24) / 20), 0, 5);
     const opponentGoals = clamp(Math.round(((opponentTactics.attack + tacticalMatchup.opponentAttackModifier) - matchDefense + 22 + deterministic(this.week + 18) * 20) / 21), 0, 4);
-    const matchFlow = this.createMatchFlow(playerGoals, opponentGoals, opponent.name, tactics, opponentTactics, tacticalMatchup, matchCondition);
+    const matchFlow = this.createMatchFlow(playerGoals, opponentGoals, opponent.name, tactics, opponentTactics, tacticalMatchup, matchCondition, this.week, undefined, redCardTimes);
     matchFlow.halfTime.tacticalNote += ` / ${markingImpact.summary} / ${matchCondition.summary}`;
     matchFlow.highlights.push(...matchCards);
     matchFlow.highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind));
@@ -2689,16 +2726,16 @@ export class ClubSimulation {
     };
   }
 
-  private createMatchFlow(playerGoals: number, opponentGoals: number, opponentName: string, tactics: TacticalAssessment, opponentTactics: OpponentTacticalAssessment, tacticalMatchup: TacticalMatchup, matchCondition: TeamMatchCondition, matchWeek = this.week, fixedHalf?: Pick<HalfTimeReport, "playerGoals" | "opponentGoals">): { halfTime: HalfTimeReport; highlights: MatchHighlight[] } {
+  private createMatchFlow(playerGoals: number, opponentGoals: number, opponentName: string, tactics: TacticalAssessment, opponentTactics: OpponentTacticalAssessment, tacticalMatchup: TacticalMatchup, matchCondition: TeamMatchCondition, matchWeek = this.week, fixedHalf?: Pick<HalfTimeReport, "playerGoals" | "opponentGoals">, redCardTimes: Map<string, number> = new Map()): { halfTime: HalfTimeReport; highlights: MatchHighlight[] } {
     const playerFirst = fixedHalf?.playerGoals ?? clamp(Math.round(playerGoals * (.38 + deterministic(matchWeek + 61) * .25)), 0, playerGoals);
     const opponentFirst = fixedHalf?.opponentGoals ?? clamp(Math.round(opponentGoals * (.38 + deterministic(matchWeek + 83) * .25)), 0, opponentGoals);
     const goalHighlights = [
-      ...this.goalHighlights("orbit", playerGoals, playerFirst, opponentName, tactics, opponentTactics, 101, matchWeek),
-      ...this.goalHighlights("opponent", opponentGoals, opponentFirst, opponentName, tactics, opponentTactics, 211, matchWeek),
+      ...this.goalHighlights("orbit", playerGoals, playerFirst, opponentName, tactics, opponentTactics, 101, matchWeek, redCardTimes),
+      ...this.goalHighlights("opponent", opponentGoals, opponentFirst, opponentName, tactics, opponentTactics, 211, matchWeek, redCardTimes),
     ];
     const highlights: MatchHighlight[] = [
       { minute: 1, kind: "kickoff", team: "neutral", text: "キックオフ。両チームが主導権を求めてボールを動かし始めた。" },
-      ...this.keyPlayHighlights(opponentName, opponentTactics, matchWeek, goalHighlights.map((item) => item.minute), playerGoals, opponentGoals, playerFirst, opponentFirst),
+      ...this.keyPlayHighlights(opponentName, opponentTactics, matchWeek, goalHighlights.map((item) => item.minute), playerGoals, opponentGoals, playerFirst, opponentFirst, redCardTimes),
       ...goalHighlights,
     ];
     const scoreAtHalf = `${playerFirst}-${opponentFirst}`;
@@ -2715,11 +2752,18 @@ export class ClubSimulation {
     return { halfTime, highlights: highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind)) };
   }
 
-  private keyPlayHighlights(opponentName: string, opponentTactics: OpponentTacticalAssessment, matchWeek: number, blockedMinutes: number[], playerGoals: number, opponentGoals: number, playerFirst: number, opponentFirst: number): MatchHighlight[] {
+  private keyPlayHighlights(opponentName: string, opponentTactics: OpponentTacticalAssessment, matchWeek: number, blockedMinutes: number[], playerGoals: number, opponentGoals: number, playerFirst: number, opponentFirst: number, redCardTimes: Map<string, number> = new Map()): MatchHighlight[] {
     const orbitAttackers = this.startingPlayers().filter((player) => player.position !== "GK").sort((a, b) => this.attackPower(b) - this.attackPower(a));
+    const activeOrbitPlayersAt = (minute: number) => this.startingPlayers().filter((player) => (redCardTimes.get(player.id) ?? Infinity) > minute);
+    const activeOrbitAttackersAt = (minute: number) => {
+      const active = orbitAttackers.filter((player) => (redCardTimes.get(player.id) ?? Infinity) > minute);
+      if (active.length) return active;
+      const eligible = this.roster.filter((player) => player.position !== "GK" && (redCardTimes.get(player.id) ?? Infinity) > minute);
+      return eligible.length ? eligible : orbitAttackers;
+    };
     const opponentAttackers = opponentTactics.lineup.filter((player) => player.position !== "GK").sort((a, b) => b.attack - a.attack);
     const ownGoalkeeper = this.startingPlayers().find((player) => player.position === "GK")?.name ?? "守護神";
-    const ownDefender = this.startingPlayers().filter((player) => ["CB", "SB", "DM"].includes(player.position)).sort((a, b) => this.defensePower(b) - this.defensePower(a))[0]?.name ?? "最終ライン";
+    const ownDefenderAt = (minute: number) => activeOrbitPlayersAt(minute).filter((player) => ["CB", "SB", "WB", "DM"].includes(player.position)).sort((a, b) => this.defensePower(b) - this.defensePower(a))[0]?.name ?? "最終ライン";
     if (!orbitAttackers.length || !opponentAttackers.length) return [];
     const usedMinutes = new Set([1, 45, 46, 90, ...blockedMinutes]);
     const firstHalfGoalCount = blockedMinutes.filter((minute) => minute >= 2 && minute <= 44).length;
@@ -2755,8 +2799,9 @@ export class ClubSimulation {
     ];
     const baseHighlights = minutes.map((minute, index) => {
       const orbitAction = deterministic(matchWeek * 37 + 401 + index) >= .43;
-      const orbitCreator = orbitAttackers[(index + 1) % orbitAttackers.length];
-      const orbitFinisher = orbitAttackers[(index + 2) % orbitAttackers.length];
+      const activeOrbitAttackers = activeOrbitAttackersAt(minute);
+      const orbitCreator = activeOrbitAttackers[(index + 1) % activeOrbitAttackers.length];
+      const orbitFinisher = activeOrbitAttackers[(index + 2) % activeOrbitAttackers.length];
       const opponentCreator = opponentAttackers[(index + 1) % opponentAttackers.length];
       const opponentFinisher = opponentAttackers[(index + 2) % opponentAttackers.length];
       const orbitPlays = [
@@ -2796,32 +2841,32 @@ export class ClubSimulation {
         `${opponentName}の${opponentCreator.name}が鋭い縦パスを通す。${opponentFinisher.name}の強烈なシュートは、わずかに枠の外へ！`,
         `${opponentName}の${opponentCreator.name}がこぼれ球を拾い、${opponentFinisher.name}へラストパス。至近距離の一撃を${ownGoalkeeper}が体を張って止めた！`,
         `${opponentName}の${opponentCreator.name}のコーナーキックに${opponentFinisher.name}が競り勝つ。ヘディングシュートは、クロスバーの上へ！`,
-        `${opponentName}の${opponentCreator.name}がワンツーで中央を突破。${opponentFinisher.name}のシュートは${ownDefender}が身を投げ出してブロックした！`,
+        `${opponentName}の${opponentCreator.name}がワンツーで中央を突破。${opponentFinisher.name}のシュートは${ownDefenderAt(minute)}が身を投げ出してブロックした！`,
         `${opponentName}の${opponentCreator.name}が切り返しから右足を振り抜く。鋭いミドルシュートを${ownGoalkeeper}が片手でかき出した！`,
-        `${opponentName}の${opponentCreator.name}が速攻から折り返し。${opponentFinisher.name}の決定的な一撃は、${ownDefender}がゴール前でクリア！`,
+        `${opponentName}の${opponentCreator.name}が速攻から折り返し。${opponentFinisher.name}の決定的な一撃は、${ownDefenderAt(minute)}がゴール前でクリア！`,
         `${opponentName}の${opponentCreator.name}が最終ラインの背後へロングパス。${opponentFinisher.name}が狙うが、${ownGoalkeeper}が飛び出して先に収めた！`,
-        `${opponentName}の${opponentCreator.name}がタッチライン際で巧みにキープし、深い位置からクロス。${opponentFinisher.name}のボレーは${ownDefender}に当たってコーナーへ！`,
+        `${opponentName}の${opponentCreator.name}がタッチライン際で巧みにキープし、深い位置からクロス。${opponentFinisher.name}のボレーは${ownDefenderAt(minute)}に当たってコーナーへ！`,
         `${opponentName}の${opponentCreator.name}が素早いリスタートで前を向き、${opponentFinisher.name}へ浮き球のパス。胸で収めた${opponentFinisher.name}の一撃を${ownGoalkeeper}が正面で抑えた！`,
         `${opponentName}の${opponentCreator.name}が中央をドリブルで運び、${opponentFinisher.name}とパスを交換。ペナルティエリア手前からのシュートは、ポストの外へ外れた！`,
         `${opponentName}の${opponentCreator.name}のFKがゴール前へ落ちる。${opponentFinisher.name}が混戦で押し込もうとするが、${ownGoalkeeper}が間一髪でキャッチした！`,
-        `${opponentName}の${opponentCreator.name}が中盤で奪って即座に縦へ。${opponentFinisher.name}が裏へ抜け出すが、${ownDefender}が懸命に追いついた！`,
+        `${opponentName}の${opponentCreator.name}が中盤で奪って即座に縦へ。${opponentFinisher.name}が裏へ抜け出すが、${ownDefenderAt(minute)}が懸命に追いついた！`,
         `${opponentName}の${opponentCreator.name}がボールを失うも、すぐに前線から奪い返す。${opponentFinisher.name}の速いシュートは${ownGoalkeeper}がセーブ！`,
-        `${opponentName}の${opponentCreator.name}が相手の攻撃を止めて前進。${opponentFinisher.name}へ一気に預けるが、ラストパスを${ownDefender}が読んだ！`,
+        `${opponentName}の${opponentCreator.name}が相手の攻撃を止めて前進。${opponentFinisher.name}へ一気に預けるが、ラストパスを${ownDefenderAt(minute)}が読んだ！`,
         `${opponentName}の${opponentCreator.name}が高い位置で奪取し、${opponentFinisher.name}がペナルティエリアへ侵入。角度のないシュートはサイドネット！`,
-        `${opponentName}の${opponentCreator.name}が縦へ急加速。${opponentFinisher.name}の折り返しを${ownDefender}が戻りながらクリアした！`,
+        `${opponentName}の${opponentCreator.name}が縦へ急加速。${opponentFinisher.name}の折り返しを${ownDefenderAt(minute)}が戻りながらクリアした！`,
         `${opponentName}の${opponentCreator.name}が自陣から素早く持ち出し、${opponentFinisher.name}へロングパス。${ownGoalkeeper}が飛び出して収めた！`,
         `${opponentName}の${opponentCreator.name}が前から追い込んでボールを奪う。${opponentFinisher.name}の決定機は${ownGoalkeeper}の正面！`,
-        `${opponentName}の${opponentCreator.name}が攻撃参加した直後に失い、${ownDefender}が奪い返す。こちらの速攻へ切り替わった！`,
+        `${opponentName}の${opponentCreator.name}が攻撃参加した直後に失い、${ownDefenderAt(minute)}が奪い返す。こちらの速攻へ切り替わった！`,
         `${opponentName}の${opponentCreator.name}と${opponentFinisher.name}がプレスを連続でかわす。最後は中央を閉じられ、攻撃が後退した！`,
-        `${opponentName}の${opponentCreator.name}がインターセプトから前を向く。${opponentFinisher.name}の一撃は、${ownDefender}が足を伸ばして阻止！`,
+        `${opponentName}の${opponentCreator.name}がインターセプトから前を向く。${opponentFinisher.name}の一撃は、${ownDefenderAt(minute)}が足を伸ばして阻止！`,
         `${opponentName}の${opponentCreator.name}が奪ってから一気に人数をかける。${opponentFinisher.name}のヘディングはわずかに枠を越えた！`,
         `${opponentName}の${opponentCreator.name}が失った直後に再び寄せて主導権を取り戻す。${opponentFinisher.name}のミドルは${ownGoalkeeper}が弾いた！`,
         `${opponentName}の${opponentCreator.name}が中央で時間を作り、${opponentFinisher.name}が右のスペースへ走り込む。折り返しは守備が先に触った！`,
-        `${opponentName}の${opponentCreator.name}が背後へ鋭いボールを入れる。${opponentFinisher.name}が追いつきクロスを送るが、${ownDefender}が戻って対応！`,
-        `${opponentName}の${opponentCreator.name}と${opponentFinisher.name}が細かなパスで中央を割る。最後のタッチを${ownDefender}が押さえた！`,
+        `${opponentName}の${opponentCreator.name}が背後へ鋭いボールを入れる。${opponentFinisher.name}が追いつきクロスを送るが、${ownDefenderAt(minute)}が戻って対応！`,
+        `${opponentName}の${opponentCreator.name}と${opponentFinisher.name}が細かなパスで中央を割る。最後のタッチを${ownDefenderAt(minute)}が押さえた！`,
         `${opponentName}の${opponentCreator.name}がこぼれ球を拾って左足を一閃。味方の二次攻撃も、${ownGoalkeeper}が落ち着いて止めた！`,
         `${opponentName}の${opponentCreator.name}が背負ってボールを収め、${opponentFinisher.name}へ落とす。前を向かせまいと守備が一斉に寄せる！`,
-        `${opponentName}の${opponentCreator.name}がライン間へ縦パスを差し込む。${opponentFinisher.name}が抜け出す寸前、${ownDefender}がカットした！`,
+        `${opponentName}の${opponentCreator.name}がライン間へ縦パスを差し込む。${opponentFinisher.name}が抜け出す寸前、${ownDefenderAt(minute)}がカットした！`,
       ];
       const playIndex = index % orbitPlays.length;
       return { minute, kind: "action" as const, team: orbitAction ? "orbit" as const : "opponent" as const, text: orbitAction ? orbitPlays[playIndex] : opponentPlays[playIndex] };
@@ -2836,8 +2881,9 @@ export class ClubSimulation {
         const firstMinute = allocateMinute(base, min, max, matchWeek * 43 + 501 + sequenceIndex);
         const counterMinute = allocateMinute(counterBase, min, max, matchWeek * 43 + 511 + sequenceIndex);
         const thirdMinute = allocateMinute(counterBase + 3, min, max, matchWeek * 43 + 521 + sequenceIndex);
-        const orbitCreator = orbitAttackers[(sequenceIndex + 2) % orbitAttackers.length];
-        const orbitFinisher = orbitAttackers[(sequenceIndex + 3) % orbitAttackers.length];
+        const activeOrbitAttackers = activeOrbitAttackersAt(firstMinute);
+        const orbitCreator = activeOrbitAttackers[(sequenceIndex + 2) % activeOrbitAttackers.length];
+        const orbitFinisher = activeOrbitAttackers[(sequenceIndex + 3) % activeOrbitAttackers.length];
         const opponentCreator = opponentAttackers[(sequenceIndex + 2) % opponentAttackers.length];
         const opponentFinisher = opponentAttackers[(sequenceIndex + 3) % opponentAttackers.length];
         const orbitFirst = deterministic(matchWeek * 47 + 521 + sequenceIndex) >= .5;
@@ -2854,7 +2900,7 @@ export class ClubSimulation {
           kind: "sequence",
           team: orbitFirst ? "opponent" : "orbit",
           text: orbitFirst
-            ? `${opponentName}がこぼれ球から即座に反撃。${opponentCreator.name}の折り返しを${ownDefender}が体を張ってクリアした！`
+            ? `${opponentName}がこぼれ球から即座に反撃。${opponentCreator.name}の折り返しを${ownDefenderAt(counterMinute)}が体を張ってクリアした！`
             : `${orbitCreator.name}が奪い返してカウンター。${orbitFinisher.name}のシュートはわずかに枠を外れた！`,
         });
         sequenceHighlights.push({
@@ -2863,25 +2909,28 @@ export class ClubSimulation {
           team: orbitFirst ? "orbit" : "opponent",
           text: orbitFirst
             ? `${orbitCreator.name}がこぼれ球を拾ってもう一度前進。${orbitFinisher.name}が折り返し、相手の守備ブロックが最後の一歩で防いだ！`
-            : `${opponentName}の${opponentCreator.name}が再び攻め込む。${opponentFinisher.name}のシュートコースを${ownDefender}が滑り込みで消した！`,
+            : `${opponentName}の${opponentCreator.name}が再び攻め込む。${opponentFinisher.name}のシュートコースを${ownDefenderAt(thirdMinute)}が滑り込みで消した！`,
         });
       });
     }
     return [...baseHighlights, ...sequenceHighlights];
   }
 
-  private goalHighlights(team: "orbit" | "opponent", goals: number, firstHalfGoals: number, opponentName: string, tactics: TacticalAssessment, opponentTactics: OpponentTacticalAssessment, seed: number, matchWeek: number): MatchHighlight[] {
+  private goalHighlights(team: "orbit" | "opponent", goals: number, firstHalfGoals: number, opponentName: string, tactics: TacticalAssessment, opponentTactics: OpponentTacticalAssessment, seed: number, matchWeek: number, redCardTimes: Map<string, number> = new Map()): MatchHighlight[] {
     const highlights: MatchHighlight[] = [];
     const attackers = this.startingPlayers().filter((player) => player.position !== "GK").sort((a, b) => this.attackPower(b) - this.attackPower(a));
     for (let index = 0; index < goals; index += 1) {
       const firstHalf = index < firstHalfGoals;
       const minute = firstHalf ? clamp(Math.round(6 + deterministic(matchWeek * 17 + seed + index) * 37), 5, 44) : clamp(Math.round(49 + deterministic(matchWeek * 19 + seed + index) * 39), 48, 89);
-      const scorerPlayer = team === "orbit" ? attackers[index % Math.max(attackers.length, 1)] : undefined;
+      const activeAttackers = attackers.filter((player) => (redCardTimes.get(player.id) ?? Infinity) > minute);
+      const scorerPool = activeAttackers.length ? activeAttackers : this.roster.filter((player) => player.position !== "GK" && (redCardTimes.get(player.id) ?? Infinity) > minute);
+      const scorerPlayer = team === "orbit" ? scorerPool[index % Math.max(scorerPool.length, 1)] : undefined;
       const opponentAttacker = opponentTactics.lineup.filter((player) => ["CF", "WG", "SH", "AM"].includes(player.position)).sort((a, b) => b.attack - a.attack)[index % Math.max(1, opponentTactics.lineup.filter((player) => ["CF", "WG", "SH", "AM"].includes(player.position)).length)];
       const scorer = scorerPlayer?.name ?? opponentAttacker?.name ?? (team === "orbit" ? this.clubName : `${opponentName}のFW`);
-      const assistant = team === "orbit" && attackers.length > 1 ? attackers[(index + 1) % attackers.length].name : undefined;
+      const activeAssistantPool = activeAttackers.length ? activeAttackers : scorerPool;
+      const assistant = team === "orbit" && activeAssistantPool.length > 1 ? activeAssistantPool[(index + 1) % activeAssistantPool.length].name : undefined;
       const role = scorerPlayer ? this.matchRoleFor(scorerPlayer) : null;
-      const wbPlayer = team === "orbit" ? this.startingPlayers().find((player) => player.position === "WB" || player.secondary === "WB") : undefined;
+      const wbPlayer = team === "orbit" ? this.startingPlayers().find((player) => (player.position === "WB" || player.secondary === "WB") && (redCardTimes.get(player.id) ?? Infinity) > minute) : undefined;
       const wbRole = wbPlayer ? this.wbPlayStyleFor(wbPlayer) : null;
       const wbBuildUp = wbPlayer && wbRole && index % 3 === 0
         ? wbRole.id === "attacking-wingback" ? `${wbPlayer.name}が大外を一気に駆け上がり、クロスを送り込んだ。`

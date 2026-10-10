@@ -45,6 +45,18 @@ describe("Player side foundation", () => {
     expect(fourFourTwo?.slots.find((slot) => slot.id === "rst")?.side).toBe("right");
   });
 
+  it("classifies every formation slot as primary, secondary, or off-role", () => {
+    const simulation = new ClubSimulation();
+    for (const formation of formations) {
+      simulation.setFormation(formation.id);
+      for (const slot of formation.slots) {
+        const player = simulation.rosterPlayers.find((item) => item.position === slot.allowed[0] || item.secondary === slot.allowed[0]);
+        if (!player) continue;
+        expect(["primary", "secondary", "offrole"]).toContain(simulation.positionFitTypeFor(player, slot.id));
+      }
+    }
+  });
+
   it("defines distinct WB commentary for each play style", () => {
     expect(wbPlayStyleOptions.find((option) => option.id === "attacking-wingback")?.finishCopy).toContain("大外");
     expect(wbPlayStyleOptions.find((option) => option.id === "underlapping-wingback")?.finishCopy).toContain("内側");
@@ -301,6 +313,32 @@ describe("ClubSimulation match commentary", () => {
     expect(restored.rosterPlayers.find((item) => item.id === recoveryPlayer!.id)?.fatigue).toBe(recoveryPlayer!.fatigue);
   });
 
+  it("applies one training load to every player and persists the bulk setting", () => {
+    localStorage.clear();
+    const simulation = new ClubSimulation();
+    const result = simulation.setAllTrainingLoads("recovery");
+    expect(result.ok).toBe(true);
+    expect(simulation.rosterPlayers.every((player) => simulation.trainingLoadFor(player).id === "recovery")).toBe(true);
+    const restored = new ClubSimulation();
+    expect(restored.rosterPlayers.every((player) => restored.trainingLoadFor(player).id === "recovery")).toBe(true);
+  });
+
+  it("supports excluding injured players or forcing their recovery in bulk load settings", () => {
+    localStorage.clear();
+    const simulation = new ClubSimulation();
+    const injured = simulation.rosterPlayers[0]!;
+    const healthy = simulation.rosterPlayers[1]!;
+    simulation.injuries[injured.id] = 2;
+    simulation.setTrainingLoad(injured.id, "light");
+    simulation.setTrainingLoad(healthy.id, "light");
+    simulation.setAllTrainingLoads("high", "skip");
+    expect(simulation.trainingLoadFor(injured).id).toBe("light");
+    expect(simulation.trainingLoadFor(healthy).id).toBe("high");
+    simulation.setAllTrainingLoads("high", "recovery");
+    expect(simulation.trainingLoadFor(injured).id).toBe("recovery");
+    expect(simulation.trainingLoadFor(healthy).id).toBe("high");
+  });
+
   it("persists individual development plans and runs them before the next match", () => {
     localStorage.clear();
     const simulation = new ClubSimulation();
@@ -506,6 +544,29 @@ describe("Match statistics", () => {
     expect(result.refereeStrictness).toBeGreaterThanOrEqual(.78);
     expect(result.refereeStrictness).toBeLessThanOrEqual(1.28);
     expect(["寛容", "標準", "厳格"]).toContain(result.refereeLabel);
+  });
+
+  it("does not mention a sent-off player in later commentary", () => {
+    localStorage.clear();
+    const simulation = new ClubSimulation();
+    let verified = false;
+    for (let week = 0; week < 80 && !verified; week += 1) {
+      if (simulation.isBreakWeek) {
+        simulation.advanceBreakWeek("training-camp");
+        continue;
+      }
+      const result = simulation.advanceWeek();
+      const redCards = result.highlights.filter((item) => item.kind === "card" && item.team === "orbit" && item.cardType === "red" && item.playerId);
+      for (const red of redCards) {
+        const laterCommentary = result.highlights.filter((item) => item.minute > red.minute && item.kind !== "card");
+        expect(laterCommentary.every((item) => !item.text.includes(red.playerId!))).toBe(true);
+        const sentOff = simulation.rosterPlayers.find((player) => player.id === red.playerId)?.name;
+        expect(sentOff).toBeDefined();
+        expect(laterCommentary.every((item) => !item.text.includes(sentOff!))).toBe(true);
+        verified = true;
+      }
+    }
+    expect(verified).toBe(true);
   });
 
   it("generates injuries and cards often enough to affect match management", () => {
@@ -852,6 +913,20 @@ describe("Recruit negotiation choices", () => {
       expect(highSimulation.currentRecruitNegotiation.holdReason).toBeTruthy();
       expect(highSimulation.acceptRecruitHold().ok).toBe(true);
     }
+  });
+
+  it("limits scout growth forecasts to the player's primary position", () => {
+    localStorage.clear();
+    const simulation = new ClubSimulation();
+    const candidate = simulation.marketCandidates.find((player) => ["AM", "SH", "WG"].includes(player.position));
+    expect(candidate).toBeDefined();
+    const report = simulation.scoutGrowthReport(candidate!);
+    const allowed = candidate!.position === "AM"
+      ? ["pass", "dribble", "attack", "shoot"]
+      : ["dribble", "pass", "attack", "shoot"];
+    expect(report.top.length).toBeLessThanOrEqual(4);
+    expect(report.top.every((item) => allowed.includes(item.attribute))).toBe(true);
+    expect(report.top.some((item) => ["block", "tackle", "interception"].includes(item.attribute))).toBe(false);
   });
 
   it("reports a deterministic growth curve and bounded ability forecast", () => {

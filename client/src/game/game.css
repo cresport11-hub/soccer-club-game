@@ -615,6 +615,14 @@ button { font: inherit; }
 .squad-card .card-stat { display:grid; gap:1px; justify-content:initial; line-height:1.15; }
 .squad-card .card-stat b, .squad-card .card-stat span { display:block; }
 
+/* Formation tokens use the same suitability language as the player position map. */
+.player-token.is-primary-fit { border-color:#ff756c; background:linear-gradient(145deg,rgba(185,71,62,.94),rgba(88,28,29,.94)); box-shadow:0 0 0 2px rgba(255,93,81,.3),0 8px 18px rgba(0,0,0,.28); }
+.player-token.is-secondary-fit { border-color:#d9ff4a; background:linear-gradient(145deg,rgba(104,123,25,.96),rgba(43,61,18,.96)); box-shadow:0 0 0 2px rgba(217,255,74,.22),0 8px 18px rgba(0,0,0,.28); }
+.formation-fit-legend { display:flex; flex-wrap:wrap; gap:7px; margin:8px 0 0; color:#a4bca8; font-size:9px; font-weight:800; }
+.formation-fit-legend span { padding:4px 7px; border:1px solid rgba(158,190,164,.24); background:rgba(2,20,11,.7); }
+.formation-fit-legend .is-primary-fit { color:#fff5f1; border-color:#ff756c; background:#b9473e; }
+.formation-fit-legend .is-secondary-fit { color:#18200b; border-color:#d9ff4a; background:#d9ff4a; }
+.formation-fit-legend .is-offrole { color:#ffd0c8; border-color:#ff907d; }
 /* Off-role starters remain playable, but are clearly marked after a formation switch. */
 .player-token.is-offrole {
   background: linear-gradient(145deg, rgba(111, 28, 24, .96), rgba(67, 18, 21, .94));
@@ -965,3 +973,22 @@ button { font: inherit; }
 .position-map-cell.secondary { border-color:#d9ff4a; background:#d9ff4a; color:#1a260e; box-shadow:0 0 12px rgba(217,255,74,.16); }
 .position-suitability-note { color:#819e89; font-size:8px; line-height:1.5; }
 @media (max-width:600px) { .position-suitability { padding:12px; }.position-map-cell { min-height:31px; font-size:9px; } }
+
+
+/* Squad-wide training load controls */
+.training-bulk-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 14px; }
+.bulk-load-option { min-height: 48px; padding: 8px 6px; color: #dcebdd; border: 1px solid rgba(187,222,190,.24); background: rgba(2,20,10,.5); text-align: left; transition: transform .16s cubic-bezier(.23,1,.32,1), border-color .16s ease, background .16s ease; }
+.bulk-load-option:active { transform: scale(.97); }
+.bulk-load-option b, .bulk-load-option small { display: block; }
+.bulk-load-option b { font-size: 10px; }
+.bulk-load-option small { margin-top: 3px; color: #96b29b; font-size: 7px; }
+.bulk-load-option.load-recovery:hover, .bulk-load-option.load-recovery:focus-visible { border-color: #6ad7ff; background: rgba(106,215,255,.15); }
+.bulk-load-option.load-light:hover, .bulk-load-option.load-light:focus-visible { border-color: #bfe799; background: rgba(191,231,153,.14); }
+.bulk-load-option.load-standard:hover, .bulk-load-option.load-standard:focus-visible { border-color: #f5c955; background: rgba(245,201,85,.14); }
+.bulk-load-option.load-high:hover, .bulk-load-option.load-high:focus-visible { border-color: #ff9b73; background: rgba(255,155,115,.14); }
+@media (max-width: 600px) { .training-bulk-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.training-injured-mode { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 14px; }
+.training-injured-mode > span { width: 100%; color: #9eb9a3; font-size: 8px; letter-spacing: .08em; }
+.training-injured-mode button { padding: 6px 8px; color: #9eb9a3; border: 1px solid rgba(187,222,190,.2); background: rgba(2,20,10,.42); font-size: 8px; }
+.training-injured-mode button.is-selected { color: #132b18; border-color: var(--lime); background: var(--lime); font-weight: 900; }

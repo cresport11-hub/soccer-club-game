@@ -169,7 +169,7 @@ export const defaultSystemMasteryFor = (player: Pick<Player, "id">, formationId:
 const growthFocusByPosition: Record<Position, PlayerAttributeKey[]> = {
   GK: ["gk", "pass"], WB: ["dribble", "pass", "defense", "tackle"], CB: ["defense", "tackle", "block", "interception"], SB: ["defense", "tackle", "interception", "dribble"],
   DM: ["defense", "tackle", "interception", "pass"], CM: ["pass", "dribble", "defense", "attack"], AM: ["pass", "dribble", "attack", "shoot"],
-  SH: ["dribble", "pass", "attack", "defense"], WG: ["dribble", "attack", "shoot", "pass"], CF: ["shoot", "attack", "dribble", "pass"],
+  SH: ["dribble", "pass", "attack", "shoot"], WG: ["dribble", "attack", "shoot", "pass"], CF: ["shoot", "attack", "dribble", "pass"],
 };
 
 /** IDを種にして、同じ選手は常に同じ成長特性になるようにする。 */
@@ -202,7 +202,7 @@ export const defaultAttributeCeilingsFor = (player: Pick<Player, "position" | "s
     DM: ["defense", "tackle", "interception", "pass"],
     CM: ["pass", "dribble", "defense", "attack"],
     AM: ["pass", "dribble", "attack", "shoot"],
-    SH: ["dribble", "pass", "attack", "defense"],
+    SH: ["dribble", "pass", "attack", "shoot"],
     WG: ["dribble", "attack", "shoot", "pass"],
     CF: ["shoot", "attack", "dribble", "pass"],
   };
