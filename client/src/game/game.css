@@ -992,3 +992,40 @@ button { font: inherit; }
 .training-injured-mode > span { width: 100%; color: #9eb9a3; font-size: 8px; letter-spacing: .08em; }
 .training-injured-mode button { padding: 6px 8px; color: #9eb9a3; border: 1px solid rgba(187,222,190,.2); background: rgba(2,20,10,.42); font-size: 8px; }
 .training-injured-mode button.is-selected { color: #132b18; border-color: var(--lime); background: var(--lime); font-weight: 900; }
+
+/* Key moments inside commentary are highlighted without recoloring the entire feed. */
+.commentary-emphasis { display: inline-block; padding: 0 3px; border-radius: 3px; font-weight: 950; letter-spacing: .01em; }
+.commentary-emphasis.is-goal { color: #071509; background: var(--lime); box-shadow: 0 0 13px rgba(217,255,74,.38); }
+.highlight-item.opponent .commentary-emphasis.is-goal { color: #241008; background: #ff8d69; box-shadow: 0 0 13px rgba(255,141,105,.34); }
+.commentary-emphasis.is-save { color: #06151b; background: #6ad7ff; box-shadow: 0 0 12px rgba(106,215,255,.34); }
+.commentary-emphasis.is-chance { color: #2b2005; background: #f5c955; box-shadow: 0 0 10px rgba(245,201,85,.28); }
+@media (prefers-reduced-motion: reduce) { .commentary-emphasis { box-shadow: none; } }
+
+/* Newly revealed key moments briefly expand and glow to focus attention without moving the feed. */
+.highlight-item.is-live.is-latest.is-key-moment { position: relative; z-index: 2; animation: commentary-impact .78s cubic-bezier(.23,1,.32,1) both; }
+.highlight-item.is-live.is-latest.is-key-moment.goal { border-color: var(--lime); }
+.highlight-item.is-live.is-latest.is-key-moment.opponent.goal { border-color: #ff8d69; }
+@keyframes commentary-impact {
+  0% { opacity: .72; transform: scale(.985); box-shadow: 0 0 0 rgba(217,255,74,0); }
+  28% { opacity: 1; transform: scale(1.018); box-shadow: 0 0 24px rgba(217,255,74,.38), inset 0 0 18px rgba(217,255,74,.08); }
+  62% { transform: scale(1.008); box-shadow: 0 0 13px rgba(106,215,255,.22), inset 0 0 10px rgba(106,215,255,.04); }
+  100% { opacity: 1; transform: scale(1); box-shadow: none; }
+}
+.highlight-item.is-live.is-latest.is-key-moment.opponent { animation-name: commentary-impact-opponent; }
+@keyframes commentary-impact-opponent {
+  0% { opacity: .72; transform: scale(.985); box-shadow: 0 0 0 rgba(255,141,105,0); }
+  28% { opacity: 1; transform: scale(1.018); box-shadow: 0 0 24px rgba(255,141,105,.4), inset 0 0 18px rgba(255,141,105,.08); }
+  62% { transform: scale(1.008); box-shadow: 0 0 13px rgba(255,141,105,.24), inset 0 0 10px rgba(255,141,105,.04); }
+  100% { opacity: 1; transform: scale(1); box-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) { .highlight-item.is-live.is-latest.is-key-moment { animation: none; } }
+
+/* Manager report filters: compact tabs keep the dashboard dense while making log history scannable. */
+.manager-report-tabs { display:grid; grid-template-columns:repeat(5,1fr); gap:3px; margin:12px 0 9px; padding:3px; border:1px solid rgba(218,255,216,.12); background:rgba(1,15,8,.42); }
+.manager-report-tabs button { display:flex; align-items:center; justify-content:center; gap:4px; min-width:0; padding:6px 4px; color:#8eaa92; border:0; background:transparent; cursor:pointer; font:700 9px "Zen Kaku Gothic New",sans-serif; transition:color .16s ease,background .16s ease,transform .16s ease; }
+.manager-report-tabs button small { color:inherit; font-size:8px; opacity:.7; }
+.manager-report-tabs button:hover,.manager-report-tabs button:focus-visible { color:#efffea; background:rgba(217,255,74,.08); outline:0; }
+.manager-report-tabs button.is-active { color:#193209; background:var(--lime); box-shadow:0 3px 10px rgba(217,255,74,.12); }
+.manager-report-tabs button:active { transform:scale(.97); }
+.manager-report-empty { margin:15px 0; padding:14px 10px; color:#8eaa92; border:1px dashed rgba(218,255,216,.18); text-align:center; font-size:10px; }
+@media (max-width:600px) { .manager-report-tabs { gap:2px; }.manager-report-tabs button { flex-direction:column; gap:1px; padding:5px 2px; font-size:8px; }.manager-report-tabs button small { font-size:7px; } }

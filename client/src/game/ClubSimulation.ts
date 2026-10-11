@@ -682,7 +682,7 @@ export class ClubSimulation {
   get clubEmblemId() { return this.emblemId; }
   get currentMoney() { return this.money; }
   get currentFame() { return this.fame; }
-  get currentLogs() { return this.logs.slice(0, 5); }
+  get currentLogs() { return this.logs.slice(0, 20); }
   get isRecruited() { return this.recruited; }
   get lineupState() { return this.lineup; }
   get currentSponsor() { return this.sponsor; }
@@ -2491,6 +2491,9 @@ export class ClubSimulation {
     matchFlow.highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind));
     const injuries = this.createMatchInjuries(matchFlow.highlights, this.week);
     matchFlow.highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind));
+    this.annotateCommentaryPositions(matchFlow.highlights, opponentTactics.lineup);
+    this.enrichPositionCommentary(matchFlow.highlights, opponentTactics.lineup);
+    matchFlow.highlights.sort((a, b) => a.minute - b.minute || a.kind.localeCompare(b.kind));
     const stats = this.createMatchStats(playerGoals, opponentGoals, matchAttack, matchDefense, tactics, opponentTactics, matchFlow.highlights, this.week);
     const refereeStrictness = this.refereeStrictnessFor(this.week);
     const reward = playerGoals > opponentGoals ? 245000 : playerGoals === opponentGoals ? 105000 : 48000;
@@ -2724,6 +2727,97 @@ export class ClubSimulation {
       orbit: { possession: orbitPossession, shots: orbitShots, shotsOnTarget: orbitShotsOnTarget, bigChances: orbitBigChances, corners: orbitCorners, passes: orbitPasses, passAccuracy: orbitPassAccuracy, fouls: orbitFouls, offsides: orbitOffsides, saves: Math.max(0, opponentShotsOnTarget - opponentGoals) },
       opponent: { possession: opponentPossession, shots: opponentShots, shotsOnTarget: opponentShotsOnTarget, bigChances: opponentBigChances, corners: opponentCorners, passes: opponentPasses, passAccuracy: opponentPassAccuracy, fouls: opponentFouls, offsides: opponentOffsides, saves: Math.max(0, orbitShotsOnTarget - playerGoals) },
     };
+  }
+
+  private annotateCommentaryPositions(highlights: MatchHighlight[], opponents: OpponentPlayer[]) {
+    const players = [
+      ...this.roster.map((player) => ({ name: player.name, position: player.position })),
+      ...opponents.map((player) => ({ name: player.name, position: player.position })),
+    ].filter((player) => player.name.length > 0).sort((a, b) => b.name.length - a.name.length);
+    const names = players.map((player) => player.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    if (!names.length) return;
+    const namePattern = new RegExp(names.join("|"), "g");
+    const positionByName = new Map(players.map((player) => [player.name, positionLabel(player.position)]));
+    for (const highlight of highlights) {
+      highlight.text = highlight.text.replace(namePattern, (name) => `${positionByName.get(name) ?? ""} ${name}`.trim());
+    }
+  }
+
+  private enrichPositionCommentary(highlights: MatchHighlight[], opponents: OpponentPlayer[]) {
+    const players = [...this.roster, ...opponents];
+    const phraseMap: Record<string, Record<string, string[]>> = {
+      CF: {
+        shot: ["ゴール前で駆け引きを制し、フィニッシュの間合いを逃さない。", "最終ラインの背後を読む動きから、前線らしい一撃へつないだ。", "相手を背負いながらも、ストライカーの仕事を見せる。"],
+        pass: ["最前線でボールを収め、味方の押し上げを引き出す。", "ターゲットとして体を張り、攻撃の出口になった。"],
+        dribble: ["中央で相手を引きつけ、ゴールへ向かう角度を作った。"],
+        defense: ["前線からの追い込みで、相手の判断を急がせた。"],
+      },
+      WG: {
+        shot: ["幅を取った位置から内へ絞り、鋭くゴールを狙う。", "サイドの加速をそのままシュートへ持ち込んだ。"],
+        pass: ["タッチライン際で幅を作り、決定機へつながるボールを供給。", "大外から相手の守備を広げ、クロスの起点になった。"],
+        dribble: ["一対一で縦へのスピードを見せ、守備ラインを後退させた。"],
+        defense: ["サイドまで戻って相手の前進を止め、切り替えを支えた。"],
+      },
+      SH: {
+        shot: ["ハーフスペースへ入り込み、ゴール前の隙を突いた。", "二列目からの飛び出しで、守備の視界から消えた。"],
+        pass: ["中盤と前線の間で受け、素早い連係を完成させる。", "斜めのランニングでパスコースを生み出した。"],
+        dribble: ["内側へ運びながら相手の守備ブロックを揺さぶった。"],
+        defense: ["サイドのプレスに加わり、相手の逃げ道を限定した。"],
+      },
+      AM: {
+        shot: ["ライン間で前を向き、決定機を見逃さない。", "トップ下らしく一瞬の判断でゴールへの道を開いた。"],
+        pass: ["ライン間でボールを受け、最後のパスを選び取った。", "視野の広さで守備の間へ針のようなパスを通した。"],
+        dribble: ["中央で相手を引き出し、狭い局面を抜け出した。"],
+        defense: ["相手のアンカーへ素早く寄せ、中央の前進を遅らせた。"],
+      },
+      CM: {
+        shot: ["二列目からタイミングよく入り、ミドルの構えを作った。", "中盤から押し上げ、こぼれ球へ迷わず反応した。"],
+        pass: ["中盤のテンポを整え、次の攻撃へボールを運んだ。", "味方との距離を保ちながら、展開を一段速めた。"],
+        dribble: ["中央の空いたレーンを見つけ、持ち運びで前進した。"],
+        defense: ["中盤の回収役として、セカンドボールを逃さなかった。"],
+      },
+      DM: {
+        shot: ["後方から遅れて入り、意外性のある一撃を狙った。"],
+        pass: ["最終ラインの前で受け、攻撃の第一歩を正確につないだ。", "相手のプレスをいなし、守備から攻撃へ切り替えた。"],
+        dribble: ["危険を見極めて持ち運び、中央の圧力を外した。"],
+        defense: ["中央の危険地帯を読み、奪取から即座に前へ出た。", "最終ラインの前で盾となり、攻撃の芽を摘んだ。"],
+      },
+      WB: {
+        shot: ["大外からの攻撃参加で、相手の想定を上回るシュートコースへ入った。"],
+        pass: ["上下動で幅を作り、深い位置から質の高いクロスを届けた。", "サイドの出口として走り続け、攻撃の幅を広げた。"],
+        dribble: ["タッチラインを縦にえぐり、相手の守備を外へ引き出した。"],
+        defense: ["素早い帰陣でサイドを封鎖し、攻守の切り替えを成立させた。"],
+      },
+      SB: {
+        shot: ["後方からのオーバーラップで、思い切ってゴール前へ顔を出した。"],
+        pass: ["守備位置から一気に押し上げ、低く正確なボールを入れた。"],
+        dribble: ["サイドで運びながら、味方の前進を後押しした。"],
+        defense: ["一対一の距離を保ち、サイドの侵入を許さなかった。", "最終ラインで冷静にコースを読み、攻撃を外へ追いやった。"],
+      },
+      CB: {
+        shot: ["セットプレーの流れから、最終ラインの選手もゴール前へ迫った。"],
+        pass: ["後方から縦のコースを見つけ、ビルドアップを前進させた。"],
+        dribble: ["持ち上がりで相手の一列目を引きつけ、味方の出口を作った。"],
+        defense: ["最後の一歩を読み、ゴール前の危険を消し去った。", "中央のスペースを締め、相手のフィニッシュを許さない。"],
+      },
+      GK: {
+        shot: ["最後尾から反応を研ぎ澄まし、ゴールを守り抜いた。"],
+        pass: ["足元から落ち着いてつなぎ、チームを押し上げた。"],
+        dribble: ["飛び出しの判断で、相手の狙いを先に摘み取った。"],
+        defense: ["最後の砦として、シュートコースを読み切った。", "守備陣へ声を送りながら、ゴール前を整えた。"],
+      },
+    };
+    const actionFor = (text: string) => /シュート|一撃|ゴール|ヘディング|ボレー|ミドル/.test(text) ? "shot" : /パス|クロス|折り返し|展開|FK|コーナー/.test(text) ? "pass" : /ドリブル|抜け出し|侵入|仕掛け|運ぶ/.test(text) ? "dribble" : /タックル|ブロック|クリア|奪取|インターセプト|守備|帰陣|カット/.test(text) ? "defense" : null;
+    for (const highlight of highlights) {
+      if (!["action", "sequence", "goal"].includes(highlight.kind)) continue;
+      const action = actionFor(highlight.text);
+      if (!action) continue;
+      const mentioned = players.find((player) => highlight.text.includes(player.name));
+      const phrases = mentioned ? phraseMap[mentioned.position]?.[action] : undefined;
+      if (!phrases?.length) continue;
+      const index = Math.abs(highlight.minute + mentioned!.name.length) % phrases.length;
+      highlight.text += ` ${phrases[index]}`;
+    }
   }
 
   private createMatchFlow(playerGoals: number, opponentGoals: number, opponentName: string, tactics: TacticalAssessment, opponentTactics: OpponentTacticalAssessment, tacticalMatchup: TacticalMatchup, matchCondition: TeamMatchCondition, matchWeek = this.week, fixedHalf?: Pick<HalfTimeReport, "playerGoals" | "opponentGoals">, redCardTimes: Map<string, number> = new Map()): { halfTime: HalfTimeReport; highlights: MatchHighlight[] } {

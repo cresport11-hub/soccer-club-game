@@ -1,5 +1,7 @@
+import { positionLabel } from "./data";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ClubSimulation, sponsorOffers, wbPlayStyleOptions } from "./ClubSimulation";
+import { managerReportCategoryFor } from "./ui";
 import { commonGivenNamePool, commonSurnamePool, defaultGrowthProfileFor, defaultPlayerSideFor, defaultSecondarySideFor, formations, growthCurveModifierFor, marketRecruits, nationalityNameFor, nationalityPositionBoostFor, nationalityProfiles, normalizePlayerName, opponentSeeds, opponentSquadFor, playerAssessmentFor, players, youthIntakes, youthProspects } from "./data";
 
 const advanceWeekForTest = (simulation: ClubSimulation) => {
@@ -80,6 +82,22 @@ describe("ClubSimulation match commentary", () => {
       removeItem: (key: string) => values.delete(key),
       clear: () => values.clear(),
     });
+  });
+
+  it("shows the latest 20 lines in the manager report", () => {
+    const simulation = new ClubSimulation();
+    for (let index = 0; index < 24; index += 1) {
+      simulation.setClubName(`テストクラブ${index + 1}`);
+    }
+    expect(simulation.currentLogs).toHaveLength(20);
+    expect(simulation.currentLogs[0]).toContain("クラブ名を");
+  });
+
+  it("classifies manager report lines into the selectable tabs", () => {
+    expect(managerReportCategoryFor("第4節 HOME 試合。賞金を獲得。" )).toBe("match");
+    expect(managerReportCategoryFor("トレーニングを実施。疲労を回復。" )).toBe("training");
+    expect(managerReportCategoryFor("市場から選手を獲得。移籍金を支払った。" )).toBe("transfer");
+    expect(managerReportCategoryFor("クラブ名を変更。" )).toBe("club");
   });
 
   it("keeps each half dense and includes consecutive attack-counterattack sequences", () => {
@@ -544,6 +562,28 @@ describe("Match statistics", () => {
     expect(result.refereeStrictness).toBeGreaterThanOrEqual(.78);
     expect(result.refereeStrictness).toBeLessThanOrEqual(1.28);
     expect(["寛容", "標準", "厳格"]).toContain(result.refereeLabel);
+  });
+
+  it("prefixes every named player in commentary with their position", () => {
+    const simulation = new ClubSimulation();
+    const result = advanceWeekForTest(simulation);
+    const players = [...simulation.rosterPlayers.map((player) => ({ name: player.name, position: player.position })), ...result.opponentTactics.lineup.map((player) => ({ name: player.name, position: player.position }))];
+    for (const highlight of result.highlights) {
+      for (const player of players) {
+        if (highlight.text.includes(player.name)) expect(highlight.text).toContain(`${positionLabel(player.position)} ${player.name}`);
+      }
+    }
+  });
+
+  it("varies commentary phrasing by position and play type", () => {
+    const simulation = new ClubSimulation();
+    const texts: string[] = [];
+    for (let week = 0; week < 10; week += 1) {
+      texts.push(...advanceWeekForTest(simulation).highlights.filter((item) => ["action", "sequence", "goal"].includes(item.kind)).map((item) => item.text));
+    }
+    const joined = texts.join(" ");
+    expect(joined).toMatch(/フィニッシュの間合い|中盤のテンポ|ライン間でボールを受け|最終ラインで冷静に|最後の砦として|大外からの攻撃参加/);
+    expect(new Set(texts).size).toBeGreaterThan(12);
   });
 
   it("does not mention a sent-off player in later commentary", () => {

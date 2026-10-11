@@ -42,11 +42,18 @@ type SalaryFilter = "all" | "high" | "low";
 type ContractFilter = "all" | "due" | "short" | "long";
 type MarkTone = "advantage" | "even" | "caution";
 type MarkingAssessment = { player: Player; tone: MarkTone; label: string; differential: number; reason: string; manual: boolean };
-
+export type ManagerReportCategory = "all" | "match" | "training" | "transfer" | "club";
+export const managerReportCategoryFor = (log: string): Exclude<ManagerReportCategory, "all"> => {
+  if (/移籍|売却|交渉|契約|スカウト網|市場|選手を獲得|候補を獲得/.test(log)) return "transfer";
+  if (/試合|第\d+節|ハーフタイム|前半|後半|カップ|勝利|敗北|引き分け|レッドカード|警告累積|出場停止/.test(log)) return "match";
+  if (/練習|育成|スキル|成長|疲労|回復|負荷|トレーニング|ユース/.test(log)) return "training";
+  return "club";
+};
 export class GameUI {
   private root = document.createElement("div");
   private page: PageId = "home";
   private helpSection: "home" | "lineup" | "team" | "league" = "home";
+  private managerReportCategory: ManagerReportCategory = "all";
   private bulkTrainingInjuredMode: "include" | "skip" | "recovery" = "include";
   private toast = "";
   private toastTimer: number | null = null;
@@ -233,7 +240,7 @@ export class GameUI {
 
   private handleClick = (event: MouseEvent) => {
     this.unlockBgm();
-    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action], [data-nav], [data-mobile-nav], [data-bgm-toggle], [data-team-power-toggle], [data-auto-criteria], [data-emblem], [data-player], [data-player-detail], [data-close-player-detail], [data-opponent-player], [data-mark-source], [data-mark-clear], [data-slot], [data-formation], [data-mentality], [data-style], [data-half-mentality], [data-half-style], [data-half-out], [data-half-in], [data-half-remove], [data-roster-sort], [data-roster-salary-filter], [data-roster-contract-filter]");
+    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action], [data-nav], [data-mobile-nav], [data-bgm-toggle], [data-team-power-toggle], [data-auto-criteria], [data-emblem], [data-report-category], [data-player], [data-player-detail], [data-close-player-detail], [data-opponent-player], [data-mark-source], [data-mark-clear], [data-slot], [data-formation], [data-mentality], [data-style], [data-half-mentality], [data-half-style], [data-half-out], [data-half-in], [data-half-remove], [data-roster-sort], [data-roster-salary-filter], [data-roster-contract-filter]");
     if (!target) return;
     if (this.suppressNextPlayerClick && (target.matches("[data-slot]") || target.matches("[data-player]"))) {
       this.suppressNextPlayerClick = false;
@@ -251,6 +258,11 @@ export class GameUI {
     if (target.dataset.teamPowerToggle !== undefined) {
       this.teamPowerRadarVisible = !this.teamPowerRadarVisible;
       window.localStorage.setItem("touchline-team-power-visible", this.teamPowerRadarVisible ? "1" : "0");
+      this.render();
+      return;
+    }
+    if (target.dataset.reportCategory) {
+      this.managerReportCategory = target.dataset.reportCategory as ManagerReportCategory;
       this.render();
       return;
     }
@@ -655,6 +667,36 @@ export class GameUI {
     chant.stop(now + (isOwnGoal ? 1.1 : 0.72));
   }
 
+  private playImportantMomentSE(item: MatchHighlight) {
+    const context = this.crowdAudio;
+    if (!context || context.state !== "running" || !this.isImportantCommentary(item)) return;
+    const now = context.currentTime;
+    const isGoal = item.kind === "goal";
+    const own = item.team === "orbit";
+    const tones = isGoal
+      ? own ? [660, 880, 1320] : [440, 554, 740]
+      : [740, 988, 1318];
+    const output = context.createGain();
+    output.gain.setValueAtTime(0.0001, now);
+    output.gain.exponentialRampToValueAtTime(isGoal ? (own ? 0.105 : 0.075) : 0.09, now + 0.018);
+    output.gain.exponentialRampToValueAtTime(0.0001, now + (isGoal ? 0.72 : 0.42));
+    output.connect(context.destination);
+    tones.forEach((frequency, index) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const start = now + index * (isGoal ? 0.095 : 0.065);
+      const duration = isGoal ? 0.56 : 0.28;
+      oscillator.type = isGoal ? (own ? "triangle" : "sine") : "sine";
+      oscillator.frequency.setValueAtTime(frequency, start);
+      oscillator.frequency.exponentialRampToValueAtTime(frequency * (isGoal ? 1.025 : 1.08), start + duration * 0.7);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(index === tones.length - 1 ? 0.72 : 0.42, start + 0.018);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      oscillator.connect(gain).connect(output);
+      oscillator.start(start);
+      oscillator.stop(start + duration + 0.02);
+    });
+  }
   private stopGoalCelebration() {
     if (this.goalCelebrationTimer !== null) window.clearTimeout(this.goalCelebrationTimer);
     this.goalCelebrationTimer = null;
@@ -664,6 +706,7 @@ export class GameUI {
   private triggerGoalCelebration(item: MatchHighlight) {
     this.stopGoalCelebration();
     this.goalCelebration = item;
+    this.playImportantMomentSE(item);
     this.playGoalCrowd(item.team);
     this.goalCelebrationTimer = window.setTimeout(() => {
       this.goalCelebration = null;
@@ -675,6 +718,7 @@ export class GameUI {
   private revealCommentaryItem(item: MatchHighlight) {
     this.commentaryVisibleCount += 1;
     if (item.kind === "goal") this.triggerGoalCelebration(item);
+    else if (this.isImportantCommentary(item)) this.playImportantMomentSE(item);
     this.render();
   }
 
@@ -1064,7 +1108,16 @@ export class GameUI {
   private homePage(score: ReturnType<ClubSimulation["score"]>) {
     const isBreak = this.simulation.isBreakWeek;
     const opponent = this.simulation.currentOpponent;
-    const recent = this.simulation.currentLogs;
+    const reportTabs: Array<{ id: ManagerReportCategory; label: string }> = [
+      { id: "all", label: "すべて" },
+      { id: "match", label: "試合" },
+      { id: "training", label: "練習" },
+      { id: "transfer", label: "移籍" },
+      { id: "club", label: "クラブ" },
+    ];
+    const allLogs = this.simulation.currentLogs;
+    const recent = this.managerReportCategory === "all" ? allLogs : allLogs.filter((log) => managerReportCategoryFor(log) === this.managerReportCategory);
+    const reportTabsMarkup = `<div class="manager-report-tabs" role="tablist" aria-label="監督レポートのカテゴリ">${reportTabs.map((tab) => `<button type="button" role="tab" aria-selected="${this.managerReportCategory === tab.id}" data-report-category="${tab.id}" class="${this.managerReportCategory === tab.id ? "is-active" : ""}">${tab.label}<small>${tab.id === "all" ? allLogs.length : allLogs.filter((log) => managerReportCategoryFor(log) === tab.id).length}</small></button>`).join("")}</div>`;
     const nextGate = this.simulation.upcomingGateForecast;
     const nextMerchandise = this.simulation.upcomingMerchandiseForecast;
     const nextConcession = this.simulation.upcomingConcessionForecast;
@@ -1083,7 +1136,7 @@ export class GameUI {
         <article class="tactical-card team-card"><div class="card-kicker">TEAM PULSE</div><h3>チーム総合値</h3><div class="score-ring" style="--score:${score.total || 0}"><span>${score.total || "--"}</span></div><div class="split-metrics"><span><b>${score.attack || "--"}</b>攻撃</span><span><b>${score.defense || "--"}</b>守備</span><span><b>${score.readiness || "--"}</b>準備度</span><span><b>${score.systemRate || "--"}%</b>発揮率</span></div></article>
         <article class="tactical-card objective-card"><div class="card-kicker">SEASON OBJECTIVE</div><h3>今季の目標</h3><div class="objective-list"><p><b>01</b> リーグ <strong>6位以内</strong></p><p><b>02</b> 名声 <strong>500</strong> に到達</p><p><b>03</b> 10勝を積み上げる</p></div><div class="progress-label"><span>SEASON PROGRESS</span><b>${this.simulation.seasonProgress}%</b></div><div class="progress-bar"><i style="width:${this.simulation.seasonProgress}%"></i></div></article>
         <article class="tactical-card supporter-card home-pulse-card"><div class="card-kicker">CLUB PULSE</div><div class="home-pulse-head"><div><h3>人気と財務</h3><p>次節の集客とクラブ資金の現在値。</p></div><span class="fan-score-compact"><strong>${this.simulation.fanPopularity}<small>%</small></strong><em>${this.simulation.fanPopularity >= 70 ? "熱狂" : this.simulation.fanPopularity >= 45 ? "期待" : "再建中"}</em></span></div><div class="home-pulse-summary"><span><i>所持金</i><b>${formatMoney(this.simulation.currentMoney)}</b></span><span><i>次回見込み収入</i><b>+${formatMoney(nextClubIncome)}</b></span><span><i>次戦</i><b>${nextGate.isHome ? `${nextGate.attendance.toLocaleString()}人` : "AWAY"}</b></span></div><div class="fan-bar"><i style="width:${this.simulation.fanPopularity}%"></i></div><details class="home-pulse-details"><summary><span>収益・人気の詳細</span><small>会員・グッズ・売店・入場料</small><b>＋</b></summary><div class="supporter-commerce"><span><i>FAN CLUB</i><b>${membership.members.toLocaleString()}人</b><small>週次 +${formatMoney(membership.revenue)}</small></span><span><i>GATE ${nextGate.isHome ? "FORECAST" : "AWAY"}</i><b>${nextGate.isHome ? formatMoney(nextGate.revenue) : "—"}</b><small>${nextGate.isHome ? `${nextGate.attendance.toLocaleString()} / ${nextGate.capacity.toLocaleString()}人` : "ホーム戦で入場料"}</small></span><span><i>GOODS</i><b>${nextMerchandise.isHome ? formatMoney(nextMerchandise.revenue) : "—"}</b><small>${nextMerchandise.isHome ? `${nextMerchandise.buyers.toLocaleString()}人が購入予想` : "ホーム戦で販売"}</small></span><span><i>FOOD Lv.${nextConcession.level}</i><b>${nextConcession.isHome ? formatMoney(nextConcession.revenue) : "—"}</b><small>${nextConcession.isHome ? `${nextConcession.customers.toLocaleString()}人が利用予想` : "ホーム戦で営業"}</small></span></div><button data-nav="finance" class="home-pulse-link">財務ダッシュボードを見る <b>→</b></button></details></article>
-        <article class="tactical-card log-card"><div class="card-kicker">TOUCHLINE LOG</div><h3>監督レポート</h3>${recent.map((log, index) => `<p class="log-line"><b>${String(index + 1).padStart(2, "0")}</b>${log}</p>`).join("")}${this.simulation.currentSponsor ? `<div class="compact-contract"><span>PARTNER</span><b>${this.simulation.currentSponsor.name}</b><em>週次 +${formatMoney(this.simulation.currentSponsor.weeklyIncome)}</em></div>` : `<button data-nav="sponsors" class="compact-contract is-empty"><span>PARTNER</span><b>スポンサーを選ぶ</b><em>資金計画を整える →</em></button>`}</article>
+        <article class="tactical-card log-card"><div class="card-kicker">TOUCHLINE LOG</div><h3>監督レポート</h3>${reportTabsMarkup}${recent.length ? recent.map((log, index) => `<p class="log-line"><b>${String(index + 1).padStart(2, "0")}</b>${log}</p>`).join("") : `<p class="manager-report-empty">このカテゴリのレポートはまだありません。</p>`}${this.simulation.currentSponsor ? `<div class="compact-contract"><span>PARTNER</span><b>${this.simulation.currentSponsor.name}</b><em>週次 +${formatMoney(this.simulation.currentSponsor.weeklyIncome)}</em></div>` : `<button data-nav="sponsors" class="compact-contract is-empty"><span>PARTNER</span><b>スポンサーを選ぶ</b><em>資金計画を整える →</em></button>`}</article>
       </section>
       <section class="test-reset-panel" aria-label="テストプレイ用リセット"><div><span class="card-kicker">TEST PLAY / DANGER ZONE</span><h3>ゲームを初期状態へ戻す</h3><p>保存済みのシーズン進行、選手育成、資金、戦績をすべて開幕状態へ戻します。</p></div><button data-action="reset-game" class="reset-game-button">初期状態へリセット</button></section>
     `;
@@ -1482,10 +1535,32 @@ export class GameUI {
     return `<div class="commerce-receipt concession"><span>${prefix} / LV.${concession.level}</span><b>${concession.customers.toLocaleString()}<small> CUSTOMERS</small></b><em>平均 ${formatMoney(concession.averageSpend)}　<strong>+ ${formatMoney(concession.revenue)}</strong></em></div>`;
   }
 
+  private emphasizedCommentaryText(item: MatchHighlight) {
+    const escaped = escapeHtml(item.text);
+    const saveTerms = "好セーブ|ビッグセーブ|セーブ！|セーブ!|間一髪で防いだ|横っ飛びで防いだ|片手でかき出した|体を張って止めた|足で止めた|反応に阻まれた|弾き出した|正面で抑えた|キャッチした|飛び出して先に収めた";
+    const goalTerms = "ゴール！|ゴール!|GOAL";
+    const chanceTerms = "決定的な一撃|決定機|シュート|ヘディング|ボレー|ミドルシュート";
+    const patterns = item.kind === "goal"
+      ? [{ pattern: goalTerms, className: "is-goal" }, { pattern: saveTerms, className: "is-save" }]
+      : [{ pattern: saveTerms, className: "is-save" }, { pattern: chanceTerms, className: "is-chance" }];
+    let result = escaped;
+    for (const { pattern, className } of patterns) {
+      result = result.replace(new RegExp(`(${pattern})`, "g"), `<strong class="commentary-emphasis ${className}">$1</strong>`);
+    }
+    return result;
+  }
+  private isImportantCommentary(item: MatchHighlight) {
+    return item.kind === "goal" || /好セーブ|ビッグセーブ|セーブ！|セーブ!|間一髪で防いだ|横っ飛びで防いだ|片手でかき出した|体を張って止めた|足で止めた|反応に阻まれた|弾き出した|正面で抑えた|キャッチした/.test(item.text);
+  }
   private highlightsTimeline(highlights: NonNullable<ReturnType<ClubSimulation["advanceWeek"]>>["highlights"], throughHalf: boolean, visibleCount?: number) {
     const visible = highlights.filter((item) => throughHalf ? item.minute <= 45 : item.minute > 45 && item.kind !== "fulltime");
     const shown = visibleCount === undefined ? visible : visible.slice(0, visibleCount);
-    const line = (item: MatchHighlight) => `<article class="highlight-item ${item.team} ${item.kind}"><b>${String(item.minute).padStart(2, "0")}′</b><span>${item.kind === "goal" ? "GOAL" : item.kind === "sequence" ? "RALLY" : item.kind === "action" ? "PLAY" : item.kind === "injury" ? "MED" : item.kind === "card" ? "CARD" : item.kind === "tactic" ? "PLAN" : item.kind === "halftime" ? "HT" : "•"}</span><p>${item.text}</p></article>`;
+    const line = (item: MatchHighlight, index: number) => {
+      const latest = visibleCount !== undefined && index === shown.length - 1;
+      const emphasis = this.isImportantCommentary(item) ? " is-key-moment" : "";
+      const latestClass = latest ? " is-latest" : "";
+      return `<article class="highlight-item ${item.team} ${item.kind}${emphasis}${latestClass}"><b>${String(item.minute).padStart(2, "0")}′</b><span>${item.kind === "goal" ? "GOAL" : item.kind === "sequence" ? "RALLY" : item.kind === "action" ? "PLAY" : item.kind === "injury" ? "MED" : item.kind === "card" ? "CARD" : item.kind === "tactic" ? "PLAN" : item.kind === "halftime" ? "HT" : "•"}</span><p>${this.emphasizedCommentaryText(item)}</p></article>`;
+    };
     return `<section class="highlight-timeline ${visibleCount === undefined ? "" : "is-live"}" aria-live="polite">${visibleCount === undefined ? shown.map(line).join("") : `<small>LIVE FEED / ${visibleCount} of ${visible.length}</small>${shown.map(line).join("")}`}</section>`;
   }
 
