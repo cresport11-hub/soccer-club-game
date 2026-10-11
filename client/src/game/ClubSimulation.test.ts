@@ -71,6 +71,14 @@ describe("Player side foundation", () => {
     expect(wideSlot?.allowed).toContain("WB");
     expect(formations.find((formation) => formation.id === "5-4-1")?.slots.find((slot) => slot.id === "rwb")?.allowed).toContain("WB");
   });
+
+  it("adds primary WB players with SH or SB as their secondary position", () => {
+    const wingBacks = marketRecruits.filter((player) => player.position === "WB");
+    expect(wingBacks.length).toBeGreaterThanOrEqual(2);
+    expect(wingBacks.some((player) => player.secondary === "SH")).toBe(true);
+    expect(wingBacks.some((player) => player.secondary === "SB")).toBe(true);
+    expect(players.filter((player) => player.position === "WB").map((player) => player.secondary)).toEqual(expect.arrayContaining(["SH", "SB"]));
+  });
 });
 
 describe("ClubSimulation match commentary", () => {
@@ -204,7 +212,7 @@ describe("ClubSimulation match commentary", () => {
     const simulation = new ClubSimulation();
     const result = advanceWeekForTest(simulation);
     const markableOpponentPositions = ["CF", "WG", "AM", "SH", "CM", "DM"];
-    const defensivePositions = ["CB", "SB", "DM", "CM", "SH"];
+    const defensivePositions = ["CB", "SB", "WB", "DM", "CM", "SH"];
 
     expect(result.markDuels.length).toBeGreaterThan(0);
     expect(result.markDuels.every((duel) => markableOpponentPositions.includes(duel.opponentPosition))).toBe(true);
@@ -238,12 +246,12 @@ describe("ClubSimulation match commentary", () => {
     expect(nationalityNameFor("KR", "sample")).toMatch(/^[A-Za-z-]+ [A-Za-z-]+$/);
   });
 
-  it("provides 300 unique market player IDs with exactly 50 foreign players", () => {
-    expect(marketRecruits).toHaveLength(300);
-    expect(new Set(marketRecruits.map((player) => player.id)).size).toBe(300);
-    expect(marketRecruits.filter((player) => player.nationality && player.nationality !== "JP")).toHaveLength(50);
-    expect(marketRecruits.filter((player) => (player.nationality ?? "JP") === "JP")).toHaveLength(250);
-    expect(marketRecruits.filter((player) => player.id.startsWith("rg"))).toHaveLength(291);
+  it("provides 600 unique market player IDs with exactly 100 foreign players", () => {
+    expect(marketRecruits).toHaveLength(600);
+    expect(new Set(marketRecruits.map((player) => player.id)).size).toBe(600);
+    expect(marketRecruits.filter((player) => player.nationality && player.nationality !== "JP")).toHaveLength(100);
+    expect(marketRecruits.filter((player) => (player.nationality ?? "JP") === "JP")).toHaveLength(500);
+    expect(marketRecruits.filter((player) => player.id.startsWith("rg"))).toHaveLength(591);
   });
 
   it("differentiates nationality tendencies by position", () => {

@@ -3,7 +3,7 @@ import { assets } from "./assets";
  * Design system: 「タッチライン戦術室」— dense tactical cards and a compact mobile scoreboard keep club health visible at all times.
  */
 import { ClubSimulation, amPlayStyleOptions, cbPlayStyleOptions, cfPlayStyleOptions, cmPlayStyleOptions, contractOfferOptions, dmPlayStyleOptions, formationSelectionOrder, gkPlayStyleOptions, mentalityOptions, playingStyleOptions, sbPlayStyleOptions, wbPlayStyleOptions, sponsorOffers, trainingLoadOptions, trainingOptions, wgPlayStyleOptions, type AutoLineupCriteria, type ConcessionReceipt, type ContractOfferId, type GateReceipt, type MatchHighlight, type MembershipReceipt, type MerchandiseReceipt, type Mentality, type PageId, type PlayingStyle, type TrainingFocus, type ClubEmblemId } from "./ClubSimulation";
-import { canMarkOpponent, defaultPlayerSideFor, defaultSecondarySideFor, formationBaseId, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, nationalityProfileFor, opponentSeeds, playerAssessmentFor, playerSkillCatalog, positionLabel, recruit, sideLabel, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type DMPlayStyle, type GKPlayStyle, type OpponentPlayer, type Player, type PlayerSkillId, type SBPlayStyle, type Slot, type WBPlayStyle, type WGPlayStyle } from "./data";
+import { canMarkOpponent, defaultPlayerSideFor, defaultSecondarySideFor, formationBaseId, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, nationalityLabels, nationalityProfileFor, opponentSeeds, playerAssessmentFor, playerSkillCatalog, positionLabel, recruit, sideLabel, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type DMPlayStyle, type GKPlayStyle, type NationalityCode, type OpponentPlayer, type Player, type PlayerSkillId, type Position, type SBPlayStyle, type Slot, type WBPlayStyle, type WGPlayStyle } from "./data";
 
 const navItems: Array<{ id: PageId; icon: string; label: string }> = [
   { id: "home", icon: "⌂", label: "ホーム" }, { id: "lineup", icon: "◫", label: "スタメン" }, { id: "team", icon: "◎", label: "チーム" }, { id: "stats", icon: "◈", label: "成績" },
@@ -54,6 +54,8 @@ export class GameUI {
   private page: PageId = "home";
   private helpSection: "home" | "lineup" | "team" | "league" = "home";
   private managerReportCategory: ManagerReportCategory = "all";
+  private catalogPosition: Position | "all" = "all";
+  private catalogNationality: NationalityCode | "all" = "all";
   private bulkTrainingInjuredMode: "include" | "skip" | "recovery" = "include";
   private toast = "";
   private toastTimer: number | null = null;
@@ -240,7 +242,7 @@ export class GameUI {
 
   private handleClick = (event: MouseEvent) => {
     this.unlockBgm();
-    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action], [data-nav], [data-mobile-nav], [data-bgm-toggle], [data-team-power-toggle], [data-auto-criteria], [data-emblem], [data-report-category], [data-player], [data-player-detail], [data-close-player-detail], [data-opponent-player], [data-mark-source], [data-mark-clear], [data-slot], [data-formation], [data-mentality], [data-style], [data-half-mentality], [data-half-style], [data-half-out], [data-half-in], [data-half-remove], [data-roster-sort], [data-roster-salary-filter], [data-roster-contract-filter]");
+    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-action], [data-nav], [data-mobile-nav], [data-bgm-toggle], [data-team-power-toggle], [data-auto-criteria], [data-emblem], [data-report-category], [data-catalog-position], [data-catalog-nationality], [data-player], [data-player-detail], [data-close-player-detail], [data-opponent-player], [data-mark-source], [data-mark-clear], [data-slot], [data-formation], [data-mentality], [data-style], [data-half-mentality], [data-half-style], [data-half-out], [data-half-in], [data-half-remove], [data-roster-sort], [data-roster-salary-filter], [data-roster-contract-filter]");
     if (!target) return;
     if (this.suppressNextPlayerClick && (target.matches("[data-slot]") || target.matches("[data-player]"))) {
       this.suppressNextPlayerClick = false;
@@ -263,6 +265,16 @@ export class GameUI {
     }
     if (target.dataset.reportCategory) {
       this.managerReportCategory = target.dataset.reportCategory as ManagerReportCategory;
+      this.render();
+      return;
+    }
+    if (target.dataset.catalogPosition) {
+      this.catalogPosition = target.dataset.catalogPosition as Position | "all";
+      this.render();
+      return;
+    }
+    if (target.dataset.catalogNationality) {
+      this.catalogNationality = target.dataset.catalogNationality as NationalityCode | "all";
       this.render();
       return;
     }
@@ -840,6 +852,7 @@ export class GameUI {
       case "finance": return this.financePage();
       case "settings": return this.settingsPage();
       case "help": return this.helpPage();
+      case "catalog": return this.playerCatalogPage();
       default: return this.homePage(score);
     }
   }
@@ -1105,6 +1118,30 @@ export class GameUI {
     return `<section class="tactical-card break-schedule-card"><div><span class="card-kicker">${phase.toUpperCase()} / WEEK ${this.simulation.currentWeek}</span><h2>公式戦のない週を活用する</h2><p>この週は次の公式戦へ向けた準備期間です。どちらか一つを選んで週を進めます。</p></div><div class="break-activity-grid"><button type="button" data-action="break-activity" data-break-activity="preseason-match" class="ghost-action"><b>プレシーズンマッチ</b><small>実戦感覚・士気を高める　費用 50,000円</small></button><button type="button" data-action="break-activity" data-break-activity="training-camp" class="primary-action"><b>トレーニングキャンプ</b><small>疲労 −10・コンディション +5　費用 30,000円</small></button></div></section>`;
   }
 
+  private playerCatalogPage() {
+    const positions: Position[] = ["CF", "WG", "SH", "AM", "CM", "DM", "WB", "SB", "CB", "GK"];
+    const nationalities: NationalityCode[] = ["JP", "BR", "KR", "ES", "DE", "FR", "AR"];
+    const filtered = marketRecruits.filter((player) => (this.catalogPosition === "all" || player.position === this.catalogPosition) && (this.catalogNationality === "all" || (player.nationality ?? "JP") === this.catalogNationality));
+    const positionFilters = [{ id: "all", label: "すべて" }, ...positions.map((position) => ({ id: position, label: positionLabel(position) }))];
+    const nationalityFilters = [{ id: "all", label: "すべて" }, ...nationalities.map((nationality) => ({ id: nationality, label: nationalityLabels[nationality] }))];
+    return `
+      ${this.pageHeading("PLAYER ARCHIVE", "選手データ一覧", "移籍市場に登録されている600名の能力・適性データを確認できます。", false)}
+      <section class="player-catalog-page">
+        <div class="player-catalog-toolbar tactical-card">
+          <div><span class="card-kicker">MARKET DATABASE / ${marketRecruits.length} PROFILES</span><h2>選手図鑑</h2><p>WB適性を含む全候補を、ポジションまたは国籍で絞り込めます。</p></div>
+          <button type="button" data-nav="home" class="ghost-action">ホームへ戻る <b>→</b></button>
+          <div class="player-catalog-filter"><span>POSITION</span><div>${positionFilters.map((item) => `<button type="button" data-catalog-position="${item.id}" class="${this.catalogPosition === item.id ? "is-selected" : ""}">${item.label}</button>`).join("")}</div></div>
+          <div class="player-catalog-filter"><span>NATIONALITY</span><div>${nationalityFilters.map((item) => `<button type="button" data-catalog-nationality="${item.id}" class="${this.catalogNationality === item.id ? "is-selected" : ""}">${item.label}</button>`).join("")}</div></div>
+        </div>
+        <section class="player-catalog-table tactical-card" aria-label="選手データ一覧">
+          <div class="player-catalog-table-head"><span>表示中 <b>${filtered.length}</b> / ${marketRecruits.length}名</span><small>能力値は市場生成時の基準値です</small></div>
+          <div class="player-catalog-columns"><span>ID / 選手名</span><span>国籍</span><span>適性</span><span>年齢</span><span>OF</span><span>DF</span><span>GK</span><span>年俸</span></div>
+          <div class="player-catalog-rows">${filtered.map((player) => { const nationality = player.nationality ?? "JP"; return `<div class="player-catalog-row"><span class="player-catalog-name"><b>${escapeHtml(player.id)}</b><strong>${escapeHtml(player.name)}</strong></span><span>${nationalityLabels[nationality]}</span><span><b class="catalog-primary">${positionLabel(player.position)}</b>${player.secondary ? `<small>${positionLabel(player.secondary)}</small>` : ""}</span><span>${player.age}歳</span><span class="catalog-attack">${player.attack}</span><span class="catalog-defense">${player.defense}</span><span>${player.position === "GK" ? player.gk ?? 0 : "—"}</span><span>${formatMoney(player.salary)}</span></div>`; }).join("")}</div>
+        </section>
+      </section>
+    `;
+  }
+
   private homePage(score: ReturnType<ClubSimulation["score"]>) {
     const isBreak = this.simulation.isBreakWeek;
     const opponent = this.simulation.currentOpponent;
@@ -1139,6 +1176,7 @@ export class GameUI {
         <article class="tactical-card log-card"><div class="card-kicker">TOUCHLINE LOG</div><h3>監督レポート</h3>${reportTabsMarkup}${recent.length ? recent.map((log, index) => `<p class="log-line"><b>${String(index + 1).padStart(2, "0")}</b>${log}</p>`).join("") : `<p class="manager-report-empty">このカテゴリのレポートはまだありません。</p>`}${this.simulation.currentSponsor ? `<div class="compact-contract"><span>PARTNER</span><b>${this.simulation.currentSponsor.name}</b><em>週次 +${formatMoney(this.simulation.currentSponsor.weeklyIncome)}</em></div>` : `<button data-nav="sponsors" class="compact-contract is-empty"><span>PARTNER</span><b>スポンサーを選ぶ</b><em>資金計画を整える →</em></button>`}</article>
       </section>
       <section class="test-reset-panel" aria-label="テストプレイ用リセット"><div><span class="card-kicker">TEST PLAY / DANGER ZONE</span><h3>ゲームを初期状態へ戻す</h3><p>保存済みのシーズン進行、選手育成、資金、戦績をすべて開幕状態へ戻します。</p></div><button data-action="reset-game" class="reset-game-button">初期状態へリセット</button></section>
+      <footer class="home-catalog-link"><span><b>PLAYER ARCHIVE</b><strong>600名の選手データ一覧</strong><small>名前・国籍・適性・能力・年俸をまとめて確認</small></span><button type="button" data-nav="catalog" class="ghost-action">一覧を開く <b>→</b></button></footer>
     `;
   }
 
@@ -1443,7 +1481,7 @@ export class GameUI {
     const candidateNeed = this.simulation.currentMarketRecruitmentMatch;
     const comparisons = this.simulation.marketCandidateComparison;
     const requestedPositions = this.simulation.selectedMarketPositions;
-    const marketPositions: Player["position"][] = ["GK", "CB", "SB", "DM", "CM", "SH", "AM", "WG", "CF"];
+    const marketPositions: Player["position"][] = ["GK", "CB", "WB", "SB", "DM", "CM", "SH", "AM", "WG", "CF"];
     const nextRefreshWeek = this.simulation.marketNextRefreshWeek;
     const marketUpdate = this.simulation.marketUpdateNotice;
     const foreignCount = this.simulation.foreignPlayerCount;

@@ -1029,3 +1029,44 @@ button { font: inherit; }
 .manager-report-tabs button:active { transform:scale(.97); }
 .manager-report-empty { margin:15px 0; padding:14px 10px; color:#8eaa92; border:1px dashed rgba(218,255,216,.18); text-align:center; font-size:10px; }
 @media (max-width:600px) { .manager-report-tabs { gap:2px; }.manager-report-tabs button { flex-direction:column; gap:1px; padding:5px 2px; font-size:8px; }.manager-report-tabs button small { font-size:7px; } }
+
+
+/* Player archive: dense, horizontally scrollable on small screens so every ability column remains readable. */
+.player-catalog-page { max-width: 1240px; margin: 0 auto; }
+.player-catalog-toolbar { display: grid; grid-template-columns: 1fr auto; gap: 14px 18px; align-items: start; margin-bottom: 12px; }
+.player-catalog-toolbar h2 { margin: 5px 0 5px; color: #efffe9; font-size: 24px; }
+.player-catalog-toolbar p { margin: 0; color: #9eb9a3; font-size: 11px; }
+.player-catalog-filter { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding-top: 9px; border-top: 1px solid rgba(218,255,216,.1); }
+.player-catalog-filter > span { flex: 0 0 82px; color: #8ea992; font-size: 9px; letter-spacing: .12em; }
+.player-catalog-filter > div { display: flex; flex-wrap: wrap; gap: 4px; }
+.player-catalog-filter button { padding: 5px 8px; color: #a9c3aa; border: 1px solid rgba(187,222,190,.2); background: rgba(2,20,10,.5); font-size: 9px; cursor: pointer; }
+.player-catalog-filter button:hover, .player-catalog-filter button:focus-visible { color: #efffea; border-color: var(--lime); outline: none; }
+.player-catalog-filter button.is-selected { color: #17300d; border-color: var(--lime); background: var(--lime); font-weight: 900; }
+.player-catalog-table { overflow: hidden; padding: 0; }
+.player-catalog-table-head { display: flex; justify-content: space-between; gap: 12px; padding: 13px 15px; color: #d9ff4a; border-bottom: 1px solid rgba(218,255,216,.12); font-size: 10px; }
+.player-catalog-table-head small { color: #8ea992; font-size: 9px; }
+.player-catalog-columns, .player-catalog-row { display: grid; grid-template-columns: minmax(170px, 1.7fr) minmax(74px, .8fr) minmax(82px, .9fr) 52px 42px 42px 42px minmax(92px, .9fr); gap: 8px; align-items: center; min-width: 720px; }
+.player-catalog-columns { padding: 8px 12px; color: #7f9b84; background: rgba(1,15,8,.55); font-size: 8px; letter-spacing: .08em; }
+.player-catalog-rows { max-height: 68vh; overflow: auto; }
+.player-catalog-row { padding: 8px 12px; color: #c7d9c7; border-top: 1px solid rgba(218,255,216,.07); font-size: 10px; }
+.player-catalog-row:hover { background: rgba(217,255,74,.055); }
+.player-catalog-name { display: grid; gap: 2px; min-width: 0; }
+.player-catalog-name b { overflow: hidden; color: #78977d; font: 8px ui-monospace, SFMono-Regular, monospace; text-overflow: ellipsis; white-space: nowrap; }
+.player-catalog-name strong { overflow: hidden; color: #efffe9; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.catalog-primary { color: #d9ff4a; }
+.player-catalog-row span > small { display: block; margin-top: 2px; color: #d9b85a; font-size: 8px; }
+.catalog-attack { color: #ffd278; font-weight: 900; }
+.catalog-defense { color: #82d8ff; font-weight: 900; }
+.home-catalog-link { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin: 16px 0 34px; padding: 17px 19px; border: 1px solid rgba(217,255,74,.28); background: linear-gradient(110deg, rgba(19,55,29,.72), rgba(4,22,13,.82)); }
+.home-catalog-link span { display: grid; gap: 3px; }
+.home-catalog-link b { color: #d9ff4a; font-size: 8px; letter-spacing: .15em; }
+.home-catalog-link strong { color: #efffe9; font-size: 16px; }
+.home-catalog-link small { color: #9eb9a3; font-size: 10px; }
+@media (max-width: 600px) {
+  .player-catalog-toolbar { grid-template-columns: 1fr; gap: 10px; }
+  .player-catalog-toolbar > .ghost-action { justify-self: start; }
+  .player-catalog-filter { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .player-catalog-filter > span { flex-basis: auto; }
+  .player-catalog-rows { max-height: 62vh; }
+  .home-catalog-link { align-items: flex-start; flex-direction: column; }
+}

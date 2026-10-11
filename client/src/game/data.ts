@@ -458,6 +458,8 @@ export const players: Player[] = [
   { id: "p18", name: "桐生 玲央", position: "DM", secondary: "CM", dmPlayStyle: "regista", cmPlayStyle: "deep-playmaker", attack: 47, dribble: 49, pass: 63, shoot: 38, defense: 61, tackle: 59, block: 55, interception: 67, fatigue: 6, age: 28, salary: 5800000, level: 3, ceiling: 8, chemistry: "edge" },
   { id: "p19", name: "白瀬 透真", position: "SH", secondary: "WG", wgPlayStyle: "touchline", attack: 59, dribble: 64, pass: 62, shoot: 54, defense: 42, tackle: 39, block: 34, interception: 51, fatigue: 5, age: 24, salary: 5400000, level: 3, ceiling: 9, chemistry: "spark" },
   { id: "p20", name: "三好 湊斗", position: "CF", secondary: "WG", cfPlayStyle: "target", wgPlayStyle: "wide-worker", attack: 57, dribble: 55, pass: 49, shoot: 64, defense: 31, tackle: 27, block: 25, interception: 34, fatigue: 3, age: 20, salary: 3600000, level: 2, ceiling: 10, chemistry: "steady" },
+  { id: "p21", name: "高原 陸", position: "WB", secondary: "SH", wbPlayStyle: "attacking-wingback", wgPlayStyle: "wide-worker", attack: 56, dribble: 65, pass: 61, shoot: 41, defense: 58, tackle: 62, block: 49, interception: 57, fatigue: 4, age: 22, salary: 5200000, level: 3, ceiling: 9, chemistry: "spark" },
+  { id: "p22", name: "西園寺 直哉", position: "WB", secondary: "SB", wbPlayStyle: "defensive-wingback", sbPlayStyle: "defensive-fullback", attack: 48, dribble: 56, pass: 58, shoot: 35, defense: 68, tackle: 71, block: 57, interception: 66, fatigue: 2, age: 27, salary: 7600000, level: 4, ceiling: 8, chemistry: "steady" },
 ];
 
 const openingPlayerSkills: Record<string, PlayerSkillId[]> = {
@@ -627,14 +629,14 @@ export const marketRecruits: Player[] = [
  * 固定の能力表を複製するのではなく、ポジション別の基準値へ年齢・タイプ・国籍ごとの
  * 決定論的な振れ幅を加える。セーブ間で結果は再現されるが、候補の組み合わせは豊富になる。
  */
-// 固定9名（日本籍6名・外国籍3名）に、生成291名（日本籍244名・外国籍47名）を加え、
-// 市場候補を常時300名（日本籍250名・外国籍50名）にする。
-const generatedMarketRecruits: Player[] = Array.from({ length: 291 }, (_, index) => {
+// 固定9名（日本籍6名・外国籍3名）に、生成591名（日本籍494名・外国籍97名）を加え、
+// 市場候補を常時600名（日本籍500名・外国籍100名）にする。
+const generatedMarketRecruits: Player[] = Array.from({ length: 591 }, (_, index) => {
     const positions: Position[] = ["CF", "WG", "SH", "AM", "CM", "DM", "WB", "SB", "CB", "GK"];
     const nationalities: NationalityCode[] = ["JP", "BR", "KR", "ES", "DE", "FR", "AR"];
     const basePosition = positions[index % positions.length];
-  const position: Position = index === 244 ? "WG" : index === 246 ? "CM" : basePosition;
-  const foreignIndex = index - 244;
+  const position: Position = index === 494 ? "WG" : index === 496 ? "CM" : basePosition;
+  const foreignIndex = index - 494;
   const nationality = foreignIndex < 0 ? "JP" : nationalities[1 + (foreignIndex % (nationalities.length - 1))];
   const variation = ((index * 17) % 13) - 6;
   const age = 19 + ((index * 7) % 17);
@@ -655,7 +657,7 @@ const generatedMarketRecruits: Player[] = Array.from({ length: 291 }, (_, index)
     return Math.max(8, Math.min(91, value + variation + (((index + attributeIndex * 3) % 9) - 4) + (profile.abilityBoosts[attribute] ?? 0) + (positionBoosts[attribute] ?? 0)));
   });
   const [attack, dribble, pass, shoot, defense, tackle, block, interception] = values;
-  const secondary: Partial<Record<Position, Position>> = { CF: "WG", WG: "CF", SH: "AM", AM: "CM", CM: "DM", DM: "CB", WB: "SB", SB: "SH", CB: "SB" };
+  const secondary: Partial<Record<Position, Position>> = { CF: "WG", WG: "CF", SH: "AM", AM: "CM", CM: "DM", DM: "CB", WB: Math.floor(index / positions.length) % 2 === 0 ? "SH" : "SB", SB: "SH", CB: "SB" };
   const styleIndex = index % 3;
   const player: Player = {
     id: `rg${String(index + 1).padStart(3, "0")}`, name, nationality, position, secondary: secondary[position],
@@ -672,6 +674,7 @@ const generatedMarketRecruits: Player[] = Array.from({ length: 291 }, (_, index)
   if (position === "DM") player.dmPlayStyle = (["anchor", "regista", "destroyer"] as const)[styleIndex];
   if (position === "CB") player.cbPlayStyle = (["stopper", "ball-playing", "cover"] as const)[styleIndex];
   if (position === "SB") player.sbPlayStyle = (["overlap", "inverted-fullback", "defensive-fullback"] as const)[styleIndex];
+  if (position === "WB") { player.wbPlayStyle = (["attacking-wingback", "underlapping-wingback", "defensive-wingback"] as const)[styleIndex]; player.sbPlayStyle = styleIndex === 2 ? "defensive-fullback" : "overlap"; player.wgPlayStyle = styleIndex === 1 ? "inverted" : "wide-worker"; }
   return player;
 });
 
