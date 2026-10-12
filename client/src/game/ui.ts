@@ -3,7 +3,7 @@ import { assets } from "./assets";
  * Design system: 「タッチライン戦術室」— dense tactical cards and a compact mobile scoreboard keep club health visible at all times.
  */
 import { ClubSimulation, amPlayStyleOptions, cbPlayStyleOptions, cfPlayStyleOptions, cmPlayStyleOptions, contractOfferOptions, dmPlayStyleOptions, formationSelectionOrder, gkPlayStyleOptions, mentalityOptions, playingStyleOptions, sbPlayStyleOptions, wbPlayStyleOptions, sponsorOffers, trainingLoadOptions, trainingOptions, wgPlayStyleOptions, type AutoLineupCriteria, type ConcessionReceipt, type ContractOfferId, type GateReceipt, type MatchHighlight, type MembershipReceipt, type MerchandiseReceipt, type Mentality, type PageId, type PlayingStyle, type TrainingFocus, type ClubEmblemId } from "./ClubSimulation";
-import { canMarkOpponent, defaultPlayerSideFor, defaultSecondarySideFor, formationBaseId, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, nationalityLabels, nationalityProfileFor, opponentSeeds, playerAssessmentFor, playerSkillCatalog, positionLabel, recruit, sideLabel, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type DMPlayStyle, type GKPlayStyle, type NationalityCode, type OpponentPlayer, type Player, type PlayerSkillId, type Position, type SBPlayStyle, type Slot, type WBPlayStyle, type WGPlayStyle } from "./data";
+import { canMarkOpponent, defaultPlayerSideFor, defaultSecondarySideFor, formationBaseId, formations, isMarkableOpponentPosition, isMarkingDefenderPosition, markingDefenderRank, marketRecruits, nationalityLabels, nationalityProfileFor, opponentSeeds, playerAssessmentFor, playerSkillCatalog, positionLabel, recruit, sideLabel, type AMPlayStyle, type CBPlayStyle, type CFPlayStyle, type CMPlayStyle, type DMPlayStyle, type Formation, type GKPlayStyle, type NationalityCode, type OpponentPlayer, type Player, type PlayerSkillId, type Position, type SBPlayStyle, type Slot, type WBPlayStyle, type WGPlayStyle } from "./data";
 
 const navItems: Array<{ id: PageId; icon: string; label: string }> = [
   { id: "home", icon: "⌂", label: "ホーム" }, { id: "lineup", icon: "◫", label: "スタメン" }, { id: "team", icon: "◎", label: "チーム" }, { id: "stats", icon: "◈", label: "成績" },
@@ -38,6 +38,15 @@ const emblemUrl = (id: ClubEmblemId) => {
 type RosterSort = "position" | "contract-short" | "contract-long";
 const rosterPositionOrder: Record<string, number> = { CF: 0, WG: 1, SH: 2, AM: 3, CM: 4, DM: 5, WB: 6, SB: 7, CB: 8, GK: 9 };
 const benchPositionOrder: Record<string, number> = { CF: 0, WG: 1, SH: 2, AM: 3, CM: 4, DM: 5, WB: 6, SB: 7, CB: 8, GK: 9 };
+const midfieldPositionLabels: Record<string, string> = { DM: "DH", CM: "CH", AM: "OH", SH: "SH" };
+const basicStructurePositionLabel = (formation: Formation) => {
+  const counts = new Map<string, number>();
+  formation.slots.forEach((slot) => {
+    const label = midfieldPositionLabels[slot.label];
+    if (label) counts.set(label, (counts.get(label) ?? 0) + 1);
+  });
+  return ["SH", "OH", "CH", "DH"].filter((label) => counts.has(label)).map((label) => `${label}${counts.get(label)}`).join("・");
+};
 type SalaryFilter = "all" | "high" | "low";
 type ContractFilter = "all" | "due" | "short" | "long";
 type MarkTone = "advantage" | "even" | "caution";
@@ -1135,8 +1144,8 @@ export class GameUI {
         </div>
         <section class="player-catalog-table tactical-card" aria-label="選手データ一覧">
           <div class="player-catalog-table-head"><span>表示中 <b>${filtered.length}</b> / ${marketRecruits.length}名</span><small>能力値は市場生成時の基準値です</small></div>
-          <div class="player-catalog-columns"><span>ID / 選手名</span><span>国籍</span><span>適性</span><span>年齢</span><span>OF</span><span>DF</span><span>GK</span><span>年俸</span></div>
-          <div class="player-catalog-rows">${filtered.map((player) => { const nationality = player.nationality ?? "JP"; return `<div class="player-catalog-row"><span class="player-catalog-name"><b>${escapeHtml(player.id)}</b><strong>${escapeHtml(player.name)}</strong></span><span>${nationalityLabels[nationality]}</span><span><b class="catalog-primary">${positionLabel(player.position)}</b>${player.secondary ? `<small>${positionLabel(player.secondary)}</small>` : ""}</span><span>${player.age}歳</span><span class="catalog-attack">${player.attack}</span><span class="catalog-defense">${player.defense}</span><span>${player.position === "GK" ? player.gk ?? 0 : "—"}</span><span>${formatMoney(player.salary)}</span></div>`; }).join("")}</div>
+          <div class="player-catalog-columns"><span>ID / 選手名</span><span>国籍</span><span>適性</span><span>年齢</span><span>OF</span><span>ドリブル</span><span>パス</span><span>シュート</span><span>DF</span><span>タックル</span><span>ブロック</span><span>パスカット</span><span>GK</span><span>年俸</span></div>
+          <div class="player-catalog-rows">${filtered.map((player) => { const nationality = player.nationality ?? "JP"; return `<div class="player-catalog-row"><span class="player-catalog-name"><b>${escapeHtml(player.id)}</b><strong>${escapeHtml(player.name)}</strong></span><span>${nationalityLabels[nationality]}</span><span><b class="catalog-primary">${positionLabel(player.position)}</b>${player.secondary ? `<small>${positionLabel(player.secondary)}</small>` : ""}</span><span>${player.age}歳</span><span class="catalog-attack">${player.attack}</span><span>${player.dribble}</span><span>${player.pass}</span><span>${player.shoot}</span><span class="catalog-defense">${player.defense}</span><span>${player.tackle}</span><span>${player.block}</span><span>${player.interception}</span><span>${player.position === "GK" ? player.gk ?? 0 : "—"}</span><span>${formatMoney(player.salary)}</span></div>`; }).join("")}</div>
         </section>
       </section>
     `;
@@ -1247,7 +1256,7 @@ export class GameUI {
     const baseFormations = baseFormationIds.map((id) => formations.find((formation) => formation.id === id)).filter((formation): formation is typeof formations[number] => Boolean(formation));
     const selectedStructures = formations.filter((formation) => formation.id.startsWith(`${selectedBaseFormationId}-`));
     const baseFormation = baseFormations.find((formation) => formation.id === selectedBaseFormationId);
-    const structureMenu = baseFormation ? `<section class="formation-structure-menu"><div><span class="card-kicker">${baseFormation.label} MIDFIELD STRUCTURE</span><small>構成を選択すると、ピッチ上の配置も切り替わります。</small></div><div class="formation-structure-options"><button data-formation="${baseFormation.id}" class="formation-structure-chip ${selectedFormationId === baseFormation.id ? "is-selected" : ""}"><b>基本構成</b><span>${baseFormation.description}</span></button>${selectedStructures.map((formation) => { const [structure, label] = formation.description.split("／"); return `<button data-formation="${formation.id}" class="formation-structure-chip ${selectedFormationId === formation.id ? "is-selected" : ""}"><b>${structure}</b><span>${label ?? "構成"}</span></button>`; }).join("")}</div></section>` : "";
+    const structureMenu = baseFormation ? `<section class="formation-structure-menu"><div><span class="card-kicker">${baseFormation.label} MIDFIELD STRUCTURE</span><small>構成を選択すると、ピッチ上の配置も切り替わります。</small></div><div class="formation-structure-options"><button data-formation="${baseFormation.id}" class="formation-structure-chip ${selectedFormationId === baseFormation.id ? "is-selected" : ""}"><b>${basicStructurePositionLabel(baseFormation)}</b><span>基本構成</span></button>${selectedStructures.map((formation) => { const [structure, label] = formation.description.split("／"); return `<button data-formation="${formation.id}" class="formation-structure-chip ${selectedFormationId === formation.id ? "is-selected" : ""}"><b>${structure}</b><span>${label ?? "構成"}</span></button>`; }).join("")}</div></section>` : "";
     const formationMenu = `<section class="formation-switcher">${baseFormations.map((formation) => `<button data-formation="${formation.id}" class="formation-chip ${selectedBaseFormationId === formation.id ? "is-selected" : ""}"><b>${formation.label}</b><span>${formation.description}</span></button>`).join("")}</section>${structureMenu}`;
     return `
       ${this.pageHeading("MATCHDAY", "スタメンを組む", "選手を選び、戦術ボードのポジションへ配置する。")}

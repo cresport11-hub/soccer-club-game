@@ -654,6 +654,16 @@ describe("Team power radar", () => {
     }
   });
 
+  it("uses WB positions for the wide midfield slots in 3-6-1", () => {
+    const formation = formations.find((item) => item.id === "3-6-1");
+    const left = formation?.slots.find((slot) => slot.id === "lwb");
+    const right = formation?.slots.find((slot) => slot.id === "rwb");
+    expect(left?.label).toBe("WB");
+    expect(right?.label).toBe("WB");
+    expect(left?.allowed[0]).toBe("WB");
+    expect(right?.allowed[0]).toBe("WB");
+  });
+
   it("keeps the goalkeeper visibly separated from the central defenders in five-back formations", () => {
     for (const formationId of ["5-4-1", "5-3-2"]) {
       const formation = formations.find((item) => item.id === formationId);

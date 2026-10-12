@@ -385,7 +385,7 @@ const formationSeeds: Formation[] = [
     description: "中盤の数的優位",
     slots: [
       field("gk", "GK", 50, 93, ["GK"]), field("lcb", "CB", 22, 76, ["CB", "SB", "WB"]), field("cb", "CB", 50, 80, ["CB"]), field("rcb", "CB", 78, 76, ["CB", "SB", "WB"]),
-      field("lwb", "SB", 9, 62, ["SB", "WB", "WG", "SH"]), field("lm", "SH", 24, 45, ["SH", "WG", "AM", "CM"]), field("lcm", "CM", 39, 60, ["CM", "DM", "AM"]), field("rcm", "CM", 61, 60, ["CM", "DM", "AM"]), field("rm", "SH", 76, 45, ["SH", "WG", "AM", "CM"]), field("rwb", "SB", 91, 62, ["SB", "WB", "WG", "SH"]),
+      field("lwb", "WB", 9, 62, ["WB", "SB", "WG", "SH"]), field("lm", "SH", 24, 45, ["SH", "WG", "AM", "CM"]), field("lcm", "CM", 39, 60, ["CM", "DM", "AM"]), field("rcm", "CM", 61, 60, ["CM", "DM", "AM"]), field("rm", "SH", 76, 45, ["SH", "WG", "AM", "CM"]), field("rwb", "WB", 91, 62, ["WB", "SB", "WG", "SH"]),
       field("st", "CF", 50, 20, ["CF", "AM", "WG"]),
     ],
   },
