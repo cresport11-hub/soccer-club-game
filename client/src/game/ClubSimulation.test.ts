@@ -775,6 +775,30 @@ describe("Team power radar", () => {
       "4-4-2-diamond",
     ]);
   });
+  it("places every OH below the CF line and in the central attacking lane", () => {
+    const expectedGap: Record<string, number> = {
+      "4-4-2": 18,
+      "4-3-3": 16,
+      "4-5-1": 18,
+      "3-4-3": 17,
+      "3-5-2": 17,
+      "3-6-1": 19,
+      "5-4-1": 16,
+      "5-3-2": 17,
+    };
+    for (const formation of formations) {
+      const cfSlots = formation.slots.filter((slot) => slot.label === "CF");
+      const ohSlots = formation.slots.filter((slot) => slot.label === "AM");
+      if (!cfSlots.length || !ohSlots.length) continue;
+      const cfLine = Math.max(...cfSlots.map((slot) => slot.y));
+      const baseId = Object.keys(expectedGap).find((id) => formation.id === id || formation.id.startsWith(`${id}-`));
+      expect(ohSlots.every((slot) => slot.y > cfLine)).toBe(true);
+      expect(ohSlots.every((slot) => slot.x >= 30 && slot.x <= 70)).toBe(true);
+      expect(baseId).toBeTruthy();
+      expect(ohSlots.every((slot) => slot.y - cfLine === expectedGap[baseId!])).toBe(true);
+    }
+  });
+
   it("keeps the diamond OH and DH on the central vertical axis", () => {
     const simulation = new ClubSimulation();
     simulation.setFormation("4-4-2-diamond");

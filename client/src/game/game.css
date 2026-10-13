@@ -922,14 +922,6 @@ button { font: inherit; }
 .sponsor-special-reward-list article.is-claimed > span { color:#d9ff4a; border-color:rgba(217,255,74,.45); }
 @media (max-width:600px) { .sponsor-special-reward-list { grid-template-columns:1fr; } }
 
-/* Scout report: nationality-specific playing style context */
-.nationality-style-report { display:grid; gap:8px; margin:14px 0; padding:13px 15px; border:1px solid rgba(106,215,255,.3); border-left:3px solid #6ad7ff; background:linear-gradient(120deg,rgba(13,39,48,.78),rgba(7,27,17,.72)); }
-.nationality-style-report .card-kicker { color:#6ad7ff; }
-.nationality-style-report h3 { margin:4px 0 0; font-size:16px; color:var(--ink); }
-.nationality-style-report p { margin:0; color:rgba(239,247,235,.86); line-height:1.7; font-size:13px; }
-.nationality-style-report small { color:rgba(239,247,235,.55); line-height:1.5; }
-@media (max-width:600px) { .nationality-style-report { padding:11px 12px; } .nationality-style-report h3 { font-size:14px; } .nationality-style-report p { font-size:12px; } }
-
 .help-lineup-topic { grid-column:1 / -1; border-top:2px solid #6ad7ff; background:linear-gradient(135deg,rgba(8,42,48,.72),rgba(5,25,15,.84)); }
 .help-lineup-topic .card-kicker { color:#8de5ff; }
 .help-lineup-topic li b { color:#8de5ff; }
@@ -1057,6 +1049,10 @@ button { font: inherit; }
 .player-catalog-row span > small { display: block; margin-top: 2px; color: #d9b85a; font-size: 8px; }
 .catalog-attack { color: #ffd278; font-weight: 900; }
 .catalog-defense { color: #82d8ff; font-weight: 900; }
+.catalog-stat-value { display: inline-flex; align-items: baseline; gap: 2px; white-space: nowrap; }
+.catalog-stat-value small { color: #7f9b84; font-size: 8px; font-weight: 600; }
+.catalog-attack .catalog-stat-value small { color: #b89d61; }
+.catalog-defense .catalog-stat-value small { color: #6fa9c4; }
 .home-catalog-link { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin: 16px 0 34px; padding: 17px 19px; border: 1px solid rgba(217,255,74,.28); background: linear-gradient(110deg, rgba(19,55,29,.72), rgba(4,22,13,.82)); }
 .home-catalog-link span { display: grid; gap: 3px; }
 .home-catalog-link b { color: #d9ff4a; font-size: 8px; letter-spacing: .15em; }
@@ -1069,4 +1065,31 @@ button { font: inherit; }
   .player-catalog-filter > span { flex-basis: auto; }
   .player-catalog-rows { max-height: 62vh; }
   .home-catalog-link { align-items: flex-start; flex-direction: column; }
+}
+
+/* Responsive tactical board: token dimensions follow the available pitch width. */
+.tactics-pitch {
+  container-type: inline-size;
+  --token-width: clamp(54px, 10cqw, 78px);
+  --token-height: clamp(44px, 7.2cqw, 56px);
+  --token-pad: clamp(3px, 0.75cqw, 5px);
+}
+.tactics-pitch .player-token {
+  box-sizing: border-box;
+  width: var(--token-width);
+  min-height: var(--token-height);
+  height: var(--token-height);
+  padding: var(--token-pad);
+  font-size: clamp(8px, 1.35cqw, 11px);
+}
+.tactics-pitch .player-token i { font-size: clamp(6px, 1cqw, 8px); }
+.tactics-pitch .player-token strong { font-size: clamp(8px, 1.35cqw, 11px); }
+.tactics-pitch .player-token .player-token-stats { font-size: clamp(6px, 1.05cqw, 8px); }
+.tactics-pitch .player-token .offrole-warning { top: clamp(2px, .6cqw, 4px); right: clamp(2px, .6cqw, 4px); }
+@media (max-width: 600px) {
+  .tactics-pitch { min-height: min(440px, 118cqw); }
+}
+@media (max-width: 380px) {
+  .tactics-pitch { min-height: min(400px, 122cqw); }
+  .tactics-pitch .player-token { --token-width: clamp(50px, 14cqw, 62px); --token-height: clamp(42px, 11cqw, 50px); }
 }

@@ -150,6 +150,15 @@ export type Player = {
   systemMastery?: Record<string, number>;
 };
 
+/** 新規契約時の年俸を、ポジションに応じた主能力と年齢・将来性から算出する。 */
+export const salaryForPlayer = (player: Pick<Player, "position" | "attack" | "dribble" | "pass" | "shoot" | "defense" | "tackle" | "block" | "interception" | "gk" | "age" | "ceiling">) => {
+  const primary = player.position === "GK" ? player.gk ?? player.defense : ["CF", "WG", "SH", "AM"].includes(player.position) ? (player.attack * .35 + player.shoot * .3 + player.dribble * .2 + player.pass * .15) : ["CM", "DM"].includes(player.position) ? (player.pass * .3 + player.defense * .25 + player.tackle * .2 + player.interception * .15 + player.attack * .1) : (player.defense * .35 + player.tackle * .25 + player.block * .2 + player.interception * .2);
+  const ageMultiplier = player.age <= 19 ? .62 : player.age <= 22 ? .78 : player.age <= 25 ? .94 : player.age <= 29 ? 1.08 : player.age <= 32 ? 1.12 : 1.02;
+  const potentialMultiplier = 1 + Math.max(0, player.ceiling - 7) * .035;
+  const roleMultiplier = player.position === "GK" || player.position === "CF" ? 1.08 : ["WG", "AM"].includes(player.position) ? 1.05 : 1;
+  return Math.max(1_200_000, Math.round((1_000_000 + primary * primary * 3_000) * ageMultiplier * potentialMultiplier * roleMultiplier / 100_000) * 100_000);
+};
+
 const stableSystemSeed = (value: string) => Array.from(value).reduce((total, character, index) => total + character.charCodeAt(0) * (index + 3), 0);
 
 /** 選手ごとのシステム理解力を、判断系能力・経験・固定シードから決定する。初期は伸びしろを残す。 */
@@ -410,6 +419,46 @@ const formationSeeds: Formation[] = [
   },
  ];
 
+/** OH（内部表記AM）は、CFの真下の中央レーンに置く。
+ * 複数のOHがいる構成では中央を挟んで均等に並べ、左右のSH/WGと混同しない。
+ */
+const attackingMidfieldGapByFormation: Record<string, number> = {
+  "4-4-2": 18,
+  "4-3-3": 16,
+  "4-5-1": 18,
+  "3-4-3": 17,
+  "3-5-2": 17,
+  "3-6-1": 19,
+  "5-4-1": 16,
+  "5-3-2": 17,
+};
+
+const placeAttackingMidfieldBelowForwards = (formation: Formation): Formation => {
+  const forwardYs = formation.slots.filter((slot) => slot.label === "CF").map((slot) => slot.y);
+  const attackingMidfieldSlots = formation.slots
+    .map((slot, index) => ({ slot, index }))
+    .filter(({ slot }) => slot.label === "AM");
+  if (!forwardYs.length || !attackingMidfieldSlots.length) return formation;
+
+  const cfLine = Math.max(...forwardYs);
+  const baseFormationId = Object.keys(attackingMidfieldGapByFormation).find(
+    (id) => formation.id === id || formation.id.startsWith(`${id}-`),
+  );
+  const verticalGap = baseFormationId ? attackingMidfieldGapByFormation[baseFormationId] : 16;
+  const ohY = Math.min(78, cfLine + verticalGap);
+  const xPositions = attackingMidfieldSlots.length === 1
+    ? [50]
+    : attackingMidfieldSlots.map((_, index) => 50 + (index - (attackingMidfieldSlots.length - 1) / 2) * 20);
+  const nextSlots = formation.slots.map((slot, index) => {
+    const ohIndex = attackingMidfieldSlots.findIndex((entry) => entry.index === index);
+    if (ohIndex < 0) return { ...slot, allowed: [...slot.allowed] };
+    const x = xPositions[ohIndex] ?? 50;
+    return { ...slot, x, y: ohY, side: sideForFieldX(x), allowed: [...slot.allowed] };
+  });
+  return { ...formation, slots: nextSlots };
+};
+
+const normalizedFormationSeeds = formationSeeds.map(placeAttackingMidfieldBelowForwards);
 const midfieldLabels = new Set<Position>(["DM", "CM", "AM", "SH"]);
 const structureAllowed: Record<Position, Position[]> = {
   GK: ["GK"], CB: ["CB", "SB", "WB"], SB: ["SB", "WB", "WG", "SH"], WB: ["WB", "SB", "WG", "SH"], DM: ["DM", "CM", "CB"], CM: ["CM", "DM", "AM"], AM: ["AM", "CM", "CF", "WG"], SH: ["SH", "WG", "AM", "CM", "SB"], WG: ["WG", "SH", "AM", "CF"], CF: ["CF", "AM", "WG"],
@@ -424,15 +473,16 @@ const structurePresets: Record<string, Array<{ suffix: string; description: stri
   "5-3-2": [{ suffix: "flat", description: "CH3／中盤安定", midfield: ["CM", "CM", "CM"] }, { suffix: "double-pivot", description: "DH2・CH1／堅守速攻", midfield: ["DM", "DM", "CM"] }, { suffix: "counter", description: "DH2・CH1／奪って速攻", midfield: ["DM", "CM", "DM"] }],
 };
 const baseFormationIds = new Set(["4-4-2", "4-3-3", "4-5-1", "3-4-3", "3-5-2", "3-6-1", "5-4-1", "5-3-2"]);
-const primaryFormationSeeds = formationSeeds.filter((formation) => baseFormationIds.has(formation.id));
-const existing442Structures = formationSeeds.filter((formation) => formation.id.startsWith("4-4-2-"));
+const primaryFormationSeeds = normalizedFormationSeeds.filter((formation) => baseFormationIds.has(formation.id));
+const existing442Structures = normalizedFormationSeeds.filter((formation) => formation.id.startsWith("4-4-2-"));
 const createStructure = (base: Formation, preset: (typeof structurePresets[string])[number]): Formation => {
   let midfieldIndex = 0;
-  return { id: `${base.id}-${preset.suffix}`, label: base.label, description: preset.description, slots: base.slots.map((slot) => {
+  const structure = { id: `${base.id}-${preset.suffix}`, label: base.label, description: preset.description, slots: base.slots.map((slot) => {
     if (!midfieldLabels.has(slot.label)) return { ...slot, allowed: [...slot.allowed] };
     const label = preset.midfield[midfieldIndex++] ?? slot.label;
     return { ...slot, label, allowed: structureAllowed[label] };
   }) };
+  return placeAttackingMidfieldBelowForwards(structure);
 };
 export const formations: Formation[] = [...primaryFormationSeeds, ...existing442Structures, ...primaryFormationSeeds.flatMap((base) => (structurePresets[base.id] ?? []).map((preset) => createStructure(base, preset)))];
 export const formationBaseId = (formationId: string) => Array.from(baseFormationIds).find((id) => formationId === id || formationId.startsWith(`${id}-`)) ?? formationId;
@@ -662,7 +712,7 @@ const generatedMarketRecruits: Player[] = Array.from({ length: 591 }, (_, index)
   const player: Player = {
     id: `rg${String(index + 1).padStart(3, "0")}`, name, nationality, position, secondary: secondary[position],
     attack, dribble, pass, shoot, defense, tackle, block, interception, fatigue: 0, age,
-    salary: Math.round((4_800_000 + (attack + dribble + pass + shoot + defense + tackle) * 135_000) * (age >= 30 ? 1.08 : age <= 21 ? .88 : 1)),
+    salary: 0,
     contractYears: 3, level: Math.max(2, Math.min(6, Math.round((attack + defense) / 28))), ceiling: Math.max(7, Math.min(10, 8 + (index % 3))),
     chemistry: (["spark", "steady", "edge"] as const)[index % 3],
   };
@@ -675,6 +725,7 @@ const generatedMarketRecruits: Player[] = Array.from({ length: 591 }, (_, index)
   if (position === "CB") player.cbPlayStyle = (["stopper", "ball-playing", "cover"] as const)[styleIndex];
   if (position === "SB") player.sbPlayStyle = (["overlap", "inverted-fullback", "defensive-fullback"] as const)[styleIndex];
   if (position === "WB") { player.wbPlayStyle = (["attacking-wingback", "underlapping-wingback", "defensive-wingback"] as const)[styleIndex]; player.sbPlayStyle = styleIndex === 2 ? "defensive-fullback" : "overlap"; player.wgPlayStyle = styleIndex === 1 ? "inverted" : "wide-worker"; }
+  player.salary = salaryForPlayer(player);
   return player;
 });
 
